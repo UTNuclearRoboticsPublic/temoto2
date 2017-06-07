@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+
+<task type="add" >
+  
+  <in>
+    <arg argtype="number" />
+    <arg argtype="number" />
+  </in>
+
+  <out>
+    <arg argtype="number" />
+  </out>
+  
+</task>
