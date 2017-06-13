@@ -34,10 +34,10 @@ target_link_libraries(context_manager
    ${catkin_LIBRARIES}
 )
 
-add_executable(agent_core src/agent_core.cpp 
-			  src/language_processor/language_processor.cpp
-			  src/task_handler/task_handler.cpp
-			  src/task_handler/description_processor.cpp
+add_executable(agent_core src/core/agent_core.cpp 
+			  src/core/language_processor/language_processor.cpp
+			  src/core/task_handler/task_handler.cpp
+			  src/core/task_handler/description_processor.cpp
 )
 
 target_link_libraries(agent_core

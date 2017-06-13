@@ -6,10 +6,10 @@
 #include <ctype.h>
 
 #include <sstream>
-#include "temoto_2/base_task/task.h"
-#include "temoto_2/language_processor/language_processor.h"
-#include "temoto_2/task_handler/task_handler.h"
-#include "temoto_2/task_handler/description_processor.h"
+#include "base_task/task.h"
+#include "core/language_processor/language_processor.h"
+#include "core/task_handler/task_handler.h"
+#include "core/task_handler/description_processor.h"
 
 bool msgReceived = false;
 std::string my_text;

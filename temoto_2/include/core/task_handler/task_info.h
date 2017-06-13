@@ -1,30 +1,27 @@
 #ifndef TASK_INFO_H
 #define TASK_INFO_H
 
-#include "temoto_2/task_handler/common.h"
+#include "core/common.h"
 #include <string>
 #include <vector>
 
 class TaskInfo
 {
+    friend class DescriptionProcessor;
 
 public:
 
-    TaskInfo();
-
-    TaskInfo( std::string descPath );
-
     std::string getPath();
-
-    std::string setPath();
 
     std::string getName();
 
-    std::string setName();
+    paramList getArgs();
 
-
+    paramList getReturn();
 
 private:
+
+    std::string name_;
 
     std::string path_;
 

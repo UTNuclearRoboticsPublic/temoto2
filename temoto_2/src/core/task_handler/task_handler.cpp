@@ -1,13 +1,13 @@
-#include "temoto_2/task_handler/task_handler.h"
+#include "core/task_handler/task_handler.h"
 
 /* * * * * * * * *
  *  CONSTRUCTOR
  * * * * * * * * */
 
-TaskHandler::TaskHandler(class_loader::MultiLibraryClassLoader * loader)
+TaskHandler::TaskHandler( class_loader::MultiLibraryClassLoader * loader)
 {
     loader_ = loader;
-    langProcessor_.setTaskToArgBook( &(this->taskToArgBook_) )
+    //langProcessor_.setTaskToArgBook( &(this->taskToArgBook_) )
 }
 
 

@@ -1,11 +1,11 @@
 #ifndef TASK_HANDLER_H
 #define TASK_HANDLER_H
 
-#include "temoto_2/task_handler/common.h"
-#include "temoto_2/task_handler/task_info.h"
-#include "temoto_2/task_handler/description_processor.h"
-#include "temoto_2/language_processor/language_processor.h"
-#include "temoto_2/base_task/task.h"
+#include "core/common.h"
+#include "core/task_handler/task_info.h"
+#include "core/task_handler/description_processor.h"
+#include "core/language_processor/language_processor.h"
+#include "base_task/task.h"
 
 #include <class_loader/multi_library_class_loader.h>
 #include <map>

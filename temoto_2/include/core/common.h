@@ -6,7 +6,10 @@
 #include <vector>
 #include <utility>
 
-typedef std::vector < std::vector<std::string> > paramList;
+#include "core/core_errors.h"
+#include "ros/ros.h"
+
+typedef std::vector < std::vector<std::string> > ParamList;
 
 // REDO TYPEDEFS
 typedef std::vector< std::pair<std::string, std::vector<boost::any>> > TaskList;
