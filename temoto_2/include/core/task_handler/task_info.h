@@ -2,8 +2,6 @@
 #define TASK_INFO_H
 
 #include "core/common.h"
-#include <string>
-#include <vector>
 
 class TaskInfo
 {
@@ -15,9 +13,9 @@ public:
 
     std::string getName();
 
-    paramList getArgs();
+    ParamList getArgs();
 
-    paramList getReturn();
+    ParamList getReturn();
 
 private:
 
@@ -25,9 +23,9 @@ private:
 
     std::string path_;
 
-    paramList args_;
+    ParamList args_;
 
-    paramList return_;
+    ParamList return_;
 };
 
 #endif

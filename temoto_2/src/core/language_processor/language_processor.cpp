@@ -1,6 +1,4 @@
 #include "core/language_processor/language_processor.h"
-//BROKEN
-LanguageProcessor::setTaskToArgBook( &(this->taskToArgBook_) )
 
 
 /* * * * * * * * *

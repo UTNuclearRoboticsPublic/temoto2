@@ -8,7 +8,7 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // Things that have to be included
-#include "temoto_2/base_task/task.h"                 // The base task
+#include "base_task/task.h"                 // The base task
 #include <class_loader/class_loader.h>               // Class loader includes
 
 // Task specific includes

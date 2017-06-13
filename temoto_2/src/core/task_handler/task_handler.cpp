@@ -7,19 +7,19 @@
 TaskHandler::TaskHandler( class_loader::MultiLibraryClassLoader * loader)
 {
     loader_ = loader;
-    //langProcessor_.setTaskToArgBook( &(this->taskToArgBook_) )
+    //fProcessor_.setTaskToArgBook( &(this->taskToArgBook_) )
 }
 
 
 /* * * * * * * * *
  *  FIND TASK LOCAL
  * * * * * * * * */
-
+/*
 std::vector <TaskInfo> TaskHandler::findTask(std::string taskToFind)
 {
 
 }
-
+*/
 
 /* * * * * * * * *
  *  FIND TASK
@@ -29,7 +29,7 @@ std::vector <TaskInfo> TaskHandler::findTask(std::string taskToFind, boost::file
 {
     boost::filesystem::path current_dir (basePath);
     boost::filesystem::directory_iterator end_itr;
-    std::vector <TaskInfo> tasksFound = {};
+    std::vector <TaskInfo> tasksFound;
 
     try
     {
@@ -49,18 +49,28 @@ std::vector <TaskInfo> TaskHandler::findTask(std::string taskToFind, boost::file
                 }
             }
 
-            // if its a file and matches the desc file name, search the file
+            // if its a file and matches the desc file name, process the file
             else if ( boost::filesystem::is_regular_file(*itr) &
                       ((*itr).path().filename().compare(descriptionFile) == 0) )
             {
-// HERE!                int res = processDesc (taskType, (*itr).path().string());
-
-                if ( res == 0)
+                //int res = processDesc (taskType, (*itr).path().string());
+                try
                 {
-                    std::cout << "Pushing: " << (*itr).path().string() << std::endl;
-                    pathsFound.push_back( (*itr).path().string() );
+                    // Create a description processor object
+                    // I THINK THIS SHOULD NOT BE CREATED EVERY SINGLE TIME
+                    DescriptionProcessor descProcessor( (*itr).path().string() );
+
+                    // Get TaskInfo
+                    TaskInfo taskInfo = descProcessor.getTaskInfo();
+                    tasksFound.push_back( taskInfo );
                 }
 
+                catch( ErrorStack & e )
+                {
+                    // Append the error to local ErrorStack
+                    e.emplace_back(coreErr::FORWARDING, "[TaskHandler/findTask]");
+                    this->errorHandler_.append(e);
+                }
             }
         }
         return tasksFound;
@@ -71,22 +81,6 @@ std::vector <TaskInfo> TaskHandler::findTask(std::string taskToFind, boost::file
         std::cerr << "[DescriptionProcessor/findTask] Unhandled exception" << std::endl;
         return tasksFound;
     }
-
-
-
-
-
-    // Create an empty map for storing tasks that were found
-    std::map<std::string, std::string> foundTasks;
-
-    this->descProcessor_.
-
-    else
-    {
-        ROS_DEBUG( "[TaskHandler/findTask] didnt find any tasks named: %s", taskToFind.c_str());
-    }
-
-    return foundTasks;
 }
 
 

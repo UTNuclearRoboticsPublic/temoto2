@@ -8,13 +8,13 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // Things that have to be included
-#include "temoto_2/base_task/task.h"                 // The base task
+#include "base_task/task.h"                 // The base task
 #include <class_loader/class_loader.h>               // Class loader includes
 
 // Task specific includes
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-#include "temoto_2/human_context_interface.h"
+#include "context_manager/human_context_interface.h"
 
 // First implementaton
 class Imp_task_3: public Task

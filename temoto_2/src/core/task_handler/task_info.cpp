@@ -1,21 +1,21 @@
 #include "core/task_handler/task_info.h"
 
-std::string getPath()
+std::string TaskInfo::getPath()
 {
-    return path_;
+    return this->path_;
 }
 
-std::string getName()
+std::string TaskInfo::getName()
 {
-    return name_;
+    return this->name_;
 }
 
-paramList getArgs()
+ParamList TaskInfo::getArgs()
 {
-    return args_;
+    return this->args_;
 }
 
-paramList getReturn()
+ParamList TaskInfo::getReturn()
 {
-    return return_;
+    return this->return_;
 }

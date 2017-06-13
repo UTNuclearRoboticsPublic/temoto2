@@ -8,9 +8,6 @@
 #include "base_task/task.h"
 
 #include <class_loader/multi_library_class_loader.h>
-#include <map>
-#include <string>
-#include <vector>
 #include <boost/any.hpp>
 #include "boost/filesystem.hpp"
 
@@ -28,7 +25,7 @@ public:
      * @param taskToFind String that contains the type of the task, if specified as "any" then all task descriptions are loaded in
      * @return Returns a vector containing task description classes
      */
-    std::vector <TaskInfo> findTask(std::string taskToFind);
+    //std::vector <TaskInfo> findTask(std::string taskToFind);
 
     /**
      * @brief findTask
@@ -104,14 +101,14 @@ private:
     class_loader::MultiLibraryClassLoader * loader_;
 
     /**
-     * @brief descProcessor_
-     */
-    DescriptionProcessor descProcessor_;
-
-    /**
      * @brief langProcessor_
      */
-    LanguageProcessor langProcessor_;
+    //LanguageProcessor langProcessor_;
+
+    /**
+     * @brief errorHandler_
+     */
+    error::ErrorHandler errorHandler_;
 
     const std::string descriptionFile = "description.xml";
 };

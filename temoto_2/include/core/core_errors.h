@@ -2,9 +2,10 @@
 
 enum class coreErr : int
 {
-    FORWARDING,
-    DESC_OPEN_FAIL,
-    DESC_NO_ROOT,
-    DESC_NO_ATTR,
-    DESC_INVALID_ARG
+    FORWARDING,         // Forwarding the error
+
+    DESC_OPEN_FAIL,     // Failed to open the xml file
+    DESC_NO_ROOT,       // Missing root element
+    DESC_NO_ATTR,       // Attribute missing
+    DESC_INVALID_ARG    // Invalid/Corrupt arguments
 };

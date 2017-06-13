@@ -16,10 +16,10 @@ DescriptionProcessor::DescriptionProcessor( std::string path)
         getRootElement();
     }
 
-    catch( ErrorStack & e )
+    catch( error::ErrorStack& e )
     {
         // Rethrow the error
-        e.push_back(coreErr::FORWARDING, "[DescriptionProcessor/Constructor]");
+        e.emplace_back(coreErr::FORWARDING, "[DescriptionProcessor/Constructor]");
         throw e;
     }
 }
@@ -32,11 +32,11 @@ DescriptionProcessor::DescriptionProcessor( std::string path)
 void DescriptionProcessor::openTaskDesc()
 {
     // Open the description file
-    if( !this->descFile.LoadFile(this->descFilePath_) )
+    if( !this->descFile_.LoadFile(this->descFilePath_) )
     {
         // Throw error
-        ErrorStack errorStack;
-        errorStack.push_back( BaseError( coreErr::DESC_OPEN_FAIL, this->descFile.ErrorDesc(), ros::Time::now() ) );
+        error::ErrorStack errorStack;
+        errorStack.emplace_back( coreErr::DESC_OPEN_FAIL, this->descFile_.ErrorDesc(), ros::Time::now() );
         throw errorStack;
     }
 }
@@ -53,8 +53,8 @@ void DescriptionProcessor::getRootElement()
     if( this->rootElement_ == NULL )
     {
         // Throw error
-        ErrorStack errorStack;
-        errorStack.push_back( BaseError( coreErr::DESC_NO_ROOT, "[DescriptionProcessor/getTaskType] No root element in: " + this->descFilePath_, ros::Time::now() ) );
+        error::ErrorStack errorStack;
+        errorStack.emplace_back( coreErr::DESC_NO_ROOT, "[DescriptionProcessor/getTaskType] No root element in: " + this->descFilePath_, ros::Time::now() );
         throw errorStack;
     }
 }
@@ -71,8 +71,8 @@ std::string DescriptionProcessor::getTaskName()
     if (attr == NULL)
     {      
         // Throw error
-        ErrorStack errorStack;
-        errorStack.push_back( BaseError( coreErr::DESC_NO_ATTR, "[DescriptionProcessor/getTaskType] Missing a 'name' attribute in: " + this->descFilePath_, ros::Time::now() ) );
+        error::ErrorStack errorStack;
+        errorStack.emplace_back( coreErr::DESC_NO_ATTR, "[DescriptionProcessor/getTaskType] Missing a 'name' attribute in: " + this->descFilePath_, ros::Time::now() );
         throw errorStack;
     }
 
@@ -107,14 +107,14 @@ ParamList DescriptionProcessor::getArgs( std::string direction )
                 if ( argtypeAttr == NULL )
                 {
                     // Throw error
-                    ErrorStack errorStack;
-                    errorStack.push_back( BaseError( coreErr::DESC_NO_ATTR, "[DescriptionProcessor/getArgs] Missing an 'argtype' attribute in: " + this->descFilePath_, ros::Time::now() ) );
+                    error::ErrorStack errorStack;
+                    errorStack.emplace_back( coreErr::DESC_NO_ATTR, "[DescriptionProcessor/getArgs] Missing an 'argtype' attribute in: " + this->descFilePath_, ros::Time::now() );
                     throw errorStack;
                 }
 
                 // If were good, proceed by converting the argAttr to string and push it in the "args" vector
                 std::string argtypeStr(argtypeAttr);
-                args.pushBack(argtypeStr);
+                args.push_back(argtypeStr);
 
                 // If argtype is "string", then get the expected values
                 if( argtypeStr.compare("string") == 0 )
@@ -125,14 +125,14 @@ ParamList DescriptionProcessor::getArgs( std::string direction )
                     if ( valueAttr == NULL )
                     {
                         // Throw error
-                        ErrorStack errorStack;
-                        errorStack.push_back( BaseError( coreErr::DESC_NO_ATTR, "[DescriptionProcessor/getArgs] Missing a 'value' attribute in: " + this->descFilePath_, ros::Time::now() ) );
+                        error::ErrorStack errorStack;
+                        errorStack.emplace_back( coreErr::DESC_NO_ATTR, "[DescriptionProcessor/getArgs] Missing a 'value' attribute in: " + this->descFilePath_, ros::Time::now() );
                         throw errorStack;
                     }
 
                     // If were good, proceed by converting the valueAttr to string and push it in the "args" vector
                     std::string valueStr(valueAttr);
-                    args.pushBack(valueStr);
+                    args.push_back(valueStr);
                 }
 
             }
@@ -141,14 +141,14 @@ ParamList DescriptionProcessor::getArgs( std::string direction )
             if( args.size() > 0 )
             {
                 // Push the arguments in paramList
-                paramList.pushBack( args );
+                paramList.push_back( args );
             }
 
             else
             {
                 // Throw error
-                ErrorStack errorStack;
-                errorStack.push_back( BaseError( coreErr::DESC_INVALID_ARG, "[DescriptionProcessor/getArgs] Invalid argument in: " + this->descFilePath_, ros::Time::now() ) );
+                error::ErrorStack errorStack;
+                errorStack.emplace_back( coreErr::DESC_INVALID_ARG, "[DescriptionProcessor/getArgs] Invalid argument in: " + this->descFilePath_, ros::Time::now() );
                 throw errorStack;
             }
         }
@@ -158,8 +158,8 @@ ParamList DescriptionProcessor::getArgs( std::string direction )
     if( paramList.size() <= 0 )
     {
         // Throw error
-        ErrorStack errorStack;
-        errorStack.push_back( BaseError( coreErr::DESC_INVALID_ARG, "[DescriptionProcessor/getArgs] Invalid argument in: " + this->descFilePath_, ros::Time::now() ) );
+        error::ErrorStack errorStack;
+        errorStack.emplace_back( coreErr::DESC_INVALID_ARG, "[DescriptionProcessor/getArgs] Invalid argument in: " + this->descFilePath_, ros::Time::now() );
         throw errorStack;
     }
 
@@ -178,10 +178,10 @@ ParamList DescriptionProcessor::getInputArgs()
         return getArgs("in");
     }
 
-    catch( ErrorStack & e )
+    catch( error::ErrorStack& e )
     {
         // Rethrow the error
-        e.push_back(coreErr::FORWARDING, "[DescriptionProcessor/getInputArgs]");
+        e.emplace_back(coreErr::FORWARDING, "[DescriptionProcessor/getInputArgs]");
         throw e;
     }
 }
@@ -198,10 +198,10 @@ ParamList DescriptionProcessor::getOutputArgs()
         return getArgs("out");
     }
 
-    catch( ErrorStack & e )
+    catch( error::ErrorStack& e )
     {
         // Rethrow the error
-        e.push_back(coreErr::FORWARDING, "[DescriptionProcessor/getOutputArgs]");
+        e.emplace_back(coreErr::FORWARDING, "[DescriptionProcessor/getOutputArgs]");
         throw e;
     }
 }
@@ -224,10 +224,10 @@ TaskInfo DescriptionProcessor::getTaskInfo()
         taskInfo.return_ = getOutputArgs();
     }
 
-    catch( ErrorStack & e )
+    catch( error::ErrorStack& e )
     {
         // Rethrow the error
-        e.push_back(coreErr::FORWARDING, "[DescriptionProcessor/getTaskInfo]");
+        e.emplace_back(coreErr::FORWARDING, "[DescriptionProcessor/getTaskInfo]");
         throw e;
     }
 
@@ -239,37 +239,6 @@ TaskInfo DescriptionProcessor::getTaskInfo()
  *  CHECK DESC INTEGRITY
  * * * * * * * * */
 
-int checkDescIntegrity (TiXmlElement* rootElement)
-{
-    // Check the number of required arguments
-
-
-    // start reading the child elements
-    for(TiXmlElement* elem = rootElement->FirstChildElement(); elem != NULL; elem = elem->NextSiblingElement())
-    {
-        // get the name of the element
-        std::string elemName = elem->Value();
-        std::cout << elemName << std::endl;
-
-        // print the value of the "attribute" contained in the element
-        const char* attr;
-        attr = elem->Attribute("attribute");
-
-        if (attr != NULL)
-        {
-           std::string attribute(attr);
-           std::cout << "  " << attribute << std::endl;
-        }
-
-        // print the text if there is any
-        TiXmlText* text = elem->ToText();
-        if(text != NULL)
-        {
-            std::string t = text->Value();
-            std::cout << "  " << t << std::endl;
-        }
-    }
-}
 
 
 /* * * * * * * * *

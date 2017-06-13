@@ -1,18 +1,20 @@
 #include "base_error/base_error.h"
 
 
-BaseError::BaseError( int errorCode )
+// BaseError implementations
+
+error::BaseError::BaseError( int errorCode )
     : errorCode_( errorCode )
 {}
 
-BaseError::BaseError( int errorCode, std::string errorMessage)
+error::BaseError::BaseError( int errorCode, std::string errorMessage)
     : errorCode_( errorCode ),
       errorMessage_( errorMessage )
 {
     this->hasMessage_ = true;
 }
 
-BaseError::BaseError( int errorCode, std::string errorMessage, ros::Time timeStamp)
+error::BaseError::BaseError( int errorCode, std::string errorMessage, ros::Time timeStamp)
     : errorCode_( errorCode ),
       errorMessage_( errorMessage ),
       timeStamp_( timeStamp )
@@ -21,27 +23,52 @@ BaseError::BaseError( int errorCode, std::string errorMessage, ros::Time timeSta
     this->hasTimeStamp_ = true;
 }
 
-std::string BaseError::getErrorMessage()
+std::string error::BaseError::getErrorMessage()
 {
     return this->errorMessage_;
 }
 
-int BaseError::getErrorCode()
+int error::BaseError::getErrorCode()
 {
     return this->errorCode_;
 }
 
-ros::Time BaseError::getTimeStamp()
+ros::Time error::BaseError::getTimeStamp()
 {
     return this->timeStamp_;
 }
 
-bool hasMessage()
+bool error::BaseError::hasMessage()
 {
     return this->hasMessage_;
 }
 
-bool hasTimeStamp()
+bool error::BaseError::hasTimeStamp()
 {
     return this->hasTimeStamp_;
+}
+
+
+// ErrorHandler implementations
+
+void error::ErrorHandler::append( error::ErrorStack errorStack )
+{
+    this->errorStack_.insert(std::end(this->errorStack_), std::begin(errorStack), std::end(errorStack));
+}
+
+error::ErrorStack error::ErrorHandler::read()
+{
+    return this->errorStack_;
+}
+
+error::ErrorStack error::ErrorHandler::readAndClear()
+{
+    // Create a copy of the errorStack_
+    error::ErrorStack errorStackCopy( this->errorStack_ );
+
+    // Clear the errorStack_
+    this->errorStack_.clear();
+
+    // Return the copy
+    return errorStackCopy;
 }

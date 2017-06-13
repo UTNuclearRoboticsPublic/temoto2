@@ -5,39 +5,66 @@
 #include <vector>
 #include "ros/ros.h"
 
-class BaseError
+namespace error
 {
-public:
+    /**
+     * @brief The BaseError class
+     */
+    class BaseError
+    {
+    public:
 
-    BaseError( int errorCode );
+        BaseError( int errorCode );
 
-    BaseError( int errorCode, std::string errorMessage);
+        BaseError( int errorCode, std::string errorMessage);
 
-    BaseError( int errorCode, std::string errorMessage, ros::Time timeStamp);
+        BaseError( int errorCode, std::string errorMessage, ros::Time timeStamp);
 
-    std::string getErrorMessage();
+        std::string getErrorMessage();
 
-    int getErrorCode();
+        int getErrorCode();
 
-    ros::Time getTimeStamp();
+        ros::Time getTimeStamp();
 
-    bool hasMessage();
+        bool hasMessage();
 
-    bool hasTimeStamp();
+        bool hasTimeStamp();
 
-private:
+    private:
 
-    std::string errorMessage_;
+        std::string errorMessage_;
 
-    int errorCode_;
+        int errorCode_;
 
-    ros::Time timeStamp_;
+        ros::Time timeStamp_;
 
-    bool hasMessage_;
+        bool hasMessage_;
 
-    bool hasTimeStamp_;
-};
+        bool hasTimeStamp_;
+    };
 
-typedef std::vector <BaseError> errorStack;
+    /**
+     * @brief errorStack
+     */
+    typedef std::vector <BaseError> ErrorStack;
 
+
+    /**
+     * @brief The ErrorHandler class
+     */
+    class ErrorHandler
+    {
+    public:
+
+        void append( ErrorStack errorStack );
+
+        ErrorStack read();
+
+        ErrorStack readAndClear();
+
+    private:
+
+        ErrorStack errorStack_;
+    };
+}
 #endif

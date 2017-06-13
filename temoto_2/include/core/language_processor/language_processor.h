@@ -1,15 +1,11 @@
 #ifndef LANGUAGE_PROCESSOR_H
 #define LANGUAGE_PROCESSOR_H
 
-#include "core/task_handler/common.h"
+#include "core/common.h"
 #include <sstream>
-#include <map>
-#include <string>
-#include <vector>
 #include <boost/any.hpp>
 #include <iostream>
 #include <ctype.h>
-#include <utility>
 
 
 class LanguageProcessor

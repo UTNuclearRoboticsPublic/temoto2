@@ -11,6 +11,8 @@
 #include "core/task_handler/task_handler.h"
 #include "core/task_handler/description_processor.h"
 
+#include "core/task_handler/task_info.h"
+
 bool msgReceived = false;
 std::string my_text;
 
@@ -28,8 +30,8 @@ int main(int argc, char **argv)
     // Subscribers
     ros::Subscriber chatter_subscriber = n.subscribe("human_chatter", 1000, humanChatterCallback);
 
-    // Create a language processing object
-    LanguageProcessor langProc;
+    class_loader::MultiLibraryClassLoader classLoader(false);
+    TaskHandler taskHandler( &classLoader );
 
     ros::Rate loop_rate(10);
 
@@ -37,14 +39,12 @@ int main(int argc, char **argv)
     {
         if (msgReceived)
         {
-
-            DescriptionProcessor descProc;
             boost::filesystem::directory_entry dir("/home/robert/catkin_ws/src/tark_temoto/tasks/");
 
-            std::vector<std::string> taskPaths = descProc.findTask(dir, "add", 1);
-            for (std::string taskPath : taskPaths)
+            std::vector<TaskInfo> taskInfo = taskHandler.findTask(dir, "add", 1);
+            for (TaskInfo taskInfoInst : taskInfo)
             {
-                std::cout << "found: " << taskPath << std::endl;
+                std::cout << "found: " << taskInfoInst.getName() << std::endl;
             }
 
  /*

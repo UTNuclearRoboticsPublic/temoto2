@@ -29,15 +29,17 @@ include_directories(
   ${TinyXML_INCLUDE_DIRS}
 )
 
-add_executable(context_manager src/context_manager.cpp)
+add_executable(context_manager src/context_manager/context_manager.cpp)
 target_link_libraries(context_manager
    ${catkin_LIBRARIES}
 )
 
 add_executable(agent_core src/core/agent_core.cpp 
-			  src/core/language_processor/language_processor.cpp
+#			  src/core/language_processor/language_processor.cpp
 			  src/core/task_handler/task_handler.cpp
 			  src/core/task_handler/description_processor.cpp
+			  src/core/task_handler/task_info.cpp
+			  src/base_error/base_error.cpp
 )
 
 target_link_libraries(agent_core
@@ -57,9 +59,9 @@ target_link_libraries(blinker_publisher
    ${catkin_LIBRARIES}
 )
 
-link_directories(/tmp/usr/local/lib/)
-add_executable(blinker src/tools/blinker.cpp)
-target_link_libraries(blinker
-   ${catkin_LIBRARIES}
-   serial
-)
+#link_directories(/tmp/usr/local/lib/)
+#add_executable(blinker src/tools/blinker.cpp)
+#target_link_libraries(blinker
+#   ${catkin_LIBRARIES}
+#   serial
+#)
