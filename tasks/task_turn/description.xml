@@ -1,9 +1,13 @@
 <?xml version="1.0" ?>
 
-<task type="turn" >
+<task name="turn" >
 
   <in>
     <arg argtype="string" value="on, off"/>
-  <in>
+  </in>
+
+  <out>
+    <arg argtype="void"/>
+  </out>
 
 </task>

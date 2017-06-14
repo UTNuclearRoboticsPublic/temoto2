@@ -19,7 +19,7 @@ DescriptionProcessor::DescriptionProcessor( std::string path)
     catch( error::ErrorStack& e )
     {
         // Rethrow the error
-        e.emplace_back(coreErr::FORWARDING, "[DescriptionProcessor/Constructor]");
+        e.emplace_back(coreErr::FORWARDING, "[DescriptionProcessor/Constructor] FORWARDING");
         throw e;
     }
 }
@@ -66,7 +66,7 @@ void DescriptionProcessor::getRootElement()
 std::string DescriptionProcessor::getTaskName()
 {
     // Get the type of the task
-    const char * attr = this->rootElement_->Attribute("type");
+    const char * attr = this->rootElement_->Attribute("name");
 
     if (attr == NULL)
     {      
@@ -159,7 +159,7 @@ ParamList DescriptionProcessor::getArgs( std::string direction )
     {
         // Throw error
         error::ErrorStack errorStack;
-        errorStack.emplace_back( coreErr::DESC_INVALID_ARG, "[DescriptionProcessor/getArgs] Invalid argument in: " + this->descFilePath_, ros::Time::now() );
+        errorStack.emplace_back( coreErr::DESC_INVALID_ARG, "[DescriptionProcessor/getArgs] This file is either missing 'in' or 'out' args block: " + this->descFilePath_, ros::Time::now() );
         throw errorStack;
     }
 
@@ -181,7 +181,7 @@ ParamList DescriptionProcessor::getInputArgs()
     catch( error::ErrorStack& e )
     {
         // Rethrow the error
-        e.emplace_back(coreErr::FORWARDING, "[DescriptionProcessor/getInputArgs]");
+        e.emplace_back(coreErr::FORWARDING, "[DescriptionProcessor/getInputArgs] FORWARDING");
         throw e;
     }
 }
@@ -201,7 +201,7 @@ ParamList DescriptionProcessor::getOutputArgs()
     catch( error::ErrorStack& e )
     {
         // Rethrow the error
-        e.emplace_back(coreErr::FORWARDING, "[DescriptionProcessor/getOutputArgs]");
+        e.emplace_back(coreErr::FORWARDING, "[DescriptionProcessor/getOutputArgs] FORWARDING");
         throw e;
     }
 }
@@ -227,7 +227,7 @@ TaskInfo DescriptionProcessor::getTaskInfo()
     catch( error::ErrorStack& e )
     {
         // Rethrow the error
-        e.emplace_back(coreErr::FORWARDING, "[DescriptionProcessor/getTaskInfo]");
+        e.emplace_back(coreErr::FORWARDING, "[DescriptionProcessor/getTaskInfo] FORWARDING");
         throw e;
     }
 

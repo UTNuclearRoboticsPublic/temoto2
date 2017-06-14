@@ -51,18 +51,30 @@ bool error::BaseError::hasTimeStamp()
 
 // ErrorHandler implementations
 
+bool error::ErrorHandler::gotUnreadErrors()
+{
+    return this->newErrors_;
+}
+
 void error::ErrorHandler::append( error::ErrorStack errorStack )
 {
+    // Set the "newErrors" flag and append
+    this->newErrors_ = true;
     this->errorStack_.insert(std::end(this->errorStack_), std::begin(errorStack), std::end(errorStack));
 }
 
 error::ErrorStack error::ErrorHandler::read()
 {
+    // Set the "newErrors" flag and return the stack
+    this->newErrors_ = false;
     return this->errorStack_;
 }
 
 error::ErrorStack error::ErrorHandler::readAndClear()
 {
+    // Set the "newErrors" flag
+    this->newErrors_ = false;
+
     // Create a copy of the errorStack_
     error::ErrorStack errorStackCopy( this->errorStack_ );
 

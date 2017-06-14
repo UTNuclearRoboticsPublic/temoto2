@@ -4,16 +4,22 @@
 #include "core/common.h"
 #include "core/task_handler/task_info.h"
 #include "core/task_handler/description_processor.h"
-#include "core/language_processor/language_processor.h"
+//#include "core/language_processor/language_processor.h"
 #include "base_task/task.h"
 
 #include <class_loader/multi_library_class_loader.h>
 #include <boost/any.hpp>
 #include "boost/filesystem.hpp"
+#include <exception>
 
 class TaskHandler
 {
 public:
+
+    /**
+     * @brief errorHandler_
+     */
+    error::ErrorHandler errorHandler_;
 
     /**
      * @brief Task_handler
@@ -91,11 +97,6 @@ private:
     std::vector <TaskAddress> taskAddresses_;
 
     /**
-     * @brief taskToArgBook_
-     */
-    TaskToArgBook taskToArgBook_;
-
-    /**
      * @brief loader_
      */
     class_loader::MultiLibraryClassLoader * loader_;
@@ -104,11 +105,6 @@ private:
      * @brief langProcessor_
      */
     //LanguageProcessor langProcessor_;
-
-    /**
-     * @brief errorHandler_
-     */
-    error::ErrorHandler errorHandler_;
 
     const std::string descriptionFile = "description.xml";
 };

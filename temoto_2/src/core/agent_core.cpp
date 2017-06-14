@@ -7,7 +7,7 @@
 
 #include <sstream>
 #include "base_task/task.h"
-#include "core/language_processor/language_processor.h"
+//#include "core/language_processor/language_processor.h"
 #include "core/task_handler/task_handler.h"
 #include "core/task_handler/description_processor.h"
 
@@ -39,12 +39,23 @@ int main(int argc, char **argv)
     {
         if (msgReceived)
         {
-            boost::filesystem::directory_entry dir("/home/robert/catkin_ws/src/tark_temoto/tasks/");
+            boost::filesystem::directory_entry dir("/home/robert/catkin_ws/src/temoto2/tasks/");
 
-            std::vector<TaskInfo> taskInfo = taskHandler.findTask(dir, "add", 1);
+            std::cout << "[agentcore]: finding task" << std::endl;
+            std::vector<TaskInfo> taskInfo = taskHandler.findTask("add", dir, 1);
             for (TaskInfo taskInfoInst : taskInfo)
             {
                 std::cout << "found: " << taskInfoInst.getName() << std::endl;
+            }
+
+            // Check for errors
+            if( taskHandler.errorHandler_.gotUnreadErrors() )
+            {
+                std::cout << "[agentcore]: Printing the errorstack:" << std::endl;
+                for( error::BaseError err : taskHandler.errorHandler_.readAndClear() )
+                {
+                    std::cout << "    * " << err.getErrorMessage() << std::endl;
+                }
             }
 
  /*

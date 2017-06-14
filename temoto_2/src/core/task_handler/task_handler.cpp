@@ -65,14 +65,20 @@ std::vector <TaskInfo> TaskHandler::findTask(std::string taskToFind, boost::file
                     tasksFound.push_back( taskInfo );
                 }
 
-                catch( ErrorStack & e )
+                catch( error::ErrorStack & e )
                 {
                     // Append the error to local ErrorStack
-                    e.emplace_back(coreErr::FORWARDING, "[TaskHandler/findTask]");
+                    e.emplace_back(coreErr::FORWARDING, "[TaskHandler/findTask] FORWARDING");
                     this->errorHandler_.append(e);
                 }
             }
         }
+        return tasksFound;
+    }
+
+    catch (std::exception& e)
+    {
+        std::cout << "[DescriptionProcessor/findTask]: " << e.what() << '\n';
         return tasksFound;
     }
 

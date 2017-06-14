@@ -62,7 +62,11 @@ namespace error
 
         ErrorStack readAndClear();
 
+        bool gotUnreadErrors();
+
     private:
+
+        bool newErrors_ = false;
 
         ErrorStack errorStack_;
     };
