@@ -19,7 +19,10 @@ DescriptionProcessor::DescriptionProcessor( std::string path)
     catch( error::ErrorStack& e )
     {
         // Rethrow the error
-        e.emplace_back(coreErr::FORWARDING, "[DescriptionProcessor/Constructor] FORWARDING");
+        e.emplace_back( coreErr::FORWARDING,
+                        error::Subsystem::CORE,
+                        e.back().getUrgency(),
+                        "[DescriptionProcessor/Constructor] FORWARDING");
         throw e;
     }
 }
@@ -36,7 +39,11 @@ void DescriptionProcessor::openTaskDesc()
     {
         // Throw error
         error::ErrorStack errorStack;
-        errorStack.emplace_back( coreErr::DESC_OPEN_FAIL, this->descFile_.ErrorDesc(), ros::Time::now() );
+        errorStack.emplace_back( coreErr::DESC_OPEN_FAIL,
+                                 error::Subsystem::CORE,
+                                 error::Urgency::LOW,
+                                 "[DescriptionProcessor/openTaskDesc] " + std::string( this->descFile_.ErrorDesc() ) + this->descFilePath_,
+                                 ros::Time::now() );
         throw errorStack;
     }
 }
@@ -54,7 +61,11 @@ void DescriptionProcessor::getRootElement()
     {
         // Throw error
         error::ErrorStack errorStack;
-        errorStack.emplace_back( coreErr::DESC_NO_ROOT, "[DescriptionProcessor/getTaskType] No root element in: " + this->descFilePath_, ros::Time::now() );
+        errorStack.emplace_back( coreErr::DESC_NO_ROOT,
+                                 error::Subsystem::CORE,
+                                 error::Urgency::LOW,
+                                 "[DescriptionProcessor/getTaskType] No root element in: " + this->descFilePath_,
+                                 ros::Time::now() );
         throw errorStack;
     }
 }
@@ -72,7 +83,11 @@ std::string DescriptionProcessor::getTaskName()
     {      
         // Throw error
         error::ErrorStack errorStack;
-        errorStack.emplace_back( coreErr::DESC_NO_ATTR, "[DescriptionProcessor/getTaskType] Missing a 'name' attribute in: " + this->descFilePath_, ros::Time::now() );
+        errorStack.emplace_back( coreErr::DESC_NO_ATTR,
+                                 error::Subsystem::CORE,
+                                 error::Urgency::LOW,
+                                 "[DescriptionProcessor/getTaskType] Missing a 'name' attribute in: " + this->descFilePath_,
+                                 ros::Time::now() );
         throw errorStack;
     }
 
@@ -108,7 +123,11 @@ ParamList DescriptionProcessor::getArgs( std::string direction )
                 {
                     // Throw error
                     error::ErrorStack errorStack;
-                    errorStack.emplace_back( coreErr::DESC_NO_ATTR, "[DescriptionProcessor/getArgs] Missing an 'argtype' attribute in: " + this->descFilePath_, ros::Time::now() );
+                    errorStack.emplace_back( coreErr::DESC_NO_ATTR,
+                                             error::Subsystem::CORE,
+                                             error::Urgency::LOW,
+                                             "[DescriptionProcessor/getArgs] Missing an 'argtype' attribute in: " + this->descFilePath_,
+                                             ros::Time::now() );
                     throw errorStack;
                 }
 
@@ -126,7 +145,11 @@ ParamList DescriptionProcessor::getArgs( std::string direction )
                     {
                         // Throw error
                         error::ErrorStack errorStack;
-                        errorStack.emplace_back( coreErr::DESC_NO_ATTR, "[DescriptionProcessor/getArgs] Missing a 'value' attribute in: " + this->descFilePath_, ros::Time::now() );
+                        errorStack.emplace_back( coreErr::DESC_NO_ATTR,
+                                                 error::Subsystem::CORE,
+                                                 error::Urgency::LOW,
+                                                 "[DescriptionProcessor/getArgs] Missing a 'value' attribute in: " + this->descFilePath_,
+                                                 ros::Time::now() );
                         throw errorStack;
                     }
 
@@ -148,7 +171,11 @@ ParamList DescriptionProcessor::getArgs( std::string direction )
             {
                 // Throw error
                 error::ErrorStack errorStack;
-                errorStack.emplace_back( coreErr::DESC_INVALID_ARG, "[DescriptionProcessor/getArgs] Invalid argument in: " + this->descFilePath_, ros::Time::now() );
+                errorStack.emplace_back( coreErr::DESC_INVALID_ARG,
+                                         error::Subsystem::CORE,
+                                         error::Urgency::LOW,
+                                         "[DescriptionProcessor/getArgs] Invalid argument in: " + this->descFilePath_,
+                                         ros::Time::now() );
                 throw errorStack;
             }
         }
@@ -159,7 +186,11 @@ ParamList DescriptionProcessor::getArgs( std::string direction )
     {
         // Throw error
         error::ErrorStack errorStack;
-        errorStack.emplace_back( coreErr::DESC_INVALID_ARG, "[DescriptionProcessor/getArgs] This file is either missing 'in' or 'out' args block: " + this->descFilePath_, ros::Time::now() );
+        errorStack.emplace_back( coreErr::DESC_INVALID_ARG,
+                                 error::Subsystem::CORE,
+                                 error::Urgency::LOW,
+                                 "[DescriptionProcessor/getArgs] This file is either missing 'in' or 'out' args block: " + this->descFilePath_,
+                                 ros::Time::now() );
         throw errorStack;
     }
 
@@ -181,7 +212,10 @@ ParamList DescriptionProcessor::getInputArgs()
     catch( error::ErrorStack& e )
     {
         // Rethrow the error
-        e.emplace_back(coreErr::FORWARDING, "[DescriptionProcessor/getInputArgs] FORWARDING");
+        e.emplace_back( coreErr::FORWARDING,
+                        error::Subsystem::CORE,
+                        e.back().getUrgency(),
+                        "[DescriptionProcessor/getInputArgs] FORWARDING");
         throw e;
     }
 }
@@ -201,7 +235,10 @@ ParamList DescriptionProcessor::getOutputArgs()
     catch( error::ErrorStack& e )
     {
         // Rethrow the error
-        e.emplace_back(coreErr::FORWARDING, "[DescriptionProcessor/getOutputArgs] FORWARDING");
+        e.emplace_back( coreErr::FORWARDING,
+                        error::Subsystem::CORE,
+                        e.back().getUrgency(),
+                        "[DescriptionProcessor/getOutputArgs] FORWARDING");
         throw e;
     }
 }
@@ -227,7 +264,10 @@ TaskInfo DescriptionProcessor::getTaskInfo()
     catch( error::ErrorStack& e )
     {
         // Rethrow the error
-        e.emplace_back(coreErr::FORWARDING, "[DescriptionProcessor/getTaskInfo] FORWARDING");
+        e.emplace_back( coreErr::FORWARDING,
+                        error::Subsystem::CORE,
+                        e.back().getUrgency(),
+                        "[DescriptionProcessor/getTaskInfo] FORWARDING");
         throw e;
     }
 

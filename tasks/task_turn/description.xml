@@ -6,7 +6,7 @@
     <arg argtype="string" value="on, off"/>
   </in>
 
-  <out>
+  <odut>
     <arg argtype="void"/>
   </out>
 

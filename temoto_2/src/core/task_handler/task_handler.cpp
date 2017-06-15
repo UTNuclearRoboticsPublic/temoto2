@@ -68,7 +68,11 @@ std::vector <TaskInfo> TaskHandler::findTask(std::string taskToFind, boost::file
                 catch( error::ErrorStack & e )
                 {
                     // Append the error to local ErrorStack
-                    e.emplace_back(coreErr::FORWARDING, "[TaskHandler/findTask] FORWARDING");
+                    e.emplace_back( coreErr::FORWARDING,
+                                    error::Subsystem::CORE,
+                                    e.back().getUrgency(),
+                                    "[TaskHandler/findTask] FORWARDING");
+
                     this->errorHandler_.append(e);
                 }
             }

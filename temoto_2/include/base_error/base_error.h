@@ -7,6 +7,31 @@
 
 namespace error
 {
+/**
+     * @brief The Subsystem enum
+     */
+    enum class Subsystem : int
+    {
+        CORE,
+        CONTEXT_CENTER,
+        HEALTH_MONITOR,
+        SENSOR_MANAGER,
+        ROBOT_MANAGER,
+        OUTPUT_MANAGER
+    };
+
+    /**
+     * @brief The Urgency enum
+     */
+    enum class Urgency : int
+    {
+        LOW,        // Does not affect the performance of the system directly
+        MEDIUM,     // Does not affect the performance of the system directly, but needs to be resolved
+        HIGH        // Affects the performance of the system, needs to be resolved immediately
+    };
+
+
+
     /**
      * @brief The BaseError class
      */
@@ -14,27 +39,44 @@ namespace error
     {
     public:
 
-        BaseError( int errorCode );
+        BaseError( int code,
+                   Subsystem subsystem,
+                   Urgency urgency );
 
-        BaseError( int errorCode, std::string errorMessage);
+        BaseError( int code,
+                   Subsystem subsystem,
+                   Urgency urgency,
+                   std::string message );
 
-        BaseError( int errorCode, std::string errorMessage, ros::Time timeStamp);
+        BaseError( int code,
+                   Subsystem subsystem,
+                   Urgency urgency,
+                   std::string message,
+                   ros::Time timeStamp );
 
-        std::string getErrorMessage();
+        int getCode() const;
 
-        int getErrorCode();
+        Subsystem getSubsystem() const;
 
-        ros::Time getTimeStamp();
+        Urgency getUrgency() const;
 
-        bool hasMessage();
+        std::string getMessage() const;
 
-        bool hasTimeStamp();
+        ros::Time getTimeStamp() const;
+
+        bool hasMessage() const;
+
+        bool hasTimeStamp() const;
 
     private:
 
-        std::string errorMessage_;
+        int code_;
 
-        int errorCode_;
+        Subsystem subsystem_;
+
+        Urgency urgency_;
+
+        std::string message_;
 
         ros::Time timeStamp_;
 
@@ -60,9 +102,11 @@ namespace error
 
         ErrorStack read();
 
+        ErrorStack readSilent() const;
+
         ErrorStack readAndClear();
 
-        bool gotUnreadErrors();
+        bool gotUnreadErrors() const;
 
     private:
 
@@ -71,4 +115,9 @@ namespace error
         ErrorStack errorStack_;
     };
 }
+
+std::ostream& operator<<(std::ostream& out, const error::BaseError& t);
+
+std::ostream& operator<<(std::ostream& out, const error::ErrorHandler& t);
+
 #endif

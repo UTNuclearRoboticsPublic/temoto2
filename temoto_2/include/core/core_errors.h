@@ -4,7 +4,7 @@ namespace coreErr
 {
     enum coreError : int
     {
-        FORWARDING,         // Forwarding the error
+        FORWARDING = 0,
 
         DESC_OPEN_FAIL,     // Failed to open the xml file
         DESC_NO_ROOT,       // Missing root element

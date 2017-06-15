@@ -3,47 +3,72 @@
 
 // BaseError implementations
 
-error::BaseError::BaseError( int errorCode )
-    : errorCode_( errorCode )
+error::BaseError::BaseError( int code,
+                             Subsystem subsystem,
+                             Urgency urgency )
+    : code_( code ),
+      subsystem_( subsystem ),
+      urgency_( urgency )
 {}
 
-error::BaseError::BaseError( int errorCode, std::string errorMessage)
-    : errorCode_( errorCode ),
-      errorMessage_( errorMessage )
+error::BaseError::BaseError( int code,
+                             Subsystem subsystem,
+                             Urgency urgency,
+                             std::string message)
+    : code_( code ),
+      subsystem_( subsystem ),
+      urgency_( urgency ),
+      message_( message )
 {
     this->hasMessage_ = true;
 }
 
-error::BaseError::BaseError( int errorCode, std::string errorMessage, ros::Time timeStamp)
-    : errorCode_( errorCode ),
-      errorMessage_( errorMessage ),
+error::BaseError::BaseError( int code,
+                             Subsystem subsystem,
+                             Urgency urgency,
+                             std::string message,
+                             ros::Time timeStamp)
+    : code_( code ),
+      subsystem_( subsystem ),
+      urgency_( urgency ),
+      message_( message ),
       timeStamp_( timeStamp )
 {
     this->hasMessage_ = true;
     this->hasTimeStamp_ = true;
 }
 
-std::string error::BaseError::getErrorMessage()
+int error::BaseError::getCode() const
 {
-    return this->errorMessage_;
+    return this->code_;
 }
 
-int error::BaseError::getErrorCode()
+error::Subsystem error::BaseError::getSubsystem() const
 {
-    return this->errorCode_;
+    return this->subsystem_;
 }
 
-ros::Time error::BaseError::getTimeStamp()
+error::Urgency error::BaseError::getUrgency() const
+{
+    return this->urgency_;
+}
+
+std::string error::BaseError::getMessage() const
+{
+    return this->message_;
+}
+
+ros::Time error::BaseError::getTimeStamp() const
 {
     return this->timeStamp_;
 }
 
-bool error::BaseError::hasMessage()
+bool error::BaseError::hasMessage() const
 {
     return this->hasMessage_;
 }
 
-bool error::BaseError::hasTimeStamp()
+bool error::BaseError::hasTimeStamp() const
 {
     return this->hasTimeStamp_;
 }
@@ -51,7 +76,7 @@ bool error::BaseError::hasTimeStamp()
 
 // ErrorHandler implementations
 
-bool error::ErrorHandler::gotUnreadErrors()
+bool error::ErrorHandler::gotUnreadErrors() const
 {
     return this->newErrors_;
 }
@@ -70,6 +95,11 @@ error::ErrorStack error::ErrorHandler::read()
     return this->errorStack_;
 }
 
+error::ErrorStack error::ErrorHandler::readSilent() const
+{
+    return this->errorStack_;
+}
+
 error::ErrorStack error::ErrorHandler::readAndClear()
 {
     // Set the "newErrors" flag
@@ -83,4 +113,45 @@ error::ErrorStack error::ErrorHandler::readAndClear()
 
     // Return the copy
     return errorStackCopy;
+}
+
+std::ostream& operator<<(std::ostream& out, const error::BaseError& t)
+{
+    out << std::endl;
+    out << "* code: " << t.getCode() << std::endl;
+    out << "* subsystem: " << static_cast<int>(t.getSubsystem()) << std::endl;
+    out << "* urgency: " ;
+
+    error::Urgency urg = t.getUrgency();
+    if ( urg == error::Urgency::LOW )
+        out << "LOW" << std::endl;
+
+    else if ( urg == error::Urgency::MEDIUM )
+        out << "MEDIUM" << std::endl;
+
+    else if ( urg == error::Urgency::HIGH )
+        out << "HIGH" << std::endl;
+
+    out << "* message: " << t.getMessage() << std::endl;
+    out << "* timestamp: " << t.getTimeStamp() << std::endl;
+
+    return out;
+}
+
+std::ostream& operator<<(std::ostream& out, const error::ErrorHandler& t)
+{
+    out << std::endl;
+
+    // Start printing out the errors
+    for( error::BaseError err : t.readSilent())
+    {
+        if( err.getCode() != 0 )
+        {
+            out << std::endl << " ------- Error Trace --------";
+        }
+
+        out << err;
+    }
+
+    return out;
 }
