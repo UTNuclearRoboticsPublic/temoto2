@@ -146,9 +146,7 @@ std::ostream& operator<<(std::ostream& out, const error::ErrorHandler& t)
     for( error::BaseError err : t.readSilent())
     {
         if( err.getCode() != 0 )
-        {
             out << std::endl << " ------- Error Trace --------";
-        }
 
         out << err;
     }

@@ -1,0 +1,22 @@
+# actions:
+# 	run
+# 	launch
+# 	kill
+string action
+
+# name of the package
+string package
+
+# name of the node or launch file
+string name
+
+---
+
+# return code
+#		0: Success
+#		1: Failure
+#	 -1: Undefined
+int64 code
+
+# return message
+string message

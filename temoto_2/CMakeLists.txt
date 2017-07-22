@@ -8,10 +8,20 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   class_loader
   cmake_modules
+	message_generation
 )
 
 find_package(TinyXML REQUIRED)
 
+add_service_files(
+  FILES
+  node_spawn_kill.srv
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
 catkin_package(
 #  INCLUDE_DIRS include
@@ -48,7 +58,11 @@ target_link_libraries(agent_core
    ${TinyXML_LIBRARIES}
 )
 
-# testing tools
+
+###################
+#    testing tools
+###################
+
 add_executable(language_input src/tools/language_input.cpp)
 target_link_libraries(language_input
    ${catkin_LIBRARIES}
@@ -56,6 +70,11 @@ target_link_libraries(language_input
 
 add_executable(blinker_publisher src/tools/blinker_publisher.cpp)
 target_link_libraries(blinker_publisher
+   ${catkin_LIBRARIES}
+)
+
+add_executable(node_manager src/tools/node_manager.cpp)
+target_link_libraries(node_manager
    ${catkin_LIBRARIES}
 )
 
