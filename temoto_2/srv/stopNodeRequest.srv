@@ -1,0 +1,20 @@
+# Type of the devices required. 
+string type
+
+# Name of the devices required. If the name is left undefined
+# then the first known entry under the specified type is executed
+string name
+
+# name of the executable/launchable/runnable
+string executable
+
+---
+
+# return code
+#		0: Success
+#		1: Failure
+#	 -1: Undefined
+int64 code
+
+# return message
+string message

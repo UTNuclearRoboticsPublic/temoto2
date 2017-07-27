@@ -21,7 +21,7 @@
 
 #include "std_msgs/String.h"
 #include <ros/xmlrpc_manager.h>
-#include "temoto_2/node_spawn_kill.h"
+#include "temoto_2/nodeSpawnKill.h"
 
 #include "core/common.h"
 
@@ -39,7 +39,7 @@ bool pipeOpen = false;
 const std::vector<std::string> validActions = {"rosrun", "roslaunch", "kill"};
 
 // function for making the response formatting bit compact
-void formatResponse(temoto_2::node_spawn_kill::Response &res, int code, std::string message)
+void formatResponse(temoto_2::nodeSpawnKill::Response &res, int code, std::string message)
 {
     // Print the message out to the console.
     if ( (code == 1) || (code == -1))
@@ -56,8 +56,8 @@ void formatResponse(temoto_2::node_spawn_kill::Response &res, int code, std::str
     res.message = message;
 }
 
-bool spawn_kill_cb(temoto_2::node_spawn_kill::Request &req,
-                   temoto_2::node_spawn_kill::Response &res)
+bool spawn_kill_cb(temoto_2::nodeSpawnKill::Request &req,
+                   temoto_2::nodeSpawnKill::Response &res)
 {
     // Get the service parameters
     std::string action = req.action;
@@ -130,8 +130,8 @@ bool spawn_kill_cb(temoto_2::node_spawn_kill::Request &req,
 
         // Only parent gets here
         std::cout << "Process forked. Child PID: " << PID << std::endl;
-        output = fdopen(pipefd[0], "r");
-        pipeOpen = true;
+        //output = fdopen(pipefd[0], "r");
+        //pipeOpen = true;
 
         // Insert the pid to map of running processes
         runningProcesses.insert ( {name, PID} );
@@ -210,46 +210,6 @@ void callback_1 (const std_msgs::String& command)
         std::cout << "request: " << request << std::endl;
         std::cout << "response: " << response << std::endl;
     }
-
-    // New proc via fork + exec
-    else if (command.data.compare("t2") == 0)
-    {
-        ROS_INFO("[callback_1] %s requested ...", command.data.c_str());
-
-        // create a pipe
-        pipe(pipefd);
-
-        // Fork the parent process
-        std::cout << "forking the process ..." << std::endl;
-        pid = fork();
-
-        // Child process
-        if (pid == 0)
-        {
-            // Let's redirect its standard output to our pipe and replace process with tail
-            close(pipefd[0]);
-            dup2(pipefd[1], STDOUT_FILENO);
-            dup2(pipefd[1], STDERR_FILENO);
-            //execlp("rosrun", "rosrun", "rospy_tutorials", "talker.py", (char*) NULL);
-            execlp("roslaunch", "roslaunch", "temoto_2", "test_1.launch", (char*) NULL);
-        }
-
-        //Only parent gets here. Listen to what the tail says
-        std::cout << "PID of the child is: " << pid << std::endl;
-
-        close(pipefd[1]);
-        output = fdopen(pipefd[0], "r");
-/*
-        while(fgets(line, sizeof(line), output)) //listen to what tail writes to its standard output
-        {
-        //if you need to kill the tail application, just kill it:
-          if(something_goes_wrong)
-            kill(pid, SIGKILL);
-        }
-*/
-        //or wait for the child process to terminate
-        //waitpid(pid, &status, 0);
-    }
 }
 
 
@@ -264,9 +224,10 @@ int main(int argc, char **argv)
 
     while (ros::ok())
     {
+        /*
         if (pipeOpen)
             readPipe();
-
+        */
         ros::spinOnce();
         loop_rate.sleep();
     }

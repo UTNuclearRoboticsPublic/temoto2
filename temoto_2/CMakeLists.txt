@@ -15,7 +15,10 @@ find_package(TinyXML REQUIRED)
 
 add_service_files(
   FILES
-  node_spawn_kill.srv
+  nodeSpawnKill.srv
+	listDevices.srv
+	startNodeRequest.srv
+	stopNodeRequest.srv
 )
 
 generate_messages(
@@ -41,6 +44,12 @@ include_directories(
 
 add_executable(context_manager src/context_manager/context_manager.cpp)
 target_link_libraries(context_manager
+   ${catkin_LIBRARIES}
+)
+
+add_executable(sensor_manager src/sensor_manager/sensor_manager.cpp
+															src/package_info/package_info.cpp)
+target_link_libraries(sensor_manager
    ${catkin_LIBRARIES}
 )
 
@@ -75,6 +84,11 @@ target_link_libraries(blinker_publisher
 
 add_executable(node_manager src/tools/node_manager.cpp)
 target_link_libraries(node_manager
+   ${catkin_LIBRARIES}
+)
+
+add_executable(dummy_sensor src/tools/dummy_sensor.cpp)
+target_link_libraries(dummy_sensor
    ${catkin_LIBRARIES}
 )
 
