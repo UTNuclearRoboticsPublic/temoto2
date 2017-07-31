@@ -6,8 +6,10 @@
  *          * MOST OF THE CODE IS COMPLETELY INITIAL AND
  *            HAS ONLY SINGLE FUNCTIONALITY, I.E. LAUNCHFILES
  *            ARE NOT SUPPORTED, ETC.
- *          * CHANGE THE "start_node_cb" to "start_sensor_cb"
+ *          * CHANGE THE "start_sensor_cb" to "start_sensor_cb"
  *          * KEEP TRACK ON WHAT SENSORS ARE CURRENTLY RUNNING
+ *            (sensors, registered subscribers. if subs = 0 then
+ *             shut the sensor down)
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -16,8 +18,8 @@
 #include "core/common.h"
 #include "temoto_2/nodeSpawnKill.h"
 #include "temoto_2/listDevices.h"
-#include "temoto_2/startNodeRequest.h"
-#include "temoto_2/stopNodeRequest.h"
+#include "temoto_2/startSensorRequest.h"
+#include "temoto_2/stopSensorRequest.h"
 #include "std_msgs/String.h"
 #include <sstream>
 
@@ -38,8 +40,8 @@ public:
         nodeSpawnKillClient_ = n_.serviceClient<temoto_2::nodeSpawnKill>("spawn_kill_process");
 
         // Start the servers
-        startNodeServer_ = n_.advertiseService("start_node", &SensorManager::start_node_cb, this);
-        stopNodeServer_ = n_.advertiseService("stop_node", &SensorManager::stop_node_cb, this);
+        startSensorServer_ = n_.advertiseService("start_sensor", &SensorManager::start_sensor_cb, this);
+        stopSensorServer_ = n_.advertiseService("stop_sensor", &SensorManager::stop_sensor_cb, this);
 
         ROS_INFO("[SensorManager::SensorManager] all services initialized, manager is good to go");
     }
@@ -48,8 +50,8 @@ private:
 
     ros::NodeHandle n_;
     ros::ServiceClient nodeSpawnKillClient_;
-    ros::ServiceServer startNodeServer_;
-    ros::ServiceServer stopNodeServer_;
+    ros::ServiceServer startSensorServer_;
+    ros::ServiceServer stopSensorServer_;
 
     /**
      * @brief Callback to a service that lists all available packages that
@@ -87,14 +89,14 @@ private:
      * @param res
      * @return
      */
-    bool start_node_cb (temoto_2::startNodeRequest::Request &req,
-                        temoto_2::startNodeRequest::Response &res)
+    bool start_sensor_cb (temoto_2::startSensorRequest::Request &req,
+                          temoto_2::startSensorRequest::Response &res)
     {
         std::string reqType = req.type;
         std::string reqName = req.name;
         std::string reqExecutable = req.executable;
 
-        ROS_INFO("[start_node_cb] received a request to start a '%s': '%s'", reqType.c_str(), reqName.c_str());
+        ROS_INFO("[start_sensor_cb] received a request to start a '%s': '%s'", reqType.c_str(), reqName.c_str());
 
         // Create an empty message that will be filled out by "findSensor" function
         temoto_2::nodeSpawnKill spawnKillMsg;
@@ -102,16 +104,16 @@ private:
         // Find the suitable sensor
         if (findSensor(spawnKillMsg.request, res, reqType, reqName, reqExecutable))
         {
-            ROS_INFO("[start_node_cb] Found a suitable sensor. Trying to call /spawn_kill_process ...");
+            ROS_INFO("[start_sensor_cb] Found a suitable sensor. Trying to call /spawn_kill_process ...");
             while (!nodeSpawnKillClient_.call(spawnKillMsg))
             {
-                ROS_ERROR("[start_node_cb] Failed to call service /spawn_kill_process, trying again...");
+                ROS_ERROR("[start_sensor_cb] Failed to call service /spawn_kill_process, trying again...");
             }
 
             res.code = spawnKillMsg.response.code;
             res.message = spawnKillMsg.response.message;
 
-            ROS_INFO("[start_node_cb] /spawn_kill_process responded: '%s'", res.message.c_str());
+            ROS_INFO("[start_sensor_cb] /spawn_kill_process responded: '%s'", res.message.c_str());
 
             // Check if the /spawn_kill_process service was able to fulfill the request
             return ( (res.code == 0) ? true : false);
@@ -124,7 +126,7 @@ private:
             res.topic = "";
             res.code = 1;
             res.message = "Suitable sensor was not found. Aborting the request";
-            ROS_INFO("[start_node_cb] %s", res.message.c_str());
+            ROS_INFO("[start_sensor_cb] %s", res.message.c_str());
 
             return false;
         }
@@ -134,8 +136,8 @@ private:
      * @brief Stop node service
      * @return
      */
-    bool stop_node_cb (temoto_2::stopNodeRequest::Request &req,
-                         temoto_2::stopNodeRequest::Response &res)
+    bool stop_sensor_cb (temoto_2::stopSensorRequest::Request &req,
+                       temoto_2::stopSensorRequest::Response &res)
     {
         // TODO: Check if the request makes sense, check the name and type
         temoto_2::nodeSpawnKill spawnKillMsg;
@@ -143,17 +145,17 @@ private:
         spawnKillMsg.request.package = req.name;
         spawnKillMsg.request.name = req.executable;
 
-        ROS_INFO("[stop_node_cb] received a request to stop a '%s'", spawnKillMsg.request.name.c_str());
+        ROS_INFO("[stop_sensor_cb] received a request to stop a '%s'", spawnKillMsg.request.name.c_str());
 
         while (!nodeSpawnKillClient_.call(spawnKillMsg))
         {
-            ROS_ERROR("[start_node_cb] Failed to call service /spawn_kill_process, trying again...");
+            ROS_ERROR("[stop_sensor_cb] Failed to call service /spawn_kill_process, trying again...");
         }
 
         res.code = spawnKillMsg.response.code;
         res.message = spawnKillMsg.response.message;
 
-        ROS_INFO("[start_node_cb] /spawn_kill_process responded: '%s'", res.message.c_str());
+        ROS_INFO("[stop_sensor_cb] /spawn_kill_process responded: '%s'", res.message.c_str());
 
         // Check if the /spawn_kill_process service was able to fulfill the request
         return ( (res.code == 0) ? true : false);
@@ -168,7 +170,7 @@ private:
      * @brief Function for finding the right sensor, based on the request parameters
      * type - requested, name - optional, node - optional
      * @param ret
-     * @param retStartNode
+     * @param retstartSensor
      * @param type
      * @param name
      * @param node
@@ -176,7 +178,7 @@ private:
      * is formatted as a nodeSpawnKill::Request (first one in the list, even if there is more)
      */
     bool findSensor (temoto_2::nodeSpawnKill::Request &ret,
-                     temoto_2::startNodeRequest::Response &retStartNode,
+                     temoto_2::startSensorRequest::Response &retstartSensor,
                      std::string type,
                      std::string name = "",
                      std::string executable = "")
@@ -230,9 +232,9 @@ private:
             ret.name = candidates[0].getRunnables().begin()->first;
 
             // The name of the topic that this particular runnable publishes to
-            retStartNode.name = ret.package;
-            retStartNode.executable = ret.name;
-            retStartNode.topic = candidates[0].getRunnables().begin()->second;
+            retstartSensor.name = ret.package;
+            retstartSensor.executable = ret.name;
+            retstartSensor.topic = candidates[0].getRunnables().begin()->second;
 
             return true;
         }
@@ -274,9 +276,9 @@ private:
             ret.name = candidates[0].getRunnables().begin()->first;
 
             // The name of the topic that this particular runnable publishes to
-            retStartNode.name = name;
-            retStartNode.executable = ret.name;
-            retStartNode.topic = candidates[0].getRunnables().begin()->second;
+            retstartSensor.name = name;
+            retstartSensor.executable = ret.name;
+            retstartSensor.topic = candidates[0].getRunnables().begin()->second;
 
             return true;
         }
@@ -287,9 +289,9 @@ private:
         ret.name = executable;
 
         // The name of the topic that this particular runnable publishes to
-        retStartNode.name = name;
-        retStartNode.executable = executable;
-        retStartNode.topic = candidates[0].getRunnables()[executable];
+        retstartSensor.name = name;
+        retstartSensor.executable = executable;
+        retstartSensor.topic = candidates[0].getRunnables()[executable];
 
         return true;
     }

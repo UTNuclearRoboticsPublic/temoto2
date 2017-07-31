@@ -90,12 +90,12 @@ std::vector<boost::any> LanguageProcessor::extractArguments (std::vector<std::st
     for (std::string arg_type : arg_types)
     {
         // Search for integers
-        if (arg_type.compare("int") == 0)
+        if (arg_type.compare("number") == 0)
         {
             int argInt;
             if (lookForInt(&argInt, &in_strs))
             {
-                std::cout << "    got int: " << argInt << std::endl;
+                std::cout << "    got number: " << argInt << std::endl;
                 std::cout << "    remaining string size: " << in_strs.size() << std::endl;
 
                 // Push the argument to the argument vector

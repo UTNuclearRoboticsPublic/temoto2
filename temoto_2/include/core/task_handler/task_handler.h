@@ -31,7 +31,7 @@ public:
      * @param taskToFind String that contains the type of the task, if specified as "any" then all task descriptions are loaded in
      * @return Returns a vector containing task description classes
      */
-    //std::vector <TaskInfo> findTask(std::string taskToFind);
+    std::vector <TaskInfo> findTask(std::string taskToFind);
 
     /**
      * @brief findTask
@@ -41,6 +41,13 @@ public:
      * @return
      */
     std::vector <TaskInfo> findTask(std::string taskToFind, boost::filesystem::directory_entry basePath, int searchDepth);
+
+    /**
+     * @brief indexTasks
+     * @param basePath
+     * @param searchDepth
+     */
+    void indexTasks (boost::filesystem::directory_entry basePath, int searchDepth);
 
     /**
      * @brief Loads in a task .so file and returns the name of the class
@@ -95,6 +102,11 @@ private:
      * @brief taskAddresses_
      */
     std::vector <TaskAddress> taskAddresses_;
+
+    /**
+     * @brief tasksIndexed_
+     */
+    std::vector <TaskInfo> tasksIndexed_;
 
     /**
      * @brief loader_

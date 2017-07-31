@@ -24,7 +24,7 @@ void humanChatterCallback (std_msgs::String my_text_in)
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "teleop_core");
+    ros::init(argc, argv, "temoto2_core");
     ros::NodeHandle n;
 
     // Subscribers
@@ -41,9 +41,14 @@ int main(int argc, char **argv)
         {
             boost::filesystem::directory_entry dir("/home/robert/catkin_ws/src/temoto2/tasks/");
 
-            std::cout << "[agentcore]: finding task" << std::endl;
-            std::vector<TaskInfo> taskInfo = taskHandler.findTask("add", dir, 1);
-            for (TaskInfo taskInfoInst : taskInfo)
+            // Index the available tasks
+            std::cout << "[core]: Indexing the tasks ..." << std::endl;
+            taskHandler.indexTasks(dir, 1);
+
+            // Index the available tasks
+            std::cout << "[core]: Looking for 'terminal' ..." << std::endl;
+
+            for (TaskInfo taskInfoInst : taskHandler.findTask("terminal"))
             {
                 std::cout << "found:" << taskInfoInst << std::endl;
             }

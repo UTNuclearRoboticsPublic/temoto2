@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(task_3)
+project(task_4)
 
 # use c++11 standard
 add_compile_options(-std=c++11)

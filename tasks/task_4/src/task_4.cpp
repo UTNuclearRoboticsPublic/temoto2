@@ -4,46 +4,58 @@
  *
  *	TASK DESCRIPTION:
  *		* Demonstrate dynamic subscription
+ *              * Brings up a terminal that allows to send commands to the core
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // Things that have to be included
-#include "base_task/task.h"                 // The base task
-#include <class_loader/class_loader.h>               // Class loader includes
+#include "base_task/task.h"                 				 // The base task
+#include <class_loader/class_loader.h>                                   // Class loader includes
 
 // Task specific includes
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-#include "context_manager/human_context_interface.h"
+#include "context_manager/human_context/human_context_interface.h"
 
 // First implementaton
-class Imp_task_3: public Task
+class Imp_task_4: public Task
 {
 public:
 
     // Human context interface object
-    Human_context_interface <Imp_task_3> hci_;
+    HumanContextInterface <Imp_task_4> hci_;
 
     /* * * * * * * * * * * * * * * * * * * * * * * * *
      * Inherited methods that have to be implemented /START
      * * * * * * * * * * * * * * * * * * * * * * * * */
 
-    Imp_task_3()
+    Imp_task_4()
     {
         // Do something here if needed
-        ROS_INFO("Imp_task_3 constructed");
+        ROS_INFO("Imp_task_4 constructed");
     }
 
     // startTask without arguments
     int startTask()
     {
+        // Build a gesture specifier
+        // TODO: This shoud be done via gesture specifier helper class
+        std::vector <temoto_2::speechSpecifier> speechSpecifiers;
+        temoto_2::speechSpecifier speechSpecifier;
+        speechSpecifier.dev = "device";
+        speechSpecifier.type = "text";
+
+        speechSpecifiers.push_back(speechSpecifier);
+
+
         // Subscribe to gesture topic
-        if ( hci_.getGestures( &Imp_task_3::gesture_callback, this ) )
+        if ( !hci_.getSpeech(speechSpecifiers, &Imp_task_4::speech_callback, this ) )
         {
-            ROS_ERROR("[Imp_task_3]: getGestures failed");
+            ROS_ERROR("[Imp_task_4]: getSpeech request failed");
+            return 1;
         }
 
-        return getValue();
+        return 0;
     }
 
     // startTask with arguments
@@ -52,7 +64,7 @@ public:
         // Check if arguments vector contains expected amount of arguments
         if (arguments.size() != numberOfArguments)
         {
-            std::cerr << "[Imp_task_3/startTask]: Wrong number of arguments. Expected: "
+            std::cerr << "[Imp_task_4/startTask]: Wrong number of arguments. Expected: "
                       << numberOfArguments  << " but got: " << arguments.size() << '\n';
 
             return 1;
@@ -74,7 +86,7 @@ public:
         }
         catch (boost::bad_any_cast &e)
         {
-            std::cerr << "[Imp_task_3/startTask]: " << e.what() << '\n';
+            std::cerr << "[Imp_task_4/startTask]: " << e.what() << '\n';
             return 1;
         }
     }
@@ -125,19 +137,14 @@ public:
      * * * * * * * * * * * * * * * * * * * * * * * * */
 
     // Callback for processing gestures
-    void gesture_callback(std_msgs::String msg)
+    void speech_callback(std_msgs::String msg)
     {
         ROS_INFO("Gesture callback got: %s", msg.data.c_str());
     }
 
-    int getValue()
+    ~Imp_task_4()
     {
-        return 6060;
-    }
-
-    ~Imp_task_3()
-    {
-        ROS_INFO("Imp_task_3 destructed");
+        ROS_INFO("Imp_task_4 destructed");
     }
 
 private:
@@ -150,4 +157,4 @@ private:
 };
 
 // Dont forget that part, otherwise this class would not be loadable
-CLASS_LOADER_REGISTER_CLASS(Imp_task_3, Task);
+CLASS_LOADER_REGISTER_CLASS(Imp_task_4, Task);

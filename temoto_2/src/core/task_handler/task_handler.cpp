@@ -14,12 +14,20 @@ TaskHandler::TaskHandler( class_loader::MultiLibraryClassLoader * loader)
 /* * * * * * * * *
  *  FIND TASK LOCAL
  * * * * * * * * */
-/*
+
 std::vector <TaskInfo> TaskHandler::findTask(std::string taskToFind)
 {
-
+    std::vector <TaskInfo> tasksFound;
+    for (auto& task : this->tasksIndexed_)
+    {
+        if (taskToFind.compare(task.getName()) == 0)
+        {
+            tasksFound.push_back(task);
+        }
+    }
+    return tasksFound;
 }
-*/
+
 
 /* * * * * * * * *
  *  FIND TASK
@@ -42,7 +50,7 @@ std::vector <TaskInfo> TaskHandler::findTask(std::string taskToFind, boost::file
             {
                 std::vector<TaskInfo> subTasksFound = TaskHandler::findTask( taskToFind, *itr, (searchDepth - 1));
 
-                // Append if it not empty
+                // Append the subtasks if not empty
                 if ( !subTasksFound.empty() )
                 {
                     tasksFound.insert(std::end(tasksFound), std::begin(subTasksFound), std::end(subTasksFound));
@@ -91,6 +99,15 @@ std::vector <TaskInfo> TaskHandler::findTask(std::string taskToFind, boost::file
         std::cerr << "[DescriptionProcessor/findTask] Unhandled exception" << std::endl;
         return tasksFound;
     }
+}
+
+/* * * * * * * * *
+ *  INDEX TASKS
+ * * * * * * * * */
+
+void TaskHandler::indexTasks (boost::filesystem::directory_entry basePath, int searchDepth)
+{
+    this->tasksIndexed_ = findTask ("", basePath, searchDepth);
 }
 
 

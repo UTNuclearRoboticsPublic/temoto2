@@ -131,7 +131,7 @@ ParamList DescriptionProcessor::getArgs( std::string direction )
                     throw errorStack;
                 }
 
-                // If were good, proceed by converting the argAttr to string and push it in the "args" vector
+                // If we are good, proceed by converting the argAttr to string and push it in the "args" vector
                 std::string argtypeStr(argtypeAttr);
                 args.push_back(argtypeStr);
 
@@ -153,7 +153,7 @@ ParamList DescriptionProcessor::getArgs( std::string direction )
                         throw errorStack;
                     }
 
-                    // If were good, proceed by converting the valueAttr to string and push it in the "args" vector
+                    // If we are good, proceed by converting the valueAttr to string and push it in the "args" vector
                     std::string valueStr(valueAttr);
                     args.push_back(valueStr);
                 }

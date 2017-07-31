@@ -1,0 +1,16 @@
+# Field that contains the speech specifiers
+temoto_2/gestureSpecifier[] gestureSpecifiers
+
+---
+
+# return the name of the topic where the task should subscribe to
+string topic
+
+# return code
+#		0: Success
+#		1: Failure
+#	 -1: Undefined
+int64 code
+
+# return message
+string message
