@@ -26,6 +26,8 @@ private:
 
     // Params
 
+    std::string basePath_;
+
     std::string descFilePath_;
 
     TiXmlDocument descFile_;
@@ -40,11 +42,15 @@ private:
 
     std::string getTaskPath();
 
+    std::string getPackageName();
+
     ParamList getArgs( std::string direction );
 
     ParamList getInputArgs();
 
     ParamList getOutputArgs();
+
+    std::vector<std::string> parseString (std::string in_str, char delimiter);
 
     /* TODO:
      *

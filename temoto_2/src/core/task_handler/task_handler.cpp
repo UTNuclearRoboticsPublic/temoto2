@@ -66,7 +66,8 @@ std::vector <TaskInfo> TaskHandler::findTask(std::string taskToFind, boost::file
                 {
                     // Create a description processor object
                     // I THINK THIS SHOULD NOT BE CREATED EVERY SINGLE TIME
-                    DescriptionProcessor descProcessor( (*itr).path().string() );
+                    boost::filesystem::path hackdir ((*itr)); //HACKATON
+                    DescriptionProcessor descProcessor( hackdir.parent_path().string() );
 
                     // Get TaskInfo
                     TaskInfo taskInfo = descProcessor.getTaskInfo();
@@ -112,13 +113,26 @@ void TaskHandler::indexTasks (boost::filesystem::directory_entry basePath, int s
 
 
 /* * * * * * * * *
+ *  GET THE INDEX TASKS
+ * * * * * * * * */
+
+std::vector <TaskInfo> TaskHandler::getIndexedTasks()
+{
+    return this->tasksIndexed_;
+}
+
+
+/* * * * * * * * *
  *  LOAD TASK
  * * * * * * * * */
 
-std::string TaskHandler::loadTask(std::string pathToLib)
+std::string TaskHandler::loadTask(std::string taskName)
 {
     // Create an empty map for storing tasks that were loaded
     std::vector<std::string> classes;
+
+    // Find the task and get the "path" to its lib file
+    std::string pathToLib =  findTask(taskName)[0].getLibPath();
 
     try
     {
@@ -211,16 +225,25 @@ int TaskHandler::startTask(std::string taskName)
 
 int TaskHandler::startTask(std::string taskName, std::vector<boost::any> arguments)
 {
-    try
+    // If the list is empty then ...
+    if (arguments.empty())
     {
-        ROS_DEBUG( "[TaskHandler/startTask] starting task (with arguments): %s", taskName.c_str());
-        runningTasks_.at(taskName)->startTask(0, arguments);
+        startTask(taskName);
     }
 
-    catch(class_loader::ClassLoaderException& e)
+    else
     {
-        ROS_ERROR("[TaskHandler/startTask] ClassLoaderException: %s", e.what());
-        return 1;
+        try
+        {
+            ROS_DEBUG( "[TaskHandler/startTask] starting task (with arguments): %s", taskName.c_str());
+            runningTasks_.at(taskName)->startTask(0, arguments);
+        }
+
+        catch(class_loader::ClassLoaderException& e)
+        {
+            ROS_ERROR("[TaskHandler/startTask] ClassLoaderException: %s", e.what());
+            return 1;
+        }
     }
 
     return 0;

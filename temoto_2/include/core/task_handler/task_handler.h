@@ -50,11 +50,17 @@ public:
     void indexTasks (boost::filesystem::directory_entry basePath, int searchDepth);
 
     /**
+     * @brief getIndexedTasks
+     * @return
+     */
+    std::vector <TaskInfo> getIndexedTasks();
+
+    /**
      * @brief Loads in a task .so file and returns the name of the class
-     * @param Full path to the task
+     * @param Name of the task
      * @return Returns the name of the class. If same name already exists, an unique name is returned
      */
-    std::string loadTask(std::string pathToLib);
+    std::string loadTask(std::string taskName);
 
     /**
      * @brief startTask

@@ -3,12 +3,12 @@
 <task name="add" >
   
   <in>
-    <arg argtype="number" />
-    <arg argtype="number" />
+    <arg argtype="number" value=""/>
+    <arg argtype="number" value=""/>
   </in>
 
   <out>
-    <arg argtype="number" />
+    <arg argtype="number" value=""/>
   </out>
   
 </task>

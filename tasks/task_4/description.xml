@@ -3,22 +3,11 @@
 <task name="terminal" >
 
   <in>
-    <arg argtype="void"/>
-  </in>
-
-  <in>
-    <arg argtype="string" value="str1, str2"/>
-  </in>
-
-  <in>
-    <arg argtype="number"/>
-    <arg argtype="string" value="str1, str2"/>
-    <arg argtype="string" value="on, off"/>
-    <arg argtype="number"/>
+    <arg argtype="void" value=""/>
   </in>
   
   <out>
-    <arg argtype="void"/>
+    <arg argtype="void" value=""/>
   </out>
 
 </task>

@@ -227,7 +227,7 @@ private:
         else
         {
             // Return the first "runnable" of the element in the "candidates" list
-            ret.action = "rosrun";
+            ret.action = "roslaunch";
             ret.package = candidates[0].getName();
             ret.name = candidates[0].getRunnables().begin()->first;
 
@@ -271,7 +271,7 @@ private:
         else
         {
             // Return the first "runnable" of the element in the "candidates" list
-            ret.action = "rosrun";
+            ret.action = "roslaunch";
             ret.package = name;
             ret.name = candidates[0].getRunnables().begin()->first;
 
@@ -284,7 +284,7 @@ private:
         }
 
         // If all above constraints were satisfied, then:
-        ret.action = "rosrun";
+        ret.action = "roslaunch";
         ret.package = name;
         ret.name = executable;
 
@@ -309,6 +309,9 @@ int main (int argc, char **argv)
     // Add a dummy sensro entry (For testing)
     sensorManager.pkgInfoList_.push_back (package_info("temoto_2", "hand"));
     sensorManager.pkgInfoList_[0].addRunnable({"dummy_sensor", "/dummy_sensor_data"});
+
+    sensorManager.pkgInfoList_.push_back (package_info("temoto_2", "text"));
+    sensorManager.pkgInfoList_[1].addRunnable({"test_2.launch", "/dummy_sensor_data"});
 
     ros::spin();
 

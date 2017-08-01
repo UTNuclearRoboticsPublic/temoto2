@@ -19,10 +19,22 @@ public:
     std::string getPath() const;
 
     /**
+     * @brief getLibPath
+     * @return
+     */
+    std::string getLibPath() const;
+
+    /**
      * @brief Returns the name of the task
      * @return
      */
     std::string getName() const;
+
+    /**
+     * @brief getPackageNAme
+     * @return
+     */
+    std::string getPackageName() const;
 
     /**
      * @brief Returns the list of accepted input arguments
@@ -40,7 +52,11 @@ private:
 
     std::string name_;
 
+    std::string packageName_;
+
     std::string path_;
+
+    std::string libPath_;
 
     ParamList args_;
 

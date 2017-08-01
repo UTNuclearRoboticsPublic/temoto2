@@ -7,7 +7,7 @@
 
 #include <sstream>
 #include "base_task/task.h"
-//#include "core/language_processor/language_processor.h"
+#include "core/language_processor/language_processor.h"
 #include "core/task_handler/task_handler.h"
 #include "core/task_handler/description_processor.h"
 
@@ -35,62 +35,48 @@ int main(int argc, char **argv)
 
     ros::Rate loop_rate(10);
 
+    // INIT SEQUENCE, FORMAT INTO A FUNCTION
+    boost::filesystem::directory_entry dir("/home/robert/catkin_ws/src/temoto2/tasks/");
+
+    // Index the available tasks
+    std::cout << "[core]: Indexing the tasks ..." << std::endl;
+    taskHandler.indexTasks(dir, 1);
+
+    // Create a language processor and initialize it
+    LanguageProcessor languageProcessor;
+    languageProcessor.setTasksIndexed( taskHandler.getIndexedTasks() );
+
+    // Find something from the indexed tasks
+    std::cout << "[core]: Looking for 'terminal' ..." << std::endl;
+
+    for (TaskInfo taskInfoInst : taskHandler.findTask("terminal"))
+    {
+        std::cout << "found:" << taskInfoInst << std::endl;
+    }
+
+    // Check for errors
+    if( taskHandler.errorHandler_.gotUnreadErrors() )
+    {
+        std::cout << "[core]: Printing the errorstack:" << taskHandler.errorHandler_;
+    }
+
     while (ros::ok())
     {
         if (msgReceived)
         {
-            boost::filesystem::directory_entry dir("/home/robert/catkin_ws/src/temoto2/tasks/");
-
-            // Index the available tasks
-            std::cout << "[core]: Indexing the tasks ..." << std::endl;
-            taskHandler.indexTasks(dir, 1);
-
-            // Index the available tasks
-            std::cout << "[core]: Looking for 'terminal' ..." << std::endl;
-
-            for (TaskInfo taskInfoInst : taskHandler.findTask("terminal"))
-            {
-                std::cout << "found:" << taskInfoInst << std::endl;
-            }
-
-            // Check for errors
-            if( taskHandler.errorHandler_.gotUnreadErrors() )
-            {
-                std::cout << "[agentcore]: Printing the errorstack:" << taskHandler.errorHandler_;
-            }
-
- /*
-            // Get tasks
             TaskList taskList;
-            taskList = langProc.processText(my_text);
+            taskList = languageProcessor.processText(my_text);
 
-            ROS_INFO("[agent_core] Received %lu tasks", taskList.size());
-
-            // Create task handling object
-            class_loader::MultiLibraryClassLoader classLoader(false);
-            TaskHandler taskHandler( &classLoader );
+            ROS_INFO("[core] Received %lu tasks", taskList.size());
 
             // Find a task
             for (auto task: taskList)
             {
-                // Get the path to the required task since the librarys are loaded based on
-                // the path. A task keyword might return multiple librarys, hence the "map"
-                // that is returned by "findtask" method
-                std::map<std::string, std::string> taskToPath = taskHandler.findTask(task.first);
-                if ( taskToPath.empty() )
-                {
-                    continue;
-                }
-
-                ROS_DEBUG("[agent_core] task '%s' was found at '%s'", task.first.c_str(), taskToPath.at(task.first).c_str() );
-
-                //
-                //    DO SOME MAGIC HERE IF NEEDED, choose a right task lib or whatever
-                //
-
-                // Use the path to load in the task class. task handler returns the internal
+                // Use the name of the task to load in the task class. task handler returns the internal
                 // specific name of the task which is used in the next step.
-                std::string taskClassName = taskHandler.loadTask(taskToPath.at(task.first));
+                ROS_INFO("[core] Executing task '%s' ...", task.first.c_str());
+
+                std::string taskClassName = taskHandler.loadTask(task.first);
                 if ( taskClassName.empty() )
                 {
                     continue;
@@ -110,7 +96,7 @@ int main(int argc, char **argv)
 
                 std::cout << std::endl;
             }
- */
+
             msgReceived = false;
         }
 

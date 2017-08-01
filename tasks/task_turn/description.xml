@@ -7,7 +7,7 @@
   </in>
 
   <out>
-    <arg argtype="void"/>
+    <arg argtype="void" value=""/>
   </out>
 
 </task>
