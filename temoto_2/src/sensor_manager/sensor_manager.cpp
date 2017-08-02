@@ -43,7 +43,7 @@ public:
         startSensorServer_ = n_.advertiseService("start_sensor", &SensorManager::start_sensor_cb, this);
         stopSensorServer_ = n_.advertiseService("stop_sensor", &SensorManager::stop_sensor_cb, this);
 
-        ROS_INFO("[SensorManager::SensorManager] all services initialized, manager is good to go");
+        ROS_INFO("[SensorManager::SensorManager::SensorManager] all services initialized, manager is good to go");
     }
 
 private:
@@ -96,7 +96,7 @@ private:
         std::string reqName = req.name;
         std::string reqExecutable = req.executable;
 
-        ROS_INFO("[start_sensor_cb] received a request to start a '%s': '%s'", reqType.c_str(), reqName.c_str());
+        ROS_INFO("[SensorManager::start_sensor_cb] received a request to start a '%s': '%s'", reqType.c_str(), reqName.c_str());
 
         // Create an empty message that will be filled out by "findSensor" function
         temoto_2::nodeSpawnKill spawnKillMsg;
@@ -104,19 +104,20 @@ private:
         // Find the suitable sensor
         if (findSensor(spawnKillMsg.request, res, reqType, reqName, reqExecutable))
         {
-            ROS_INFO("[start_sensor_cb] Found a suitable sensor. Trying to call /spawn_kill_process ...");
+            ROS_INFO("[SensorManager::start_sensor_cb] Found a suitable sensor. Trying to call /spawn_kill_process ...");
             while (!nodeSpawnKillClient_.call(spawnKillMsg))
             {
-                ROS_ERROR("[start_sensor_cb] Failed to call service /spawn_kill_process, trying again...");
+                ROS_ERROR("[SensorManager::start_sensor_cb] Failed to call service /spawn_kill_process, trying again...");
             }
 
             res.code = spawnKillMsg.response.code;
             res.message = spawnKillMsg.response.message;
 
-            ROS_INFO("[start_sensor_cb] /spawn_kill_process responded: '%s'", res.message.c_str());
+            ROS_INFO("[SensorManager::start_sensor_cb] /spawn_kill_process responded: '%s'", res.message.c_str());
 
             // Check if the /spawn_kill_process service was able to fulfill the request
-            return ( (res.code == 0) ? true : false);
+            //return ( (res.code == 0) ? true : false);
+            return true;
         }
 
         else
@@ -126,9 +127,9 @@ private:
             res.topic = "";
             res.code = 1;
             res.message = "Suitable sensor was not found. Aborting the request";
-            ROS_INFO("[start_sensor_cb] %s", res.message.c_str());
+            ROS_INFO("[SensorManager::start_sensor_cb] %s", res.message.c_str());
 
-            return false;
+            return true;
         }
     }
 
@@ -145,20 +146,21 @@ private:
         spawnKillMsg.request.package = req.name;
         spawnKillMsg.request.name = req.executable;
 
-        ROS_INFO("[stop_sensor_cb] received a request to stop a '%s'", spawnKillMsg.request.name.c_str());
+        ROS_INFO("[SensorManager::stop_sensor_cb] received a request to stop a '%s'", spawnKillMsg.request.name.c_str());
 
         while (!nodeSpawnKillClient_.call(spawnKillMsg))
         {
-            ROS_ERROR("[stop_sensor_cb] Failed to call service /spawn_kill_process, trying again...");
+            ROS_ERROR("[SensorManager::stop_sensor_cb] Failed to call service /spawn_kill_process, trying again...");
         }
 
         res.code = spawnKillMsg.response.code;
         res.message = spawnKillMsg.response.message;
 
-        ROS_INFO("[stop_sensor_cb] /spawn_kill_process responded: '%s'", res.message.c_str());
+        ROS_INFO("[SensorManager::stop_sensor_cb] /spawn_kill_process responded: '%s'", res.message.c_str());
 
         // Check if the /spawn_kill_process service was able to fulfill the request
-        return ( (res.code == 0) ? true : false);
+        //return ( (res.code == 0) ? true : false);
+        return true;
     }
 
 
@@ -311,7 +313,7 @@ int main (int argc, char **argv)
     sensorManager.pkgInfoList_[0].addRunnable({"dummy_sensor", "/dummy_sensor_data"});
 
     sensorManager.pkgInfoList_.push_back (package_info("temoto_2", "text"));
-    sensorManager.pkgInfoList_[1].addRunnable({"test_2.launch", "/dummy_sensor_data"});
+    sensorManager.pkgInfoList_[1].addRunnable({"test_2.launch", "/human_chatter"});
 
     ros::spin();
 

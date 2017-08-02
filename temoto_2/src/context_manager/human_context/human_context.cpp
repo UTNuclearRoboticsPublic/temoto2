@@ -61,7 +61,7 @@ bool HumanContext::setup_speech_cb (temoto_2::getSpeech::Request &req,
 
     if (startSensReq.response.code == 0)
     {
-        res.message = startSensReq.response.message = "Speech Setup request was satisfied";
+        res.message = startSensReq.response.message = "Speech Setup request was satisfied: %s", startSensReq.response.message.c_str();
 
         // Add the request to the "setupSpeechActive_" list
         temoto_2::getSpeech reqRes;
@@ -74,7 +74,7 @@ bool HumanContext::setup_speech_cb (temoto_2::getSpeech::Request &req,
     else
     {
         res.message = "Speech Setup request was not satisfied";
-        return false;
+        return true;
     }
 }
 

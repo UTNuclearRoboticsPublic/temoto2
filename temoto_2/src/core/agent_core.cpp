@@ -30,19 +30,20 @@ int main(int argc, char **argv)
     // Subscribers
     ros::Subscriber chatter_subscriber = n.subscribe("human_chatter", 1000, humanChatterCallback);
 
+    // Create a class loader instance and pass it to the taskhandler. For some reason
+    // I could not create a private classloader inside the taskhandler, hence it is being
+    // passed over from here
     class_loader::MultiLibraryClassLoader classLoader(false);
     TaskHandler taskHandler( &classLoader );
 
-    ros::Rate loop_rate(10);
-
-    // INIT SEQUENCE, FORMAT INTO A FUNCTION
-    boost::filesystem::directory_entry dir("/home/robert/catkin_ws/src/temoto2/tasks/");
-
     // Index the available tasks
     std::cout << "[core]: Indexing the tasks ..." << std::endl;
+    boost::filesystem::directory_entry dir("/home/robert/catkin_ws/src/temoto2/tasks/");
     taskHandler.indexTasks(dir, 1);
 
-    // Create a language processor and initialize it
+    // Create a Panguage Processor and initialize it by passing the list of indexed tasks.
+    // Language Processor uses the information contained within the indexed tasks to detect
+    // right keywords
     LanguageProcessor languageProcessor;
     languageProcessor.setTasksIndexed( taskHandler.getIndexedTasks() );
 
@@ -60,12 +61,14 @@ int main(int argc, char **argv)
         std::cout << "[core]: Printing the errorstack:" << taskHandler.errorHandler_;
     }
 
+    ros::Rate loop_rate(10);
+
     while (ros::ok())
     {
         if (msgReceived)
         {
-            TaskList taskList;
-            taskList = languageProcessor.processText(my_text);
+            // Process the text and get the required tasks if any
+            TaskList taskList = languageProcessor.processText(my_text);
 
             ROS_INFO("[core] Received %lu tasks", taskList.size());
 
@@ -88,7 +91,7 @@ int main(int argc, char **argv)
                 if ( !taskHandler.instantiateTask(taskClassName) )
                 {
                     //Start the task
-                    if ( !taskHandler.startTask(taskClassName, task.second) )
+                    if ( taskHandler.startTask(taskClassName, task.second) )
                     {
                         taskHandler.stopTask(taskClassName);
                     }

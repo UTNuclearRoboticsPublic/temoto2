@@ -22,9 +22,6 @@ class Imp_task_4: public Task
 {
 public:
 
-    // Human context interface object
-    HumanContextInterface <Imp_task_4> hci_;
-
     /* * * * * * * * * * * * * * * * * * * * * * * * *
      * Inherited methods that have to be implemented /START
      * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -39,7 +36,7 @@ public:
     int startTask()
     {
         // Build a gesture specifier
-        // TODO: This shoud be done via gesture specifier helper class
+        // TODO: This shoud be done via speech specifier helper class
         std::vector <temoto_2::speechSpecifier> speechSpecifiers;
         temoto_2::speechSpecifier speechSpecifier;
         speechSpecifier.dev = "device";
@@ -139,7 +136,7 @@ public:
     // Callback for processing gestures
     void speech_callback(std_msgs::String msg)
     {
-        ROS_INFO("Gesture callback got: %s", msg.data.c_str());
+        ROS_INFO("Speech callback got: %s", msg.data.c_str());
     }
 
     ~Imp_task_4()
@@ -148,6 +145,10 @@ public:
     }
 
 private:
+
+    // Human context interface object
+    HumanContextInterface <Imp_task_4> hci_;
+
     int numberOfArguments = 3;
 
     int arg0;

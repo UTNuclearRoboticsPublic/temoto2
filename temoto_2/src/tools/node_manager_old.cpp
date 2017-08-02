@@ -11,25 +11,21 @@
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *
- *          MASSIVE TODO: * CATCH ALL EXEPTIONS !!!
- *                        * implement interprocess piping service
- *                          that starts streaming the std::out of
- *                          a requested process.
- *                        * organize your sh*t
+ *          MASSIVE TODO: CATCH ALL EXEPTIONS !!!
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
-#include "core/common.h"
-#include "std_msgs/String.h"
-#include "temoto_2/nodeSpawnKill.h"
 
 #include <stdio.h>
 #include <csignal>
 #include <algorithm>
 
-// Global filehandle for FILL IN THE BLANKS
-FILE * f;
+#include "std_msgs/String.h"
+#include <ros/xmlrpc_manager.h>
+#include "temoto_2/nodeSpawnKill.h"
 
+#include "core/common.h"
+
+FILE * f;
 
 std::map <std::string, pid_t> runningProcesses;
 
@@ -160,6 +156,60 @@ void readPipe()
     }
 
     //fclose(output);
+}
+
+void callback_1 (const std_msgs::String& command)
+{
+    XmlRpc::XmlRpcValue request;
+    XmlRpc::XmlRpcValue response;
+    XmlRpc::XmlRpcValue payload;
+
+    if (command.data.compare("lookupNode") == 0)
+    {
+        ROS_INFO("[node_manager/callback_1] %s requested. Specify the name of the node: ", command.data.c_str());
+
+        std::string node_name;
+        std::getline(std::cin, node_name);
+
+        request[0] = ros::this_node::getName();
+        request[1] = node_name;
+
+        ROS_INFO("[node_manager/callback_1] sending '%s' for %s ...", command.data.c_str(), node_name.c_str());
+
+        bool success = ros::master::execute(command.data.c_str(), request,
+                response, payload, true);
+
+        ROS_INFO("[callback_1] sending was %s", success?"sucessful":"unsuccessful");
+
+        std::cout << "request: " << request << std::endl;
+        std::cout << "response: " << response << std::endl;
+        std::cout << "payload: " << payload << std::endl;
+    }
+
+    // Shut the node down. there is no master call for shutdown, hence it has to
+    // be called directly via xmlrpc that is embedded inside master api anyways
+
+    else if (command.data.compare("shutdown") == 0)
+    {
+        ROS_INFO("[callback_1] %s requested. Specify the name of the node: ", command.data.c_str());
+
+        std::string host;
+        uint32_t port;
+        std::string uri;
+        request[0] = ros::this_node::getName();
+        request[1] = "because I can";
+
+        std::cout << "Enter port nr: ";
+        std::cin >> port;
+        std::cout << std::endl;
+
+        XmlRpc::XmlRpcClient *c = ros::XMLRPCManager::instance()->getXMLRPCClient("localhost", port, "/");
+        bool success = c->execute(command.data.c_str(), request, response);
+
+        ROS_INFO("[callback_1] sending was %s", success?"sucessful":"unsuccessful");
+        std::cout << "request: " << request << std::endl;
+        std::cout << "response: " << response << std::endl;
+    }
 }
 
 
