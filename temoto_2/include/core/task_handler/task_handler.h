@@ -1,16 +1,24 @@
 #ifndef TASK_HANDLER_H
 #define TASK_HANDLER_H
 
-#include "core/common.h"
-#include "core/task_handler/task_info.h"
-#include "core/task_handler/description_processor.h"
-//#include "core/language_processor/language_processor.h"
-#include "base_task/task.h"
-
 #include <class_loader/multi_library_class_loader.h>
 #include <boost/any.hpp>
 #include "boost/filesystem.hpp"
 #include <exception>
+
+#include "core/common.h"
+#include "core/task_handler/task_info.h"
+#include "core/task_handler/description_processor.h"
+#include "base_task/task.h"
+#include "temoto_2/stopTask.h"
+
+
+struct RunningTask
+{
+    std::string taskName;
+    std::string taskClassName;
+    boost::shared_ptr<Task> taskPointer;
+};
 
 class TaskHandler
 {
@@ -24,14 +32,29 @@ public:
     /**
      * @brief Task_handler
      */
-    TaskHandler(class_loader::MultiLibraryClassLoader * loader);
+    TaskHandler(std::string system_prefix, class_loader::MultiLibraryClassLoader * loader);
 
     /**
-     * @brief Finds and returns list of available tasks based on taskToFind criteria
-     * @param taskToFind String that contains the type of the task, if specified as "any" then all task descriptions are loaded in
-     * @return Returns a vector containing task description classes
+     * @brief findTask
+     * @param taskToFind
+     * @param tasks
+     * @return
      */
-    std::vector <TaskInfo> findTask(std::string taskToFind);
+    std::vector <TaskInfo> findTask(std::string taskToFind,  std::vector <TaskInfo>& tasks);
+
+    /**
+     * @brief findTaskLocal
+     * @param taskToFind
+     * @return
+     */
+    std::vector <TaskInfo> findTaskLocal(std::string taskToFind);
+
+    /**
+     * @brief findTaskRunning
+     * @param taskToFind
+     * @return
+     */
+    std::vector <TaskInfo> findTaskRunning(std::string taskToFind);
 
     /**
      * @brief findTask
@@ -40,7 +63,7 @@ public:
      * @param searchDepth
      * @return
      */
-    std::vector <TaskInfo> findTask(std::string taskToFind, boost::filesystem::directory_entry basePath, int searchDepth);
+    std::vector <TaskInfo> findTaskFilesys(std::string taskToFind, boost::filesystem::directory_entry basePath, int searchDepth);
 
     /**
      * @brief indexTasks
@@ -56,58 +79,64 @@ public:
     std::vector <TaskInfo> getIndexedTasks();
 
     /**
-     * @brief Loads in a task .so file and returns the name of the class
-     * @param Name of the task
-     * @return Returns the name of the class. If same name already exists, an unique name is returned
+     * @brief loadTask
+     * @param taskName
+     * @return
      */
-    std::string loadTask(std::string taskName);
+    bool loadTask(TaskInfo& task);
 
     /**
      * @brief startTask
      * @param taskName
      * @return
      */
-    int instantiateTask(std::string taskName);
+    bool instantiateTask(TaskInfo& task);
 
     /**
      * @brief startTask
      * @param taskName
      * @return
      */
-    int startTask(std::string taskName);
+    bool startTask(TaskInfo& task);
 
     /**
      * @brief startTask
      * @param taskName
      * @return
      */
-    int startTask(std::string taskName, std::vector<boost::any> arguments);
+    bool startTask(TaskInfo& task, std::vector<boost::any> arguments);
 
     /**
      * @brief Stops a task specified by the taskName
      * @param taskName
      * @return
      */
-    int stopTask(std::string taskName);
+    bool stopTask(std::string taskName);
 
     /**
      * @brief unloadTaskLib
      * @param taskName
      * @return
      */
-    int unloadTaskLib(std::string pathToLib);
+    bool unloadTaskLib(std::string pathToLib);
 
 
 private:
+
+    ros::NodeHandle n_;
+
+    // ros::ServiceServer startTaskServer_;
+    ros::ServiceServer stop_task_server_;
+
+    /**
+     * @brief system_prefix_
+     */
+    std::string system_prefix_;
+
     /**
      * @brief runningTasks_
      */
-    std::map < std::string, boost::shared_ptr<Task> > runningTasks_;
-
-    /**
-     * @brief taskAddresses_
-     */
-    std::vector <TaskAddress> taskAddresses_;
+    std::vector <TaskInfo> running_tasks_;
 
     /**
      * @brief tasksIndexed_
@@ -125,6 +154,12 @@ private:
     //LanguageProcessor langProcessor_;
 
     const std::string descriptionFile = "description.xml";
+/*
+    bool startTaskCallback (temoto_2::startTask::Request& req,
+                                         temoto_2::startTask::Response& res);
+*/
+    bool stopTaskCallback (temoto_2::stopTask::Request& req,
+                                        temoto_2::stopTask::Response& res);
 };
 
 #endif

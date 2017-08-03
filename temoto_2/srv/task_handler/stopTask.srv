@@ -1,0 +1,7 @@
+string name
+
+---
+
+uint64 code
+
+string message

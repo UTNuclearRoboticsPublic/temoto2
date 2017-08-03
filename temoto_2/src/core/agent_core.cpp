@@ -34,14 +34,14 @@ int main(int argc, char **argv)
     // I could not create a private classloader inside the taskhandler, hence it is being
     // passed over from here
     class_loader::MultiLibraryClassLoader classLoader(false);
-    TaskHandler taskHandler( &classLoader );
+    TaskHandler taskHandler( "core", &classLoader );
 
     // Index the available tasks
     std::cout << "[core]: Indexing the tasks ..." << std::endl;
     boost::filesystem::directory_entry dir("/home/robert/catkin_ws/src/temoto2/tasks/");
     taskHandler.indexTasks(dir, 1);
 
-    // Create a Panguage Processor and initialize it by passing the list of indexed tasks.
+    // Create a Language Processor and initialize it by passing the list of indexed tasks.
     // Language Processor uses the information contained within the indexed tasks to detect
     // right keywords
     LanguageProcessor languageProcessor;
@@ -50,7 +50,7 @@ int main(int argc, char **argv)
     // Find something from the indexed tasks
     std::cout << "[core]: Looking for 'terminal' ..." << std::endl;
 
-    for (TaskInfo taskInfoInst : taskHandler.findTask("terminal"))
+    for (TaskInfo taskInfoInst : taskHandler.findTaskLocal("terminal"))
     {
         std::cout << "found:" << taskInfoInst << std::endl;
     }
@@ -77,23 +77,23 @@ int main(int argc, char **argv)
             {
                 // Use the name of the task to load in the task class. task handler returns the internal
                 // specific name of the task which is used in the next step.
-                ROS_INFO("[core] Executing task '%s' ...", task.first.c_str());
+                ROS_INFO("[core] Executing task '%s' ...", task.first.getName().c_str());
 
-                std::string taskClassName = taskHandler.loadTask(task.first);
-                if ( taskClassName.empty() )
+                if ( !taskHandler.loadTask(task.first) )
                 {
                     continue;
+                    // PLEASE DO SOMETHING MORE REASONABLE
                 }
 
                 // Create an instance of the task based on the class name. a task .so file might
                 // contain multiple classes, therefore path is not enough and specific name
                 // must be used
-                if ( !taskHandler.instantiateTask(taskClassName) )
+                if ( taskHandler.instantiateTask(task.first) )
                 {
                     //Start the task
-                    if ( taskHandler.startTask(taskClassName, task.second) )
+                    if ( !taskHandler.startTask(task.first, task.second) )
                     {
-                        taskHandler.stopTask(taskClassName);
+                        taskHandler.stopTask(task.first.getName());
                     }
                 }
 

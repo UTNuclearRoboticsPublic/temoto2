@@ -2,7 +2,6 @@
 #define LANGUAGE_PROCESSOR_H
 
 #include "core/common.h"
-#include "core/task_handler/task_info.h"
 #include <sstream>
 #include <boost/any.hpp>
 #include <iostream>

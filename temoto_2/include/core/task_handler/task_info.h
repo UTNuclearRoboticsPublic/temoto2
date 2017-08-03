@@ -1,7 +1,19 @@
 #ifndef TASK_INFO_H
 #define TASK_INFO_H
 
-#include "core/common.h"
+#include <iostream>
+#include <string>
+#include <vector>
+#include <utility>
+#include <boost/any.hpp>
+
+#include "base_task/task.h"
+
+class TaskInfo;
+
+typedef std::pair <std::string, std::vector<std::string>> ArgWithValues;
+typedef std::vector < std::vector<ArgWithValues> > ParamList;
+typedef std::vector< std::pair<TaskInfo, std::vector<boost::any>> > TaskList;
 
 /**
  * @brief The TaskInfo class contains informaton about a specific task
@@ -9,6 +21,7 @@
 class TaskInfo
 {
     friend class DescriptionProcessor;
+    friend class TaskHandler;
 
 public:
 
@@ -29,6 +42,12 @@ public:
      * @return
      */
     std::string getName() const;
+
+    /**
+     * @brief getClassName
+     * @return
+     */
+    std::string getClassName() const;
 
     /**
      * @brief getPackageNAme
@@ -52,6 +71,8 @@ private:
 
     std::string name_;
 
+    std::string class_name_;
+
     std::string packageName_;
 
     std::string path_;
@@ -61,6 +82,8 @@ private:
     ParamList args_;
 
     ParamList return_;
+
+    boost::shared_ptr<Task> task_pointer_;
 };
 
 /**

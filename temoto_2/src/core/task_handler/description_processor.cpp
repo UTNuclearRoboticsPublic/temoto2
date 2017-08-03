@@ -317,7 +317,7 @@ TaskInfo DescriptionProcessor::getTaskInfo()
         taskInfo.args_ = getInputArgs();
         taskInfo.return_ = getOutputArgs();
         taskInfo.packageName_ = getPackageName();
-        taskInfo.libPath_ = this->basePath_ + "/lib/lib" + taskInfo.packageName_ + ".so";
+        taskInfo.libPath_ = this->basePath_ + "/lib/lib" + taskInfo.packageName_ + ".so"; // TODO: check if this file even exists
     }
 
     catch( error::ErrorStack& e )

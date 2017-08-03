@@ -1,3 +1,12 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ *     TODO: * Start using ros cpp naming conventions
+ *           * (?) include starting time variable
+ *           * Include a "signature" variable that i2ndicates
+ *             a unique combination of the name and i/o variables
+ *
+ * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 #include "core/task_handler/task_info.h"
 
 std::string TaskInfo::getPath() const
@@ -13,6 +22,11 @@ std::string TaskInfo::getLibPath() const
 std::string TaskInfo::getName() const
 {
     return this->name_;
+}
+
+std::string TaskInfo::getClassName() const
+{
+    return this->class_name_;
 }
 
 std::string TaskInfo::getPackageName() const

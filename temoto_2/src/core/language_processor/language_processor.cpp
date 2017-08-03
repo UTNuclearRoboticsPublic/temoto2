@@ -27,7 +27,7 @@ TaskList LanguageProcessor::processText (std::string my_text)
     std::cout << "found " << sentences.size() << " sentences\n" << std::endl;
 
     // Analyze the sentences
-    for(std::string sentence : sentences)
+    for (std::string sentence : sentences)
     {
         // Extract words, delimited by whitespace
         std::vector <std::string> words = this->parseString(sentence, ' ');
@@ -35,7 +35,8 @@ TaskList LanguageProcessor::processText (std::string my_text)
 
         std::cout << "sentence to analyze: '" << sentence << "'" << std::endl;
 
-        for(int i=0; i<words.size(); i++)
+        // Loop over the words
+        for (int i=0; i<words.size(); i++)
         {
             // Check it it is a known command
             for (auto& command : this->tasksIndexed_)
@@ -52,7 +53,7 @@ TaskList LanguageProcessor::processText (std::string my_text)
 
                     // Get the arguments in a format of vector<boost::any>
                     std::vector<boost::any> arguments = extractArguments(tempWords, command.getArgs());
-                    taskList.push_back ( std::pair<std::string, std::vector<boost::any>>(command.getName(), arguments) );
+                    taskList.push_back ( std::pair<TaskInfo, std::vector<boost::any>>(command, arguments) );
 
                     break;
                 }
