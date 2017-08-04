@@ -29,8 +29,6 @@
 
 // Global filehandle for FILL IN THE BLANKS
 FILE * f;
-
-
 std::map <std::string, pid_t> runningProcesses;
 
 pid_t pid;
@@ -68,7 +66,7 @@ bool spawn_kill_cb(temoto_2::nodeSpawnKill::Request &req,
     std::string package = req.package;
     std::string name = req.name;
 
-    ROS_INFO("[node_manager/spawn_kill_cb] Received a spawn_kill service request '%s %s %s' ...", action.c_str(), package.c_str(), name.c_str());
+    ROS_INFO("[node_manager/spawn_kill_cb] Received a 'spawn_kill' service request: '%s %s %s' ...", action.c_str(), package.c_str(), name.c_str());
 
     // Test the validity of action command. If the action string is unknown
     if ( std::find(validActions.begin(), validActions.end(), action) == validActions.end() )
@@ -83,7 +81,7 @@ bool spawn_kill_cb(temoto_2::nodeSpawnKill::Request &req,
     // "Kill" command
     if (action.compare("kill") == 0)
     {
-        ROS_INFO("[node_manager/callback_1] Kill requested ...");
+        ROS_INFO("[node_manager/spawn_kill_cb] Kill requested ...");
 
         // Check if the requested process exists in the list of running processes
         if ( runningProcesses.find(name) == runningProcesses.end() )

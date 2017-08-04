@@ -1,14 +1,13 @@
 <?xml version="1.0" ?>
 
-<task name="add" >
-  
-  <in>
-    <arg argtype="number" value=""/>
-		<arg argtype="number" value=""/>
-  </in>
+<task name="stop" >
 
+  <in>
+    <arg argtype="task" value=""/>
+  </in>
+  
   <out>
     <arg argtype="void" value=""/>
   </out>
-  
+
 </task>

@@ -20,6 +20,9 @@ TaskList LanguageProcessor::processText (std::string my_text)
     // Create empty tasklist
     TaskList taskList;
 
+    // A bool that says if a detected task should be ignored or not
+    bool ignore_next_match = false;
+
     // Extract the sentences
     std::vector <std::string> sentences = this->parseString(my_text, '.');
 
@@ -38,24 +41,40 @@ TaskList LanguageProcessor::processText (std::string my_text)
         // Loop over the words
         for (int i=0; i<words.size(); i++)
         {
-            // Check it it is a known command
+            // Loop over known commands
             for (auto& command : this->tasksIndexed_)
             {
-                if ( words[i].compare(command.getName()) == 0)
+                // Check if the command matches
+                if ( words[i].compare(command.getName()) == 0 )
                 {
-                    std::cout << " + : " << words[i] << ": known, ";
+                    // Check if this match should be ignored or not
+                    if (!ignore_next_match)
+                    {
+                        std::cout << " + : " << words[i] << ": known, ";
 
-                    std::cout << "extracting the arguments" << std::endl;
+                        std::cout << "extracting the arguments" << std::endl;
 
-                    // Remove the strings before the command, including command itself
-                    tempWords = words;
-                    tempWords.erase(tempWords.begin(), tempWords.begin() + i+1);
+                        // Remove the strings before the command, including command itself
+                        tempWords = words;
+                        tempWords.erase(tempWords.begin(), tempWords.begin() + i+1);
 
-                    // Get the arguments in a format of vector<boost::any>
-                    std::vector<boost::any> arguments = extractArguments(tempWords, command.getArgs());
-                    taskList.push_back ( std::pair<TaskInfo, std::vector<boost::any>>(command, arguments) );
+                        // Get the arguments in a format of vector<boost::any>
+                        std::vector<boost::any> arguments;
 
-                    break;
+                        if ( extractArguments(tempWords,
+                                              command.getArgs(),
+                                              arguments,
+                                              ignore_next_match) )
+                        {
+                            taskList.push_back ( std::pair<TaskInfo, std::vector<boost::any>>(command, arguments) );
+                        }
+                        break;
+                    }
+                    else
+                    {
+                        ignore_next_match = false;
+                        break;
+                    }
                 }
             }
         }
@@ -71,10 +90,13 @@ TaskList LanguageProcessor::processText (std::string my_text)
  *  EXTRACT ARGUMENTS
  * * * * * * * * * * */
 
-std::vector<boost::any> LanguageProcessor::extractArguments (std::vector<std::string> in_strs, ParamList args_list)
+bool LanguageProcessor::extractArguments (std::vector<std::string>& in_strs,
+                                          ParamList args_list,
+                                          std::vector<boost::any>& extractedArguments,
+                                          bool& ignore_next_match)
 {
-    // Create a vector for storing arguments
-    std::vector<boost::any> arguments;
+    // A variable that stores information about if returning an empty list of arguments is permitted
+    bool return_empty = false;
 
     std::cout << " This task accepts " << args_list.size() << " different sets of arguments" << std::endl;
 
@@ -84,7 +106,7 @@ std::vector<boost::any> LanguageProcessor::extractArguments (std::vector<std::st
         std::vector<boost::any> argumentsLocal;
 
         // Make a copy of the input string, since it is going to be hacked and slashed
-        std::vector<std::string> in_strs_copy = in_strs;
+        //std::vector<std::string> in_strs_copy = in_strs;
 
         unsigned int nrOfArgs = args.size();
         std::cout << "    * searching for " << nrOfArgs << " arguments of type: ";
@@ -102,17 +124,30 @@ std::vector<boost::any> LanguageProcessor::extractArguments (std::vector<std::st
             // Search for void
             if (arg.first.compare("void") == 0)
             {
-                break;
+                return_empty = true;
+            }
+
+            // Search for other tasks
+            else if (arg.first.compare("task") == 0)
+            {
+                std::string argTask;
+                if (lookForTask(&argTask, &in_strs, arg.second))
+                {
+                    std::cout << "      - got task: " << argTask << std::endl;
+
+                    // Push the argument to the argument vector
+                    argumentsLocal.push_back( boost::any_cast<std::string>(argTask) );
+                    ignore_next_match = true;
+                }
             }
 
             // Search for numbers
             else if (arg.first.compare("number") == 0)
             {
                 int argInt;
-                if (lookForInt(&argInt, &in_strs_copy, arg.second))
+                if (lookForInt(&argInt, &in_strs, arg.second))
                 {
                     std::cout << "      - got number: " << argInt << std::endl;
-                    //std::cout << "      - remaining string size: " << in_strs_copy.size() << std::endl;
 
                     // Push the argument to the argument vector
                     argumentsLocal.push_back( boost::any_cast<int>(argInt) );
@@ -123,10 +158,9 @@ std::vector<boost::any> LanguageProcessor::extractArguments (std::vector<std::st
             else if (arg.first.compare("string") == 0)
             {
                 std::string argStr;
-                if (lookForStr(&argStr, &in_strs_copy, arg.second))
+                if (lookForStr(&argStr, &in_strs, arg.second))
                 {
                     std::cout << "      - got string: " << argStr << std::endl;
-                    //std::cout << "      - remaining string size: " << in_strs_copy.size() << std::endl;
 
                     // Push the argument to the argument vector
                     argumentsLocal.push_back( boost::any_cast<std::string>(argStr) );
@@ -141,13 +175,18 @@ std::vector<boost::any> LanguageProcessor::extractArguments (std::vector<std::st
             // If it does, then the one that has the best match, "wins". For example say one arg list
             // is specified by 3 args and other by 5, and lets say that both got a complete match, then
             // the one which is specified with more arguments (5) "wins"
-            if (argumentsLocal.size() > arguments.size())
+            if (argumentsLocal.size() > extractedArguments.size())
             {
-                arguments = argumentsLocal;
+                extractedArguments = argumentsLocal;
             }
         }
     }
-    return arguments;
+
+    // Check if returning an empty list of arguments is legal or not
+    if (return_empty)
+        return true;
+    else
+        return ( (extractedArguments.empty()) ? false : true);
 }
 
 
@@ -240,7 +279,7 @@ int LanguageProcessor::lookForStr (std::string * returnStr, std::vector<std::str
         restrictionsApply = true;
     }
 
-    for(int i=0; i<in_strs->size(); i++)
+    for (int i=0; i<in_strs->size(); i++)
     {
         // First check if the restrictions apply
         if (restrictionsApply)
@@ -259,7 +298,7 @@ int LanguageProcessor::lookForStr (std::string * returnStr, std::vector<std::str
         // Check if the first character is NOT a digit
         else if (!isdigit( in_strs->at(i)[0] ))
         {
-            // Convert to int and remove the str
+            // Fill the return and cut the input words
             *returnStr = in_strs->at(i);
             in_strs->erase( in_strs->begin() + i );
 
@@ -267,6 +306,59 @@ int LanguageProcessor::lookForStr (std::string * returnStr, std::vector<std::str
         }
     }
     return 0;
+}
+
+/* * * * * * * * *
+ *  LOOK FOR TASK
+ * * * * * * * * */
+
+bool LanguageProcessor::lookForTask (std::string * taskName, std::vector<std::string> * in_strs, std::vector<std::string> restrictions)
+{
+    // See if the restrictions apply
+    bool restrictionsApply = false;
+    if (!restrictions.empty())
+    {
+        restrictionsApply = true;
+    }
+
+    // How many words are looked through before returning false
+    int max_words = 2;
+    int words_to_check = (in_strs->size() < max_words) ? in_strs->size() : max_words;
+
+
+    for (int i=0; i<words_to_check; i++)
+    {
+        // First check if the restrictions apply
+        if (restrictionsApply)
+        {
+            // If the word matches with the restriction then ...
+            if (checkRestrictions(in_strs->at(i), restrictions))
+            {
+                // Check if this is even a known task
+                if (checkTask(in_strs->at(i)))
+                {
+                    // Fill the return and cut the input words
+                    *taskName = in_strs->at(i);
+                    in_strs->erase( in_strs->begin() + i );
+                    return true;
+                }
+            }
+        }
+
+        // Check if the first character is NOT a digit
+        else if (!isdigit( in_strs->at(i)[0] ))
+        {
+            // Check if this is even a known task
+            if (checkTask(in_strs->at(i)))
+            {
+                // Fill the return and cut the input words
+                *taskName = in_strs->at(i);
+                in_strs->erase( in_strs->begin() + i );
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 
@@ -284,6 +376,22 @@ bool LanguageProcessor::checkRestrictions (std::string inputWord, std::vector<st
         {
             return true;
         }
+    }
+
+    return false;
+}
+
+
+/* * * * * * * * *
+ *  CHECK THE RESTRICTIONS
+ * * * * * * * * */
+
+bool LanguageProcessor::checkTask (std::string taskName)
+{
+    for (auto& task : tasksIndexed_)
+    {
+        if (task.getName().compare(taskName) == 0)
+            return true;
     }
 
     return false;

@@ -43,10 +43,15 @@ private:
     /**
      * @brief extractArguments
      * @param in_strs
-     * @param arg_types
+     * @param args_list
+     * @param extractedArguments
+     * @param ignore_next_match
      * @return
      */
-    std::vector<boost::any> extractArguments (std::vector<std::string> in_strs, ParamList args_list);
+    bool extractArguments (std::vector<std::string>& in_strs,
+                           ParamList args_list,
+                           std::vector<boost::any>& extractedArguments,
+                           bool& ignore_next_match);
 
     /**
      * @brief lookForInt
@@ -65,12 +70,28 @@ private:
     int lookForStr (std::string * returnStr, std::vector<std::string> * in_strs, std::vector<std::string> restrictions);
 
     /**
+     * @brief lookForTask
+     * @param taskName
+     * @param in_strs
+     * @param restrictions
+     * @return
+     */
+    bool lookForTask (std::string * taskName, std::vector<std::string> * in_strs, std::vector<std::string> restrictions);
+
+    /**
      * @brief checkRestrictions
      * @param inputWord
      * @param restrictions
      * @return
      */
     bool checkRestrictions (std::string inputWord, std::vector<std::string> restrictions);
+
+    /**
+     * @brief checkTask
+     * @param taskName
+     * @return
+     */
+    bool checkTask (std::string taskName);
 };
 
 #endif

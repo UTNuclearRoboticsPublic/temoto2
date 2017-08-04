@@ -1,6 +1,7 @@
 #include "core/common.h"
 #include "temoto_2/getGestures.h"
 #include "temoto_2/getSpeech.h"
+#include "temoto_2/stopAllocatedServices.h"
 #include "temoto_2/startSensorRequest.h"
 #include "temoto_2/stopSensorRequest.h"
 #include "temoto_2/gestureSpecifier.h"
@@ -20,6 +21,7 @@ private:
     // Define the basic services
     ros::ServiceServer gestureServer_;
     ros::ServiceServer speechServer_;
+    ros::ServiceServer stop_allocated_services_;
     // ... And other interesting servers
 
     // Service clients
@@ -36,7 +38,7 @@ private:
      * @return
      */
     bool setup_gesture_cb (temoto_2::getGestures::Request &req,
-                            temoto_2::getGestures::Response &res);
+                           temoto_2::getGestures::Response &res);
 
     /**
      * @brief Service that sets up a speech publisher
@@ -46,7 +48,16 @@ private:
      * @return
      */
     bool setup_speech_cb (temoto_2::getSpeech::Request &req,
-                           temoto_2::getSpeech::Response &res);
+                          temoto_2::getSpeech::Response &res);
+
+    /**
+     * @brief stopAllocatedServices
+     * @param req
+     * @param res
+     * @return
+     */
+    bool stopAllocatedServices (temoto_2::stopAllocatedServices::Request& req,
+                                temoto_2::stopAllocatedServices::Response& res);
 
     /**
      * @brief Function that compares the speech requests
@@ -57,6 +68,12 @@ private:
     bool compareSpeechRequest (temoto_2::getSpeech::Request &req,
                                temoto_2::getSpeech::Request &reqLocal) const;
 
+    /**
+     * @brief checkId
+     * @param id_in
+     * @return
+     */
+    std::string checkId (std::string id_in);
 };
 
 

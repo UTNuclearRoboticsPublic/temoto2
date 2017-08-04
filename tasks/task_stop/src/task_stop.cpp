@@ -15,10 +15,11 @@
 // Task specific includes
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-#include "context_manager/human_context/human_context_interface.h"
+#include "temoto_2/stopTask.h"
+
 
 // First implementaton
-class Imp_task_4: public Task
+class TaskStop: public Task
 {
 public:
 
@@ -26,32 +27,15 @@ public:
      * Inherited methods that have to be implemented /START
      * * * * * * * * * * * * * * * * * * * * * * * * */
 
-    Imp_task_4()
+    TaskStop()
     {
-        // Do something here if needed
-        ROS_INFO("Imp_task_4 constructed");
+        stop_task_client_ = n_.serviceClient<temoto_2::stopTask>("core/stop_task");
+        ROS_INFO("TaskStop constructed");
     }
 
     // startTask without arguments
     int startTask()
     {
-        // Build a gesture specifier
-        // TODO: This shoud be done via speech specifier helper class
-        std::vector <temoto_2::speechSpecifier> speechSpecifiers;
-        temoto_2::speechSpecifier speechSpecifier;
-        speechSpecifier.dev = "device";
-        speechSpecifier.type = "text";
-
-        speechSpecifiers.push_back(speechSpecifier);
-
-
-        // Subscribe to gesture topic
-        if ( !hci_.getSpeech(speechSpecifiers, &Imp_task_4::speech_callback, this ) )
-        {
-            ROS_ERROR("[Imp_task_4]: getSpeech request failed");
-            return 1;
-        }
-
         return 0;
     }
 
@@ -61,7 +45,7 @@ public:
         // Check if arguments vector contains expected amount of arguments
         if (arguments.size() != numberOfArguments)
         {
-            std::cerr << "[Imp_task_4/startTask]: Wrong number of arguments. Expected: "
+            std::cerr << "[TaskStop::startTask]: Wrong number of arguments. Expected: "
                       << numberOfArguments  << " but got: " << arguments.size() << '\n';
 
             return 1;
@@ -70,20 +54,29 @@ public:
         // If it does, try to cast the arguments
         try
         {
-            arg0 = boost::any_cast<int>(arguments[0]);
-            arg1 = boost::any_cast<std::string>(arguments[1]);
-            arg2 = boost::any_cast<double>(arguments[2]);
+            arg_0 = boost::any_cast<std::string>(arguments[0]);
 
-            // Print them out
-            std::cout << arg0 << '\n';
-            std::cout << arg1 << '\n';
-            std::cout << arg2 << '\n';
+            ROS_INFO("[TaskStop::startTask] Trying to stop task: %s", arg_0.c_str());
 
-            return 0;
+            // Create a service message
+            temoto_2::stopTask stop_task_srv;
+            stop_task_srv.request.name = arg_0;
+
+            // Call the server
+            stop_task_client_.call(stop_task_srv);
+
+            ROS_INFO("[TaskStop::startTask] '/core/stop_task' service respinded: %s", stop_task_srv.response.message.c_str());
+
+            // Check the result
+            if (stop_task_srv.response.code == 0)
+                return 0;
+            else
+                return 1;
+
         }
         catch (boost::bad_any_cast &e)
         {
-            std::cerr << "[Imp_task_4/startTask]: " << e.what() << '\n';
+            std::cerr << "[TaskStop::startTask]: " << e.what() << '\n';
             return 1;
         }
     }
@@ -114,18 +107,6 @@ public:
         // Construct an empty vector
         std::vector<boost::any> solutionVector;
 
-        // Check the subtask number
-        if ( subtaskNr == 0)
-        {
-            boost::any retArg0 = arg0;
-            boost::any retArg1 = arg1;
-            boost::any retArg2 = arg2;
-
-            solutionVector.push_back(retArg0);
-            solutionVector.push_back(retArg1);
-            solutionVector.push_back(retArg2);
-        }
-
         return solutionVector;
     }
 
@@ -133,29 +114,19 @@ public:
      * Inherited methods that have to be implemented / END
      * * * * * * * * * * * * * * * * * * * * * * * * */
 
-    // Callback for processing gestures
-    void speech_callback(std_msgs::String msg)
+    ~TaskStop()
     {
-        ROS_INFO("Speech callback got: %s", msg.data.c_str());
-    }
-
-    ~Imp_task_4()
-    {
-        ROS_INFO("Imp_task_4 destructed");
+        ROS_INFO("[TaskStop::~TaskStop] TaskStop destructed");
     }
 
 private:
 
-    // Human context interface object
-    HumanContextInterface <Imp_task_4> hci_;
+    ros::NodeHandle n_;
+    ros::ServiceClient stop_task_client_;
 
-    int numberOfArguments = 3;
-
-    int arg0;
-    std::string arg1;
-    double arg2;
-
+    int numberOfArguments = 1;
+    std::string arg_0;
 };
 
 // Dont forget that part, otherwise this class would not be loadable
-CLASS_LOADER_REGISTER_CLASS(Imp_task_4, Task);
+CLASS_LOADER_REGISTER_CLASS(TaskStop, Task);

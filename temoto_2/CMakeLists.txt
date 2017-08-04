@@ -27,6 +27,7 @@ add_service_files(
 	task_handler/stopTask.srv
 	context_manager/human_context/getGestures.srv
   context_manager/human_context/getSpeech.srv
+  context_manager/human_context/stopAllocatedServices.srv
 )
 
 generate_messages(

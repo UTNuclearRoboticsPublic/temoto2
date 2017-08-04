@@ -1,5 +1,8 @@
 /*
  * TODO: * (?) Implement piping: raw_data -> filter_1 -> filter_n -> end_user
+ *       * Decide wether its sensor manager's problem to look if different tasks
+ *         are using the same resource or not. Its not a good idea to stop a node
+ *         that is used by multiple tasks
  */
 
 #include "context_manager/human_context/human_context.h"
@@ -13,6 +16,7 @@ HumanContext::HumanContext ()
     // Start the servers
     this->gestureServer_ = n_.advertiseService("setup_gesture", &HumanContext::setup_gesture_cb, this);
     this->speechServer_ = n_.advertiseService("setup_speech", &HumanContext::setup_speech_cb, this);
+    this->stop_allocated_services_ = n_.advertiseService("stop_allocated_services", &HumanContext::stopAllocatedServices, this);
 
     ROS_INFO("[HumanContext::HumanContext] all services and clients initialized, Human Context is good to go.");
 }
@@ -32,15 +36,18 @@ bool HumanContext::setup_speech_cb (temoto_2::getSpeech::Request &req,
 {
     ROS_INFO("[HumanContext::setup_speech_cb] Received a speech setup request ...");
 
+    // Check the id of the req. If there is none (the first call from a task) then provide one
+    std::string id_local = checkId(req.id);
+
     for (auto& activeReq : setupSpeechActive_)
     {
         if (compareSpeechRequest(req, activeReq.request))
         {
             ROS_INFO("[HumanContext::setup_speech_cb] Same request already available.");
             res = activeReq.response;
+            res.id = id_local;
             return true;
         }
-
     }
 
     // The request was not in "setupSpeechActive_" list. Make a new sensor request
@@ -49,18 +56,22 @@ bool HumanContext::setup_speech_cb (temoto_2::getSpeech::Request &req,
     temoto_2::startSensorRequest startSensReq;
     startSensReq.request.type = req.speechSpecifiers[0].type;
 
-    // Call the server
+    // Call the sensor manager
     while (!startSensorClient_.call(startSensReq))
     {
         ROS_ERROR("[HumanContext::setup_speech_cb] Failed to call service /start_sensor, trying again...");
     }
 
     ROS_INFO("[HumanContext::setup_speech_cb] Got a response from service /start_sensor: '%s'", startSensReq.response.message.c_str());
+    res.id = id_local;
     res.topic = startSensReq.response.topic;
+    res.name = startSensReq.response.name;
+    res.executable = startSensReq.response.executable;
     res.code = startSensReq.response.code;
 
+    // Check the response message, if all is ok then
     if (startSensReq.response.code == 0)
-    {
+    {   
         res.message = startSensReq.response.message = "Speech Setup request was satisfied: %s", startSensReq.response.message.c_str();
 
         // Add the request to the "setupSpeechActive_" list
@@ -78,7 +89,51 @@ bool HumanContext::setup_speech_cb (temoto_2::getSpeech::Request &req,
     }
 }
 
+/*
+ * TODO: send a reasonable response message and code
+ */
 
+bool HumanContext::stopAllocatedServices (temoto_2::stopAllocatedServices::Request& req,
+                                          temoto_2::stopAllocatedServices::Response& res)
+{
+    ROS_INFO("[HumanContext::stopAllocatedServices] Received a 'stopAllocatedServices' request ...");
+
+
+    // Default the response code to 0
+    res.code = 0;
+
+    // Go through the "setupGestureActive_" and "setupSpeechActive_" lists, look for the id
+    // and make a request to the Sensor Manager to stop those services.
+
+    for (auto it = setupSpeechActive_.begin(); it != setupSpeechActive_.end(); /*empty*/)
+    {
+        if ( req.id.compare((*it).response.id) == 0)
+        {
+            temoto_2::stopSensorRequest stop_sens_local;
+            stop_sens_local.request.name = (*it).response.name;
+            stop_sens_local.request.executable = (*it).response.executable;
+
+            // Call the service
+            while (!stopSensorClient_.call(stop_sens_local))
+            {
+                ROS_ERROR("[HumanContext::stopAllocatedServices] Failed to call service /stop_sensor, trying again...");
+            }
+
+            ROS_INFO("[HumanContext::stopAllocatedServices] /stop_sensor responded: %s", stop_sens_local.response.message.c_str());
+
+            if (stop_sens_local.response.code == 0)
+            {
+                res.code = stop_sens_local.response.code;
+                setupSpeechActive_.erase (it);
+            }
+        }
+
+        else
+            it++;
+    }
+
+    return true;
+}
 
 /*
  * TODO: * Implement a complete comparison
@@ -93,18 +148,22 @@ bool HumanContext::compareSpeechRequest (temoto_2::getSpeech::Request &req,
     {
         return true;
     }
-    /*
-    for(auto& )
-
-    if (reqLocal.type.compare(req.type) == 0)
-    {
-     return true;
-    }
-    */
 
     return false;
 }
 
+
+/* * * * * * * * *
+ *  CHECK ID
+ * * * * * * * * */
+
+std::string HumanContext::checkId (std::string id_in)
+{
+    if ( id_in.empty() )
+        return std::to_string (ros::Time::now().toSec());
+
+    return id_in;
+}
 
 /**
  * TODO: * Implement parsing multiple type requests: position(xyz) + orientation(rpy) + detected_gesture(str) + ...

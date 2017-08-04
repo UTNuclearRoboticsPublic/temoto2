@@ -158,8 +158,6 @@ private:
 
         ROS_INFO("[SensorManager::stop_sensor_cb] /spawn_kill_process responded: '%s'", res.message.c_str());
 
-        // Check if the /spawn_kill_process service was able to fulfill the request
-        //return ( (res.code == 0) ? true : false);
         return true;
     }
 
