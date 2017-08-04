@@ -68,6 +68,9 @@ private:
     bool compareSpeechRequest (temoto_2::getSpeech::Request &req,
                                temoto_2::getSpeech::Request &reqLocal) const;
 
+    bool compareGestureRequest (temoto_2::getGestures::Request &req,
+                                temoto_2::getGestures::Request &reqLocal) const;
+
     /**
      * @brief checkId
      * @param id_in

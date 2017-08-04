@@ -198,13 +198,12 @@ private:
 
         // If the list is empty, leave the req empty
         if (candidates.empty())
-        {
             return false;
-        }
 
         // Check if a name was specified
         if (name.compare("") != 0)
         {
+            ROS_INFO("jeei name specified");
             // Filter out the devices that follow the "name" criteria
             for (auto& entry : candidates)
             {
@@ -226,15 +225,30 @@ private:
 
         else
         {
-            // Return the first "runnable" of the element in the "candidates" list
-            ret.action = "roslaunch";
+            ROS_INFO("jeei nope no name");
+            // Get the name of the package
             ret.package = candidates[0].getName();
-            ret.name = candidates[0].getRunnables().begin()->first;
+
+            // Check for runnables
+            if ( !candidates[0].getRunnables().empty() )
+            {
+                ROS_INFO("jeei its a runnable");
+                ret.action = "rosrun";
+                ret.name = candidates[0].getRunnables().begin()->first;
+                retstartSensor.topic = candidates[0].getRunnables().begin()->second;
+            }
+
+            else if( !candidates[0].getLaunchables().empty() )
+            {
+                ROS_INFO("jeei its a launchable");
+                ret.action = "roslaunch";
+                ret.name = candidates[0].getLaunchables().begin()->first;
+                retstartSensor.topic = candidates[0].getLaunchables().begin()->second;
+            }
 
             // The name of the topic that this particular runnable publishes to
             retstartSensor.name = ret.package;
             retstartSensor.executable = ret.name;
-            retstartSensor.topic = candidates[0].getRunnables().begin()->second;
 
             return true;
         }
@@ -311,7 +325,7 @@ int main (int argc, char **argv)
     sensorManager.pkgInfoList_[0].addRunnable({"dummy_sensor", "/dummy_sensor_data"});
 
     sensorManager.pkgInfoList_.push_back (package_info("temoto_2", "text"));
-    sensorManager.pkgInfoList_[1].addRunnable({"test_2.launch", "/human_chatter"});
+    sensorManager.pkgInfoList_[1].addLaunchable({"test_2.launch", "/human_chatter"});
 
     ros::spin();
 
