@@ -203,7 +203,6 @@ private:
         // Check if a name was specified
         if (name.compare("") != 0)
         {
-            ROS_INFO("jeei name specified");
             // Filter out the devices that follow the "name" criteria
             for (auto& entry : candidates)
             {
@@ -225,14 +224,12 @@ private:
 
         else
         {
-            ROS_INFO("jeei nope no name");
             // Get the name of the package
             ret.package = candidates[0].getName();
 
             // Check for runnables
             if ( !candidates[0].getRunnables().empty() )
             {
-                ROS_INFO("jeei its a runnable");
                 ret.action = "rosrun";
                 ret.name = candidates[0].getRunnables().begin()->first;
                 retstartSensor.topic = candidates[0].getRunnables().begin()->second;
@@ -240,7 +237,6 @@ private:
 
             else if( !candidates[0].getLaunchables().empty() )
             {
-                ROS_INFO("jeei its a launchable");
                 ret.action = "roslaunch";
                 ret.name = candidates[0].getLaunchables().begin()->first;
                 retstartSensor.topic = candidates[0].getLaunchables().begin()->second;

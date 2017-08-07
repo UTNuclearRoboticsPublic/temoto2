@@ -25,6 +25,7 @@ add_service_files(
 	startSensorRequest.srv
 	stopSensorRequest.srv
 	task_handler/stopTask.srv
+	task_handler/indexTasks.srv
 	context_manager/human_context/getGestures.srv
   context_manager/human_context/getSpeech.srv
   context_manager/human_context/stopAllocatedServices.srv

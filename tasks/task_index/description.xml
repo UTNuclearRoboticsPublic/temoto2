@@ -1,11 +1,11 @@
 <?xml version="1.0" ?>
 
-<task name="turn" >
+<task name="index" >
 
   <in>
-    <arg argtype="string" value="on,off"/>
+    <arg argtype="string" value="task,tasks"/>
   </in>
-
+  
   <out>
     <arg argtype="void" value=""/>
   </out>

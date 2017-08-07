@@ -136,7 +136,7 @@ public:
     // Callback for processing gestures
     void speech_callback(std_msgs::String msg)
     {
-        ROS_INFO("Speech callback got: %s", msg.data.c_str());
+        //ROS_INFO("Speech callback got: %s", msg.data.c_str());
     }
 
     ~TaskTerminal()

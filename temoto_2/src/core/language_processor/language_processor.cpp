@@ -4,7 +4,7 @@
  * SET TASKSINDEXED
  * * * * * * * * */
 
-bool LanguageProcessor::setTasksIndexed (std::vector <TaskInfo> tasksIndexed)
+bool LanguageProcessor::setTasksIndexed (std::vector <TaskInfo>* tasksIndexed)
 {
     this->tasksIndexed_ = tasksIndexed;
     return true;
@@ -42,7 +42,7 @@ TaskList LanguageProcessor::processText (std::string my_text)
         for (int i=0; i<words.size(); i++)
         {
             // Loop over known commands
-            for (auto& command : this->tasksIndexed_)
+            for (auto& command : *(this->tasksIndexed_))
             {
                 // Check if the command matches
                 if ( words[i].compare(command.getName()) == 0 )
@@ -383,12 +383,12 @@ bool LanguageProcessor::checkRestrictions (std::string inputWord, std::vector<st
 
 
 /* * * * * * * * *
- *  CHECK THE RESTRICTIONS
+ *  CHECK THE TASK
  * * * * * * * * */
 
 bool LanguageProcessor::checkTask (std::string taskName)
 {
-    for (auto& task : tasksIndexed_)
+    for (auto& task : *tasksIndexed_)
     {
         if (task.getName().compare(taskName) == 0)
             return true;

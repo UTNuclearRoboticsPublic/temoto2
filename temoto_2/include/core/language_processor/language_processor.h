@@ -23,14 +23,14 @@ public:
      * @brief setTasksIndeed
      * @return
      */
-    bool setTasksIndexed (std::vector <TaskInfo> tasksIndexed);
+    bool setTasksIndexed (std::vector <TaskInfo>* tasksIndexed);
 
 private:
 
     /**
      * @brief tasksIndexed_
      */
-    std::vector <TaskInfo> tasksIndexed_;
+    std::vector <TaskInfo>* tasksIndexed_;
 
     /**
      * @brief parseString

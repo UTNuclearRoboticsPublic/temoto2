@@ -1,0 +1,7 @@
+string directory
+
+---
+
+uint64 code
+
+string message

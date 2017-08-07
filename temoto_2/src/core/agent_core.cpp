@@ -1,8 +1,9 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *
  *  TODO: * Fix the bug: when "terminal" task is closed, ros
- *          tries to desperately reconnect with the internal service
+ *          tries to desperately reconnect with the internal service:
  *          "Retrying connection to [ajamasinII:58905] for topic [/human_chatter]"
+ *          This is visible when the debug logger level is enabled.
  *
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -36,21 +37,23 @@ public:
         // Subscribers
         chatter_subscriber_ = n_.subscribe("human_chatter", 1000, &TemotoCore::humanChatterCallback, this);
 
-        // Initialize the classloader
-        classLoader_ = new class_loader::MultiLibraryClassLoader(false);
+        // Initialize the taskHandler. Pass in the name of the subsystem
+        // (used for namespacing services and debug information)
+        task_handler_ = new TaskHandler("core");
 
-        // Initialize the taskHandler
-        taskHandler_ = new TaskHandler( "core", classLoader_ );
-
-        // Index the available tasks
+        // Index (look recursivey for the tasks in the given folder up to specified depth)
+        // the available tasks, otherwise the task handler would have no clue about the available
+        // tasks. Later the indexing could be via indexing task.
+        // TODO: Read the base path from the parameter server
         ROS_INFO("[TemotoCore::TemotoCore]: Indexing the tasks ...");
         boost::filesystem::directory_entry dir("/home/robert/catkin_ws/src/temoto2/tasks/");
-        taskHandler_->indexTasks(dir, 1);
+        task_handler_->indexTasks(dir, 1);
 
         // Create a Language Processor and initialize it by passing the list of indexed tasks.
         // Language Processor uses the information contained within the indexed tasks to detect
-        // right keywords
-        languageProcessor_.setTasksIndexed( taskHandler_->getIndexedTasks() );
+        // right keywords (tasks and their I/O arguments)
+        ROS_INFO("[TemotoCore::TemotoCore]: Initializing the Language Processor ...");
+        language_processor_.setTasksIndexed( task_handler_->getIndexedTasks() );
     }
 
 private:
@@ -66,19 +69,14 @@ private:
     ros::Subscriber chatter_subscriber_;
 
     /**
-     * @brief languageProcessor_
+     * @brief language_processor_
      */
-    LanguageProcessor languageProcessor_;
+    LanguageProcessor language_processor_;
 
     /**
-     * @brief classLoader_
+     * @brief task_handler_
      */
-    class_loader::MultiLibraryClassLoader* classLoader_;
-
-    /**
-     * @brief taskHandler_
-     */
-    TaskHandler* taskHandler_;
+    TaskHandler* task_handler_;
 
     /**
      * @brief humanChatterCallback
@@ -87,7 +85,7 @@ private:
     void humanChatterCallback (std_msgs::String my_text_in)
     {
         // Process the text and get the required tasks if any
-        TaskList taskList = languageProcessor_.processText(my_text_in.data);
+        TaskList taskList = language_processor_.processText(my_text_in.data);
 
         ROS_INFO("[TemotoCore::humanChatterCallback] Received %lu tasks", taskList.size());
 
@@ -98,7 +96,7 @@ private:
             // specific name of the task which is used in the next step.
             ROS_INFO("[TemotoCore::humanChatterCallback] Executing task '%s' ...", task.first.getName().c_str());
 
-            if ( !taskHandler_->loadTask(task.first) )
+            if ( !task_handler_->loadTask(task.first) )
             {
                 continue;
                 // PLEASE DO SOMETHING MORE REASONABLE
@@ -107,12 +105,12 @@ private:
             // Create an instance of the task based on the class name. a task .so file might
             // contain multiple classes, therefore path is not enough and specific name
             // must be used
-            if ( taskHandler_->instantiateTask(task.first) )
+            if ( task_handler_->instantiateTask(task.first) )
             {
                 //Start the task
-                if ( !taskHandler_->startTask(task.first, task.second) )
+                if ( !task_handler_->startTask(task.first, task.second) )
                 {
-                    taskHandler_->stopTask(task.first.getName());
+                    task_handler_->stopTask(task.first.getName());
                 }
             }
 
@@ -120,9 +118,9 @@ private:
         }
 
         // Check for errors
-        if( taskHandler_->errorHandler_.gotUnreadErrors() )
+        if( task_handler_->error_handler_.gotUnreadErrors() )
         {
-            std::cout << "[TemotoCore::humanChatterCallback]: Printing the errorstack:" << taskHandler_->errorHandler_;
+            std::cout << "[TemotoCore::humanChatterCallback]: Printing the errorstack:" << task_handler_->error_handler_;
         }
     }
 };
@@ -130,14 +128,22 @@ private:
 
 int main(int argc, char **argv)
 {
+    std::cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * " << std::endl;
+    std::cout << "*                                                     * " << std::endl;
+    std::cout << "*                       TEMOTO CORE                   * " << std::endl;
+    std::cout << "*                          v.1.0                      * " << std::endl;
+    std::cout << "*                                                     * " << std::endl;
+    std::cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * " << std::endl;
+    std::cout << "\n\n";
+
     ros::init(argc, argv, "temoto_core");
     ros::NodeHandle n;
 
     // Publisher for publishing messages to core itself
     ros::Publisher chatter_publisher = n.advertise<std_msgs::String>("human_chatter", 1000);
 
-    // Create core object
-    TemotoCore temotoCore;
+    // Create the Core object
+    TemotoCore temoto_core;
 
     // Create async spinner, otherwise there is a possibility
     // of locking during core calls

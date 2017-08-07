@@ -12,14 +12,28 @@
  *  CONSTRUCTOR
  * * * * * * * * */
 
+/*
 TaskHandler::TaskHandler (std::string system_prefix,
                           class_loader::MultiLibraryClassLoader * loader)
     : system_prefix_(system_prefix),
-      loader_(loader)
+      class_loader_(loader)
 {  
     // Start the servers
     //this->start_task_server_ = n_.advertiseService (system_prefix_ + "/start_sensor", &TaskHandler::startTaskCallback, this);
     this->stop_task_server_ = n_.advertiseService (system_prefix_ + "/stop_task", &TaskHandler::stopTaskCallback, this);
+}
+*/
+
+TaskHandler::TaskHandler (std::string system_prefix)
+    : system_prefix_(system_prefix)
+{
+    // Initialize the vector of indexed tasks.
+    tasks_indexed_ = new std::vector <TaskInfo>(1);
+
+    // Start the servers
+    class_loader_ = new class_loader::MultiLibraryClassLoader(false);
+    this->stop_task_server_ = n_.advertiseService (system_prefix_ + "/stop_task", &TaskHandler::stopTaskCallback, this);
+    this->index_tasks_server_ = n_.advertiseService (system_prefix_ + "/index_tasks", &TaskHandler::indexTasksCallback, this);
 }
 
 
@@ -27,12 +41,12 @@ TaskHandler::TaskHandler (std::string system_prefix,
  *  FIND TASK
  * * * * * * * * */
 
-std::vector <TaskInfo> TaskHandler::findTask(std::string taskToFind, std::vector <TaskInfo>& tasks)
+std::vector <TaskInfo> TaskHandler::findTask(std::string task_to_find, const std::vector <TaskInfo>& tasks)
 {
     std::vector <TaskInfo> tasksFound;
     for (auto& task : tasks)
     {
-        if (taskToFind.compare(task.getName()) == 0)
+        if (task_to_find.compare(task.getName()) == 0)
         {
             tasksFound.push_back(task);
         }
@@ -45,9 +59,9 @@ std::vector <TaskInfo> TaskHandler::findTask(std::string taskToFind, std::vector
  *  FIND TASK LOCAL
  * * * * * * * * */
 
-std::vector <TaskInfo> TaskHandler::findTaskLocal(std::string taskToFind)
+std::vector <TaskInfo> TaskHandler::findTaskLocal(std::string task_to_find)
 {
-    return findTask(taskToFind, this->tasksIndexed_);
+    return findTask(task_to_find, *(this->tasks_indexed_));
 }
 
 
@@ -55,9 +69,9 @@ std::vector <TaskInfo> TaskHandler::findTaskLocal(std::string taskToFind)
  *  FIND TASK RUNNING
  * * * * * * * * */
 
-std::vector <TaskInfo> TaskHandler::findTaskRunning(std::string taskToFind)
+std::vector <TaskInfo> TaskHandler::findTaskRunning(std::string task_to_find)
 {
-    return findTask(taskToFind, this->running_tasks_);
+    return findTask(task_to_find, this->running_tasks_);
 }
 
 
@@ -65,9 +79,9 @@ std::vector <TaskInfo> TaskHandler::findTaskRunning(std::string taskToFind)
  *  FIND TASK FROM FILESYSTEM
  * * * * * * * * */
 
-std::vector <TaskInfo> TaskHandler::findTaskFilesys(std::string taskToFind, boost::filesystem::directory_entry basePath, int searchDepth)
+std::vector <TaskInfo> TaskHandler::findTaskFilesys(std::string task_to_find, boost::filesystem::directory_entry base_path, int search_depth)
 {
-    boost::filesystem::path current_dir (basePath);
+    boost::filesystem::path current_dir (base_path);
     boost::filesystem::directory_iterator end_itr;
     std::vector <TaskInfo> tasksFound;
 
@@ -78,9 +92,9 @@ std::vector <TaskInfo> TaskHandler::findTaskFilesys(std::string taskToFind, boos
         {
 
             // if its a directory and depth limit is not there yet, go inside it
-            if ( boost::filesystem::is_directory(*itr) & (searchDepth > 0) )
+            if ( boost::filesystem::is_directory(*itr) & (search_depth > 0) )
             {
-                std::vector<TaskInfo> subTasksFound = findTaskFilesys( taskToFind, *itr, (searchDepth - 1));
+                std::vector<TaskInfo> subTasksFound = findTaskFilesys( task_to_find, *itr, (search_depth - 1));
 
                 // Append the subtasks if not empty
                 if ( !subTasksFound.empty() )
@@ -114,7 +128,7 @@ std::vector <TaskInfo> TaskHandler::findTaskFilesys(std::string taskToFind, boos
                                     e.back().getUrgency(),
                                     "[TaskHandler/findTask] FORWARDING");
 
-                    this->errorHandler_.append(e);
+                    this->error_handler_.append(e);
                 }
             }
         }
@@ -138,9 +152,16 @@ std::vector <TaskInfo> TaskHandler::findTaskFilesys(std::string taskToFind, boos
  *  INDEX TASKS
  * * * * * * * * */
 
-void TaskHandler::indexTasks (boost::filesystem::directory_entry basePath, int searchDepth)
+void TaskHandler::indexTasks (boost::filesystem::directory_entry base_path, int search_depth)
 {
-    this->tasksIndexed_ = findTaskFilesys ("", basePath, searchDepth);
+    try
+    {
+        *tasks_indexed_ = findTaskFilesys ("", base_path, search_depth);
+    }
+    catch (...)
+    {
+        ROS_ERROR("[%s/TaskHandler::indexTasks] FILL IN THE BLANKS", this->system_prefix_.c_str());
+    }
 }
 
 
@@ -148,9 +169,9 @@ void TaskHandler::indexTasks (boost::filesystem::directory_entry basePath, int s
  *  GET THE INDEX TASKS
  * * * * * * * * */
 
-std::vector <TaskInfo> TaskHandler::getIndexedTasks()
+std::vector <TaskInfo>* TaskHandler::getIndexedTasks()
 {
-    return this->tasksIndexed_;
+    return this->tasks_indexed_;
 }
 
 
@@ -165,16 +186,16 @@ bool TaskHandler::loadTask(TaskInfo& task)
     std::vector<std::string> classes;
 
     // Get the "path" to its lib file
-    std::string pathToLib =  task.getLibPath();
+    std::string path_to_lib =  task.getLibPath();
 
     try
     {
         // Start loading a task library
-        loader_->loadLibrary(pathToLib);
-        classes = loader_->getAvailableClassesForLibrary<Task>(pathToLib);
+        class_loader_->loadLibrary(path_to_lib);
+        classes = class_loader_->getAvailableClassesForLibrary<Task>(path_to_lib);
 
         // Done loading
-        ROS_DEBUG( "[%s/TaskHandler::loadTask] Loaded %lu classes from %s", this->system_prefix_.c_str(), classes.size(), pathToLib.c_str() );
+        ROS_DEBUG( "[%s/TaskHandler::loadTask] Loaded %lu classes from %s", this->system_prefix_.c_str(), classes.size(), path_to_lib.c_str() );
 
         // Add the name of the class
         task.class_name_ = classes[0];
@@ -209,7 +230,7 @@ bool TaskHandler::instantiateTask(TaskInfo& task)
 
     // Check if there is a class with this name
     bool task_class_found = false;
-    std::vector<std::string> loadedClasses = loader_->getAvailableClasses<Task>();
+    std::vector<std::string> loadedClasses = class_loader_->getAvailableClasses<Task>();
 
     for (std::string singleClass : loadedClasses)
     {
@@ -226,7 +247,7 @@ bool TaskHandler::instantiateTask(TaskInfo& task)
         try
         {
             ROS_DEBUG( "[%s/TaskHandler::instantiateTask] instatiating task: %s", this->system_prefix_.c_str(), taskClassName.c_str());
-            task.task_pointer_ = loader_->createInstance<Task>(taskClassName);
+            task.task_pointer_ = class_loader_->createInstance<Task>(taskClassName);
 
             // Push the task info into the list of running tasks
             running_tasks_.push_back (task);
@@ -312,13 +333,13 @@ bool TaskHandler::startTask(TaskInfo& task, std::vector<boost::any> arguments)
  *        just stopping the first one.
  * * * * * * * * */
 
-bool TaskHandler::stopTask(std::string taskName)
+bool TaskHandler::stopTask(std::string task_name)
 {
     // Find the task by iterating through the list of running tasks
     for (auto it = this->running_tasks_.begin(); it != this->running_tasks_.end(); it++)
     {
         // If a task was found then delete it
-        if ((*it).getName().compare(taskName) == 0)
+        if ((*it).getName().compare(task_name) == 0)
         {
             try
             {
@@ -350,10 +371,10 @@ bool TaskHandler::stopTask(std::string taskName)
  *  UNLOAD LIB
  * * * * * * * * */
 
-bool TaskHandler::unloadTaskLib(std::string pathToLib)
+bool TaskHandler::unloadTaskLib(std::string path_to_lib)
 {
     ROS_INFO( "[TaskHandler/unloadTaskLib] unloading library");
-    loader_->unloadLibrary(pathToLib);
+    class_loader_->unloadLibrary(path_to_lib);
     return true;
 }
 
@@ -423,4 +444,31 @@ bool TaskHandler::stopTaskCallback (temoto_2::stopTask::Request& req,
     }
 
     return true;
+}
+
+
+/* * * * * * * * *
+ *  INDEX TASKS SERVICE CALLBACK
+ * * * * * * * * */
+
+bool TaskHandler::indexTasksCallback (temoto_2::indexTasks::Request& req,
+                         temoto_2::indexTasks::Response& res)
+{
+    ROS_DEBUG( "[%s/TaskHandler::indexTasksCallback] Received a request to index tasks at '%s'", this->system_prefix_.c_str(), req.directory.c_str());
+    try
+    {
+        boost::filesystem::directory_entry dir(req.directory);
+        indexTasks(dir, 1);
+        res.code = 0;
+        res.message = "Browsed and indexed the tasks successfully";
+
+        return true;
+    }
+    catch(...)
+    {
+        ROS_ERROR("[%s/TaskHandler::indexTasksCallback] Failed to index the tasks", this->system_prefix_.c_str());
+        res.code = 1;
+        res.message = "Failed to index the tasks";
+        return false;
+    }
 }
