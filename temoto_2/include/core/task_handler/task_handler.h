@@ -2,12 +2,14 @@
 #define TASK_HANDLER_H
 
 #include <class_loader/multi_library_class_loader.h>
+#include <thread>
 #include <boost/any.hpp>
 #include "boost/filesystem.hpp"
 #include <exception>
 
 #include "core/common.h"
 #include "core/task_handler/task_info.h"
+#include "core/task_handler/running_task.h"
 #include "core/task_handler/description_processor.h"
 #include "base_task/task.h"
 #include "temoto_2/stopTask.h"
@@ -49,7 +51,7 @@ public:
      * @param task_to_find
      * @return
      */
-    std::vector <TaskInfo> findTaskRunning(std::string task_to_find);
+    //std::vector <TaskInfo> findTaskRunning(std::string task_to_find);
 
     /**
      * @brief findTask
@@ -74,25 +76,33 @@ public:
     std::vector <TaskInfo>* getIndexedTasks();
 
     /**
+     * @brief executeTask
+     * @param task_info
+     * @param arguments
+     * @return
+     */
+    bool executeTask(TaskInfo task_info, std::vector<boost::any> arguments);
+
+    /**
      * @brief loadTask
      * @param task
      * @return
      */
-    bool loadTask(TaskInfo& task);
+    bool loadTask(RunningTask& task);
 
     /**
      * @brief instantiateTask
      * @param task
      * @return
      */
-    bool instantiateTask(TaskInfo& task);
+    bool instantiateTask(RunningTask& task);
 
     /**
      * @brief startTask
      * @param task
      * @return
      */
-    bool startTask(TaskInfo& task);
+    bool startTask(RunningTask& task);
 
     /**
      * @brief startTask
@@ -100,7 +110,14 @@ public:
      * @param arguments
      * @return
      */
-    bool startTask(TaskInfo& task, std::vector<boost::any> arguments);
+    bool startTask(RunningTask& task, std::vector<boost::any> arguments);
+
+    /**
+     * @brief startTaskThread
+     * @param task
+     * @return
+     */
+    bool startTaskThread(RunningTask& task, std::vector<boost::any> arguments);
 
     /**
      * @brief Stops a task specified by the task_name
@@ -116,8 +133,9 @@ public:
      */
     bool unloadTaskLib(std::string path_to_lib);
 
-
 private:
+
+    //ros::NodeHandlePtr n_ = boost::make_shared<ros::NodeHandle>();
 
     ros::NodeHandle n_;
 
@@ -137,7 +155,9 @@ private:
     /**
      * @brief runningTasks_
      */
-    std::vector <TaskInfo> running_tasks_;
+    std::vector <RunningTask> running_tasks_;
+
+    std::thread test1;
 
     /**
      * @brief tasks_indexed_

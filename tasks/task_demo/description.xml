@@ -7,7 +7,7 @@
   </in>
 
 	<in>
-    <arg argtype="string" value="no,not,dont,without"/>
+    <arg argtype="string" value="no,not,dont,without,excluding"/>
   </in>
   
   <out>

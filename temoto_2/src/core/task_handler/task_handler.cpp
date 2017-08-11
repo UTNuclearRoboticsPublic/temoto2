@@ -12,18 +12,6 @@
  *  CONSTRUCTOR
  * * * * * * * * */
 
-/*
-TaskHandler::TaskHandler (std::string system_prefix,
-                          class_loader::MultiLibraryClassLoader * loader)
-    : system_prefix_(system_prefix),
-      class_loader_(loader)
-{  
-    // Start the servers
-    //this->start_task_server_ = n_.advertiseService (system_prefix_ + "/start_sensor", &TaskHandler::startTaskCallback, this);
-    this->stop_task_server_ = n_.advertiseService (system_prefix_ + "/stop_task", &TaskHandler::stopTaskCallback, this);
-}
-*/
-
 TaskHandler::TaskHandler (std::string system_prefix)
     : system_prefix_(system_prefix)
 {
@@ -68,12 +56,12 @@ std::vector <TaskInfo> TaskHandler::findTaskLocal(std::string task_to_find)
 /* * * * * * * * *
  *  FIND TASK RUNNING
  * * * * * * * * */
-
+/*
 std::vector <TaskInfo> TaskHandler::findTaskRunning(std::string task_to_find)
 {
     return findTask(task_to_find, this->running_tasks_);
 }
-
+*/
 
 /* * * * * * * * *
  *  FIND TASK FROM FILESYSTEM
@@ -179,14 +167,14 @@ std::vector <TaskInfo>* TaskHandler::getIndexedTasks()
  *  LOAD TASK
  * * * * * * * * */
 
-bool TaskHandler::loadTask(TaskInfo& task)
+bool TaskHandler::loadTask(RunningTask& task)
 {
     // Create an empty vector for storing the class names (currently a task
     // could have multiple tasks inside it. but it sounds TROUBLESOME
     std::vector<std::string> classes;
 
     // Get the "path" to its lib file
-    std::string path_to_lib =  task.getLibPath();
+    std::string path_to_lib =  task.task_info_.getLibPath();
 
     try
     {
@@ -198,7 +186,7 @@ bool TaskHandler::loadTask(TaskInfo& task)
         ROS_DEBUG( "[%s/TaskHandler::loadTask] Loaded %lu classes from %s", this->system_prefix_.c_str(), classes.size(), path_to_lib.c_str() );
 
         // Add the name of the class
-        task.class_name_ = classes[0];
+        task.task_info_.class_name_ = classes[0];
 
         return true;
     }
@@ -217,9 +205,9 @@ bool TaskHandler::loadTask(TaskInfo& task)
  *  INSTANTIATE TASK
  * * * * * * * * */
 
-bool TaskHandler::instantiateTask(TaskInfo& task)
+bool TaskHandler::instantiateTask(RunningTask& task)
 {
-    std::string taskClassName = task.getClassName();
+    std::string taskClassName = task.task_info_.getClassName();
 
     // First check that the task has a "class name"
     if (taskClassName.empty())
@@ -249,8 +237,7 @@ bool TaskHandler::instantiateTask(TaskInfo& task)
             ROS_DEBUG( "[%s/TaskHandler::instantiateTask] instatiating task: %s", this->system_prefix_.c_str(), taskClassName.c_str());
             task.task_pointer_ = class_loader_->createInstance<Task>(taskClassName);
 
-            // Push the task info into the list of running tasks
-            running_tasks_.push_back (task);
+            return true;
         }
 
         catch(class_loader::ClassLoaderException& e)
@@ -271,14 +258,15 @@ bool TaskHandler::instantiateTask(TaskInfo& task)
 
 /* * * * * * * * *
  *  START TASK WITHOUT ARGUMENTS
+ *
+ * TODO: CHECK IF THE TASK EVEN EXISTS IN THE LIST OF RUNNING TASKS
  * * * * * * * * */
-// TODO: CHECK IF THE TASK EVEN EXISTS IN THE LIST OF RUNNING TASKS
 
-bool TaskHandler::startTask(TaskInfo& task)
+bool TaskHandler::startTask(RunningTask& task)
 {
     try
     {
-        ROS_DEBUG( "[TaskHandler/startTask] starting task: %s", task.getName().c_str());
+        ROS_DEBUG( "[TaskHandler/startTask] starting task: %s", task.task_info_.getName().c_str());
         task.task_pointer_->startTask();
         return true;
     }
@@ -298,7 +286,7 @@ bool TaskHandler::startTask(TaskInfo& task)
  *  TODO: * check the running tasks lists before doing anything
  * * * * * * * * */
 
-bool TaskHandler::startTask(TaskInfo& task, std::vector<boost::any> arguments)
+bool TaskHandler::startTask(RunningTask& task, std::vector<boost::any> arguments)
 {
     // If the list is empty then ...
     if (arguments.empty())
@@ -310,7 +298,7 @@ bool TaskHandler::startTask(TaskInfo& task, std::vector<boost::any> arguments)
     {
         try
         {
-            ROS_DEBUG( "[TaskHandler/startTask] starting task (with arguments): %s", task.getName().c_str());
+            ROS_DEBUG( "[TaskHandler/startTask] starting task (with arguments): %s", task.task_info_.getName().c_str());
             task.task_pointer_->startTask(0, arguments);
             return true;
         }
@@ -327,6 +315,70 @@ bool TaskHandler::startTask(TaskInfo& task, std::vector<boost::any> arguments)
 
 
 /* * * * * * * * *
+ *  START TASK THREAD
+ * * * * * * * * */
+
+bool TaskHandler::startTaskThread(RunningTask& task, std::vector<boost::any> arguments)
+{
+    using memfunc_type = bool (TaskHandler::*)(RunningTask&, std::vector<boost::any>);
+    memfunc_type memfunc = &TaskHandler::startTask;
+
+    task.task_thread_ = std::thread(memfunc, this, std::ref(task), arguments);
+    return true;
+}
+
+
+/* * * * * * * * *
+ *  EXECUTE TASK
+ * * * * * * * * */
+
+bool TaskHandler::executeTask(TaskInfo task_info, std::vector<boost::any> arguments)
+{
+    // Create a RunningTask object
+    RunningTask task_to_run;
+    task_to_run.task_info_ = task_info;
+
+    /*
+     * Use the name of the task to load in the task class. task handler returns the internal
+     * specific name of the task which is used in the next step.
+     */
+    ROS_INFO("[TaskHandler::executeTask] Executing task '%s' ...", task_to_run.task_info_.getName().c_str());
+
+    if ( !loadTask(task_to_run) )
+    {
+        // throw error
+        return false;
+    }
+
+    /*
+     * Create an instance of the task based on the class name. a task .so file might
+     * contain multiple classes, therefore path is not enough and specific name
+     * must be used
+     */
+    if ( instantiateTask(task_to_run) )
+    {
+        //Start the task
+        if ( !startTaskThread(task_to_run, arguments) )
+        {
+            stopTask(task_to_run.task_info_.getName());
+            return false;
+        }
+
+        /* Push the task info into the list of running tasks
+         * NOTE: If the following ROS_INFO message is commented out, then the thread wont
+         * run correctly ... Im not sure about why is this relevant but in general, thats
+         * NOT A GOOD SIGN IN TERMS OF RELIABILITY. Maybe the move operation screws something
+         * up when the constructor of the task is doing its thing
+         */
+        ROS_INFO("[TaskHandler::executeTask] Moving the task into the 'running_tasks' vector ...");
+        running_tasks_.push_back (std::move(task_to_run));
+    }
+
+    return true;
+}
+
+
+/* * * * * * * * *
  *  STOP TASK
  *
  *  TODO: when multiple tasks with the same name are found then do something more reasonable than
@@ -339,11 +391,11 @@ bool TaskHandler::stopTask(std::string task_name)
     for (auto it = this->running_tasks_.begin(); it != this->running_tasks_.end(); it++)
     {
         // If a task was found then delete it
-        if ((*it).getName().compare(task_name) == 0)
+        if ((*it).task_info_.getName().compare(task_name) == 0)
         {
             try
             {
-                ROS_DEBUG( "[%s/TaskHandler::stopTask] Stopping and erasing task: %s", this->system_prefix_.c_str(), (*it).getName().c_str());
+                ROS_DEBUG( "[%s/TaskHandler::stopTask] Stopping and erasing task: %s", this->system_prefix_.c_str(), (*it).task_info_.getName().c_str());
                 running_tasks_.erase (it);
                 return true;
             }

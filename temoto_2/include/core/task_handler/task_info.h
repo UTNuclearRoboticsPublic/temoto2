@@ -6,8 +6,9 @@
 #include <vector>
 #include <utility>
 #include <boost/any.hpp>
+#include <thread>
 
-#include "base_task/task.h"
+//#include "base_task/task.h"
 
 class TaskInfo;
 
@@ -83,7 +84,7 @@ private:
 
     ParamList return_;
 
-    boost::shared_ptr<Task> task_pointer_;
+   //boost::shared_ptr<Task> task_pointer_;
 };
 
 /**

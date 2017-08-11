@@ -109,6 +109,7 @@ private:
 
     std::string id_;
 
+    //ros::NodeHandlePtr n_ = boost::make_shared<ros::NodeHandle>();
     ros::NodeHandle n_;
     ros::Subscriber gestureSubscriber_;
     ros::Subscriber speechSubscriber_;

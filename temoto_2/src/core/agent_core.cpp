@@ -22,6 +22,7 @@
 #include "core/task_handler/description_processor.h"
 
 #include "core/task_handler/task_info.h"
+#include "core/task_handler/running_task.h"
 
 class TemotoCore
 {
@@ -41,17 +42,23 @@ public:
         // (used for namespacing services and debug information)
         task_handler_ = new TaskHandler("core");
 
-        // Index (look recursivey for the tasks in the given folder up to specified depth)
-        // the available tasks, otherwise the task handler would have no clue about the available
-        // tasks. Later the indexing could be via indexing task.
-        // TODO: Read the base path from the parameter server
+        /*
+         * Index (look recursivey for the tasks in the given folder up to specified depth)
+         * the available tasks, otherwise the task handler would have no clue about the available
+         * tasks. Later the indexing could be via indexing task.
+         * TODO: Read the base path from the parameter server
+         */
         ROS_INFO("[TemotoCore::TemotoCore]: Indexing the tasks ...");
         boost::filesystem::directory_entry dir("/home/robert/catkin_ws/src/temoto2/tasks/");
         task_handler_->indexTasks(dir, 1);
 
-        // Create a Language Processor and initialize it by passing the list of indexed tasks.
-        // Language Processor uses the information contained within the indexed tasks to detect
-        // right keywords (tasks and their I/O arguments)
+        /*
+         * Create a Language Processor and initialize it by passing the list of indexed tasks.
+         * Language Processor uses the information contained within the indexed tasks to detect
+         * right keywords (tasks and their I/O arguments). Since the list of indexed tasks are
+         * passed as a pointer, the "TaskHandler::indexTasks" call will be enough to keep the
+         * Language Processor up-to-date
+         */
         ROS_INFO("[TemotoCore::TemotoCore]: Initializing the Language Processor ...");
         language_processor_.setTasksIndexed( task_handler_->getIndexedTasks() );
     }
@@ -92,28 +99,7 @@ private:
         // Find a task
         for (auto task: taskList)
         {
-            // Use the name of the task to load in the task class. task handler returns the internal
-            // specific name of the task which is used in the next step.
-            ROS_INFO("[TemotoCore::humanChatterCallback] Executing task '%s' ...", task.first.getName().c_str());
-
-            if ( !task_handler_->loadTask(task.first) )
-            {
-                continue;
-                // PLEASE DO SOMETHING MORE REASONABLE
-            }
-
-            // Create an instance of the task based on the class name. a task .so file might
-            // contain multiple classes, therefore path is not enough and specific name
-            // must be used
-            if ( task_handler_->instantiateTask(task.first) )
-            {
-                //Start the task
-                if ( !task_handler_->startTask(task.first, task.second) )
-                {
-                    task_handler_->stopTask(task.first.getName());
-                }
-            }
-
+            task_handler_->executeTask(task.first, task.second);
             std::cout << std::endl;
         }
 
@@ -145,15 +131,16 @@ int main(int argc, char **argv)
     // Create the Core object
     TemotoCore temoto_core;
 
-    // Create async spinner, otherwise there is a possibility
-    // of locking during core calls
+    // Create async spinner, otherwise there is a possibility of locking during core calls
     ros::AsyncSpinner spinner(0);
     spinner.start();
     ros::Rate loop_rate(10);
 
-    // Set the initial tasks
-    // TODO: currently done just by publishing a chatter msg, do it
-    //       in a reasonable manner by just loading in the tasks.
+    /*
+     * Set the initial tasks
+     * TODO: currently done just by publishing a chatter msg, do it
+     *       in a reasonable manner by just loading in the tasks.
+     */
     std_msgs::String init_msg;
     init_msg.data = "terminal";
     chatter_publisher.publish(init_msg);
