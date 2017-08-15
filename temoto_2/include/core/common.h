@@ -10,9 +10,7 @@
 
 #include "core/task_handler/task_info.h"
 #include "core/core_errors.h"
+#include "common/tools.h"
 #include "ros/ros.h"
-
-
-//typedef std::vector<std::string, std::vector<std::string>> TaskToArgBook;
 
 #endif

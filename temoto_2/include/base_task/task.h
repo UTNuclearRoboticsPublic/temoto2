@@ -19,7 +19,7 @@ public:
      * @brief Start the task
      * @return
      */
-    virtual int startTask() = 0;
+    virtual bool startTask() = 0;
 
     /**
      * @brief startTask
@@ -28,25 +28,29 @@ public:
      * generic way ( imo better than void*) for not caring about the argument types
      * @return
      */
-    virtual int startTask( int subtaskNr, std::vector<boost::any> arguments ) = 0;
+    virtual bool startTask( int subtaskNr, std::vector<boost::any> arguments ) = 0;
 
     /**
      * @brief pauseTask
      * @return
      */
-    virtual int pauseTask() = 0;
+    bool pauseTask();
 
     /**
      * @brief stopTask
      * @return
      */
-    virtual int stopTask() = 0;
+    bool stopTask()
+    {
+        stop_task_ = true;
+        return 0;
+    }
 
     /**
      * @brief Receive a short description of the task
      * @return
      */
-    virtual std::string getDescription() = 0;
+    std::string getDescription();
 
     /**
      * @brief getStatus
@@ -70,6 +74,7 @@ public:
 protected:
 
     std::string description;
+    bool stop_task_ = false;
 };
 
 

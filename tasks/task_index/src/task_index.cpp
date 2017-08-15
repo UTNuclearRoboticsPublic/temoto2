@@ -30,13 +30,13 @@ public:
     }
 
     // startTask without arguments
-    int startTask()
+    bool startTask()
     {
-        return 0;
+        return true;
     }
 
     // startTask with arguments
-    int startTask(int subtaskNr, std::vector<boost::any> arguments )
+    bool startTask(int subtaskNr, std::vector<boost::any> arguments )
     {
         // Check if arguments vector contains expected amount of arguments
         if (arguments.size() != number_of_arguments)
@@ -44,7 +44,7 @@ public:
             std::cerr << "[TaskIndex::startTask]: Wrong number of arguments. Expected: "
                       << number_of_arguments  << " but got: " << arguments.size() << '\n';
 
-            return 1;
+            return false;
         }
 
         // If it does, try to cast the arguments
@@ -65,31 +65,22 @@ public:
 
             // Check the result
             if (index_tasks_srv.response.code == 0)
-                return 0;
+                return true;
             else
-                return 1;
+                return false;
 
         }
         catch (boost::bad_any_cast &e)
         {
             std::cerr << "[TaskIndex::startTask]: " << e.what() << '\n';
-            return 1;
+            return false;
         }
     }
 
-    int pauseTask()
-    {
-        return 2;
-    }
 
-    int stopTask()
+    bool stopTask()
     {
-        return 3;
-    }
-
-    std::string getDescription()
-    {
-        return description;
+        return true;
     }
 
     std::string getStatus()

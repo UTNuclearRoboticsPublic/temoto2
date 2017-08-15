@@ -135,8 +135,11 @@ public:
 
 private:
 
-    //ros::NodeHandlePtr n_ = boost::make_shared<ros::NodeHandle>();
+    const std::string class_name_ = "TaskHandler";
 
+    /**
+     * @brief n_
+     */
     ros::NodeHandle n_;
 
     // ros::ServiceServer startTaskServer_;
@@ -156,8 +159,6 @@ private:
      * @brief runningTasks_
      */
     std::vector <RunningTask> running_tasks_;
-
-    std::thread test1;
 
     /**
      * @brief tasks_indexed_

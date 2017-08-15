@@ -33,7 +33,7 @@ public:
     }
 
     // startTask without arguments
-    int startTask()
+    bool startTask()
     {
         // Build a gesture specifier
         // TODO: This shoud be done via speech specifier helper class
@@ -49,14 +49,14 @@ public:
         if ( !hci_.getSpeech(speechSpecifiers, &TaskTerminal::speech_callback, this ) )
         {
             ROS_ERROR("[TaskTerminal::startTask()]: getSpeech request failed");
-            return 1;
+            return false;
         }
 
-        return 0;
+        return true;
     }
 
     // startTask with arguments
-    int startTask(int subtaskNr, std::vector<boost::any> arguments )
+    bool startTask(int subtaskNr, std::vector<boost::any> arguments )
     {
         // Check if arguments vector contains expected amount of arguments
         if (arguments.size() != numberOfArguments)
@@ -64,7 +64,7 @@ public:
             std::cerr << "[TaskTerminal/startTask]: Wrong number of arguments. Expected: "
                       << numberOfArguments  << " but got: " << arguments.size() << '\n';
 
-            return 1;
+            return false;
         }
 
         // If it does, try to cast the arguments
@@ -79,28 +79,18 @@ public:
             std::cout << arg1 << '\n';
             std::cout << arg2 << '\n';
 
-            return 0;
+            return true;
         }
         catch (boost::bad_any_cast &e)
         {
             std::cerr << "[TaskTerminal::startTask]: " << e.what() << '\n';
-            return 1;
+            return false;
         }
     }
 
-    int pauseTask()
+    bool stopTask()
     {
-        return 2;
-    }
-
-    int stopTask()
-    {
-        return 3;
-    }
-
-    std::string getDescription()
-    {
-        return description;
+        return true;
     }
 
     std::string getStatus()
