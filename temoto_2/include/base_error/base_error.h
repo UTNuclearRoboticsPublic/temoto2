@@ -182,6 +182,23 @@ private:
 
     ErrorStack errorStack_;
 };
+
+/**
+ * @brief formatError
+ * @param code
+ * @param subsystem
+ * @param urgency
+ * @param message
+ * @param timeStamp
+ * @return
+ */
+ErrorStack formatError ( int code,
+                         Subsystem subsystem,
+                         Urgency urgency,
+                         std::string message,
+                         ros::Time timeStamp );
+
+
 } // end of error namespace
 
 /**

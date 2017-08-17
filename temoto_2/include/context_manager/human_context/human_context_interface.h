@@ -6,6 +6,7 @@
 #include "temoto_2/getSpeech.h"
 #include "temoto_2/stopAllocatedServices.h"
 #include "std_msgs/Float32.h"
+#include "leap_motion_controller/Set.h"
 
 //#include <boost/function.hpp>
 
@@ -21,7 +22,7 @@ public:
         this->stopAllocatedServices_ = n_.serviceClient<temoto_2::stopAllocatedServices>("stop_allocated_services");
     }
 
-    bool getGestures (std::vector <temoto_2::gestureSpecifier> gestureSpecifiers, void(T::*callback)(std_msgs::Float32), T* obj)
+    bool getGestures (std::vector <temoto_2::gestureSpecifier> gestureSpecifiers, void(T::*callback)(leap_motion_controller::Set), T* obj)
     {
         // Contact the "Context Manager", pass the gesture specifier and if successful, get
         // the name of the topic

@@ -77,7 +77,8 @@ private:
         return true;
     }
 
-    /* Callback to a service that executes/runs a requested device
+    /*
+     * Callback to a service that executes/runs a requested device
      * and sends back the topic that the device is publishing to
      * THIS IS LIKELY A GENERIC FUNCTION THAT WILL BE USED ALSO BY
      * OTHER MANAGERS
@@ -317,11 +318,15 @@ int main (int argc, char **argv)
     SensorManager sensorManager;
 
     // Add a dummy sensro entry (For testing)
+    sensorManager.pkgInfoList_.push_back (package_info("leap_motion_controller", "hand"));
+    sensorManager.pkgInfoList_[0].addRunnable({"leap_motion", "/leap_motion_output"});
+
     sensorManager.pkgInfoList_.push_back (package_info("temoto_2", "hand"));
-    sensorManager.pkgInfoList_[0].addRunnable({"dummy_sensor", "/dummy_sensor_data"});
+    sensorManager.pkgInfoList_[1].addRunnable({"dummy_sensor", "/dummy_sensor_data"});
 
     sensorManager.pkgInfoList_.push_back (package_info("temoto_2", "text"));
-    sensorManager.pkgInfoList_[1].addLaunchable({"test_2.launch", "/human_chatter"});
+    sensorManager.pkgInfoList_[2].addLaunchable({"test_2.launch", "/human_chatter"});
+
 
     ros::spin();
 

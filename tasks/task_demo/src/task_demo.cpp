@@ -133,10 +133,13 @@ public:
     }
 
     // Callback for processing gestures
-    void gesture_callback(std_msgs::Float32 msg)
+    void gesture_callback(leap_motion_controller::Set gesture)
     {
         if (print_)
-            ROS_INFO("Gesture callback got: %f", msg.data);
+        {
+            //ROS_INFO("Gesture callback got: %f", gesture.data);
+            std::cout << "Spammfest: " << gesture << std::endl;
+        }
     }
 
     ~TaskDemo()

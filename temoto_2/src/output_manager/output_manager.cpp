@@ -1,6 +1,6 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-//#include "context_manager/human_context/human_context.h"
+#include "output_manager/rviz_manager/rviz_manager.h"
 
 #include <sstream>
 
@@ -11,7 +11,7 @@ int main(int argc, char **argv)
     ros::NodeHandle n;
 
     // Create instance of human context
-    HumanContext humanContext;
+    RvizManager rviz_manager;
 
     ros::Rate loop_rate(10);
 

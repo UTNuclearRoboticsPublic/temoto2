@@ -115,6 +115,25 @@ error::ErrorStack error::ErrorHandler::readAndClear()
     return errorStackCopy;
 }
 
+ErrorStack error::formatError ( int code,
+                                Subsystem subsystem,
+                                Urgency urgency,
+                                std::string message,
+                                ros::Time timeStamp )
+{
+    ROS_ERROR("%s", message.c_str());
+
+    error::ErrorStack error_stack;
+    error_stack.emplace_back( code,
+                              subsystem,
+                              urgency,
+                              message,
+                              timeStamp );
+
+    return error_stack;
+}
+
+
 std::ostream& operator<<(std::ostream& out, const error::BaseError& t)
 {
     out << std::endl;
