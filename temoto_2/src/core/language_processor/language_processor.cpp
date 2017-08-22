@@ -17,6 +17,9 @@ bool LanguageProcessor::setTasksIndexed (std::vector <TaskInfo>* tasksIndexed)
 
 TaskList LanguageProcessor::processText (std::string my_text)
 {
+    ROS_INFO("name of the func: %s", __PRETTY_FUNCTION__);
+    ROS_INFO("name of the func: %s", __func__);
+
     // Create empty tasklist
     TaskList taskList;
 

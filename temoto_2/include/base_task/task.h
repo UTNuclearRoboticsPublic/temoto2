@@ -9,6 +9,7 @@
 
 #include <string>
 #include <boost/any.hpp>
+#include "base_error/base_error.h"
 #include "ros/ros.h"
 
 class Task
@@ -70,6 +71,11 @@ public:
      * a magical undefined .so reference error will appear if the task is destructed
      */
     virtual ~Task(){};
+
+    /**
+     * @brief error_handler_
+     */
+    error::ErrorHandler error_handler_;
 
 protected:
 

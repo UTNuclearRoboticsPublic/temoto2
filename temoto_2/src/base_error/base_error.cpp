@@ -1,80 +1,109 @@
 #include "base_error/base_error.h"
 
+/* * * * * * * * * * * * * * * * * * *
+ *
+ *    ErrorStackUtil implementations
+ *
+ * * * * * * * * * * * * * * * * * * */
 
-// BaseError implementations
-
-error::BaseError::BaseError( int code,
-                             Subsystem subsystem,
-                             Urgency urgency )
-    : code_( code ),
-      subsystem_( subsystem ),
-      urgency_( urgency )
-{}
-
-error::BaseError::BaseError( int code,
-                             Subsystem subsystem,
-                             Urgency urgency,
-                             std::string message)
-    : code_( code ),
-      subsystem_( subsystem ),
-      urgency_( urgency ),
-      message_( message )
+/*
+ * Constructor
+ */
+error::ErrorStackUtil::ErrorStackUtil( int code,
+                                       error::Subsystem subsystem,
+                                       error::Urgency urgency,
+                                       std::string message,
+                                       ros::Time timeStamp)
 {
-    this->hasMessage_ = true;
+    // Print the message to the console
+    ROS_ERROR("%s", message.c_str());
+
+    push( code,
+          subsystem,
+          urgency,
+          message,
+          timeStamp);
 }
 
-error::BaseError::BaseError( int code,
-                             Subsystem subsystem,
-                             Urgency urgency,
-                             std::string message,
-                             ros::Time timeStamp)
-    : code_( code ),
-      subsystem_( subsystem ),
-      urgency_( urgency ),
-      message_( message ),
-      timeStamp_( timeStamp )
+/*
+ * Get stack
+ */
+
+error::ErrorStack error::ErrorStackUtil::getStack()
 {
-    this->hasMessage_ = true;
-    this->hasTimeStamp_ = true;
+    return this->error_stack_;
 }
 
-int error::BaseError::getCode() const
+/*
+ * Push
+ */
+
+void error::ErrorStackUtil::push( int code,
+                                  error::Subsystem subsystem,
+                                  error::Urgency urgency,
+                                  std::string message,
+                                  ros::Time timeStamp )
 {
-    return this->code_;
+    this->error_stack_.push_back( initBaseError( code,
+                                                 subsystem,
+                                                 urgency,
+                                                 message,
+                                                 timeStamp));
 }
 
-error::Subsystem error::BaseError::getSubsystem() const
+/*
+ * Push
+ */
+
+void error::ErrorStackUtil::push ( temoto_2::BaseError base_error )
 {
-    return this->subsystem_;
+    this->error_stack_.push_back ( base_error );
 }
 
-error::Urgency error::BaseError::getUrgency() const
+/*
+ * Initialize Base Error
+ */
+
+temoto_2::BaseError error::ErrorStackUtil::initBaseError( int code,
+                                                          error::Subsystem subsystem,
+                                                          error::Urgency urgency,
+                                                          std::string message,
+                                                          ros::Time stamp)
 {
-    return this->urgency_;
+    temoto_2::BaseError error_msg;
+    error_msg.code = static_cast<int>(code);
+    error_msg.subsystem = static_cast<int>(subsystem);
+    error_msg.urgency = static_cast<int>(urgency);
+    error_msg.message = message;
+    error_msg.stamp = stamp;
+
+    return error_msg;
 }
 
-std::string error::BaseError::getMessage() const
-{
-    return this->message_;
-}
+/*
+ * Forward error
+ */
 
-ros::Time error::BaseError::getTimeStamp() const
+void error::ErrorStackUtil::forward ( std::string from_where )
 {
-    return this->timeStamp_;
-}
+    temoto_2::BaseError fwd_err = this->error_stack_.back();
+    fwd_err.code = 0;
+    fwd_err.message = from_where + " FORWARDING";
 
-bool error::BaseError::hasMessage() const
-{
-    return this->hasMessage_;
-}
-
-bool error::BaseError::hasTimeStamp() const
-{
-    return this->hasTimeStamp_;
+    this->push( fwd_err );
 }
 
 
-// ErrorHandler implementations
+/* * * * * * * * * * * * * * * *
+ *
+ *    ErrorHandler implementations
+ *
+ * * * * * * * * * * * * * * * */
+
+error::ErrorHandler::ErrorHandler()
+{
+    error_publisher_ = n_.advertise<temoto_2::ErrorStack>("temoto_error_messages", 100);
+}
 
 bool error::ErrorHandler::gotUnreadErrors() const
 {
@@ -86,6 +115,17 @@ void error::ErrorHandler::append( error::ErrorStack errorStack )
     // Set the "newErrors" flag and append
     this->newErrors_ = true;
     this->errorStack_.insert(std::end(this->errorStack_), std::begin(errorStack), std::end(errorStack));
+
+    // Create an ErrorStack message and publish it
+    temoto_2::ErrorStack error_stack_msg;
+    error_stack_msg.ErrorStack = errorStack;
+
+    error_publisher_.publish( error_stack_msg );
+}
+
+void error::ErrorHandler::append( error::ErrorStackUtil err_stck_util )
+{
+    append( err_stck_util.getStack() );
 }
 
 error::ErrorStack error::ErrorHandler::read()
@@ -115,33 +155,15 @@ error::ErrorStack error::ErrorHandler::readAndClear()
     return errorStackCopy;
 }
 
-ErrorStack error::formatError ( int code,
-                                Subsystem subsystem,
-                                Urgency urgency,
-                                std::string message,
-                                ros::Time timeStamp )
-{
-    ROS_ERROR("%s", message.c_str());
 
-    error::ErrorStack error_stack;
-    error_stack.emplace_back( code,
-                              subsystem,
-                              urgency,
-                              message,
-                              timeStamp );
-
-    return error_stack;
-}
-
-
-std::ostream& operator<<(std::ostream& out, const error::BaseError& t)
+std::ostream& operator<<(std::ostream& out, const temoto_2::BaseError& t)
 {
     out << std::endl;
-    out << "* code: " << t.getCode() << std::endl;
-    out << "* subsystem: " << static_cast<int>(t.getSubsystem()) << std::endl;
+    out << "* code: " << t.code << std::endl;
+    out << "* subsystem: " << t.subsystem << std::endl;
     out << "* urgency: " ;
 
-    error::Urgency urg = t.getUrgency();
+    error::Urgency urg = static_cast<error::Urgency>(t.urgency);
     if ( urg == error::Urgency::LOW )
         out << "LOW" << std::endl;
 
@@ -151,8 +173,8 @@ std::ostream& operator<<(std::ostream& out, const error::BaseError& t)
     else if ( urg == error::Urgency::HIGH )
         out << "HIGH" << std::endl;
 
-    out << "* message: " << t.getMessage() << std::endl;
-    out << "* timestamp: " << t.getTimeStamp() << std::endl;
+    out << "* message: " << t.message << std::endl;
+    out << "* timestamp: " << t.stamp << std::endl;
 
     return out;
 }
@@ -162,9 +184,9 @@ std::ostream& operator<<(std::ostream& out, const error::ErrorHandler& t)
     out << std::endl;
 
     // Start printing out the errors
-    for( error::BaseError err : t.readSilent())
+    for( auto err : t.readSilent())
     {
-        if( err.getCode() != 0 )
+        if( err.code != 0 )
             out << std::endl << " ------- Error Trace --------";
 
         out << err;

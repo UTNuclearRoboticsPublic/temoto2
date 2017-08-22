@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 #include "ros/ros.h"
+#include "temoto_2/BaseError.h"
+#include "temoto_2/ErrorStack.h"
 
 namespace error
 {
@@ -17,7 +19,8 @@ enum class Subsystem : int
     HEALTH_MONITOR,
     SENSOR_MANAGER,
     ROBOT_MANAGER,
-    OUTPUT_MANAGER
+    OUTPUT_MANAGER,
+    TASK
 };
 
 /**
@@ -30,113 +33,87 @@ enum class Urgency : int
     HIGH        // Affects the performance of the system, needs to be resolved immediately
 };
 
+/**
+ * @brief ErrorStack
+ */
+typedef std::vector <temoto_2::BaseError> ErrorStack;
+
 
 /**
- * @brief The BaseError class
+ * @brief The ErrorStackUtil class
  */
-class BaseError
+class ErrorStackUtil
 {
 public:
 
     /**
-     * @brief BaseError
-     * @param code
-     * @param subsystem
-     * @param urgency
-     */
-    BaseError( int code,
-               Subsystem subsystem,
-               Urgency urgency );
-
-    /**
-     * @brief BaseError
-     * @param code
-     * @param subsystem
-     * @param urgency
-     * @param message
-     */
-    BaseError( int code,
-               Subsystem subsystem,
-               Urgency urgency,
-               std::string message );
-
-    /**
-     * @brief BaseError
+     * @brief ErrorStackUtil
      * @param code
      * @param subsystem
      * @param urgency
      * @param message
      * @param timeStamp
      */
-    BaseError( int code,
-               Subsystem subsystem,
-               Urgency urgency,
-               std::string message,
-               ros::Time timeStamp );
+    ErrorStackUtil ( int code,
+                       Subsystem subsystem,
+                       Urgency urgency,
+                       std::string message,
+                       ros::Time timeStamp );
 
     /**
-     * @brief getCode
+     * @brief getStack
      * @return
      */
-    int getCode() const;
+    ErrorStack getStack ();
 
     /**
-     * @brief getSubsystem
-     * @return
+     * @brief push
+     * @param code
+     * @param subsystem
+     * @param urgency
+     * @param message
+     * @param timeStamp
      */
-    Subsystem getSubsystem() const;
+    void push ( int code,
+                Subsystem subsystem,
+                Urgency urgency,
+                std::string message,
+                ros::Time timeStamp );
 
     /**
-     * @brief getUrgency
-     * @return
+     * @brief apush
+     * @param base_error
      */
-    Urgency getUrgency() const;
+    void push ( temoto_2::BaseError base_error );
 
     /**
-     * @brief getMessage
-     * @return
+     * @brief forward
+     * @param message
      */
-    std::string getMessage() const;
-
-    /**
-     * @brief getTimeStamp
-     * @return
-     */
-    ros::Time getTimeStamp() const;
-
-    /**
-     * @brief hasMessage
-     * @return
-     */
-    bool hasMessage() const;
-
-    /**
-     * @brief hasTimeStamp
-     * @return
-     */
-    bool hasTimeStamp() const;
+    void forward ( std::string from_where );
 
 private:
 
-    int code_;
+    /**
+     * @brief error_stack_
+     */
+    ErrorStack error_stack_;
 
-    Subsystem subsystem_;
-
-    Urgency urgency_;
-
-    std::string message_;
-
-    ros::Time timeStamp_;
-
-    bool hasMessage_;
-
-    bool hasTimeStamp_;
+    /**
+     * @brief initBaseError
+     * @param code
+     * @param subsystem
+     * @param urgency
+     * @param message
+     * @param stamp
+     * @return
+     */
+    temoto_2::BaseError initBaseError ( int code,
+                                        Subsystem subsystem,
+                                        Urgency urgency,
+                                        std::string message,
+                                        ros::Time stamp);
 };
-
-/**
- * @brief errorStack
- */
-typedef std::vector <BaseError> ErrorStack;
 
 
 /**
@@ -146,11 +123,19 @@ class ErrorHandler
 {
 public:
 
+    ErrorHandler();
+
     /**
      * @brief Appends the ErrorStack
      * @param errorStack
      */
     void append( ErrorStack errorStack );
+
+    /**
+     * @brief append
+     * @param err_stk_util
+     */
+    void append( ErrorStackUtil err_stck_util );
 
     /**
      * @brief Returns the ErrorStack and sets the "newErrors" flag to false
@@ -178,25 +163,14 @@ public:
 
 private:
 
+    ros::NodeHandle n_;
+
+    ros::Publisher error_publisher_;
+
     bool newErrors_ = false;
 
     ErrorStack errorStack_;
 };
-
-/**
- * @brief formatError
- * @param code
- * @param subsystem
- * @param urgency
- * @param message
- * @param timeStamp
- * @return
- */
-ErrorStack formatError ( int code,
-                         Subsystem subsystem,
-                         Urgency urgency,
-                         std::string message,
-                         ros::Time timeStamp );
 
 
 } // end of error namespace
@@ -207,7 +181,7 @@ ErrorStack formatError ( int code,
  * @param t
  * @return
  */
-std::ostream& operator<<(std::ostream& out, const error::BaseError& t);
+std::ostream& operator<<(std::ostream& out, const temoto_2::BaseError& t);
 
 /**
  * @brief operator <<

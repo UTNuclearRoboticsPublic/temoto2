@@ -132,7 +132,7 @@ int main(int argc, char **argv)
     TemotoCore temoto_core;
 
     // Create async spinner, otherwise there is a possibility of locking during core calls
-    ros::AsyncSpinner spinner(0);
+    ros::AsyncSpinner spinner(8);
     spinner.start();
     ros::Rate loop_rate(10);
 

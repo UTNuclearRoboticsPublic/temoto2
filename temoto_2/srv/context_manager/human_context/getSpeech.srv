@@ -1,5 +1,5 @@
 # Field that contains the speech specifiers
-temoto_2/speechSpecifier[] speechSpecifiers
+temoto_2/speechSpecifier[] speech_specifiers
 
 # Id will be used for making a connection between the
 # clients and required services. If id field is left empty

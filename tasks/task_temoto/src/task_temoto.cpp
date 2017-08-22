@@ -16,7 +16,9 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "context_manager/human_context/human_context_interface.h"
+#include "output_manager/output_manager_interface.h"
 #include "leap_motion_controller/Set.h"
+#include <visualization_msgs/Marker.h>
 
 // First implementaton
 class TaskTemoto: public Task
@@ -32,10 +34,15 @@ TaskTemoto()
     // Do something here if needed
     ROS_INFO("TaskTemoto constructed");
 }
-
-// startTask without arguments
+/*
+ * startTask without arguments
+ */
 bool startTask()
 {
+    // Name of the method, used for making debugging a bit simpler
+    const std::string method_name_ = "startTask";
+    std::string prefix = formatMessage("", this->class_name_, method_name_);
+
     // Build a speech specifier
     // TODO: This shoud be done via speech specifier helper class
     /*
@@ -57,31 +64,44 @@ bool startTask()
 
     // Register the speech request and bind a callback
     /*
-    if ( !hci_.getSpeech(speechSpecifiers, &TaskTemoto::speech_callback, this ) )
+    if ( !hci_.getSpeech(speechSpecifiers, &TaskTemoto::speechCallback, this ) )
     {
         ROS_ERROR("[TaskTemoto::startTask()]: getSpeech request failed");
         return 1;
     }
     */
 
-    // Register the gesture request and bind a callback
-    if ( !hci_.getGestures(gestureSpecifiers, &TaskTemoto::gesture_callback, this ) )
+
+    try
     {
-        ROS_ERROR("[TaskTemoto::startTask()]: getGestures request failed");
-        return false;
+        // Register the gesture request and bind a callback
+        hci_.getGestures(gestureSpecifiers, &TaskTemoto::gestureCallback, this );
+
+        // Make rviz load a marker display
+        //omi_.showInRviz( "marker", "/temoto_task_markers" );
+
+        // Advertise the marker topic
+        marker_pub_ = n_.advertise<visualization_msgs::Marker>("visualization_marker", 1);
+    }
+    catch( error::ErrorStackUtil& e )
+    {
+        e.forward( prefix );
+        error_handler_.append(e);
     }
 
-    ROS_INFO("Entering a endless loop that should block if this task was not threaded");
-    while(!stop_task_)
+
+    while (!stop_task_)
     {
-        std::cout << "in tha loop" << std::endl;
+        std::cout << "in da loop" << std::endl;
         ros::Duration(1).sleep();
     }
 
     return true;
 }
 
-// startTask with arguments
+/*
+ *  startTask with arguments
+ */
 bool startTask(int subtaskNr, std::vector<boost::any> arguments )
 {
     // Check if arguments vector contains expected amount of arguments
@@ -109,11 +129,19 @@ bool startTask(int subtaskNr, std::vector<boost::any> arguments )
     }
 }
 
+/*
+ *  Get the status of the task
+ */
+
 std::string getStatus()
 {
     std::string str = "healthy";
     return str;
 }
+
+/*
+ *  Get a solution vector
+ */
 
 std::vector<boost::any> getSolution( int subtaskNr )
 {
@@ -128,19 +156,72 @@ std::vector<boost::any> getSolution( int subtaskNr )
  * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // Callback for processing speech
-void speech_callback(std_msgs::String msg)
+void speechCallback(std_msgs::String msg)
 {
     ROS_INFO("Speech callback got: %s", msg.data.c_str());
 }
 
 // Callback for processing gestures
-void gesture_callback(leap_motion_controller::Set gesture)
-{
-    if (print_)
+void gestureCallback(leap_motion_controller::Set gesture)
+{ 
+    ROS_INFO("wadup");
+
+    std::cout << __FUNCTION__ << std::endl;
+
+    visualization_msgs::Marker marker;
+    // Set the frame ID and timestamp.  See the TF tutorials for information on these.
+    marker.header.frame_id = "/my_gesture_frame";
+    marker.header.stamp = ros::Time::now();
+
+    marker.ns = "hand_indicator";
+    marker.id = 0;
+
+    std::cout << "t1" << std::endl;
+
+    // Set the marker type.  Initially this is CUBE, and cycles between that and SPHERE, ARROW, and CYLINDER
+    marker.type = visualization_msgs::Marker::CUBE;
+
+    // Set the marker action.  Options are ADD, DELETE, and new in ROS Indigo: 3 (DELETEALL)
+    marker.action = visualization_msgs::Marker::ADD;
+
+    // Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
+    marker.pose = gesture.left_hand.palm_pose.pose;
+
+    // Set the scale of the marker -- 1x1x1 here means 1m on a side
+    marker.scale.x = 0.3;
+    marker.scale.y = 0.2;
+    marker.scale.z = 0.2;
+
+    std::cout << "t2" << std::endl;
+
+    // Set the color -- be sure to set alpha to something non-zero!
+    marker.color.r = 0.0f;
+    marker.color.g = 1.0f;
+    marker.color.b = 0.0f;
+    marker.color.a = 1.0;
+
+    marker.lifetime = ros::Duration();
+    /*
+    while (marker_pub_.getNumSubscribers() < 1)
     {
-        //ROS_INFO("Gesture callback got: %f", gesture.data);
-        std::cout << "Spammfest: " << gesture << std::endl;
+      if (!ros::ok())
+      {
+        return;
+      }
+      ROS_INFO("Please create a subscriber to the marker");
+      sleep(1);
     }
+    */
+    try
+    {
+        std::cout << "t3" << std::endl;
+        marker_pub_.publish(marker);
+    }
+    catch(...)
+    {
+        ROS_ERROR("Excepition ERROR kutsuge 112 cobra");
+    }
+    std::cout << "t4" << std::endl;
 }
 
 ~TaskTemoto()
@@ -150,12 +231,37 @@ void gesture_callback(leap_motion_controller::Set gesture)
 
 private:
 
-// Human context interface object
+/**
+ * @brief hci_
+ */
 HumanContextInterface <TaskTemoto> hci_;
 
+/**
+ * @brief omi_
+ */
+//OutputManagerInterface omi_;
+
+/**
+ * @brief class_name_
+ */
+std::string class_name_ = "TaskTemoto";
+
+/**
+ * @brief n_
+ */
+ros::NodeHandle n_;
+
+/**
+ * @brief marker_pub_
+ */
+ros::Publisher marker_pub_;
+
+
+
+
+// Random stuff for testing
 int numberOfArguments = 1;
 std::string arg_0;
-
 bool print_ = true;
 
 };

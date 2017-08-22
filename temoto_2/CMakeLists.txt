@@ -16,6 +16,8 @@ find_package(TinyXML REQUIRED)
 add_message_files(FILES 
 	context_manager/human_context/speechSpecifier.msg
 	context_manager/human_context/gestureSpecifier.msg
+  error_msgs/BaseError.msg
+  error_msgs/ErrorStack.msg
 )
 
 add_service_files(
@@ -24,11 +26,13 @@ add_service_files(
 	listDevices.srv
 	startSensorRequest.srv
 	stopSensorRequest.srv
+	stopAllocatedServices.srv
 	task_handler/stopTask.srv
 	task_handler/indexTasks.srv
 	context_manager/human_context/getGestures.srv
   context_manager/human_context/getSpeech.srv
-  context_manager/human_context/stopAllocatedServices.srv
+  output_manager/loadPlugin.srv
+  output_manager/showInRviz.srv
 )
 
 generate_messages(
@@ -37,7 +41,7 @@ generate_messages(
 )
 
 catkin_package(
-#  INCLUDE_DIRS include
+  INCLUDE_DIRS include
 #  LIBRARIES temoto_2
 CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
 #  DEPENDS system_lib TinyXML
@@ -52,6 +56,9 @@ include_directories(
   ${TinyXML_INCLUDE_DIRS}
 )
 
+# # # # # # # # # # # #
+# CONTEXT MANAGER
+# # # # # # # # # # # #
 add_executable(context_manager src/context_manager/context_manager.cpp
 				src/context_manager/human_context/human_context.cpp)
 
@@ -59,12 +66,29 @@ target_link_libraries(context_manager
    ${catkin_LIBRARIES}
 )
 
+# # # # # # # # # # # #
+# SENSOR MANAGER
+# # # # # # # # # # # #
 add_executable(sensor_manager src/sensor_manager/sensor_manager.cpp
 															src/package_info/package_info.cpp)
 target_link_libraries(sensor_manager
    ${catkin_LIBRARIES}
 )
 
+# # # # # # # # # # # #
+# OUTPUT MANAGER
+# # # # # # # # # # # #
+add_executable(output_manager src/output_manager/output_manager.cpp
+															src/output_manager/rviz_manager/rviz_manager.cpp
+															src/output_manager/rviz_manager/plugin_info.cpp
+                              src/base_error/base_error.cpp )
+target_link_libraries(output_manager
+   ${catkin_LIBRARIES})
+add_dependencies(output_manager temoto_2_generate_messages_cpp)
+
+# # # # # # # # # # # #
+# CORE
+# # # # # # # # # # # #
 add_executable(agent_core src/core/agent_core.cpp 
 			  src/core/language_processor/language_processor.cpp
 			  src/core/task_handler/task_handler.cpp
@@ -72,12 +96,11 @@ add_executable(agent_core src/core/agent_core.cpp
 			  src/core/task_handler/task_info.cpp
 			  src/base_error/base_error.cpp
 )
-
 target_link_libraries(agent_core
    ${catkin_LIBRARIES}
    ${class_loader_LIBRARIES}
-   ${TinyXML_LIBRARIES}
-)
+   ${TinyXML_LIBRARIES} )
+add_dependencies(agent_core temoto_2_generate_messages_cpp)
 
 
 ###################

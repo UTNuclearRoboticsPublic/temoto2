@@ -35,6 +35,10 @@ public:
     // startTask without arguments
     bool startTask()
     {
+        // Name of the method, used for making debugging a bit simpler
+        const std::string method_name_ = "startTask";
+        std::string prefix = formatMessage("", this->class_name_, method_name_);
+
         // Build a speech specifier
         // TODO: This shoud be done via speech specifier helper class
         /*
@@ -64,11 +68,17 @@ public:
         */
 
         // Register the gesture request and bind a callback
-        if ( !hci_.getGestures(gestureSpecifiers, &TaskDemo::gesture_callback, this ) )
+        try
         {
-            ROS_ERROR("[TaskDemo::startTask()]: getGestures request failed");
-            return false;
+            hci_.getGestures(gestureSpecifiers, &TaskDemo::gesture_callback, this );
         }
+
+        catch( error::ErrorStackUtil& e )
+        {
+            e.forward( prefix );
+            this->error_handler_.append(e);
+        }
+
 
         ROS_INFO("Entering a endless loop that should block if this task was not threaded");
         while(!stop_task_)
@@ -151,6 +161,11 @@ private:
 
     // Human context interface object
     HumanContextInterface <TaskDemo> hci_;
+
+    /**
+     * @brief class_name_
+     */
+    std::string class_name_ = "TaskDemo";
 
     int numberOfArguments = 1;
     std::string arg_0;

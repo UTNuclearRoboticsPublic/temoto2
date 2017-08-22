@@ -112,14 +112,10 @@ std::vector <TaskInfo> TaskHandler::findTaskFilesys(std::string task_to_find, bo
                     tasksFound.push_back( taskInfo );
                 }
 
-                catch( error::ErrorStack & e )
+                catch( error::ErrorStackUtil & e )
                 {
                     // Append the error to local ErrorStack
-                    e.emplace_back( coreErr::FORWARDING,
-                                    error::Subsystem::CORE,
-                                    e.back().getUrgency(),
-                                    formatMessage("", this->class_name_, method_name_) + "FORWARDING");
-
+                    e.forward( formatMessage("", this->class_name_, method_name_) );
                     this->error_handler_.append(e);
                 }
             }
@@ -291,10 +287,16 @@ bool TaskHandler::startTask(RunningTask& task)
         return true;
     }
 
-    catch(class_loader::ClassLoaderException& e)
+    catch ( error::ErrorStackUtil& e )
+    {
+        // Append the error to local ErrorStack
+        e.forward( formatMessage("", this->class_name_, method_name_) );
+        this->error_handler_.append(e);
+    }
+
+    catch (class_loader::ClassLoaderException& e)
     {
         ROS_ERROR("%s ClassLoaderException: %s", prefix.c_str(), e.what());
-        return false;
     }
 
     return false;

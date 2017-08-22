@@ -1,11 +1,20 @@
 #include "output_manager/rviz_manager/rviz_manager.h"
 
+RvizManager::RvizManager()
+{
+    show_in_rviz_server_ = n_.advertiseService("show_in_rviz", &RvizManager::showInRvizCb, this);
+    node_spawn_kill_client_ = n_.serviceClient<temoto_2::nodeSpawnKill>("spawn_kill_process");
+    load_plugin_client_ = n_.serviceClient<temoto_2::loadPlugin>("load_rviz_plugin");
+}
+
+
 RvizManager::RvizManager(std::string path_to_default_conf)
     :
     path_to_default_conf_(path_to_default_conf)
 {
     show_in_rviz_server_ = n_.advertiseService("show_in_rviz", &RvizManager::showInRvizCb, this);
     node_spawn_kill_client_ = n_.serviceClient<temoto_2::nodeSpawnKill>("spawn_kill_process");
+    load_plugin_client_ = n_.serviceClient<temoto_2::loadPlugin>("load_rviz_plugin");
 }
 
 bool RvizManager::runRviz()
@@ -32,20 +41,20 @@ bool RvizManager::runRviz()
         }
         else
         {
-            throw error::formatError( outputManagerErr::RVIZ_OPEN_FAIL,
-                                      error::Subsystem::OUTPUT_MANAGER,
-                                      error::Urgency::MEDIUM,
-                                      prefix + " Failed to launch rviz: " + spawn_kill_msg.response.message,
-                                      ros::Time::now());
+            throw error::ErrorStackUtil( outputManagerErr::RVIZ_OPEN_FAIL,
+                                         error::Subsystem::OUTPUT_MANAGER,
+                                         error::Urgency::MEDIUM,
+                                         prefix + " Failed to launch rviz: " + spawn_kill_msg.response.message,
+                                         ros::Time::now());
         }
     }
     else
     {
-        throw error::formatError( outputManagerErr::SERVICE_REQ_FAIL,
-                                  error::Subsystem::OUTPUT_MANAGER,
-                                  error::Urgency::MEDIUM,
-                                  prefix + " Failed to call service /spawn_kill_process",
-                                  ros::Time::now());
+        throw error::ErrorStackUtil( outputManagerErr::SERVICE_REQ_FAIL,
+                                     error::Subsystem::OUTPUT_MANAGER,
+                                     error::Urgency::MEDIUM,
+                                     prefix + " Failed to call service /spawn_kill_process",
+                                     ros::Time::now());
     }
 }
 
@@ -65,20 +74,20 @@ bool RvizManager::sendPluginRequest ( temoto_2::loadPlugin& load_plugin_srv )
         }
         else
         {
-            throw error::formatError( outputManagerErr::PLUGIN_LOAD_FAIL,
-                                      error::Subsystem::OUTPUT_MANAGER,
-                                      error::Urgency::MEDIUM,
-                                      prefix + " Failed to load rviz plugin: " + load_plugin_srv.response.message,
-                                      ros::Time::now());
+            throw error::ErrorStackUtil( outputManagerErr::PLUGIN_LOAD_FAIL,
+                                         error::Subsystem::OUTPUT_MANAGER,
+                                         error::Urgency::MEDIUM,
+                                         prefix + " Failed to load rviz plugin: " + load_plugin_srv.response.message,
+                                         ros::Time::now());
         }
     }
     else
     {
-        throw error::formatError( outputManagerErr::SERVICE_REQ_FAIL,
-                                  error::Subsystem::OUTPUT_MANAGER,
-                                  error::Urgency::MEDIUM,
-                                  prefix + " Failed to call service /load_rviz_plugin",
-                                  ros::Time::now());
+        throw error::ErrorStackUtil( outputManagerErr::SERVICE_REQ_FAIL,
+                                     error::Subsystem::OUTPUT_MANAGER,
+                                     error::Urgency::MEDIUM,
+                                     prefix + " Failed to call service /load_rviz_plugin",
+                                     ros::Time::now());
     }
 }
 
@@ -98,20 +107,17 @@ bool RvizManager::showInRvizCb( temoto_2::showInRviz::Request &req,
         try
         {
             runRviz();
+            rviz_running_ = true;
         }
-        catch( error::ErrorStack & e )
+        catch( error::ErrorStackUtil& e )
         {
-            // Append the error to local ErrorStack
-            e.emplace_back( outputManagerErr::FORWARDING,
-                            error::Subsystem::OUTPUT_MANAGER,
-                            e.back().getUrgency(),
-                            prefix + "FORWARDING");
-
-            this->error_handler_.append(e);
-
             // Format the service response
             res.code = 1;
-            res.message = e.back().getMessage();
+            res.message = e.getStack().back().message;
+
+            // Append the error to local ErrorStack
+            e.forward( prefix );
+            this->error_handler_.append(e);
 
             return true;
         }
@@ -120,11 +126,11 @@ bool RvizManager::showInRvizCb( temoto_2::showInRviz::Request &req,
     // Check the type of the requested display plugin and run if found
     PluginInfo plugin_info;
 
-    if ( findPlugin( req.type, plugin_info ) )
+    if ( plugin_info_handler_.findPlugin( req.type, plugin_info ) )
     {
         // Create the message and fill out the request part
         temoto_2::loadPlugin load_plugin_srv;
-        load_plugin_srv.request.name = plugin_info.getName();
+        load_plugin_srv.request.plugin_name = plugin_info.getName();
         load_plugin_srv.request.topic = req.topic;
 
         try
@@ -135,19 +141,15 @@ bool RvizManager::showInRvizCb( temoto_2::showInRviz::Request &req,
 
             return true;
         }
-        catch( error::ErrorStack & e )
+        catch( error::ErrorStackUtil & e )
         {
-            // Append the error to local ErrorStack
-            e.emplace_back( outputManagerErr::FORWARDING,
-                            error::Subsystem::OUTPUT_MANAGER,
-                            e.back().getUrgency(),
-                            prefix + "FORWARDING");
-
-            this->error_handler_.append(e);
-
             // Format the service response
             res.code = 1;
-            res.message = e.back().getMessage();
+            res.message = e.getStack().back().message;
+
+            // Append the error to local ErrorStack
+            e.forward( prefix );
+            this->error_handler_.append(e);
 
             return true;
         }

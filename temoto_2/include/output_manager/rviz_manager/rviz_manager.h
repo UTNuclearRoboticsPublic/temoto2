@@ -16,9 +16,13 @@ public:
      */
     error::ErrorHandler error_handler_;
 
-    RvizManager(std::string path_to_default_conf);
+    RvizManager ();
+
+    RvizManager (std::string path_to_default_conf);
 
 private:
+
+    ros::NodeHandle n_;
 
     const std::string class_name_ = "RvizManager";
 
@@ -26,7 +30,7 @@ private:
 
     PluginInfoHandler plugin_info_handler_;
 
-    bool rviz_running = false;
+    bool rviz_running_ = false;
 
 
     ros::ServiceServer show_in_rviz_server_;

@@ -35,6 +35,10 @@ public:
     // startTask without arguments
     bool startTask()
     {
+        // Name of the method, used for making debugging a bit simpler
+        const std::string method_name_ = "startTask";
+        std::string prefix = formatMessage("", this->class_name_, method_name_);
+
         // Build a gesture specifier
         // TODO: This shoud be done via speech specifier helper class
         std::vector <temoto_2::speechSpecifier> speechSpecifiers;
@@ -46,10 +50,16 @@ public:
 
 
         // Subscribe to gesture topic
-        if ( !hci_.getSpeech(speechSpecifiers, &TaskTerminal::speech_callback, this ) )
+        try
         {
-            ROS_ERROR("[TaskTerminal::startTask()]: getSpeech request failed");
-            return false;
+            hci_.getSpeech(speechSpecifiers, &TaskTerminal::speech_callback, this );
+            true;
+        }
+
+        catch( error::ErrorStackUtil& e )
+        {
+            e.forward( prefix );
+            this->error_handler_.append(e);
         }
 
         return true;
@@ -135,6 +145,11 @@ public:
     }
 
 private:
+
+    /**
+     * @brief class_name_
+     */
+    std::string class_name_ = "TaskTerminal";
 
     // Human context interface object
     HumanContextInterface <TaskTerminal> hci_;

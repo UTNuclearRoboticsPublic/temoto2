@@ -5,6 +5,8 @@
  * PluginInfo implementations
  */
 
+PluginInfo::PluginInfo (){}
+
 PluginInfo::PluginInfo (std::string name, std::string type)
     :
     name_(name),
@@ -36,7 +38,7 @@ std::string PluginInfo::getDescription ()
  * PluginInfoHandler implementations
  */
 
-std::vector <PluginInfo> findPlugins ( std::string plugin_type )
+std::vector <PluginInfo> PluginInfoHandler::findPlugins ( std::string plugin_type )
 {
     // Empty PluginInfo vector
     std::vector <PluginInfo> plugin_info_return;

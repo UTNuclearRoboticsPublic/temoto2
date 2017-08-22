@@ -1,3 +1,6 @@
+#ifndef CORE_ERRORS_H
+#define CORE_ERRORS_H
+
 #include "base_error/base_error.h"
 
 namespace coreErr
@@ -12,3 +15,5 @@ namespace coreErr
         DESC_INVALID_ARG    // Invalid/Corrupt arguments
     };
 }
+
+#endif

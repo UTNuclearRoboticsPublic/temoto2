@@ -3,6 +3,7 @@
  *       * Decide wether its sensor manager's problem to look if different tasks
  *         are using the same resource or not. Its not a good idea to stop a node
  *         that is used by multiple tasks
+ *       * START USING ROS NAMING CONVETIONS
  */
 
 #include "context_manager/human_context/human_context.h"
@@ -16,7 +17,7 @@ HumanContext::HumanContext ()
     // Start the servers
     this->gestureServer_ = n_.advertiseService("setup_gesture", &HumanContext::setup_gesture_cb, this);
     this->speechServer_ = n_.advertiseService("setup_speech", &HumanContext::setup_speech_cb, this);
-    this->stop_allocated_services_ = n_.advertiseService("stop_allocated_services", &HumanContext::stopAllocatedServices, this);
+    this->stop_allocated_services_ = n_.advertiseService("stop_allocated_services_hc", &HumanContext::stopAllocatedServices, this);
 
     ROS_INFO("[HumanContext::HumanContext] all services and clients initialized, Human Context is good to go.");
 }
@@ -48,7 +49,7 @@ bool HumanContext::setup_gesture_cb (temoto_2::getGestures::Request &req,
     ROS_INFO("[HumanContext::setup_gestures_cb] This request is unique. Setting up the sensor ...");
 
     temoto_2::startSensorRequest startSensReq;
-    startSensReq.request.type = req.gestureSpecifiers[0].type;
+    startSensReq.request.type = req.gesture_specifiers[0].type;
 
     // Call the sensor manager
     while (!startSensorClient_.call(startSensReq))
@@ -110,7 +111,7 @@ bool HumanContext::setup_speech_cb (temoto_2::getSpeech::Request &req,
     ROS_INFO("[HumanContext::setup_speech_cb] This request is unique. Setting up the sensor ...");
 
     temoto_2::startSensorRequest startSensReq;
-    startSensReq.request.type = req.speechSpecifiers[0].type;
+    startSensReq.request.type = req.speech_specifiers[0].type;
 
     // Call the sensor manager
     while (!startSensorClient_.call(startSensReq))
@@ -225,10 +226,10 @@ bool HumanContext::stopAllocatedServices (temoto_2::stopAllocatedServices::Reque
 bool HumanContext::compareGestureRequest (temoto_2::getGestures::Request &req,
                                           temoto_2::getGestures::Request &reqLocal) const
 {
-    std::vector <temoto_2::gestureSpecifier> specifiersLoc = reqLocal.gestureSpecifiers;
+    std::vector <temoto_2::gestureSpecifier> specifiersLoc = reqLocal.gesture_specifiers;
 
     // first check if the devices match
-    if (specifiersLoc[0].dev.compare(req.gestureSpecifiers[0].dev) == 0)
+    if (specifiersLoc[0].dev.compare(req.gesture_specifiers[0].dev) == 0)
     {
         return true;
     }
@@ -243,10 +244,10 @@ bool HumanContext::compareGestureRequest (temoto_2::getGestures::Request &req,
 bool HumanContext::compareSpeechRequest (temoto_2::getSpeech::Request &req,
                                          temoto_2::getSpeech::Request &reqLocal) const
 {
-    std::vector <temoto_2::speechSpecifier> specifiersLoc = reqLocal.speechSpecifiers;
+    std::vector <temoto_2::speechSpecifier> specifiersLoc = reqLocal.speech_specifiers;
 
     // first check if the devices match
-    if (specifiersLoc[0].dev.compare(req.speechSpecifiers[0].dev) == 0)
+    if (specifiersLoc[0].dev.compare(req.speech_specifiers[0].dev) == 0)
     {
         return true;
     }
@@ -282,7 +283,7 @@ std::string HumanContext::checkId (std::string id_in)
  *       * Add "filter" elements. If these make sense ... It might not be a good idea to build pipes based on msgs
  *       * (?) Implement piping: raw_data -> filter_1 -> filter_n -> end_user
  */
-//bool HumanContext::parseSpeechSpecifier (temoto_2::speechSpecifiers specs)
+//bool HumanContext::parseSpeechSpecifier (temoto_2::speech_specifiers specs)
 //{
 
 //}

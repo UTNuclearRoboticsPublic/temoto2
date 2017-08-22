@@ -11,7 +11,7 @@
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *
- *          MASSIVE TODO: * CATCH ALL EXEPTIONS !!!
+ *          MASSIVE TODO: * CATCH ALL EXCEPTIONS !!!
  *                        * implement interprocess piping service
  *                          that starts streaming the std::out of
  *                          a requested process.
@@ -122,6 +122,7 @@ bool spawn_kill_cb(temoto_2::nodeSpawnKill::Request &req,
         if (PID == 0)
         {
             // Close the read end and redirect childs standard output to parents pipe
+
             close(pipefd[0]);
             dup2(pipefd[1], STDOUT_FILENO);
             dup2(pipefd[1], STDERR_FILENO);
@@ -140,6 +141,7 @@ bool spawn_kill_cb(temoto_2::nodeSpawnKill::Request &req,
 
         // Close the write end of the pipe
         close(pipefd[1]);
+        close(pipefd[0]);
         //output = fdopen(pipefd[0], "r");
     }
 

@@ -17,13 +17,10 @@ DescriptionProcessor::DescriptionProcessor( std::string path)
         getRootElement();
     }
 
-    catch( error::ErrorStack& e )
+    catch( error::ErrorStackUtil& e )
     {
         // Rethrow the error
-        e.emplace_back( coreErr::FORWARDING,
-                        error::Subsystem::CORE,
-                        e.back().getUrgency(),
-                        "[DescriptionProcessor/Constructor] FORWARDING");
+        e.forward( "[DescriptionProcessor/Constructor]") ;
         throw e;
     }
 }
@@ -40,28 +37,25 @@ std::string DescriptionProcessor::getPackageName()
     if( !packageFile.LoadFile( this->basePath_ + "/package.xml") )
     {
         // Throw error
-        error::ErrorStack errorStack;
-        errorStack.emplace_back( coreErr::DESC_OPEN_FAIL,
-                                 error::Subsystem::CORE,
-                                 error::Urgency::LOW,
-                                 "[DescriptionProcessor/getPackageName] " + std::string( packageFile.ErrorDesc() ),
-                                 ros::Time::now() );
-        throw errorStack;
+        error::ErrorStackUtil error_stack_util( coreErr::DESC_OPEN_FAIL,
+                                                error::Subsystem::CORE,
+                                                error::Urgency::LOW,
+                                                "[DescriptionProcessor/getPackageName] " + std::string( packageFile.ErrorDesc() ),
+                                                ros::Time::now() );
+        throw error_stack_util;
     }
 
     // Get root element
     TiXmlElement* rootElement = packageFile.FirstChildElement();
 
     if( rootElement == NULL )
-    {
-        // Throw error
-        error::ErrorStack errorStack;
-        errorStack.emplace_back( coreErr::DESC_NO_ROOT,
-                                 error::Subsystem::CORE,
-                                 error::Urgency::LOW,
-                                 "[DescriptionProcessor/getPackageName] No root element in",
-                                 ros::Time::now() );
-        throw errorStack;
+    { 
+        error::ErrorStackUtil error_stack_util( coreErr::DESC_NO_ROOT,
+                                                error::Subsystem::CORE,
+                                                error::Urgency::LOW,
+                                                "[DescriptionProcessor/getPackageName] No root element in",
+                                                ros::Time::now() );
+        throw error_stack_util;
     }
 
     // Get the name of the package
@@ -69,13 +63,12 @@ std::string DescriptionProcessor::getPackageName()
     if (elem == NULL)
     {
         // Throw error
-        error::ErrorStack errorStack;
-        errorStack.emplace_back( coreErr::DESC_NO_ROOT,
-                                 error::Subsystem::CORE,
-                                 error::Urgency::LOW,
-                                 "[DescriptionProcessor/getPackageName] 'Name' element either missing or broken",
-                                 ros::Time::now() );
-        throw errorStack;
+        error::ErrorStackUtil error_stack_util( coreErr::DESC_NO_ROOT,
+                                                error::Subsystem::CORE,
+                                                error::Urgency::LOW,
+                                                "[DescriptionProcessor/getPackageName] 'Name' element either missing or broken",
+                                                ros::Time::now() );
+        throw error_stack_util;
     }
 
     TiXmlNode* e = elem->FirstChild();
@@ -97,13 +90,12 @@ void DescriptionProcessor::openTaskDesc()
     if( !this->descFile_.LoadFile(this->descFilePath_) )
     {
         // Throw error
-        error::ErrorStack errorStack;
-        errorStack.emplace_back( coreErr::DESC_OPEN_FAIL,
-                                 error::Subsystem::CORE,
-                                 error::Urgency::LOW,
-                                 "[DescriptionProcessor/openTaskDesc] " + std::string( this->descFile_.ErrorDesc() ) + this->descFilePath_,
-                                 ros::Time::now() );
-        throw errorStack;
+        error::ErrorStackUtil error_stack_util( coreErr::DESC_OPEN_FAIL,
+                                                error::Subsystem::CORE,
+                                                error::Urgency::LOW,
+                                                "[DescriptionProcessor/openTaskDesc] " + std::string( this->descFile_.ErrorDesc() ) + this->descFilePath_,
+                                                ros::Time::now() );
+        throw error_stack_util;
     }
 }
 
@@ -119,13 +111,12 @@ void DescriptionProcessor::getRootElement()
     if( this->rootElement_ == NULL )
     {
         // Throw error
-        error::ErrorStack errorStack;
-        errorStack.emplace_back( coreErr::DESC_NO_ROOT,
-                                 error::Subsystem::CORE,
-                                 error::Urgency::LOW,
-                                 "[DescriptionProcessor/getTaskType] No root element in: " + this->descFilePath_,
-                                 ros::Time::now() );
-        throw errorStack;
+        error::ErrorStackUtil error_stack_util( coreErr::DESC_NO_ROOT,
+                                                error::Subsystem::CORE,
+                                                error::Urgency::LOW,
+                                                "[DescriptionProcessor/getTaskType] No root element in: " + this->descFilePath_,
+                                                ros::Time::now() );;
+        throw error_stack_util;
     }
 }
 
@@ -141,13 +132,12 @@ std::string DescriptionProcessor::getTaskName()
     if (attr == NULL)
     {      
         // Throw error
-        error::ErrorStack errorStack;
-        errorStack.emplace_back( coreErr::DESC_NO_ATTR,
-                                 error::Subsystem::CORE,
-                                 error::Urgency::LOW,
-                                 "[DescriptionProcessor/getTaskType] Missing a 'name' attribute in: " + this->descFilePath_,
-                                 ros::Time::now() );
-        throw errorStack;
+        error::ErrorStackUtil error_stack_util( coreErr::DESC_NO_ATTR,
+                                                error::Subsystem::CORE,
+                                                error::Urgency::LOW,
+                                                "[DescriptionProcessor/getTaskType] Missing a 'name' attribute in: " + this->descFilePath_,
+                                                ros::Time::now() );
+        throw error_stack_util;
     }
 
     std::string taskName(attr);
@@ -181,13 +171,12 @@ ParamList DescriptionProcessor::getArgs( std::string direction )
                 if ( argtypeAttr == NULL )
                 {
                     // Throw error
-                    error::ErrorStack errorStack;
-                    errorStack.emplace_back( coreErr::DESC_NO_ATTR,
-                                             error::Subsystem::CORE,
-                                             error::Urgency::LOW,
-                                             "[DescriptionProcessor/getArgs] Missing an 'argtype' attribute in: " + this->descFilePath_,
-                                             ros::Time::now() );
-                    throw errorStack;
+                    error::ErrorStackUtil error_stack_util( coreErr::DESC_NO_ATTR,
+                                                            error::Subsystem::CORE,
+                                                            error::Urgency::LOW,
+                                                            "[DescriptionProcessor/getArgs] Missing an 'argtype' attribute in: " + this->descFilePath_,
+                                                            ros::Time::now() );
+                    throw error_stack_util;
                 }
 
                 // If we are good, proceed by converting the argAttr to string and push it in the "args" vector
@@ -202,13 +191,14 @@ ParamList DescriptionProcessor::getArgs( std::string direction )
                 if ( valueAttr == NULL )
                 {
                     // Throw error
-                    error::ErrorStack errorStack;
-                    errorStack.emplace_back( coreErr::DESC_NO_ATTR,
-                                             error::Subsystem::CORE,
-                                             error::Urgency::LOW,
-                                             "[DescriptionProcessor/getArgs] Missing a 'value' attribute in: " + this->descFilePath_,
-                                             ros::Time::now() );
-                    throw errorStack;
+                    error::ErrorStackUtil error_stack_util( coreErr::DESC_NO_ATTR,
+                                                            error::Subsystem::CORE,
+                                                            error::Urgency::LOW,
+                                                            "[DescriptionProcessor/getArgs] Missing a 'value' attribute in: " + this->descFilePath_,
+                                                            ros::Time::now() );
+                    throw error_stack_util;
+
+
                 }
 
                 // If we are good, proceed by converting the valueAttr to string and push it in the "args" vector
@@ -227,13 +217,12 @@ ParamList DescriptionProcessor::getArgs( std::string direction )
             else
             {
                 // Throw error
-                error::ErrorStack errorStack;
-                errorStack.emplace_back( coreErr::DESC_INVALID_ARG,
-                                         error::Subsystem::CORE,
-                                         error::Urgency::LOW,
-                                         "[DescriptionProcessor/getArgs] Invalid argument in: " + this->descFilePath_,
-                                         ros::Time::now() );
-                throw errorStack;
+                error::ErrorStackUtil error_stack_util( coreErr::DESC_INVALID_ARG,
+                                                        error::Subsystem::CORE,
+                                                        error::Urgency::LOW,
+                                                        "[DescriptionProcessor/getArgs] Invalid argument in: " + this->descFilePath_,
+                                                        ros::Time::now() );
+                throw error_stack_util;
             }
         }
     }
@@ -242,13 +231,12 @@ ParamList DescriptionProcessor::getArgs( std::string direction )
     if( paramList.size() <= 0 )
     {
         // Throw error
-        error::ErrorStack errorStack;
-        errorStack.emplace_back( coreErr::DESC_INVALID_ARG,
-                                 error::Subsystem::CORE,
-                                 error::Urgency::LOW,
-                                 "[DescriptionProcessor/getArgs] This file is either missing 'in' or 'out' args block: " + this->descFilePath_,
-                                 ros::Time::now() );
-        throw errorStack;
+        error::ErrorStackUtil error_stack_util( coreErr::DESC_INVALID_ARG,
+                                                error::Subsystem::CORE,
+                                                error::Urgency::LOW,
+                                                "[DescriptionProcessor/getArgs] This file is either missing 'in' or 'out' args block: " + this->descFilePath_,
+                                                ros::Time::now() );
+        throw error_stack_util;
     }
 
     return paramList;
@@ -266,13 +254,10 @@ ParamList DescriptionProcessor::getInputArgs()
         return getArgs("in");
     }
 
-    catch( error::ErrorStack& e )
+    catch( error::ErrorStackUtil& e )
     {
         // Rethrow the error
-        e.emplace_back( coreErr::FORWARDING,
-                        error::Subsystem::CORE,
-                        e.back().getUrgency(),
-                        "[DescriptionProcessor/getInputArgs] FORWARDING");
+        e.forward( "[DescriptionProcessor/getInputArgs]" );
         throw e;
     }
 }
@@ -289,13 +274,10 @@ ParamList DescriptionProcessor::getOutputArgs()
         return getArgs("out");
     }
 
-    catch( error::ErrorStack& e )
+    catch( error::ErrorStackUtil& e )
     {
         // Rethrow the error
-        e.emplace_back( coreErr::FORWARDING,
-                        error::Subsystem::CORE,
-                        e.back().getUrgency(),
-                        "[DescriptionProcessor/getOutputArgs] FORWARDING");
+        e.forward( "[DescriptionProcessor/getOutputArgs]" );
         throw e;
     }
 }
@@ -320,13 +302,10 @@ TaskInfo DescriptionProcessor::getTaskInfo()
         taskInfo.libPath_ = this->basePath_ + "/lib/lib" + taskInfo.packageName_ + ".so"; // TODO: check if this file even exists
     }
 
-    catch( error::ErrorStack& e )
+    catch( error::ErrorStackUtil& e )
     {
         // Rethrow the error
-        e.emplace_back( coreErr::FORWARDING,
-                        error::Subsystem::CORE,
-                        e.back().getUrgency(),
-                        "[DescriptionProcessor/getTaskInfo] FORWARDING");
+        e.forward( "[DescriptionProcessor/getTaskInfo]" );
         throw e;
     }
 
