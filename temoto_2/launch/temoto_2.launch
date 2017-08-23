@@ -1,9 +1,11 @@
 <launch>
 	
-	<node name="node_manager" pkg="temoto_2" type="node_manager" output="screen" />
+  <node name="node_manager" pkg="temoto_2" type="node_manager" output="screen" />
 
   <node name="sensor_manager" pkg="temoto_2" type="sensor_manager" output="screen" />
 
-	<node name="context_manager" pkg="temoto_2" type="context_manager" output="screen" />
+  <node name="context_manager" pkg="temoto_2" type="context_manager" output="screen" />
+
+  <node name="output_manager" pkg="temoto_2" type="output_manager" output="screen" />
 
 </launch>

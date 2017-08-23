@@ -55,6 +55,8 @@ private:
 
     bool runRviz();
 
+    bool stopRviz();
+
     bool loadPluginRequest ( rviz_plugin_manager::PluginLoad& load_plugin_srv );
 
     bool unloadPluginRequest ( rviz_plugin_manager::PluginUnload& unload_plugin_srv );

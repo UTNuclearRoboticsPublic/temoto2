@@ -2,6 +2,7 @@
 #define TEMOTO_ID_H
 
 typedef int TemotoID;
+#define unassigned_ID 0
 
 class TemotoIDManager
 {
@@ -25,7 +26,7 @@ private:
     /**
      * @brief current_ID_
      */
-    TemotoID current_ID_ = 0;
+    TemotoID current_ID_ = 2150;
 
     /**
      * @brief generateID
@@ -43,7 +44,7 @@ private:
     void incrementID ()
     {
         // Increment the id and if it is "0" then increment again
-        if (++current_ID_ == 0)
+        if (++current_ID_ == unassigned_ID)
             ++current_ID_;
     }
 };

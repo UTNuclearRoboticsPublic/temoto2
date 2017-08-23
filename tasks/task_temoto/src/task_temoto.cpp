@@ -73,14 +73,14 @@ bool startTask()
 
     try
     {
+        // Advertise the marker topic
+        marker_pub_ = n_.advertise<visualization_msgs::Marker>("/temoto_task_markers", 1);
+
         // Register the gesture request and bind a callback
         hci_.getGestures(gestureSpecifiers, &TaskTemoto::gestureCallback, this );
 
         // Make rviz load a marker display
-        //omi_.showInRviz( "marker", "/temoto_task_markers" );
-
-        // Advertise the marker topic
-        marker_pub_ = n_.advertise<visualization_msgs::Marker>("visualization_marker", 1);
+        omi_.showInRviz( "marker", "/temoto_task_markers" );
     }
     catch( error::ErrorStackUtil& e )
     {
@@ -169,7 +169,7 @@ void gestureCallback(leap_motion_controller::Set gesture)
 
     visualization_msgs::Marker marker;
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-    marker.header.frame_id = "/my_gesture_frame";
+    marker.header.frame_id = "/world";
     marker.header.stamp = ros::Time::now();
 
     marker.ns = "hand_indicator";
@@ -211,12 +211,12 @@ void gestureCallback(leap_motion_controller::Set gesture)
       sleep(1);
     }
     */
-    try
+    if(marker_pub_)
     {
         std::cout << "t3" << std::endl;
         marker_pub_.publish(marker);
     }
-    catch(...)
+    else
     {
         ROS_ERROR("Excepition ERROR kutsuge 112 cobra");
     }
@@ -238,7 +238,7 @@ HumanContextInterface <TaskTemoto> hci_;
 /**
  * @brief omi_
  */
-//OutputManagerInterface omi_;
+OutputManagerInterface omi_;
 
 /**
  * @brief class_name_

@@ -32,7 +32,7 @@ bool HumanContext::setup_gesture_cb (temoto_2::getGestures::Request &req,
     ROS_INFO("[HumanContext::setup_gestures_cb] Received a gesture setup request ...");
 
     // Check the id of the req. If there is none (the first call from a task) then provide one
-    std::string id_local = checkId(req.id);
+    TemotoID id_local = id_manager_.checkID(req.id);
 
     // Look if similar resource is already allocated
     for (auto& activeReq : setupGestureActive_)
@@ -41,7 +41,7 @@ bool HumanContext::setup_gesture_cb (temoto_2::getGestures::Request &req,
         {
             ROS_INFO("[HumanContext::setup_gestures_cb] Same request already available.");
             res = activeReq.response;
-            res.id = id_local;
+            res.id = static_cast<int>(id_local);
             return true;
         }
     }
@@ -59,7 +59,7 @@ bool HumanContext::setup_gesture_cb (temoto_2::getGestures::Request &req,
     }
 
     ROS_INFO("[HumanContext::setup_gestures_cb] Got a response from service /start_sensor: '%s'", startSensReq.response.message.c_str());
-    res.id = id_local;
+    res.id = static_cast<int>(id_local);
     res.topic = startSensReq.response.topic;
     res.name = startSensReq.response.name;
     res.executable = startSensReq.response.executable;
@@ -95,7 +95,7 @@ bool HumanContext::setup_speech_cb (temoto_2::getSpeech::Request &req,
     ROS_INFO("[HumanContext::setup_speech_cb] Received a speech setup request ...");
 
     // Check the id of the req. If there is none (the first call from a task) then provide one
-    std::string id_local = checkId(req.id);
+    TemotoID id_local = id_manager_.checkID(req.id);
 
     for (auto& activeReq : setupSpeechActive_)
     {
@@ -103,7 +103,7 @@ bool HumanContext::setup_speech_cb (temoto_2::getSpeech::Request &req,
         {
             ROS_INFO("[HumanContext::setup_speech_cb] Same request already available.");
             res = activeReq.response;
-            res.id = id_local;
+            res.id = static_cast<int>(id_local);
             return true;
         }
     }
@@ -121,7 +121,7 @@ bool HumanContext::setup_speech_cb (temoto_2::getSpeech::Request &req,
     }
 
     ROS_INFO("[HumanContext::setup_speech_cb] Got a response from service /start_sensor: '%s'", startSensReq.response.message.c_str());
-    res.id = id_local;
+    res.id = static_cast<int>(id_local);
     res.topic = startSensReq.response.topic;
     res.name = startSensReq.response.name;
     res.executable = startSensReq.response.executable;
@@ -155,7 +155,7 @@ bool HumanContext::setup_speech_cb (temoto_2::getSpeech::Request &req,
 bool HumanContext::stopAllocatedServices (temoto_2::stopAllocatedServices::Request& req,
                                           temoto_2::stopAllocatedServices::Response& res)
 {
-    ROS_INFO("[HumanContext::stopAllocatedServices] Received a 'stopAllocatedServices' request to ID: '%s'.", req.id.c_str());
+    ROS_INFO("[HumanContext::stopAllocatedServices] Received a 'stopAllocatedServices' request to ID: '%ld'.", req.id);
 
     // Default the response code to 0
     res.code = 0;
@@ -165,7 +165,7 @@ bool HumanContext::stopAllocatedServices (temoto_2::stopAllocatedServices::Reque
 
     for (auto it = setupSpeechActive_.begin(); it != setupSpeechActive_.end(); /*empty*/)
     {
-        if ( req.id.compare((*it).response.id) == 0)
+        if( req.id == (*it).response.id )
         {
             temoto_2::stopSensorRequest stop_sens_local;
             stop_sens_local.request.name = (*it).response.name;
@@ -191,7 +191,7 @@ bool HumanContext::stopAllocatedServices (temoto_2::stopAllocatedServices::Reque
 
     for (auto it = setupGestureActive_.begin(); it != setupGestureActive_.end(); /*empty*/)
     {
-        if ( req.id.compare((*it).response.id) == 0)
+        if( req.id == (*it).response.id )
         {
             temoto_2::stopSensorRequest stop_sens_local;
             stop_sens_local.request.name = (*it).response.name;
@@ -252,19 +252,6 @@ bool HumanContext::compareSpeechRequest (temoto_2::getSpeech::Request &req,
     }
 
     return false;
-}
-
-
-/* * * * * * * * *
- *  CHECK ID
- * * * * * * * * */
-
-std::string HumanContext::checkId (std::string id_in)
-{
-    if ( id_in.empty() )
-        return std::to_string (ros::Time::now().toSec());
-
-    return id_in;
 }
 
 /**

@@ -15,6 +15,8 @@ int main(int argc, char **argv)
 
     ros::Rate loop_rate(10);
 
+    ROS_INFO("[output_manager/main] Output Manager is good to go");
+
     while (ros::ok())
     {
         ros::spinOnce();

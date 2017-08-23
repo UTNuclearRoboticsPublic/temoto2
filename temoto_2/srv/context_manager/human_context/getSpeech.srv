@@ -4,13 +4,13 @@ temoto_2/speechSpecifier[] speech_specifiers
 # Id will be used for making a connection between the
 # clients and required services. If id field is left empty
 # then Human Context will provide it
-string id
+int64 id
 
 ---
 
 # Id. Echo of provided id. If there was none provided, then
 # Human Context will generate one
-string id
+int64 id
 
 # name of the package
 string name

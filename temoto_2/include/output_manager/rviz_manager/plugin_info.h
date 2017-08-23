@@ -63,8 +63,6 @@ public:
      */
     std::vector <PluginInfo> findPlugins ( std::string plugin_type );
 
-private:
-
     std::vector<PluginInfo> plugins_;
 };
 

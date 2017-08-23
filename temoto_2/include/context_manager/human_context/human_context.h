@@ -1,4 +1,5 @@
 #include "core/common.h"
+#include "common/temoto_id.h"
 #include "temoto_2/getGestures.h"
 #include "temoto_2/getSpeech.h"
 #include "temoto_2/stopAllocatedServices.h"
@@ -15,6 +16,9 @@ public:
 
 private:
     ros::NodeHandle n_;
+
+    TemotoIDManager id_manager_;
+
     std::vector <temoto_2::getGestures> setupGestureActive_;
     std::vector <temoto_2::getSpeech> setupSpeechActive_;
 
@@ -70,13 +74,6 @@ private:
 
     bool compareGestureRequest (temoto_2::getGestures::Request &req,
                                 temoto_2::getGestures::Request &reqLocal) const;
-
-    /**
-     * @brief checkId
-     * @param id_in
-     * @return
-     */
-    std::string checkId (std::string id_in);
 };
 
 

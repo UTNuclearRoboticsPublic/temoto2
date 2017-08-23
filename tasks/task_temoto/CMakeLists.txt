@@ -38,3 +38,5 @@ set_target_properties(${PROJECT_NAME}
 )
 target_link_libraries(${PROJECT_NAME} ${class_loader_LIBRARIES})
 class_loader_hide_library_symbols(${PROJECT_NAME})
+
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})

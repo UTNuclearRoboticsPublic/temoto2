@@ -1,6 +1,7 @@
 #include "core/common.h"
 
 #include "base_task/task_errors.h"
+#include "common/temoto_id.h"
 #include "temoto_2/gestureSpecifier.h"
 #include "temoto_2/speechSpecifier.h"
 #include "temoto_2/getGestures.h"
@@ -26,8 +27,7 @@ public:
     void getGestures (std::vector <temoto_2::gestureSpecifier> gesture_specifiers, void(T::*callback)(leap_motion_controller::Set), T* obj)
     {
         // Name of the method, used for making debugging a bit simpler
-        const std::string method_name_ = "getGestures";
-        std::string prefix = formatMessage("", this->class_name_, method_name_);
+        std::string prefix = formatMessage("", this->class_name_, __func__);
 
         // Contact the "Context Manager", pass the gesture specifier and if successful, get
         // the name of the topic
@@ -66,8 +66,7 @@ public:
     void getSpeech(std::vector <temoto_2::speechSpecifier> speech_specifiers, void(T::*callback)(std_msgs::String), T* obj)
     {
         // Name of the method, used for making debugging a bit simpler
-        const std::string method_name_ = "getSpeech";
-        std::string prefix = formatMessage("", this->class_name_, method_name_);
+        std::string prefix = formatMessage("", this->class_name_, __func__);
 
         // Contact the "Context Manager", pass the speech specifier and if successful, get
         // the name of the topic
@@ -107,8 +106,7 @@ public:
     bool stopAllocatedServices()
     {
         // Name of the method, used for making debugging a bit simpler
-        const std::string method_name_ = "stopAllocatedServices";
-        std::string prefix = formatMessage("", this->class_name_, method_name_);
+        std::string prefix = formatMessage("", this->class_name_, __func__);
 
         temoto_2::stopAllocatedServices stopSrv;
         stopSrv.request.id = id_;
@@ -132,7 +130,7 @@ public:
 
 private:
 
-    std::string id_;
+    TemotoID id_ = 0;
 
     const std::string class_name_ = "HumanContextInterface";
 
