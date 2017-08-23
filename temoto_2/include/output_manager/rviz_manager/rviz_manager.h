@@ -2,9 +2,14 @@
 #define RVIZ_MANAGER_H
 
 #include "core/common.h"
+#include "common/request_container.h"
+#include "common/temoto_id.h"
 #include "temoto_2/nodeSpawnKill.h"
 #include "temoto_2/showInRviz.h"
-#include "temoto_2/loadPlugin.h"
+#include "temoto_2/stopAllocatedServices.h"
+//#include "temoto_2/loadPlugin.h"
+#include "rviz_plugin_manager/PluginLoad.h"
+#include "rviz_plugin_manager/PluginUnload.h"
 #include "output_manager/output_manager_errors.h"
 #include "output_manager/rviz_manager/plugin_info.h"
 
@@ -24,6 +29,20 @@ private:
 
     ros::NodeHandle n_;
 
+    std::vector <RequestContainer<temoto_2::showInRviz>> active_requests_;
+
+    TemotoIDManager id_manager_;
+
+    ros::ServiceServer show_in_rviz_server_;
+
+    ros::ServiceServer stop_allocated_services_server_;
+
+    ros::ServiceClient load_plugin_client_;
+
+    ros::ServiceClient unload_plugin_client_;
+
+    ros::ServiceClient node_spawn_kill_client_;
+
     const std::string class_name_ = "RvizManager";
 
     std::string path_to_default_conf_;
@@ -33,20 +52,23 @@ private:
     bool rviz_running_ = false;
 
 
-    ros::ServiceServer show_in_rviz_server_;
-
-    ros::ServiceClient load_plugin_client_;
-
-    ros::ServiceClient node_spawn_kill_client_;
 
     bool runRviz();
 
-    bool sendPluginRequest ( temoto_2::loadPlugin& load_plugin_srv );
+    bool loadPluginRequest ( rviz_plugin_manager::PluginLoad& load_plugin_srv );
 
-    bool showInRvizCb( temoto_2::showInRviz::Request &req,
-                       temoto_2::showInRviz::Response &res );
+    bool unloadPluginRequest ( rviz_plugin_manager::PluginUnload& unload_plugin_srv );
+
+    bool showInRvizCb (temoto_2::showInRviz::Request &req,
+                       temoto_2::showInRviz::Response &res);
+
+    bool stopAllocatedServices (temoto_2::stopAllocatedServices::Request& req,
+                                temoto_2::stopAllocatedServices::Response& res);
 
     PluginInfo findPlugin( std::string plugin_type );
+
+    bool compareRequest (temoto_2::showInRviz::Request req1,
+                         temoto_2::showInRviz::Request req2);
 };
 
 #endif

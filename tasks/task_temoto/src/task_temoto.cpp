@@ -40,8 +40,7 @@ TaskTemoto()
 bool startTask()
 {
     // Name of the method, used for making debugging a bit simpler
-    const std::string method_name_ = "startTask";
-    std::string prefix = formatMessage("", this->class_name_, method_name_);
+    std::string prefix = formatMessage("", this->class_name_, __func__);
 
     // Build a speech specifier
     // TODO: This shoud be done via speech specifier helper class

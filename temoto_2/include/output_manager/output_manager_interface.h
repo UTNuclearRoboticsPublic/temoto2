@@ -19,8 +19,7 @@ public:
     void showInRviz (std::string type, std::string topic)
     {
         // Name of the method, used for making debugging a bit simpler
-        const std::string method_name_ = "sendPluginRequest";
-        std::string prefix = formatMessage("", this->class_name_, method_name_);
+        std::string prefix = formatMessage("", this->class_name_, __func__);
 
         temoto_2::showInRviz show_in_rviz_srv;
         show_in_rviz_srv.request.type = type;
@@ -40,8 +39,7 @@ public:
     void stopAllocatedServices()
     {
         // Name of the method, used for making debugging a bit simpler
-        const std::string method_name_ = "stopAllocatedServices";
-        std::string prefix = formatMessage("", this->class_name_, method_name_);
+        std::string prefix = formatMessage("", this->class_name_, __func__);
 
         temoto_2::stopAllocatedServices stopSrv;
         stopSrv.request.id = id_;

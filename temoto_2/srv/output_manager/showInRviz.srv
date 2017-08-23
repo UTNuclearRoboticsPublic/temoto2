@@ -4,7 +4,19 @@ string name
 
 string topic
 
+int64 id
+
 ---
+
+# id of the resource request. This id is used
+# to unallocate the requested resources
+int64 id
+
+# id of the plugin. The client is supposed
+# to do nothing with it. Since all active
+# requests are stored, its a bit convenient
+# to store the plugin_uid to the response part
+int64 plugin_uid
 
 # return code
 #		0: Success

@@ -8,7 +8,8 @@ namespace outputManagerErr
 
         RVIZ_OPEN_FAIL,     // Failed to open rviz
         SERVICE_REQ_FAIL,   // Service request failed
-        PLUGIN_LOAD_FAIL    // Failed to load rviz plugin
+        PLUGIN_LOAD_FAIL,   // Failed to load rviz plugin
+        PLUGIN_UNLOAD_FAIL  // Failed to unload rviz plugin
 
     };
 }

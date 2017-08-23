@@ -2,6 +2,6 @@ string name
 
 ---
 
-uint64 code
+int64 code
 
 string message

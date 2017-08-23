@@ -34,6 +34,7 @@ bool HumanContext::setup_gesture_cb (temoto_2::getGestures::Request &req,
     // Check the id of the req. If there is none (the first call from a task) then provide one
     std::string id_local = checkId(req.id);
 
+    // Look if similar resource is already allocated
     for (auto& activeReq : setupGestureActive_)
     {
         if (compareGestureRequest(req, activeReq.request))
@@ -184,7 +185,6 @@ bool HumanContext::stopAllocatedServices (temoto_2::stopAllocatedServices::Reque
                 setupSpeechActive_.erase (it);
             }
         }
-
         else
             it++;
     }
@@ -211,7 +211,6 @@ bool HumanContext::stopAllocatedServices (temoto_2::stopAllocatedServices::Reque
                 setupGestureActive_.erase (it);
             }
         }
-
         else
             it++;
     }
