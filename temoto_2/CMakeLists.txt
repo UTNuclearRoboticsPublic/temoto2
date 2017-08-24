@@ -45,12 +45,10 @@ generate_messages(
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES temoto_2
+  # LIBRARIES temoto_2
   CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
   DEPENDS system_lib TinyXML
 )
-
-message(STATUS SDLFJKLFDJHLFSDJHLSDFKJDSF${catkin_EXPORTED_TARGETS})
 
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 
@@ -114,17 +112,14 @@ add_dependencies(agent_core ${catkin_EXPORTED_TARGETS})
 # # # # # # # # # # # #   TESTING TOOLS   # # # # # # # # # # # # # # #
 
 
-add_executable(language_input src/tools/language_input.cpp)
+add_executable(language_input src/tools/language_input.cpp
+                              src/base_error/base_error.cpp)
 add_dependencies(language_input ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(language_input
-   ${catkin_LIBRARIES}
-)
+target_link_libraries(language_input ${catkin_LIBRARIES} )
 
 add_executable(blinker_publisher src/tools/blinker_publisher.cpp)
 add_dependencies(blinker_publisher ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(blinker_publisher
-   ${catkin_LIBRARIES}
-)
+target_link_libraries(blinker_publisher ${catkin_LIBRARIES} )
 
 add_executable(node_manager src/tools/node_manager.cpp )
 add_dependencies(node_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
