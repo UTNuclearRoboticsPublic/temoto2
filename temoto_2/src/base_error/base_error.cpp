@@ -173,24 +173,31 @@ std::ostream& operator<<(std::ostream& out, const temoto_2::BaseError& t)
     else if ( urg == error::Urgency::HIGH )
         out << "HIGH" << std::endl;
 
-    out << "* message: " << t.message << std::endl;
-    out << "* timestamp: " << t.stamp << std::endl;
+    out << RED << "* message: " << t.message << RESET << std::endl;
+    out << "* timestamp: " << t.stamp  << std::endl;
 
     return out;
 }
 
-std::ostream& operator<<(std::ostream& out, const error::ErrorHandler& t)
+std::ostream& operator<<(std::ostream& out, const error::ErrorStack& t)
 {
     out << std::endl;
 
     // Start printing out the errors
-    for( auto err : t.readSilent())
+    for( auto err : t)
     {
         if( err.code != 0 )
             out << std::endl << " ------- Error Trace --------";
 
         out << err;
     }
+
+    return out;
+}
+
+std::ostream& operator<<(std::ostream& out, const error::ErrorHandler& t)
+{
+    out << t.readSilent();
 
     return out;
 }

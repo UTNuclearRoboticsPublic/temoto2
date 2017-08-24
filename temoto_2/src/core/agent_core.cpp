@@ -24,6 +24,21 @@
 #include "core/task_handler/task_info.h"
 #include "core/task_handler/running_task.h"
 
+// TBB test
+#include <cstdio>
+#include "tbb/flow_graph.h"
+
+using namespace tbb::flow;
+
+struct body {
+    std::string my_name;
+    body( const char *name ) : my_name(name) {}
+    void operator()( continue_msg ) const {
+        printf("%s\n", my_name.c_str());
+    }
+};
+
+
 class TemotoCore
 {
 public:
@@ -132,9 +147,9 @@ int main(int argc, char **argv)
     TemotoCore temoto_core;
 
     // Create async spinner, otherwise there is a possibility of locking during core calls
-    ros::AsyncSpinner spinner(8);
+    ros::AsyncSpinner spinner(0);
     spinner.start();
-    ros::Rate loop_rate(10);
+    ros::Rate loop_rate(5);
 
     /*
      * Set the initial tasks
@@ -146,12 +161,55 @@ int main(int argc, char **argv)
     chatter_publisher.publish(init_msg);
 
     ROS_INFO("[temoto_core] Core is up and running");
+    /*
+     * TBB TESTS
+     * from: https://software.intel.com/en-us/node/506216
+     */
+    std::cout << "INTEL TBB TESTS" << std::endl;
+/*
+    graph g;
 
+    broadcast_node< continue_msg > start(g);
+    continue_node<continue_msg> a( g, body("A"));
+    continue_node<continue_msg> b( g, body("B"));
+    continue_node<continue_msg> c( g, body("C"));
+    continue_node<continue_msg> d( g, body("D"));
+    continue_node<continue_msg> e( g, body("E"));
+
+    make_edge( start, a );
+    make_edge( start, b );
+    make_edge( a, c );
+    make_edge( b, c );
+    make_edge( c, d );
+    make_edge( a, e );
+*/
+/*
+    graph g;
+    continue_node< continue_msg> hello( g,
+      []( const continue_msg &) {
+          std::cout << "Hello";
+      }
+    );
+    continue_node< continue_msg> world( g,
+      []( const continue_msg &) {
+          std::cout << " World\n";
+      }
+    );
+    make_edge(hello, world);
+*/
     while (ros::ok())
     {
         /*
          * Do something
          */
+/*
+        hello.try_put(continue_msg());
+        g.wait_for_all();
+*/
+/*
+        start.try_put( continue_msg() );
+        g.wait_for_all();
+*/
         ros::spinOnce();
         loop_rate.sleep();
     }

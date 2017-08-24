@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(TinyXML REQUIRED)
 
+find_package(TBB REQUIRED)
+
 add_message_files(FILES 
 	speechSpecifier.msg
 	gestureSpecifier.msg
@@ -55,7 +57,10 @@ include_directories(
   /tmp/usr/local/include/
   ${catkin_INCLUDE_DIRS}
   ${TinyXML_INCLUDE_DIRS}
+  ${TBB_INCLUDE_DIRS}
 )
+
+# # # # # # # # # # # #   TEMOTO SYSTEM NODES   # # # # # # # # # # # # # # #
 
 # # # # # # # # # # # #
 # CONTEXT MANAGER
@@ -97,18 +102,17 @@ add_executable(agent_core src/core/agent_core.cpp
 target_link_libraries(agent_core
    ${catkin_LIBRARIES}
    ${class_loader_LIBRARIES}
-   ${TinyXML_LIBRARIES} )
+   ${TinyXML_LIBRARIES}
+   ${TBB_LIBRARIES} )
 add_dependencies(agent_core ${catkin_EXPORTED_TARGETS})
 
 
-###################
-#    testing tools
-###################
+# # # # # # # # # # # #   TESTING TOOLS   # # # # # # # # # # # # # # #
 
-add_executable(language_input src/tools/language_input.cpp)
-target_link_libraries(language_input
-   ${catkin_LIBRARIES}
-)
+add_executable(language_input src/tools/language_input.cpp
+															src/base_error/base_error.cpp)
+target_link_libraries(language_input ${catkin_LIBRARIES})
+add_dependencies(language_input ${catkin_EXPORTED_TARGETS})
 
 add_executable(blinker_publisher src/tools/blinker_publisher.cpp)
 target_link_libraries(blinker_publisher

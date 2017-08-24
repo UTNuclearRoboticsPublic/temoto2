@@ -3,8 +3,7 @@
  *	Sample Task class that utilizes the Temoto 2.0 architecture.
  *
  *	TASK DESCRIPTION:
- *		* Demonstrate dynamic subscription
- *              * Brings up a terminal that allows to send commands to the core
+ *              * Replicates the functionalities of Temoto 1.0
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -175,8 +174,6 @@ void gestureCallback(leap_motion_controller::Set gesture)
     marker.ns = "hand_indicator";
     marker.id = 0;
 
-    std::cout << "t1" << std::endl;
-
     // Set the marker type.  Initially this is CUBE, and cycles between that and SPHERE, ARROW, and CYLINDER
     marker.type = visualization_msgs::Marker::CUBE;
 
@@ -190,8 +187,6 @@ void gestureCallback(leap_motion_controller::Set gesture)
     marker.scale.x = 0.3;
     marker.scale.y = 0.2;
     marker.scale.z = 0.2;
-
-    std::cout << "t2" << std::endl;
 
     // Set the color -- be sure to set alpha to something non-zero!
     marker.color.r = 0.0f;
@@ -213,14 +208,12 @@ void gestureCallback(leap_motion_controller::Set gesture)
     */
     if(marker_pub_)
     {
-        std::cout << "t3" << std::endl;
         marker_pub_.publish(marker);
     }
     else
     {
         ROS_ERROR("Excepition ERROR kutsuge 112 cobra");
     }
-    std::cout << "t4" << std::endl;
 }
 
 ~TaskTemoto()

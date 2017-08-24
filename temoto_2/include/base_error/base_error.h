@@ -6,6 +6,7 @@
 #include "ros/ros.h"
 #include "temoto_2/BaseError.h"
 #include "temoto_2/ErrorStack.h"
+#include "common/console_colors.h"
 
 namespace error
 {
@@ -182,6 +183,14 @@ private:
  * @return
  */
 std::ostream& operator<<(std::ostream& out, const temoto_2::BaseError& t);
+
+/**
+ * @brief operator <<
+ * @param out
+ * @param t
+ * @return
+ */
+std::ostream& operator<<(std::ostream& out, const error::ErrorStack& t);
 
 /**
  * @brief operator <<
