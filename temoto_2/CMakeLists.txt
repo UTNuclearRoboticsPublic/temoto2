@@ -4,6 +4,7 @@ add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  genmsg
   rospy
   std_msgs
   class_loader
@@ -13,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(TinyXML REQUIRED)
+
 
 add_message_files(FILES 
 	speechSpecifier.msg
@@ -43,10 +45,12 @@ generate_messages(
 
 catkin_package(
   INCLUDE_DIRS include
-#  LIBRARIES temoto_2
-CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
-#  DEPENDS system_lib TinyXML
+  LIBRARIES temoto_2
+  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
+  DEPENDS system_lib TinyXML
 )
+
+message(STATUS SDLFJKLFDJHLFSDJHLSDFKJDSF${catkin_EXPORTED_TARGETS})
 
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 
@@ -63,16 +67,16 @@ include_directories(
 add_executable(context_manager src/context_manager/context_manager.cpp
 				src/context_manager/human_context/human_context.cpp)
 
+add_dependencies(context_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(context_manager ${catkin_LIBRARIES} )
-add_dependencies(context_manager ${catkin_EXPORTED_TARGETS})
 
 # # # # # # # # # # # #
 # SENSOR MANAGER
 # # # # # # # # # # # #
 add_executable(sensor_manager src/sensor_manager/sensor_manager.cpp
 															src/package_info/package_info.cpp)
+add_dependencies(sensor_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(sensor_manager ${catkin_LIBRARIES} )
-add_dependencies(sensor_manager ${catkin_EXPORTED_TARGETS})
 
 # # # # # # # # # # # #
 # OUTPUT MANAGER
@@ -81,8 +85,8 @@ add_executable(output_manager src/output_manager/output_manager.cpp
 															src/output_manager/rviz_manager/rviz_manager.cpp
 															src/output_manager/rviz_manager/plugin_info.cpp
                               src/base_error/base_error.cpp )
+add_dependencies(output_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(output_manager ${catkin_LIBRARIES})
-add_dependencies(output_manager ${catkin_EXPORTED_TARGETS})
 
 # # # # # # # # # # # #
 # CORE
@@ -94,11 +98,11 @@ add_executable(agent_core src/core/agent_core.cpp
 			  src/core/task_handler/task_info.cpp
 			  src/base_error/base_error.cpp
 )
+add_dependencies(agent_core ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(agent_core
    ${catkin_LIBRARIES}
    ${class_loader_LIBRARIES}
    ${TinyXML_LIBRARIES} )
-add_dependencies(agent_core ${catkin_EXPORTED_TARGETS})
 
 
 ###################
@@ -106,22 +110,24 @@ add_dependencies(agent_core ${catkin_EXPORTED_TARGETS})
 ###################
 
 add_executable(language_input src/tools/language_input.cpp)
+add_dependencies(language_input ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(language_input
    ${catkin_LIBRARIES}
 )
 
 add_executable(blinker_publisher src/tools/blinker_publisher.cpp)
+add_dependencies(blinker_publisher ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(blinker_publisher
    ${catkin_LIBRARIES}
 )
 
 add_executable(node_manager src/tools/node_manager.cpp )
+add_dependencies(node_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(node_manager ${catkin_LIBRARIES} )
-add_dependencies(node_manager ${catkin_EXPORTED_TARGETS})
 
 add_executable(dummy_sensor src/tools/dummy_sensor.cpp)
+add_dependencies(dummy_sensor ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(dummy_sensor ${catkin_LIBRARIES} )
-add_dependencies(dummy_sensor ${catkin_EXPORTED_TARGETS})
 
 #link_directories(/tmp/usr/local/lib/)
 #add_executable(blinker src/tools/blinker.cpp)
