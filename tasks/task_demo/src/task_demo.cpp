@@ -143,7 +143,7 @@ public:
     }
 
     // Callback for processing gestures
-    void gesture_callback(leap_motion_controller::Set gesture)
+    void gesture_callback( human_msgs::Hands gesture )
     {
         if (print_)
         {

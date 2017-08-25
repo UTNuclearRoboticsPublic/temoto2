@@ -41,6 +41,7 @@ private:
      * @brief A description of the plugin
      */
     std::string description_;
+
 };
 
 

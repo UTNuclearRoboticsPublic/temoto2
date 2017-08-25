@@ -16,7 +16,6 @@
 #include "std_msgs/String.h"
 #include "context_manager/human_context/human_context_interface.h"
 #include "output_manager/output_manager_interface.h"
-#include "leap_motion_controller/Set.h"
 #include <visualization_msgs/Marker.h>
 
 // First implementaton
@@ -80,6 +79,7 @@ bool startTask()
 
         // Make rviz load a marker display
         omi_.showInRviz( "marker", "/temoto_task_markers" );
+
     }
     catch( error::ErrorStackUtil& e )
     {
@@ -160,7 +160,7 @@ void speechCallback(std_msgs::String msg)
 }
 
 // Callback for processing gestures
-void gestureCallback(leap_motion_controller::Set gesture)
+void gestureCallback( human_msgs::Hands gesture )
 { 
     ROS_INFO("wadup");
 

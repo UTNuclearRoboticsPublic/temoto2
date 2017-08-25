@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
   genmsg
   rospy
   std_msgs
+  human_msgs
   class_loader
   cmake_modules
 	message_generation

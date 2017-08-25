@@ -8,7 +8,7 @@
 #include "temoto_2/getSpeech.h"
 #include "temoto_2/stopAllocatedServices.h"
 #include "std_msgs/Float32.h"
-#include "leap_motion_controller/Set.h"
+#include "human_msgs/Hands.h"
 
 //#include <boost/function.hpp>
 
@@ -24,7 +24,7 @@ public:
         this->stop_allocated_services_ = n_.serviceClient<temoto_2::stopAllocatedServices>("stop_allocated_services_hc");
     }
 
-    void getGestures (std::vector <temoto_2::gestureSpecifier> gesture_specifiers, void(T::*callback)(leap_motion_controller::Set), T* obj)
+    void getGestures (std::vector <temoto_2::gestureSpecifier> gesture_specifiers, void(T::*callback)(human_msgs::Hands), T* obj)
     {
         // Name of the method, used for making debugging a bit simpler
         std::string prefix = formatMessage("", this->class_name_, __func__);

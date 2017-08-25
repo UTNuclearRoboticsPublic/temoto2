@@ -46,16 +46,12 @@ public:
     /**
      * @brief Core
      */
-    TemotoCore()
+    TemotoCore( std::string name ) : task_handler_( name )
     {
         ROS_INFO("[TemotoCore::TemotoCore]: Construncting the core ...");
 
         // Subscribers
         chatter_subscriber_ = n_.subscribe("human_chatter", 1000, &TemotoCore::humanChatterCallback, this);
-
-        // Initialize the taskHandler. Pass in the name of the subsystem
-        // (used for namespacing services and debug information)
-        task_handler_ = new TaskHandler("core");
 
         /*
          * Index (look recursivey for the tasks in the given folder up to specified depth)
@@ -65,7 +61,7 @@ public:
          */
         ROS_INFO("[TemotoCore::TemotoCore]: Indexing the tasks ...");
         boost::filesystem::directory_entry dir("/home/robert/catkin_ws/src/temoto2/tasks/");
-        task_handler_->indexTasks(dir, 1);
+        task_handler_.indexTasks(dir, 1);
 
         /*
          * Create a Language Processor and initialize it by passing the list of indexed tasks.
@@ -75,7 +71,7 @@ public:
          * Language Processor up-to-date
          */
         ROS_INFO("[TemotoCore::TemotoCore]: Initializing the Language Processor ...");
-        language_processor_.setTasksIndexed( task_handler_->getIndexedTasks() );
+        language_processor_.setTasksIndexed( task_handler_.getIndexedTasks() );
     }
 
 private:
@@ -98,7 +94,7 @@ private:
     /**
      * @brief task_handler_
      */
-    TaskHandler* task_handler_;
+    TaskHandler task_handler_;
 
     /**
      * @brief humanChatterCallback
@@ -114,14 +110,14 @@ private:
         // Find a task
         for (auto task: taskList)
         {
-            task_handler_->executeTask(task.first, task.second);
+            task_handler_.executeTask(task.first, task.second);
             std::cout << std::endl;
         }
 
         // Check for errors
-        if( task_handler_->error_handler_.gotUnreadErrors() )
+        if( task_handler_.error_handler_.gotUnreadErrors() )
         {
-            std::cout << "[TemotoCore::humanChatterCallback]: Printing the errorstack:" << task_handler_->error_handler_;
+            std::cout << "[TemotoCore::humanChatterCallback]: Printing the errorstack:" << task_handler_.error_handler_;
         }
     }
 };
@@ -143,8 +139,10 @@ int main(int argc, char **argv)
     // Publisher for publishing messages to core itself
     ros::Publisher chatter_publisher = n.advertise<std_msgs::String>("human_chatter", 1000);
 
-    // Create the Core object
-    TemotoCore temoto_core;
+    // TODO COMMENT Create the Core object
+    // Initialize the taskHandler. Pass in the name of the subsystem
+    // (used for namespacing services and debug information)
+    TemotoCore temoto_core("core");
 
     // Create async spinner, otherwise there is a possibility of locking during core calls
     ros::AsyncSpinner spinner(0);
