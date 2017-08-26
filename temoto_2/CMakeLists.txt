@@ -7,7 +7,6 @@ find_package(catkin REQUIRED COMPONENTS
   genmsg
   rospy
   std_msgs
-  human_msgs
   class_loader
   cmake_modules
 	message_generation
@@ -47,7 +46,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   # LIBRARIES temoto_2
-  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
+  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime human_msgs
   DEPENDS system_lib TinyXML
 )
 
