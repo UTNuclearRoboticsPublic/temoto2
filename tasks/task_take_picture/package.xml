@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <package>
-  <name>task_temoto</name>
+  <name>task_take_picture</name>
   <version>0.0.0</version>
-  <description>The task_temoto package</description>
+  <description>The task_take_picture package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="robert@todo.todo">robert</maintainer>
+  <maintainer email="veiku@todo.todo">veiku</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/task_temoto</url> -->
+  <!-- <url type="website">http://wiki.ros.org/task_terminal</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
@@ -45,7 +45,6 @@
   <build_depend>rospy</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>temoto_2</build_depend>
-
   <run_depend>class_loader</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>

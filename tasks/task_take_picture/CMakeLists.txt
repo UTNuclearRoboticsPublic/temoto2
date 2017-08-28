@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(task_temoto)
+project(task_take_picture)
 
 # use c++11 standard
 add_compile_options(-std=c++11)
@@ -32,9 +32,7 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME} src/${PROJECT_NAME}.cpp)
-set_target_properties(${PROJECT_NAME}
-  PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/
-)
+set_target_properties(${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/)
 target_link_libraries(${PROJECT_NAME} ${class_loader_LIBRARIES})
 class_loader_hide_library_symbols(${PROJECT_NAME})
 

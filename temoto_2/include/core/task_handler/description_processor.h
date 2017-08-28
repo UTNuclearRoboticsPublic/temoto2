@@ -26,13 +26,13 @@ private:
 
     // Params
 
-    std::string basePath_;
+    std::string base_path_;
 
-    std::string descFilePath_;
+    std::string desc_file_path_;
 
-    TiXmlDocument descFile_;
+    TiXmlDocument desc_file_;
 
-    TiXmlElement* rootElement_;
+    TiXmlElement* root_element_;
 
     // Methods
 

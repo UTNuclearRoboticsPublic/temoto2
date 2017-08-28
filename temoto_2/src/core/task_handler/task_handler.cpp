@@ -31,15 +31,15 @@ TaskHandler::TaskHandler (std::string system_prefix)
 
 std::vector <TaskInfo> TaskHandler::findTask(std::string task_to_find, const std::vector <TaskInfo>& tasks)
 {
-    std::vector <TaskInfo> tasksFound;
+    std::vector <TaskInfo> tasks_found;
     for (auto& task : tasks)
     {
         if (task_to_find.compare(task.getName()) == 0)
         {
-            tasksFound.push_back(task);
+            tasks_found.push_back(task);
         }
     }
-    return tasksFound;
+    return tasks_found;
 }
 
 
@@ -75,7 +75,7 @@ std::vector <TaskInfo> TaskHandler::findTaskFilesys(std::string task_to_find, bo
 
     boost::filesystem::path current_dir (base_path);
     boost::filesystem::directory_iterator end_itr;
-    std::vector <TaskInfo> tasksFound;
+    std::vector <TaskInfo> tasks_found;
 
     try
     {
@@ -84,20 +84,20 @@ std::vector <TaskInfo> TaskHandler::findTaskFilesys(std::string task_to_find, bo
         {
 
             // if its a directory and depth limit is not there yet, go inside it
-            if ( boost::filesystem::is_directory(*itr) & (search_depth > 0) )
+            if ( boost::filesystem::is_directory(*itr) && (search_depth > 0) )
             {
-                std::vector<TaskInfo> subTasksFound = findTaskFilesys( task_to_find, *itr, (search_depth - 1));
+                std::vector<TaskInfo> sub_tasks_found = findTaskFilesys( task_to_find, *itr, (search_depth - 1));
 
                 // Append the subtasks if not empty
-                if ( !subTasksFound.empty() )
+                if ( !sub_tasks_found.empty() )
                 {
-                    tasksFound.insert(std::end(tasksFound), std::begin(subTasksFound), std::end(subTasksFound));
+                    tasks_found.insert(std::end(tasks_found), std::begin(sub_tasks_found), std::end(sub_tasks_found));
                 }
             }
 
             // if its a file and matches the desc file name, process the file
             else if ( boost::filesystem::is_regular_file(*itr) &
-                      ((*itr).path().filename().compare(descriptionFile) == 0) )
+                      ((*itr).path().filename().compare(description_file_) == 0) )
             {
                 //int res = processDesc (taskType, (*itr).path().string());
                 try
@@ -105,11 +105,11 @@ std::vector <TaskInfo> TaskHandler::findTaskFilesys(std::string task_to_find, bo
                     // Create a description processor object
                     // I THINK THIS SHOULD NOT BE CREATED EVERY SINGLE TIME
                     boost::filesystem::path hackdir ((*itr)); //HACKATON
-                    DescriptionProcessor descProcessor( hackdir.parent_path().string() );
+                    DescriptionProcessor desc_processor( hackdir.parent_path().string() );
 
                     // Get TaskInfo
-                    TaskInfo taskInfo = descProcessor.getTaskInfo();
-                    tasksFound.push_back( taskInfo );
+                    TaskInfo task_info = desc_processor.getTaskInfo();
+                    tasks_found.push_back( task_info );
                 }
 
                 catch( error::ErrorStackUtil & e )
@@ -120,19 +120,19 @@ std::vector <TaskInfo> TaskHandler::findTaskFilesys(std::string task_to_find, bo
                 }
             }
         }
-        return tasksFound;
+        return tasks_found;
     }
 
     catch (std::exception& e)
     {
         ROS_ERROR("%s %s", prefix.c_str(), e.what());
-        return tasksFound;
+        return tasks_found;
     }
 
     catch(...)
     {
         ROS_ERROR("%s Unhandled exception", prefix.c_str());
-        return tasksFound;
+        return tasks_found;
     }
 }
 
@@ -145,7 +145,6 @@ void TaskHandler::indexTasks (boost::filesystem::directory_entry base_path, int 
     // Name of the method, used for making debugging a bit simpler
     const std::string method_name_ = "indexTasks";
     std::string prefix = formatMessage(this->system_prefix_, this->class_name_, method_name_).c_str();
-
     try
     {
         *tasks_indexed_ = findTaskFilesys ("", base_path, search_depth);
@@ -187,6 +186,7 @@ bool TaskHandler::loadTask(RunningTask& task)
     try
     {
         // Start loading a task library
+		ROS_INFO("Loading class from path: %s", path_to_lib.c_str());
         class_loader_->loadLibrary(path_to_lib);
         classes = class_loader_->getAvailableClassesForLibrary<Task>(path_to_lib);
 
@@ -219,10 +219,10 @@ bool TaskHandler::instantiateTask(RunningTask& task)
     const std::string method_name_ = "instansiateTask";
     std::string prefix = formatMessage(this->system_prefix_, this->class_name_, method_name_);
 
-    std::string taskClassName = task.task_info_.getClassName();
+    std::string task_class_name = task.task_info_.getClassName();
 
     // First check that the task has a "class name"
-    if (taskClassName.empty())
+    if (task_class_name.empty())
     {
         ROS_ERROR( "%s Unset 'class name'", prefix.c_str() );
         return false;
@@ -230,11 +230,11 @@ bool TaskHandler::instantiateTask(RunningTask& task)
 
     // Check if there is a class with this name
     bool task_class_found = false;
-    std::vector<std::string> loadedClasses = class_loader_->getAvailableClasses<Task>();
+    std::vector<std::string> loaded_classes = class_loader_->getAvailableClasses<Task>();
 
-    for (std::string singleClass : loadedClasses)
+    for (std::string single_class : loaded_classes)
     {
-        if (singleClass.compare(taskClassName) == 0)
+        if (single_class.compare(task_class_name) == 0)
         {
             task_class_found = true;
             break;
@@ -246,8 +246,8 @@ bool TaskHandler::instantiateTask(RunningTask& task)
     {
         try
         {
-            ROS_DEBUG( "%s instatiating task: %s", prefix.c_str(), taskClassName.c_str());
-            task.task_pointer_ = class_loader_->createInstance<Task>(taskClassName);
+            ROS_DEBUG( "%s instatiating task: %s", prefix.c_str(), task_class_name.c_str());
+            task.task_pointer_ = class_loader_->createInstance<Task>(task_class_name);
 
             return true;
         }
@@ -260,7 +260,7 @@ bool TaskHandler::instantiateTask(RunningTask& task)
     }
     else
     {
-        ROS_DEBUG( "%s task: '%s' was not found", prefix.c_str(), taskClassName.c_str());
+        ROS_DEBUG( "%s task: '%s' was not found", prefix.c_str(), task_class_name.c_str());
         return false;
     }
 

@@ -16,7 +16,7 @@ std::string TaskInfo::getPath() const
 
 std::string TaskInfo::getLibPath() const
 {
-    return this->libPath_;
+    return this->lib_path_;
 }
 
 std::string TaskInfo::getName() const
@@ -31,7 +31,7 @@ std::string TaskInfo::getClassName() const
 
 std::string TaskInfo::getPackageName() const
 {
-    return this->packageName_;
+    return this->package_name_;
 }
 
 ParamList TaskInfo::getArgs() const

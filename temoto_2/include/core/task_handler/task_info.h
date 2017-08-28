@@ -74,11 +74,11 @@ private:
 
     std::string class_name_;
 
-    std::string packageName_;
+    std::string package_name_;
 
     std::string path_;
 
-    std::string libPath_;
+    std::string lib_path_;
 
     ParamList args_;
 

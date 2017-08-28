@@ -137,6 +137,8 @@ private:
 
     const std::string class_name_ = "TaskHandler";
 
+    const std::string description_file_ = "description.xml";
+
     /**
      * @brief n_
      */
@@ -175,7 +177,6 @@ private:
      */
     //LanguageProcessor langProcessor_;
 
-    const std::string descriptionFile = "description.xml";
 /*
     bool startTaskCallback (temoto_2::startTask::Request& req,
                             temoto_2::startTask::Response& res);
