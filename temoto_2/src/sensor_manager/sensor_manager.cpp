@@ -327,6 +327,8 @@ int main (int argc, char **argv)
     sensorManager.pkgInfoList_.push_back (package_info("temoto_2", "text"));
     sensorManager.pkgInfoList_[2].addLaunchable({"test_2.launch", "/human_chatter"});
 
+    sensorManager.pkgInfoList_.push_back (package_info("usb_cam", "camera"));
+    sensorManager.pkgInfoList_[3].addLaunchable({"usb_cam-test.launch", "/usb_cam/image_raw"});
 
     ros::spin();
 

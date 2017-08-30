@@ -10,12 +10,15 @@ RvizManager::RvizManager()
     node_spawn_kill_client_ = n_.serviceClient<temoto_2::nodeSpawnKill>("spawn_kill_process");
     load_plugin_client_ = n_.serviceClient<rviz_plugin_manager::PluginLoad>("rviz_plugin_load");
     unload_plugin_client_ = n_.serviceClient<rviz_plugin_manager::PluginUnload>("rviz_plugin_unload");
+    get_plugin_config_client_ = n_.serviceClient<rviz_plugin_manager::PluginGetConfig>("rviz_plugin_get_config");
+    set_plugin_config_client_ = n_.serviceClient<rviz_plugin_manager::PluginSetConfig>("rviz_plugin_set_config");
 
     /*
      * Add some plugin entries to the "plugin_info_handler_". This should be done via
      * external xml file or a service request
      */
     plugin_info_handler_.plugins_.emplace_back( "rviz/Marker", "marker" );
+    plugin_info_handler_.plugins_.emplace_back( "rviz_textured_sphere/SphereDisplay", "camera" );
 }
 
 /*
@@ -154,7 +157,7 @@ bool RvizManager::loadPluginRequest( rviz_plugin_manager::PluginLoad& load_plugi
         throw error::ErrorStackUtil( outputManagerErr::SERVICE_REQ_FAIL,
                                      error::Subsystem::OUTPUT_MANAGER,
                                      error::Urgency::MEDIUM,
-                                     prefix + " Failed to call service /load_rviz_plugin",
+                                     prefix + " Failed to call service /rviz_plugin_load",
                                      ros::Time::now());
     }
 }
@@ -190,7 +193,80 @@ bool RvizManager::unloadPluginRequest( rviz_plugin_manager::PluginUnload& unload
         throw error::ErrorStackUtil( outputManagerErr::SERVICE_REQ_FAIL,
                                      error::Subsystem::OUTPUT_MANAGER,
                                      error::Urgency::MEDIUM,
-                                     prefix + " Failed to call service /unload_rviz_plugin",
+                                     prefix + " Failed to call service /rviz_plugin_unload",
+                                     ros::Time::now());
+    }
+}
+
+/* * * * * * * * * * * * * * * * *
+ *  getPluginConfigRequest
+ * * * * * * * * * * * * * * * * */
+
+bool RvizManager::getPluginConfigRequest( rviz_plugin_manager::PluginGetConfig& get_plugin_config_srv )
+{
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = formatMessage("", this->class_name_, __func__);
+
+    // Send the plugin request
+    if( get_plugin_config_client_.call(get_plugin_config_srv) )
+    {
+        if( get_plugin_config_srv.response.code == 0 )
+        {
+            ROS_INFO("%s Request successful: %s", prefix.c_str(), get_plugin_config_srv.response.message.c_str());
+            return true;
+        }
+        else
+        {
+            throw error::ErrorStackUtil( outputManagerErr::PLUGIN_GET_CONFIG_FAIL,
+                                         error::Subsystem::OUTPUT_MANAGER,
+                                         error::Urgency::MEDIUM,
+                                         prefix + " Failed to get rviz plugin config: " + get_plugin_config_srv.response.message,
+                                         ros::Time::now());
+        }
+    }
+    else
+    {
+        throw error::ErrorStackUtil( outputManagerErr::SERVICE_REQ_FAIL,
+                                     error::Subsystem::OUTPUT_MANAGER,
+                                     error::Urgency::MEDIUM,
+                                     prefix + " Failed to call service /rviz_plugin_get_config",
+                                     ros::Time::now());
+    }
+}
+
+
+/* * * * * * * * * * * * * * * * *
+ *  setPluginConfigRequest
+ * * * * * * * * * * * * * * * * */
+
+bool RvizManager::setPluginConfigRequest( rviz_plugin_manager::PluginSetConfig& set_plugin_config_srv )
+{
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = formatMessage("", this->class_name_, __func__);
+
+    // Send the plugin request
+    if( set_plugin_config_client_.call(set_plugin_config_srv) )
+    {
+        if( set_plugin_config_srv.response.code == 0 )
+        {
+            ROS_INFO("%s Request successful: %s", prefix.c_str(), set_plugin_config_srv.response.message.c_str());
+            return true;
+        }
+        else
+        {
+            throw error::ErrorStackUtil( outputManagerErr::PLUGIN_SET_CONFIG_FAIL,
+                                         error::Subsystem::OUTPUT_MANAGER,
+                                         error::Urgency::MEDIUM,
+                                         prefix + " Failed to set rviz plugin config: " + set_plugin_config_srv.response.message,
+                                         ros::Time::now());
+        }
+    }
+    else
+    {
+        throw error::ErrorStackUtil( outputManagerErr::SERVICE_REQ_FAIL,
+                                     error::Subsystem::OUTPUT_MANAGER,
+                                     error::Urgency::MEDIUM,
+                                     prefix + " Failed to call service /rviz_plugin_set_config",
                                      ros::Time::now());
     }
 }
@@ -199,8 +275,8 @@ bool RvizManager::unloadPluginRequest( rviz_plugin_manager::PluginUnload& unload
  *  showInRvizCb
  * * * * * * * * * * * * * * * * */
 
-bool RvizManager::showInRvizCb( temoto_2::showInRviz::Request &req,
-                                temoto_2::showInRviz::Response &res )
+bool RvizManager::showInRvizCb( temoto_2::ShowInRviz::Request &req,
+                                temoto_2::ShowInRviz::Response &res )
 {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = formatMessage("", this->class_name_, __func__);
@@ -267,10 +343,19 @@ bool RvizManager::showInRvizCb( temoto_2::showInRviz::Request &req,
             res.message = load_plugin_srv.response.message;
 
             // Add the request and ID into the active_requests_
-            temoto_2::showInRviz show_in_rviz_local;
+            temoto_2::ShowInRviz show_in_rviz_local;
             show_in_rviz_local.request = req;
             show_in_rviz_local.response = res;
             active_requests_.emplace_back (show_in_rviz_local, id_local);
+
+			if (req.config != "")
+			{
+				// Send the request to set the plugin config
+				rviz_plugin_manager::PluginSetConfig set_plugin_config_srv;
+				set_plugin_config_srv.plugin_uid = load_plugin_srv.response.plugin_uid;
+				set_plugin_config_srv.config = req.config;
+				setPluginConfigRequest(set_plugin_config_srv);
+			}
 
             return true;
         }
@@ -420,12 +505,12 @@ bool RvizManager::stopAllocatedServices( temoto_2::stopAllocatedServices::Reques
 
 
 /* * * * * * * * * * * * * * * * *
- *  Compare "showInRviz" request
+ *  Compare "ShowInRviz" request
  *  TODO: * Implement a complete comparison
  * * * * * * * * * * * * * * * * */
 
-bool RvizManager::compareRequest (temoto_2::showInRviz::Request req1,
-                                  temoto_2::showInRviz::Request req2)
+bool RvizManager::compareRequest (temoto_2::ShowInRviz::Request req1,
+                                  temoto_2::ShowInRviz::Request req2)
 {
     if (req1.type == req2.type)
         return true;

@@ -5,7 +5,7 @@
 #include "common/request_container.h"
 #include "common/temoto_id.h"
 #include "temoto_2/nodeSpawnKill.h"
-#include "temoto_2/showInRviz.h"
+#include "temoto_2/ShowInRviz.h"
 #include "temoto_2/stopAllocatedServices.h"
 //#include "temoto_2/loadPlugin.h"
 #include "rviz_plugin_manager/PluginLoad.h"
@@ -29,7 +29,7 @@ private:
 
     ros::NodeHandle n_;
 
-    std::vector <RequestContainer<temoto_2::showInRviz>> active_requests_;
+    std::vector <RequestContainer<temoto_2::ShowInRviz>> active_requests_;
 
     TemotoIDManager id_manager_;
 
@@ -40,6 +40,10 @@ private:
     ros::ServiceClient load_plugin_client_;
 
     ros::ServiceClient unload_plugin_client_;
+
+    ros::ServiceClient set_plugin_config_client_;
+
+    ros::ServiceClient get_plugin_config_client_;
 
     ros::ServiceClient node_spawn_kill_client_;
 
@@ -60,6 +64,10 @@ private:
     bool loadPluginRequest ( rviz_plugin_manager::PluginLoad& load_plugin_srv );
 
     bool unloadPluginRequest ( rviz_plugin_manager::PluginUnload& unload_plugin_srv );
+
+    bool getPluginConfigRequest ( rviz_plugin_manager::PluginGetConfig& get_plugin_config_srv );
+	
+    bool setPluginConfigRequest ( rviz_plugin_manager::PluginSetConfig& set_plugin_config_srv );
 
     bool showInRvizCb (temoto_2::showInRviz::Request &req,
                        temoto_2::showInRviz::Response &res);
