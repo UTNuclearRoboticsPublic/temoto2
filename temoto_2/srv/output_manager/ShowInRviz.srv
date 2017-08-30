@@ -4,6 +4,8 @@ string name
 
 string topic
 
+string config
+
 int64 id
 
 ---

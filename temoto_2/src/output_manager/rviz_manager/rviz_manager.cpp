@@ -352,8 +352,8 @@ bool RvizManager::showInRvizCb( temoto_2::ShowInRviz::Request &req,
 			{
 				// Send the request to set the plugin config
 				rviz_plugin_manager::PluginSetConfig set_plugin_config_srv;
-				set_plugin_config_srv.plugin_uid = load_plugin_srv.response.plugin_uid;
-				set_plugin_config_srv.config = req.config;
+                                set_plugin_config_srv.request.plugin_uid = load_plugin_srv.response.plugin_uid;
+                                set_plugin_config_srv.request.config = req.config;
 				setPluginConfigRequest(set_plugin_config_srv);
 			}
 

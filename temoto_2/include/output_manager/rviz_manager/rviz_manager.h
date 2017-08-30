@@ -10,6 +10,8 @@
 //#include "temoto_2/loadPlugin.h"
 #include "rviz_plugin_manager/PluginLoad.h"
 #include "rviz_plugin_manager/PluginUnload.h"
+#include "rviz_plugin_manager/PluginGetConfig.h"
+#include "rviz_plugin_manager/PluginSetConfig.h"
 #include "output_manager/output_manager_errors.h"
 #include "output_manager/rviz_manager/plugin_info.h"
 
@@ -69,16 +71,16 @@ private:
 	
     bool setPluginConfigRequest ( rviz_plugin_manager::PluginSetConfig& set_plugin_config_srv );
 
-    bool showInRvizCb (temoto_2::showInRviz::Request &req,
-                       temoto_2::showInRviz::Response &res);
+    bool showInRvizCb (temoto_2::ShowInRviz::Request &req,
+                       temoto_2::ShowInRviz::Response &res);
 
     bool stopAllocatedServices (temoto_2::stopAllocatedServices::Request& req,
                                 temoto_2::stopAllocatedServices::Response& res);
 
     PluginInfo findPlugin( std::string plugin_type );
 
-    bool compareRequest (temoto_2::showInRviz::Request req1,
-                         temoto_2::showInRviz::Request req2);
+    bool compareRequest (temoto_2::ShowInRviz::Request req1,
+                         temoto_2::ShowInRviz::Request req2);
 };
 
 #endif

@@ -35,7 +35,7 @@ add_service_files(
 	context_manager/human_context/getGestures.srv
   context_manager/human_context/getSpeech.srv
   output_manager/loadPlugin.srv
-  output_manager/showInRviz.srv
+  output_manager/ShowInRviz.srv
 )
 
 generate_messages(
