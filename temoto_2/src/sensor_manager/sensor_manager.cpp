@@ -181,8 +181,8 @@ private:
     bool findSensor (temoto_2::nodeSpawnKill::Request &ret,
                      temoto_2::startSensorRequest::Response &retstartSensor,
                      std::string type,
-                     std::string name = "",
-                     std::string executable = "")
+                     std::string name,
+                     std::string executable)
     {
         // Local list of devices that follow the requirements
         std::vector <package_info> candidates;
@@ -202,12 +202,12 @@ private:
             return false;
 
         // Check if a name was specified
-        if (name.compare("") != 0)
+        if (name != "")
         {
             // Filter out the devices that follow the "name" criteria
             for (auto& entry : candidates)
             {
-                if (entry.getName().compare(name) == 0)
+                if (entry.getName() == name)
                 {
                     candidatesLocal.push_back(entry);
                 }
@@ -251,7 +251,7 @@ private:
         }
 
         // Check if the runnable/launchable/executable was specified
-        if (executable.compare("") != 0)
+        if (executable != "")
         {
             // Clear out the "candidatesLocal" list
             candidatesLocal.clear();
@@ -260,10 +260,19 @@ private:
             for (auto& entry : candidates)
             {
                 // Get the local runnables
-                std::map<std::string, std::string> runnablesEntry = entry.getRunnables();
+                std::map<std::string, std::string> runnables_entry = entry.getRunnables();
 
                 // Check if the required runnable exists in the list of runnables
-                if (runnablesEntry.find(executable) != runnablesEntry.end())
+                if (runnables_entry.find(executable) != runnables_entry.end())
+                {
+                    candidatesLocal.push_back(entry);
+                }
+
+                // Get the local launchables
+                std::map<std::string, std::string> launchables_entry = entry.getLaunchables();
+
+                // Check if the required runnable exists in the list of runnables
+                if (launchables_entry.find(executable) != launchables_entry.end())
                 {
                     candidatesLocal.push_back(entry);
                 }
