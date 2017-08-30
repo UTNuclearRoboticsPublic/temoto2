@@ -19,6 +19,7 @@ RvizManager::RvizManager()
      */
     plugin_info_handler_.plugins_.emplace_back( "rviz/Marker", "marker" );
     plugin_info_handler_.plugins_.emplace_back( "rviz_textured_sphere/SphereDisplay", "camera" );
+    plugin_info_handler_.plugins_.emplace_back( "rviz/Image", "image" );
 }
 
 /*

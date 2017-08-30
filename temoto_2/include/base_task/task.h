@@ -57,7 +57,11 @@ public:
      * @brief getStatus
      * @return
      */
-    virtual std::string getStatus() = 0;
+	virtual std::string getStatus()
+	{
+		return "healthy";
+	}
+
 
     /**
      * @brief getSolution
