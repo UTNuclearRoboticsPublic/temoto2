@@ -348,7 +348,7 @@ int main (int argc, char **argv)
     sensorManager.pkgInfoList_[3].addLaunchable({"usb_cam-test.launch", "/usb_cam/image_raw"});
 
     sensorManager.pkgInfoList_.push_back (package_info("task_take_picture", "camera"));
-    sensorManager.pkgInfoList_[4].addLaunchable({"camera1.launch", "/usb_cam/image_raw/raw"});
+    sensorManager.pkgInfoList_[4].addLaunchable({"camera1.launch", "/usb_cam/image_raw"});
 
     ros::spin();
 

@@ -20,7 +20,7 @@ RvizManager::RvizManager()
     //plugin_info_handler_.plugins_.emplace_back( "marker", "rviz/Marker", "Temoto Marker" );
     plugin_info_handler_.plugins_.emplace_back( "marker", "rviz/Marker");
     plugin_info_handler_.plugins_.emplace_back( "camera", "rviz_textured_sphere/SphereDisplay", "Temoto camera");
-    plugin_info_handler_.plugins_.emplace_back( "image", "rviz/Image", "Temoto Image", "std_msgs/Image");
+    plugin_info_handler_.plugins_.emplace_back( "image", "rviz/Image", "Temoto Image", "sensor_msgs/Image");
 }
 
 /*
