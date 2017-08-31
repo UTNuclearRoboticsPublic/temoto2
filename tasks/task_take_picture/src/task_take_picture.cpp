@@ -18,7 +18,7 @@
 #include "std_msgs/String.h"
 #include "temoto_2/startSensorRequest.h"
 #include "output_manager/output_manager_interface.h"
-//#include "context_manager/human_context/human_context_interface.h"
+#include "sensor_manager/sensor_manager_interface.h"
 
 // First implementaton
 class TaskTakePicture: public Task
@@ -46,29 +46,6 @@ public:
 	bool startTask(int subtaskNr, std::vector<boost::any> arguments )
 	{
 
-        // Build a gesture specifier
-        // TODO: This shoud be done via speech specifier helper class
-        //std::vector <temoto_2::speechSpecifier> speechSpecifiers;
-        //temoto_2::speechSpecifier speechSpecifier;
-        //speechSpecifier.dev = "device";
-        //speechSpecifier.type = "text";
-
-        //speechSpecifiers.push_back(speechSpecifier);
-
-
-        // Subscribe to gesture topic
-        //try
-        //{
-        //    hci_.getSpeech(speechSpecifiers, &TaskTakePicture::speech_callback, this );
-        //    true;
-        //}
-
-        //catch( error::ErrorStackUtil& e )
-        //{
-        //    e.forward( prefix );
-        //    this->error_handler_.append(e);
-        //}
-		//
 		// Check if arguments vector contains expected amount of arguments
 		//        if (arguments.size() != 1)
 		//       {
@@ -99,28 +76,22 @@ public:
 
         // Name of the method, used for making debugging a bit simpler
         std::string prefix = "TaskTakePicture::startTask()";
-
 		std::cout << prefix << "Running task with " << arguments.size() << " arguments." << std::endl;
 
-		ros::NodeHandle nh;
-		ros::ServiceClient start_sensor = nh.serviceClient<temoto_2::startSensorRequest>("start_sensor");
-		temoto_2::startSensorRequest sensor_request;
-		sensor_request.request.type = "camera";
-		sensor_request.request.name = "task_take_picture";
-		sensor_request.request.executable = "camera1.launch";
-
-		if(start_sensor.call(sensor_request) && sensor_request.response.code == 0)
+		try 
 		{
-			std::cout << prefix << "Got camera on topic '" << sensor_request.response.topic << "'" << std::endl; 
-			omi_.showInRviz("image", sensor_request.response.topic);
+			// Start the camera with our custom launch file
+			std::string camera_topic = smi_.startSensor("camera", "task_take_picture", "camera1.launch");
+			std::cout << prefix << "Got camera on topic '" << camera_topic << "'" << std::endl; 
+			
+			// Show the image in rviz
+			omi_.showInRviz("image", camera_topic);
 		}
-		else
+		catch(error::ErrorStackUtil& e)
 		{
-			std::cerr << prefix << "Camera sensor request failed..." << std::endl;
+			e.forward(prefix);
+			error_handler_.append(e);
 		}
-
-
-
 	}
 
 
@@ -161,19 +132,9 @@ public:
 
 private:
 
-	/**
-	 * @brief class_name_
-	 */
-//	std::string class_name_ = "TaskTakePicture";
-
-	// Human context interface object
-//	HumanContextInterface <TaskTakePicture> hci_;
-
+	// Create interfaces for accessing temoto devices
 	OutputManagerInterface omi_;
-//	int arg0;
-//	std::string arg1;
-//	double arg2;
-
+	SensorManagerInterface smi_;
 };
 
 // Dont forget that part, otherwise this class would not be loadable
