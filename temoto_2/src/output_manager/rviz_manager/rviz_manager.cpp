@@ -17,9 +17,10 @@ RvizManager::RvizManager()
      * Add some plugin entries to the "plugin_info_handler_". This should be done via
      * external xml file or a service request
      */
-    plugin_info_handler_.plugins_.emplace_back( "rviz/Marker", "marker" );
-    plugin_info_handler_.plugins_.emplace_back( "rviz_textured_sphere/SphereDisplay", "camera" );
-    plugin_info_handler_.plugins_.emplace_back( "rviz/Image", "image" );
+    //plugin_info_handler_.plugins_.emplace_back( "marker", "rviz/Marker", "Temoto Marker" );
+    plugin_info_handler_.plugins_.emplace_back( "marker", "rviz/Marker");
+    plugin_info_handler_.plugins_.emplace_back( "camera", "rviz_textured_sphere/SphereDisplay", "Temoto camera");
+    plugin_info_handler_.plugins_.emplace_back( "image", "rviz/Image", "Temoto Image", "std_msgs/Image");
 }
 
 /*
@@ -283,10 +284,12 @@ bool RvizManager::showInRvizCb( temoto_2::ShowInRviz::Request &req,
     std::string prefix = formatMessage("", this->class_name_, __func__);
 
     ROS_INFO("%s Received a 'show_in_rviz' request", prefix.c_str());
+	ROS_INFO_STREAM(req);
 
     // Check the id of the req. If there is none (the first call from a task) then provide one
     TemotoID id_local = id_manager_.checkID(req.id);
 
+	// Check if same resource was requested
     for( auto& active_req : active_requests_ )
     {
         if( compareRequest(req, active_req.getReq()) )
@@ -329,9 +332,10 @@ bool RvizManager::showInRvizCb( temoto_2::ShowInRviz::Request &req,
 
         // Create the message and fill out the request part
         rviz_plugin_manager::PluginLoad load_plugin_srv;
-        load_plugin_srv.request.plugin_class = plugin_info.getName();
+        load_plugin_srv.request.plugin_class = plugin_info.getClassName();
         load_plugin_srv.request.plugin_topic = req.topic;
-        load_plugin_srv.request.plugin_name = "test_test_test";
+        load_plugin_srv.request.plugin_data_type = plugin_info.getDataType();
+        load_plugin_srv.request.plugin_name = plugin_info.getRvizName();
 
         try
         {
@@ -513,8 +517,13 @@ bool RvizManager::stopAllocatedServices( temoto_2::stopAllocatedServices::Reques
 bool RvizManager::compareRequest (temoto_2::ShowInRviz::Request req1,
                                   temoto_2::ShowInRviz::Request req2)
 {
-    if (req1.type == req2.type)
-        return true;
+    if (req1.type == req2.type &&
+		req1.name == req2.name &&
+		req1.topic == req2.topic &&
+		req1.config == req2.config)
+	{
+		return true;
+	}
 
     return false;
 }

@@ -15,7 +15,7 @@ public:
      */
     TemotoID checkID (TemotoID ID_in)
     {
-        if (ID_in == 0)
+        if (ID_in == unassigned_ID)
             return generateID();
         else
             return ID_in;

@@ -17,7 +17,7 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "temoto_2/startSensorRequest.h"
-#include "output_manager/output_manager_interface.h";
+#include "output_manager/output_manager_interface.h"
 //#include "context_manager/human_context/human_context_interface.h"
 
 // First implementaton

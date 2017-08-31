@@ -197,7 +197,7 @@ private:
         temoto_2::ShowInRviz show_in_rviz_srv;
         show_in_rviz_srv.request.type = display_type;
         show_in_rviz_srv.request.topic = topic;
-        show_in_rviz_srv.request.topic = display_config;
+        show_in_rviz_srv.request.config = display_config;
 
         // Call the server
         if( !show_in_rviz_client_.call(show_in_rviz_srv) )
