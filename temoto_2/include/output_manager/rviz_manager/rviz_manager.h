@@ -7,7 +7,6 @@
 #include "temoto_2/nodeSpawnKill.h"
 #include "temoto_2/ShowInRviz.h"
 #include "temoto_2/stopAllocatedServices.h"
-//#include "temoto_2/loadPlugin.h"
 #include "rviz_plugin_manager/PluginLoad.h"
 #include "rviz_plugin_manager/PluginUnload.h"
 #include "rviz_plugin_manager/PluginGetConfig.h"

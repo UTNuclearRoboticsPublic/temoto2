@@ -16,6 +16,7 @@
 #include "std_msgs/String.h"
 #include "context_manager/human_context/human_context_interface.h"
 #include "output_manager/output_manager_interface.h"
+#include "sensor_manager/sensor_manager_interface.h"
 #include <visualization_msgs/Marker.h>
 
 // First implementaton
@@ -79,6 +80,9 @@ bool startTask()
 
         // Make rviz load a marker display
         omi_.showInRviz( "marker", "/temoto_task_markers" );
+
+        // Pointless dummy sensor manager request
+        smi_.startSensor( "hand", "temoto_2", "non_existing_file.launch" );
 
     }
     catch( error::ErrorStackUtil& e )
@@ -234,6 +238,11 @@ HumanContextInterface <TaskTemoto> hci_;
 OutputManagerInterface omi_;
 
 /**
+ * @brief smi_
+ */
+SensorManagerInterface smi_;
+
+/**
  * @brief class_name_
  */
 std::string class_name_ = "TaskTemoto";
@@ -248,7 +257,7 @@ ros::NodeHandle n_;
  */
 ros::Publisher marker_pub_;
 
-
+bool stop_task_ = true;
 
 
 // Random stuff for testing

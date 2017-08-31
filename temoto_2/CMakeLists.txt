@@ -34,7 +34,6 @@ add_service_files(
 	task_handler/indexTasks.srv
 	context_manager/human_context/getGestures.srv
   context_manager/human_context/getSpeech.srv
-  output_manager/loadPlugin.srv
   output_manager/ShowInRviz.srv
 )
 

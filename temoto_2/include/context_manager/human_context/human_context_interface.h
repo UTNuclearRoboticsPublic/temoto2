@@ -2,6 +2,7 @@
 
 #include "base_task/task_errors.h"
 #include "common/temoto_id.h"
+#include "common/console_colors.h"
 #include "temoto_2/gestureSpecifier.h"
 #include "temoto_2/speechSpecifier.h"
 #include "temoto_2/getGestures.h"

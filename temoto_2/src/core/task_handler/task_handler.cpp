@@ -325,7 +325,7 @@ bool TaskHandler::startTask(RunningTask& task, std::vector<boost::any> arguments
         try
         {
             ROS_DEBUG( "%s starting task (with arguments): %s", prefix.c_str(), task.task_info_.getName().c_str());
-            task.task_pointer_->startTask(0, arguments);
+            task.task_pointer_->startTaskAutojoin(0, arguments);
             return true;
         }
 
