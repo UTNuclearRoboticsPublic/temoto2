@@ -28,63 +28,41 @@ public:
     /**
      * @brief showInRviz
      * @param display_type
-     */
-    void showInRviz( std::string display_type )
-    {
-        // Name of the method, used for making debugging a bit simpler
-        std::string prefix = formatMessage("", this->class_name_, __func__);
-
-        try
-        {
-            showInRvizCall( display_type, "", "" );
-        }
-        catch( error::ErrorStackUtil& e )
-        {
-            e.forward( prefix );
-            error_handler_.append(e);
-        }
-    }
-
-    /**
-     * @brief showInRviz
-     * @param display_type
-     * @param topic
-     */
-    void showInRviz( std::string display_type, std::string topic )
-    {
-        // Name of the method, used for making debugging a bit simpler
-        std::string prefix = formatMessage("", this->class_name_, __func__);
-
-        try
-        {
-            showInRvizCall( display_type, topic, "" );
-        }
-        catch( error::ErrorStackUtil& e )
-        {
-            e.forward( prefix );
-            error_handler_.append(e);
-        }
-    }
-
-    /**
-     * @brief showInRviz
-     * @param display_type
      * @param topic
      * @param display_config
      */
-    void showInRviz( std::string display_type, std::string topic, std::string display_config )
+    void showInRviz( std::string display_type, std::string topic = "", std::string display_config = "" )
     {
         // Name of the method, used for making debugging a bit simpler
         std::string prefix = formatMessage("", this->class_name_, __func__);
 
-        try
+        temoto_2::ShowInRviz show_in_rviz_srv;
+        show_in_rviz_srv.request.type = display_type;
+        show_in_rviz_srv.request.topic = topic;
+        show_in_rviz_srv.request.config = display_config;
+
+        // Call the server
+        if( !show_in_rviz_client_.call(show_in_rviz_srv) )
         {
-            showInRvizCall( display_type, topic, display_config );
+            throw error::ErrorStackUtil( taskErr::SERVICE_REQ_FAIL,
+                                         error::Subsystem::TASK,
+                                         error::Urgency::MEDIUM,
+                                         prefix + " Failed to call service",
+                                         ros::Time::now());
         }
-        catch( error::ErrorStackUtil& e )
+
+        if( show_in_rviz_srv.response.code == 0 )
         {
-            e.forward( prefix );
-            error_handler_.append(e);
+            id_ = show_in_rviz_srv.response.id;
+        }
+        else
+        {
+            throw error::ErrorStackUtil( taskErr::SERVICE_REQ_FAIL,
+                                         error::Subsystem::TASK,
+                                         error::Urgency::MEDIUM,
+                                         prefix + " Unsuccessful call to /show_in_rviz" +
+                                            show_in_rviz_srv.response.message,
+                                         ros::Time::now());
         }
     }
 
@@ -182,46 +160,4 @@ private:
 
     ros::ServiceClient show_in_rviz_client_;
     ros::ServiceClient stop_allocated_services_;
-
-    /**
-     * @brief showInRvizCall
-     * @param display_type
-     * @param topic
-     * @param plugin_config
-     */
-    void showInRvizCall( std::string display_type, std::string topic, std::string display_config )
-    {
-        // Name of the method, used for making debugging a bit simpler
-        std::string prefix = formatMessage("", this->class_name_, __func__);
-
-        temoto_2::ShowInRviz show_in_rviz_srv;
-        show_in_rviz_srv.request.type = display_type;
-        show_in_rviz_srv.request.topic = topic;
-        show_in_rviz_srv.request.config = display_config;
-
-        // Call the server
-        if( !show_in_rviz_client_.call(show_in_rviz_srv) )
-        {
-            throw error::ErrorStackUtil( taskErr::SERVICE_REQ_FAIL,
-                                         error::Subsystem::TASK,
-                                         error::Urgency::MEDIUM,
-                                         prefix + " Failed to call service",
-                                         ros::Time::now());
-        }
-
-        if( show_in_rviz_srv.response.code == 0 )
-        {
-            id_ = show_in_rviz_srv.response.id;
-        }
-        else
-        {
-            throw error::ErrorStackUtil( taskErr::SERVICE_REQ_FAIL,
-                                         error::Subsystem::TASK,
-                                         error::Urgency::MEDIUM,
-                                         prefix + " Unsuccessful call to /show_in_rviz" +
-                                            show_in_rviz_srv.response.message,
-                                         ros::Time::now());
-        }
-    }
-
 };

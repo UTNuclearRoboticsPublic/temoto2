@@ -14,6 +14,8 @@
 
 class Task
 {
+friend class TaskHandler;
+
 public:
 
     /**
@@ -85,7 +87,14 @@ protected:
 
     std::string description;
     bool stop_task_ = false;
+
+private:
+
+    void startTaskAutojoin( int subtaskNr, std::vector<boost::any> arguments )
+    {
+        startTask( subtaskNr, arguments );
+
+        std::cout << "TERE TERE TERE x4" << std::endl;
+    }
 };
-
-
 #endif
