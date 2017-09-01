@@ -7,7 +7,7 @@
   </in>
   
   <in>
-    <arg argtype="string" value="using"/>
+    <arg argtype="string" value=""/>
   </in>
 
   <out>

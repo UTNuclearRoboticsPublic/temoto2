@@ -97,7 +97,7 @@ private:
         std::string reqName = req.name;
         std::string reqExecutable = req.executable;
 
-        ROS_INFO("[SensorManager::start_sensor_cb] received a request to start a '%s': '%s'", reqType.c_str(), reqName.c_str());
+        ROS_INFO("[SensorManager::start_sensor_cb] received a request to start a '%s': '%s', '%s'", reqType.c_str(), reqName.c_str(), reqExecutable.c_str());
 
         // Create an empty message that will be filled out by "findSensor" function
         temoto_2::nodeSpawnKill spawnKillMsg;
@@ -311,8 +311,16 @@ private:
         // The name of the topic that this particular runnable publishes to
         retstartSensor.name = name;
         retstartSensor.executable = executable;
-        retstartSensor.topic = candidates[0].getRunnables()[executable];
 
+		// Check if runnables were found
+		if(!candidates[0].getRunnables().empty())
+		{
+			retstartSensor.topic = candidates[0].getRunnables()[executable];
+		}
+		else if (!candidates[0].getLaunchables().empty())
+		{
+			retstartSensor.topic = candidates[0].getLaunchables()[executable];
+		}
         return true;
     }
 };
@@ -338,6 +346,9 @@ int main (int argc, char **argv)
 
     sensorManager.pkgInfoList_.push_back (package_info("usb_cam", "camera"));
     sensorManager.pkgInfoList_[3].addLaunchable({"usb_cam-test.launch", "/usb_cam/image_raw"});
+
+    sensorManager.pkgInfoList_.push_back (package_info("task_take_picture", "camera"));
+    sensorManager.pkgInfoList_[4].addLaunchable({"camera1.launch", "/usb_cam/image_raw"});
 
     ros::spin();
 

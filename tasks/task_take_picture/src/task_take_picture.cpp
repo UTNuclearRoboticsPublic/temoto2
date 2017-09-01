@@ -16,7 +16,9 @@
 // Task specific includes
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-#include "context_manager/human_context/human_context_interface.h"
+#include "temoto_2/startSensorRequest.h"
+#include "output_manager/output_manager_interface.h"
+#include "sensor_manager/sensor_manager_interface.h"
 
 // First implementaton
 class TaskTakePicture: public Task
@@ -36,131 +38,103 @@ public:
     // startTask without arguments
     bool startTask()
     {
-        // Name of the method, used for making debugging a bit simpler
-        const std::string method_name_ = "startTask";
-        std::string prefix = formatMessage("", this->class_name_, method_name_);
-
-        // Build a gesture specifier
-        // TODO: This shoud be done via speech specifier helper class
-        std::vector <temoto_2::speechSpecifier> speechSpecifiers;
-        temoto_2::speechSpecifier speechSpecifier;
-        speechSpecifier.dev = "device";
-        speechSpecifier.type = "text";
-
-        speechSpecifiers.push_back(speechSpecifier);
-
-
-        // Subscribe to gesture topic
-        try
-        {
-            hci_.getSpeech(speechSpecifiers, &TaskTakePicture::speech_callback, this );
-            true;
-        }
-
-        catch( error::ErrorStackUtil& e )
-        {
-            e.forward( prefix );
-            this->error_handler_.append(e);
-        }
 
         return true;
     }
 
     // startTask with arguments
-    bool startTask(int subtaskNr, std::vector<boost::any> arguments )
-    {
-        // Check if arguments vector contains expected amount of arguments
-        if (arguments.size() != numberOfArguments)
-        {
-            std::cerr << "[TaskTakePicture/startTask]: Wrong number of arguments. Expected: "
-                      << numberOfArguments  << " but got: " << arguments.size() << '\n';
+	bool startTask(int subtaskNr, std::vector<boost::any> arguments )
+	{
 
-            return false;
-        }
+		// Check if arguments vector contains expected amount of arguments
+		//        if (arguments.size() != 1)
+		//       {
+		//          std::cerr << "[TaskTakePicture/startTask]: Wrong number of arguments. Expected: "
+		//                   << numberOfArguments  << " but got: " << arguments.size() << '\n';
 
-        // If it does, try to cast the arguments
-        try
-        {
-            arg0 = boost::any_cast<int>(arguments[0]);
-            arg1 = boost::any_cast<std::string>(arguments[1]);
-            arg2 = boost::any_cast<double>(arguments[2]);
+		//      }
 
-            // Print them out
-            std::cout << arg0 << '\n';
-            std::cout << arg1 << '\n';
-            std::cout << arg2 << '\n';
+		// Try to cast the arguments
+		//        try
+		//        {
+		//            arg0 = boost::any_cast<int>(arguments[0]);
+		//            arg1 = boost::any_cast<std::string>(arguments[1]);
+		//            arg2 = boost::any_cast<double>(arguments[2]);
+		//
+		//            // Print them out
+		//            std::cout << arg0 << '\n';
+		//            std::cout << arg1 << '\n';
+		//            std::cout << arg2 << '\n';
+		//
+		//            return true;
+		//        }
+		//        catch (boost::bad_any_cast &e)
+		//        {
+		//            std::cerr << "[TaskTakePicture::startTask]: " << e.what() << '\n';
+		//            return false;
+		//        }
 
-            return true;
-        }
-        catch (boost::bad_any_cast &e)
-        {
-            std::cerr << "[TaskTakePicture::startTask]: " << e.what() << '\n';
-            return false;
-        }
-    }
+        // Name of the method, used for making debugging a bit simpler
+        std::string prefix = "TaskTakePicture::startTask()";
+		std::cout << prefix << "Running task with " << arguments.size() << " arguments." << std::endl;
 
-    bool stopTask()
-    {
-        return true;
-    }
+		try 
+		{
+			// Start the camera with our custom launch file
+			std::string camera_topic = smi_.startSensor("camera", "task_take_picture", "camera1.launch");
+			std::cout << prefix << "Got camera on topic '" << camera_topic << "'" << std::endl; 
+			
+			// Show the image in rviz
+			omi_.showInRviz("image", camera_topic);
+		}
+		catch(error::ErrorStackUtil& e)
+		{
+			e.forward(prefix);
+			error_handler_.append(e);
+		}
+	}
 
-    std::string getStatus()
-    {
-        std::string str = "healthy";
-        return str;
-    }
 
-    std::vector<boost::any> getSolution( int subtaskNr )
-    {
-        // Construct an empty vector
-        std::vector<boost::any> solutionVector;
+	std::vector<boost::any> getSolution( int subtaskNr )
+	{
+		// Construct an empty vector
+		std::vector<boost::any> solutionVector;
 
-        // Check the subtask number
-        if ( subtaskNr == 0)
-        {
-            boost::any retArg0 = arg0;
-            boost::any retArg1 = arg1;
-            boost::any retArg2 = arg2;
+		// Check the subtask number
+//		if ( subtaskNr == 0)
+//		{
+//			boost::any retArg0 = arg0;
+//			boost::any retArg1 = arg1;
+//			boost::any retArg2 = arg2;
+//
+//			solutionVector.push_back(retArg0);
+//			solutionVector.push_back(retArg1);
+//			solutionVector.push_back(retArg2);
+//		}
 
-            solutionVector.push_back(retArg0);
-            solutionVector.push_back(retArg1);
-            solutionVector.push_back(retArg2);
-        }
+		return solutionVector;
+	}
 
-        return solutionVector;
-    }
+	/* * * * * * * * * * * * * * * * * * * * * * * * *
+	 * Inherited methods that have to be implemented / END
+	 * * * * * * * * * * * * * * * * * * * * * * * * */
 
-    /* * * * * * * * * * * * * * * * * * * * * * * * *
-     * Inherited methods that have to be implemented / END
-     * * * * * * * * * * * * * * * * * * * * * * * * */
+	// Callback for processing gestures
+	void speech_callback(std_msgs::String msg)
+	{
+		//ROS_INFO("Speech callback got: %s", msg.data.c_str());
+	}
 
-    // Callback for processing gestures
-    void speech_callback(std_msgs::String msg)
-    {
-        //ROS_INFO("Speech callback got: %s", msg.data.c_str());
-    }
-
-    ~TaskTakePicture()
-    {
-        ROS_INFO("[TaskTakePicture::~TaskTakePicture]TaskTakePicture destructed");
-    }
+	~TaskTakePicture()
+	{
+		ROS_INFO("[TaskTakePicture::~TaskTakePicture]TaskTakePicture destructed");
+	}
 
 private:
 
-    /**
-     * @brief class_name_
-     */
-    std::string class_name_ = "TaskTakePicture";
-
-    // Human context interface object
-    HumanContextInterface <TaskTakePicture> hci_;
-
-    int numberOfArguments = 3;
-
-    int arg0;
-    std::string arg1;
-    double arg2;
-
+	// Create interfaces for accessing temoto devices
+	OutputManagerInterface omi_;
+	SensorManagerInterface smi_;
 };
 
 // Dont forget that part, otherwise this class would not be loadable

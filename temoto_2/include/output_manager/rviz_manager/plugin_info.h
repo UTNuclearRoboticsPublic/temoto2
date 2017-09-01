@@ -15,33 +15,53 @@ public:
      */
     PluginInfo ();
 
-    PluginInfo (std::string name, std::string type);
+//    PluginInfo (std::string type, std::string class_name);
 
-    bool setDescription (std::string description);
+ //   PluginInfo (std::string type, std::string class_name, std::string rviz_name);
 
-    std::string getName ();
+    PluginInfo (std::string type, std::string class_name, 
+				std::string rviz_name = "", std::string data_type = "");
+
+    void setDescription (std::string description);
+
+    void setRvizName (std::string rviz_name);
 
     std::string getType ();
+
+    std::string getClassName ();
+
+    std::string getDataType ();
+
+    std::string getRvizName ();
 
     std::string getDescription ();
 
 private:
 
     /**
-     * @brief Name of the plugin
-     */
-    std::string name_;
-
-    /**
      * @brief Type of the plugin, e.g., "Hand tracker", "LIDAR", etc.
      */
     std::string type_;
+	
+    /**
+     * @brief Name of the plugin
+     */
+    std::string class_name_;
+
+    /**
+     * @brief A data type of the plugin, e.g., std_msgs/Image.
+     */
+    std::string data_type_;
+
+    /**
+     * @brief Plugin name that appears in rviz plugin list, e.g., 'My Marker'.
+     */
+    std::string rviz_name_;
 
     /**
      * @brief A description of the plugin
      */
     std::string description_;
-
 };
 
 

@@ -19,9 +19,13 @@ public:
     ID checkID (ID ID_in)
     {
         if (ID_in == UNASSIGNED_ID)
+        {
             return generateID();
+        }
         else
+        {
             return ID_in;
+        }
     }
 
     /**

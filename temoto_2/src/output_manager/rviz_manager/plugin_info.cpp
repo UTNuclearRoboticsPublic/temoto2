@@ -5,27 +5,59 @@
  * PluginInfo implementations
  */
 
+// TODO: disable default constructor
 PluginInfo::PluginInfo (){}
 
-PluginInfo::PluginInfo (std::string name, std::string type)
+/*
+PluginInfo::PluginInfo (std::string type, std::string class_name)
+	: PluginInfo(type, class_name, "", "")
+{
+}
+
+PluginInfo::PluginInfo (std::string type, std::string class_name, std::string rviz_name)
+	: PluginInfo(type, class_name, rviz_name, "")
+{
+}
+*/
+
+PluginInfo::PluginInfo (std::string type, std::string class_name,
+	   					std::string rviz_name, std::string data_type)
     :
-    name_(name),
-    type_(type)
+    type_(type),
+    class_name_(class_name),
+    data_type_(data_type),
+    rviz_name_(rviz_name),
+    description_("")
 {}
 
-bool PluginInfo::setDescription (std::string description)
+void PluginInfo::setDescription (std::string description)
 {
     this->description_ = description;
 }
 
-std::string PluginInfo::getName ()
+void PluginInfo::setRvizName (std::string rviz_name)
 {
-    return this->name_;
+    this->rviz_name_ = rviz_name;
 }
 
 std::string PluginInfo::getType ()
 {
     return this-> type_;
+}
+
+std::string PluginInfo::getClassName ()
+{
+    return this->class_name_;
+}
+
+std::string PluginInfo::getDataType ()
+{
+    return this->data_type_;
+}
+
+std::string PluginInfo::getRvizName ()
+{
+    return this->rviz_name_;
 }
 
 std::string PluginInfo::getDescription ()
