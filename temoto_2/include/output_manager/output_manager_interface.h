@@ -74,7 +74,7 @@ public:
         // Name of the method, used for making debugging a bit simpler
         std::string prefix = formatMessage("", this->class_name_, __func__);
 
-        if( id_ != unassigned_ID )
+        if( id_ != TemotoID::UNASSIGNED_ID )
         {
             temoto_2::stopAllocatedServices stopSrv;
             stopSrv.request.id = id_;
@@ -150,7 +150,7 @@ public:
 
 private:
 
-    TemotoID id_ = unassigned_ID;
+    TemotoID::ID id_ = TemotoID::UNASSIGNED_ID;
 
     const std::string class_name_ = "OutputManagerInterface";
 

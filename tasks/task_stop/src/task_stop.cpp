@@ -14,6 +14,7 @@
 
 // Task specific includes
 #include "ros/ros.h"
+#include "common/temoto_id.h"
 #include "std_msgs/String.h"
 #include "temoto_2/stopTask.h"
 
@@ -61,6 +62,7 @@ public:
             // Create a service message
             temoto_2::stopTask stop_task_srv;
             stop_task_srv.request.name = arg_0;
+            stop_task_srv.request.task_id = TemotoID::UNASSIGNED_ID;
 
             // Call the server
             stop_task_client_.call(stop_task_srv);

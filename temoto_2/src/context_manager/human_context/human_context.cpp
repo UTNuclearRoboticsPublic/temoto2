@@ -32,7 +32,7 @@ bool HumanContext::setup_gesture_cb (temoto_2::getGestures::Request &req,
     ROS_INFO("[HumanContext::setup_gestures_cb] Received a gesture setup request ...");
 
     // Check the id of the req. If there is none (the first call from a task) then provide one
-    TemotoID id_local = id_manager_.checkID(req.id);
+    TemotoID::ID id_local = id_manager_.checkID(req.id);
 
     // Look if similar resource is already allocated
     for (auto& activeReq : setupGestureActive_)
@@ -95,7 +95,7 @@ bool HumanContext::setup_speech_cb (temoto_2::getSpeech::Request &req,
     ROS_INFO("[HumanContext::setup_speech_cb] Received a speech setup request ...");
 
     // Check the id of the req. If there is none (the first call from a task) then provide one
-    TemotoID id_local = id_manager_.checkID(req.id);
+    TemotoID::ID id_local = id_manager_.checkID(req.id);
 
     for (auto& activeReq : setupSpeechActive_)
     {

@@ -131,7 +131,7 @@ public:
 
 private:
 
-    TemotoID id_ = 0;
+    TemotoID::ID id_ = TemotoID::UNASSIGNED_ID;
 
     const std::string class_name_ = "HumanContextInterface";
 

@@ -21,17 +21,6 @@ RvizManager::RvizManager()
     plugin_info_handler_.plugins_.emplace_back( "rviz_textured_sphere/SphereDisplay", "camera" );
 }
 
-/*
-RvizManager::RvizManager(std::string path_to_default_conf)
-    :
-    path_to_default_conf_(path_to_default_conf)
-{
-    show_in_rviz_server_ = n_.advertiseService("show_in_rviz", &RvizManager::showInRvizCb, this);
-    node_spawn_kill_client_ = n_.serviceClient<temoto_2::nodeSpawnKill>("spawn_kill_process");
-    load_plugin_client_ = n_.serviceClient<temoto_2::loadPlugin>("load_rviz_plugin");
-}
-*/
-
 /* * * * * * * * * * * * * * * * *
  *  runRviz
  * * * * * * * * * * * * * * * * */
@@ -284,7 +273,7 @@ bool RvizManager::showInRvizCb( temoto_2::ShowInRviz::Request &req,
     ROS_INFO("%s Received a 'show_in_rviz' request", prefix.c_str());
 
     // Check the id of the req. If there is none (the first call from a task) then provide one
-    TemotoID id_local = id_manager_.checkID(req.id);
+    TemotoID::ID id_local = id_manager_.checkID(req.id);
 
     for( auto& active_req : active_requests_ )
     {
@@ -462,7 +451,11 @@ bool RvizManager::stopAllocatedServices( temoto_2::stopAllocatedServices::Reques
                 break;
             }
         }
-
+        /*
+         * This "if/else" block is primarily meant for checking if the iterator
+         * has to be increased or not. Otherwize this loop will propably segfault
+         * due to indexing issues
+         */
         if( active_request_erased )
         {
             active_request_erased = false;

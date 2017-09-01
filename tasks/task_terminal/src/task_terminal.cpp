@@ -77,29 +77,33 @@ public:
             return false;
         }
 
-        // If it does, try to cast the arguments
+        // Name of the method, used for making debugging a bit simpler
+        const std::string method_name_ = "startTask";
+        std::string prefix = formatMessage("", this->class_name_, method_name_);
+
+        // Build a gesture specifier
+        // TODO: This shoud be done via speech specifier helper class
+        std::vector <temoto_2::speechSpecifier> speechSpecifiers;
+        temoto_2::speechSpecifier speechSpecifier;
+        speechSpecifier.dev = "device";
+        speechSpecifier.type = "text";
+
+        speechSpecifiers.push_back(speechSpecifier);
+
+
+        // Subscribe to gesture topic
         try
         {
-            arg0 = boost::any_cast<int>(arguments[0]);
-            arg1 = boost::any_cast<std::string>(arguments[1]);
-            arg2 = boost::any_cast<double>(arguments[2]);
-
-            // Print them out
-            std::cout << arg0 << '\n';
-            std::cout << arg1 << '\n';
-            std::cout << arg2 << '\n';
-
-            return true;
+            hci_.getSpeech(speechSpecifiers, &TaskTerminal::speech_callback, this );
+            true;
         }
-        catch (boost::bad_any_cast &e)
+
+        catch( error::ErrorStackUtil& e )
         {
-            std::cerr << "[TaskTerminal::startTask]: " << e.what() << '\n';
-            return false;
+            e.forward( prefix );
+            this->error_handler_.append(e);
         }
-    }
 
-    bool stopTask()
-    {
         return true;
     }
 
@@ -154,7 +158,7 @@ private:
     // Human context interface object
     HumanContextInterface <TaskTerminal> hci_;
 
-    int numberOfArguments = 3;
+    int numberOfArguments = 0;
 
     int arg0;
     std::string arg1;

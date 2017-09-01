@@ -8,12 +8,14 @@
 #include <exception>
 
 #include "core/common.h"
+#include "common/temoto_id.h"
 #include "core/task_handler/task_info.h"
 #include "core/task_handler/running_task.h"
 #include "core/task_handler/description_processor.h"
 #include "base_task/task.h"
 #include "temoto_2/stopTask.h"
 #include "temoto_2/indexTasks.h"
+#include "temoto_2/StopTaskMsg.h"
 
 
 class TaskHandler
@@ -88,21 +90,14 @@ public:
      * @param task
      * @return
      */
-    bool loadTask(RunningTask& task);
+    void loadTask(RunningTask& task);
 
     /**
      * @brief instantiateTask
      * @param task
      * @return
      */
-    bool instantiateTask(RunningTask& task);
-
-    /**
-     * @brief startTask
-     * @param task
-     * @return
-     */
-    bool startTask(RunningTask& task);
+    void instantiateTask(RunningTask& task);
 
     /**
      * @brief startTask
@@ -110,28 +105,29 @@ public:
      * @param arguments
      * @return
      */
-    bool startTask(RunningTask& task, std::vector<boost::any> arguments);
+    void startTask(RunningTask& task, std::vector<boost::any> arguments);
 
     /**
      * @brief startTaskThread
      * @param task
      * @return
      */
-    bool startTaskThread(RunningTask& task, std::vector<boost::any> arguments);
+    void startTaskThread(RunningTask& task, std::vector<boost::any> arguments);
 
     /**
-     * @brief Stops a task specified by the task_name
+     * @brief stopTask
      * @param task_name
+     * @param task_id
      * @return
      */
-    bool stopTask(std::string task_name);
+    void stopTask(std::string task_name = "", TemotoID::ID task_id = TemotoID::UNASSIGNED_ID);
 
     /**
      * @brief unloadTaskLib
      * @param path_to_lib
      * @return
      */
-    bool unloadTaskLib(std::string path_to_lib);
+    void unloadTaskLib(std::string path_to_lib);
 
 private:
 
@@ -144,6 +140,11 @@ private:
      */
     ros::NodeHandle n_;
 
+    /**
+     * @brief id_manager_
+     */
+    TemotoID::IDManager id_manager_;
+
     // ros::ServiceServer startTaskServer_;
     ros::ServiceServer stop_task_server_;
 
@@ -151,6 +152,11 @@ private:
      * @brief index_tasks_server_
      */
     ros::ServiceServer index_tasks_server_;
+
+    /**
+     * @brief join_task_server_
+     */
+    ros::Subscriber stop_task_subscriber_;
 
     /**
      * @brief system_prefix_
@@ -175,17 +181,39 @@ private:
     /**
      * @brief langProcessor_
      */
-    //LanguageProcessor langProcessor_;
 
-/*
-    bool startTaskCallback (temoto_2::startTask::Request& req,
-                            temoto_2::startTask::Response& res);
-*/
+    /**
+     * @brief stopTaskByID
+     * @param task_id
+     */
+    void stopTaskByID( TemotoID::ID task_id );
+
+    /**
+     * @brief stopTaskByName
+     * @param task_name
+     */
+    void stopTaskByName( std::string task_name );
+
+    /**
+     * @brief stopTaskCallback
+     * @param req
+     * @param res
+     * @return
+     */
     bool stopTaskCallback (temoto_2::stopTask::Request& req,
                            temoto_2::stopTask::Response& res);
 
+    /**
+     * @brief indexTasksCallback
+     * @param req
+     * @param res
+     * @return
+     */
     bool indexTasksCallback (temoto_2::indexTasks::Request& req,
                              temoto_2::indexTasks::Response& res);
+
+    void stopTaskMsgCallback( temoto_2::StopTaskMsg msg );
+
 };
 
 #endif

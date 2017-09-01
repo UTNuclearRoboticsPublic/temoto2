@@ -161,7 +161,7 @@ private:
             throw error::ErrorStackUtil( taskErr::SERVICE_REQ_FAIL,
                                          error::Subsystem::TASK,
                                          error::Urgency::MEDIUM,
-                                         prefix + " Unsuccessful call to /show_in_rviz" +
+                                         prefix + " Unsuccessful call to /start_sensor: " +
                                             start_sensor_srv.response.message,
                                          ros::Time::now());
         }
@@ -200,7 +200,7 @@ private:
             throw error::ErrorStackUtil( taskErr::SERVICE_REQ_FAIL,
                                          error::Subsystem::TASK,
                                          error::Urgency::MEDIUM,
-                                         prefix + " Unsuccessful call to /show_in_rviz" +
+                                         prefix + " Unsuccessful call to /stop_sensor: " +
                                             stop_sensor_srv.response.message,
                                          ros::Time::now());
         }

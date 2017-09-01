@@ -1,10 +1,13 @@
 #ifndef TEMOTO_ID_H
 #define TEMOTO_ID_H
 
-typedef int TemotoID;
-#define unassigned_ID 0
+namespace TemotoID
+{
 
-class TemotoIDManager
+typedef int ID;
+const ID UNASSIGNED_ID = 0;
+
+class IDManager
 {
 public:
 
@@ -13,12 +16,22 @@ public:
      * @param ID_in
      * @return
      */
-    TemotoID checkID (TemotoID ID_in)
+    ID checkID (ID ID_in)
     {
-        if (ID_in == 0)
+        if (ID_in == UNASSIGNED_ID)
             return generateID();
         else
             return ID_in;
+    }
+
+    /**
+     * @brief generateID
+     * @return
+     */
+    ID generateID ()
+    {
+        incrementID();
+        return current_ID_;
     }
 
 private:
@@ -26,17 +39,8 @@ private:
     /**
      * @brief current_ID_
      */
-    TemotoID current_ID_ = 2150;
+    ID current_ID_ = 2150;
 
-    /**
-     * @brief generateID
-     * @return
-     */
-    TemotoID generateID ()
-    {
-        incrementID();
-        return current_ID_;
-    }
 
     /**
      * @brief incrementID
@@ -44,9 +48,10 @@ private:
     void incrementID ()
     {
         // Increment the id and if it is "0" then increment again
-        if (++current_ID_ == unassigned_ID)
+        if (++current_ID_ == UNASSIGNED_ID)
             ++current_ID_;
     }
 };
 
+}
 #endif

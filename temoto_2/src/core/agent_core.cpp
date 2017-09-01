@@ -9,20 +9,13 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "ros/ros.h"
-#include <class_loader/class_loader.h>
-#include <class_loader/multi_library_class_loader.h>
 #include "std_msgs/String.h"
-#include <boost/any.hpp>
 #include <ctype.h>
-
 #include <sstream>
-#include "base_task/task.h"
+
+#include "core/common.h"
 #include "core/language_processor/language_processor.h"
 #include "core/task_handler/task_handler.h"
-#include "core/task_handler/description_processor.h"
-
-#include "core/task_handler/task_info.h"
-#include "core/task_handler/running_task.h"
 
 // TBB test
 #include <cstdio>
@@ -48,32 +41,45 @@ public:
      */
     TemotoCore( std::string name ) : task_handler_( name )
     {
+        // Name of the method, used for making debugging a bit simpler
+        std::string prefix = formatMessage("", this->class_name_, __func__);
+
         ROS_INFO("[TemotoCore::TemotoCore]: Construncting the core ...");
 
         // Subscribers
         chatter_subscriber_ = n_.subscribe("human_chatter", 1000, &TemotoCore::humanChatterCallback, this);
 
-        /*
-         * Index (look recursivey for the tasks in the given folder up to specified depth)
-         * the available tasks, otherwise the task handler would have no clue about the available
-         * tasks. Later the indexing could be via indexing task.
-         * TODO: Read the base path from the parameter server
-         */
-        ROS_INFO("[TemotoCore::TemotoCore]: Indexing the tasks ...");
+        try
+        {
+            /*
+             * Index (look recursivey for the tasks in the given folder up to specified depth)
+             * the available tasks, otherwise the task handler would have no clue about the available
+             * tasks. Later the indexing could be via indexing task.
+             * TODO: Read the base path from the parameter server
+             */
+            ROS_INFO("[TemotoCore::TemotoCore]: Indexing the tasks ...");
 
-        std::string home = boost::filesystem::path(getenv("HOME")).string();
-        boost::filesystem::directory_entry dir(home + "/catkin_ws/src/temoto2/tasks/");
-        task_handler_.indexTasks(dir, 1);
+            std::string home = boost::filesystem::path(getenv("HOME")).string();
+            boost::filesystem::directory_entry dir(home + "/catkin_ws/src/temoto2/tasks/");
 
-        /*
-         * Create a Language Processor and initialize it by passing the list of indexed tasks.
-         * Language Processor uses the information contained within the indexed tasks to detect
-         * right keywords (tasks and their I/O arguments). Since the list of indexed tasks are
-         * passed as a pointer, the "TaskHandler::indexTasks" call will be enough to keep the
-         * Language Processor up-to-date
-         */
-        ROS_INFO("[TemotoCore::TemotoCore]: Initializing the Language Processor ...");
-        language_processor_.setTasksIndexed( task_handler_.getIndexedTasks() );
+            task_handler_.indexTasks(dir, 1);
+
+            /*
+             * Create a Language Processor and initialize it by passing the list of indexed tasks.
+             * Language Processor uses the information contained within the indexed tasks to detect
+             * right keywords (tasks and their I/O arguments). Since the list of indexed tasks are
+             * passed as a pointer, the "TaskHandler::indexTasks" call will be enough to keep the
+             * Language Processor up-to-date
+             */
+            ROS_INFO("[TemotoCore::TemotoCore]: Initializing the Language Processor ...");
+            language_processor_.setTasksIndexed( task_handler_.getIndexedTasks() );
+        }
+        catch( error::ErrorStackUtil & e )
+        {
+            // Rethrow the error
+            e.forward( prefix );\
+            throw e;
+        }
     }
 
 private:
@@ -84,11 +90,6 @@ private:
     ros::NodeHandle n_;
 
     /**
-     * @brief chatter_subscriber_
-     */
-    ros::Subscriber chatter_subscriber_;
-
-    /**
      * @brief language_processor_
      */
     LanguageProcessor language_processor_;
@@ -97,6 +98,21 @@ private:
      * @brief task_handler_
      */
     TaskHandler task_handler_;
+
+    /**
+     * @brief error_handler_
+     */
+    error::ErrorHandler error_handler_;
+
+    /**
+     * @brief class_name_
+     */
+    std::string class_name_ = "TemotoCore";
+
+    /**
+     * @brief chatter_subscriber_
+     */
+    ros::Subscriber chatter_subscriber_;
 
     /**
      * @brief humanChatterCallback
@@ -127,6 +143,9 @@ private:
 
 int main(int argc, char **argv)
 {
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = formatMessage("", "Core", __func__);
+
     std::cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * " << std::endl;
     std::cout << "*                                                     * " << std::endl;
     std::cout << "*                       TEMOTO CORE                   * " << std::endl;
@@ -141,10 +160,26 @@ int main(int argc, char **argv)
     // Publisher for publishing messages to core itself
     ros::Publisher chatter_publisher = n.advertise<std_msgs::String>("human_chatter", 1000);
 
-    // TODO COMMENT Create the Core object
-    // Initialize the taskHandler. Pass in the name of the subsystem
-    // (used for namespacing services and debug information)
-    TemotoCore temoto_core("core");
+    /**
+     * @brief error_handler_
+     */
+    error::ErrorHandler error_handler_;
+
+    // Create the Core object
+    TemotoCore* temoto_core;
+
+    try
+    {
+        temoto_core = new TemotoCore("core");
+    }
+    catch( error::ErrorStackUtil & e )
+    {
+        // Append the error to local ErrorStack
+        error_handler_.append(e);
+
+        ROS_ERROR("%s Failed to start the core", prefix.c_str());
+        return 1;
+    }
 
     // Create async spinner, otherwise there is a possibility of locking during core calls
     ros::AsyncSpinner spinner(0);
@@ -158,15 +193,18 @@ int main(int argc, char **argv)
      */
     std_msgs::String init_msg;
     init_msg.data = "terminal";
+
     chatter_publisher.publish(init_msg);
 
-    ROS_INFO("[temoto_core] Core is up and running");
+    ROS_INFO("%s Core is up and running", prefix.c_str());
+
     /*
      * TBB TESTS
      * from: https://software.intel.com/en-us/node/506216
      */
-    std::cout << "INTEL TBB TESTS" << std::endl;
 /*
+    std::cout << "INTEL TBB TESTS" << std::endl;
+
     graph g;
 
     broadcast_node< continue_msg > start(g);

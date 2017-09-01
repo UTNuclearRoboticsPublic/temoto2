@@ -10,6 +10,9 @@
 
 namespace error
 {
+
+const int FORWARDING_CODE = 0;
+
 /**
  * @brief Enum that stores the subsystem codes
  */

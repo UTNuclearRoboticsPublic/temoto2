@@ -15,13 +15,18 @@
 TaskHandler::TaskHandler (std::string system_prefix)
     : system_prefix_(system_prefix)
 {
-    // Initialize the vector of indexed tasks.
+    // Initialize the vector of indexed tasks
     tasks_indexed_ = new std::vector <TaskInfo>(1);
 
-    // Start the servers
+    // Construct the classloader
     class_loader_ = new class_loader::MultiLibraryClassLoader(false);
-    this->stop_task_server_ = n_.advertiseService (system_prefix_ + "/stop_task", &TaskHandler::stopTaskCallback, this);
-    this->index_tasks_server_ = n_.advertiseService (system_prefix_ + "/index_tasks", &TaskHandler::indexTasksCallback, this);
+
+    // Start the servers
+    stop_task_server_ = n_.advertiseService (system_prefix_ + "/stop_task", &TaskHandler::stopTaskCallback, this);
+    index_tasks_server_ = n_.advertiseService (system_prefix_ + "/index_tasks", &TaskHandler::indexTasksCallback, this);
+
+    // Start subscribers
+    stop_task_subscriber_ = n_.subscribe("temoto/stop_task", 10, &TaskHandler::stopTaskMsgCallback, this);
 }
 
 
@@ -67,11 +72,12 @@ std::vector <TaskInfo> TaskHandler::findTaskRunning(std::string task_to_find)
  *  FIND TASK FROM FILESYSTEM
  * * * * * * * * */
 
-std::vector <TaskInfo> TaskHandler::findTaskFilesys(std::string task_to_find, boost::filesystem::directory_entry base_path, int search_depth)
+std::vector <TaskInfo> TaskHandler::findTaskFilesys( std::string task_to_find,
+                                                     boost::filesystem::directory_entry base_path,
+                                                     int search_depth)
 {
     // Name of the method, used for making debugging a bit simpler
-    const std::string method_name_ = "findTaskFilesys";
-    std::string prefix = formatMessage(this->system_prefix_, this->class_name_, method_name_);
+    std::string prefix = formatMessage("", this->class_name_, __func__);
 
     boost::filesystem::path current_dir (base_path);
     boost::filesystem::directory_iterator end_itr;
@@ -86,7 +92,7 @@ std::vector <TaskInfo> TaskHandler::findTaskFilesys(std::string task_to_find, bo
             // if its a directory and depth limit is not there yet, go inside it
             if ( boost::filesystem::is_directory(*itr) && (search_depth > 0) )
             {
-                std::vector<TaskInfo> sub_tasks_found = findTaskFilesys( task_to_find, *itr, (search_depth - 1));
+                std::vector<TaskInfo> sub_tasks_found = findTaskFilesys( task_to_find, *itr, (search_depth - 1) );
 
                 // Append the subtasks if not empty
                 if ( !sub_tasks_found.empty() )
@@ -96,7 +102,7 @@ std::vector <TaskInfo> TaskHandler::findTaskFilesys(std::string task_to_find, bo
             }
 
             // if its a file and matches the desc file name, process the file
-            else if ( boost::filesystem::is_regular_file(*itr) &
+            else if ( boost::filesystem::is_regular_file(*itr) &&
                       ((*itr).path().filename().compare(description_file_) == 0) )
             {
                 //int res = processDesc (taskType, (*itr).path().string());
@@ -115,24 +121,31 @@ std::vector <TaskInfo> TaskHandler::findTaskFilesys(std::string task_to_find, bo
                 catch( error::ErrorStackUtil & e )
                 {
                     // Append the error to local ErrorStack
-                    e.forward( formatMessage("", this->class_name_, method_name_) );
-                    this->error_handler_.append(e);
+                    e.forward( prefix );
+                    error_handler_.append(e);
                 }
             }
         }
         return tasks_found;
     }
-
     catch (std::exception& e)
     {
-        ROS_ERROR("%s %s", prefix.c_str(), e.what());
-        return tasks_found;
+        // Rethrow the exception
+        throw error::ErrorStackUtil( coreErr::FIND_TASK_FAIL,
+                                     error::Subsystem::CORE,
+                                     error::Urgency::HIGH,
+                                     prefix + e.what(),
+                                     ros::Time::now() );
     }
 
     catch(...)
     {
-        ROS_ERROR("%s Unhandled exception", prefix.c_str());
-        return tasks_found;
+        // Rethrow the exception
+        throw error::ErrorStackUtil( coreErr::UNHANDLED,
+                                     error::Subsystem::CORE,
+                                     error::Urgency::HIGH,
+                                     prefix + "Received an unhandled exception",
+                                     ros::Time::now() );
     }
 }
 
@@ -143,15 +156,17 @@ std::vector <TaskInfo> TaskHandler::findTaskFilesys(std::string task_to_find, bo
 void TaskHandler::indexTasks (boost::filesystem::directory_entry base_path, int search_depth)
 {
     // Name of the method, used for making debugging a bit simpler
-    const std::string method_name_ = "indexTasks";
-    std::string prefix = formatMessage(this->system_prefix_, this->class_name_, method_name_).c_str();
+    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+
     try
     {
         *tasks_indexed_ = findTaskFilesys ("", base_path, search_depth);
     }
-    catch (...)
+    catch( error::ErrorStackUtil & e )
     {
-        ROS_ERROR("%s Unhandled exception", prefix.c_str());
+        // Rethrow the exception
+        e.forward( prefix );
+        throw e;
     }
 }
 
@@ -167,17 +182,51 @@ std::vector <TaskInfo>* TaskHandler::getIndexedTasks()
 
 
 /* * * * * * * * *
+ *  INDEX TASKS SERVICE CALLBACK
+ * * * * * * * * */
+
+bool TaskHandler::indexTasksCallback( temoto_2::indexTasks::Request& req,
+                                      temoto_2::indexTasks::Response& res)
+{
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+
+    ROS_DEBUG( "%s Received a request to index tasks at '%s'", prefix.c_str(), req.directory.c_str());
+    try
+    {
+        boost::filesystem::directory_entry dir(req.directory);
+        indexTasks(dir, 1);
+        res.code = 0;
+        res.message = "Browsed and indexed the tasks successfully";
+
+        return true;
+    }
+    catch( error::ErrorStackUtil & e )
+    {
+        // Append the error to local ErrorStack
+        e.forward( prefix );
+        error_handler_.append(e);
+
+        res.code = 1;
+        res.message = "Failed to index the tasks";
+        return true;
+    }
+}
+
+
+/* * * * * * * * *
  *  LOAD TASK
  * * * * * * * * */
 
-bool TaskHandler::loadTask(RunningTask& task)
+void TaskHandler::loadTask(RunningTask& task)
 {
     // Name of the method, used for making debugging a bit simpler
-    const std::string method_name_ = "loadTask";
-    std::string prefix = formatMessage(this->system_prefix_, this->class_name_, method_name_).c_str();
+    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
 
-    // Create an empty vector for storing the class names (currently a task
-    // could have multiple tasks inside it. but it sounds TROUBLESOME
+    /*
+     * Create an empty vector for storing the class names (currently a task
+     * could have multiple tasks inside it. but it sounds TROUBLESOME
+     */
     std::vector<std::string> classes;
 
     // Get the "path" to its lib file
@@ -186,7 +235,7 @@ bool TaskHandler::loadTask(RunningTask& task)
     try
     {
         // Start loading a task library
-		ROS_INFO("Loading class from path: %s", path_to_lib.c_str());
+        ROS_INFO("Loading class from path: %s", path_to_lib.c_str());
         class_loader_->loadLibrary(path_to_lib);
         classes = class_loader_->getAvailableClassesForLibrary<Task>(path_to_lib);
 
@@ -195,46 +244,74 @@ bool TaskHandler::loadTask(RunningTask& task)
 
         // Add the name of the class
         task.task_info_.class_name_ = classes[0];
-
-        return true;
     }
 
+    // Rethrow the exception
     catch(class_loader::ClassLoaderException& e)
     {
-        ROS_ERROR("%s ClassLoaderException: %s", prefix.c_str(), e.what());
-        return false;
+        // Rethrow the exception
+        throw error::ErrorStackUtil( coreErr::CLASS_LOADER_FAIL,
+                                     error::Subsystem::CORE,
+                                     error::Urgency::HIGH,
+                                     prefix + e.what(),
+                                     ros::Time::now() );
     }
-
-    return false;
 }
 
+
+/* * * * * * * * *
+ *  UNLOAD LIB
+ * * * * * * * * */
+
+void TaskHandler::unloadTaskLib(std::string path_to_lib)
+{
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+
+    try
+    {
+        ROS_DEBUG( "[TaskHandler/unloadTaskLib] unloading library");
+        class_loader_->unloadLibrary(path_to_lib);
+    }
+    catch(class_loader::ClassLoaderException& e)
+    {
+        // Rethrow the exception
+        throw error::ErrorStackUtil( coreErr::CLASS_LOADER_FAIL,
+                                     error::Subsystem::CORE,
+                                     error::Urgency::HIGH,
+                                     prefix + e.what(),
+                                     ros::Time::now() );
+    }
+}
 
 /* * * * * * * * *
  *  INSTANTIATE TASK
  * * * * * * * * */
 
-bool TaskHandler::instantiateTask(RunningTask& task)
+void TaskHandler::instantiateTask(RunningTask& task)
 {
     // Name of the method, used for making debugging a bit simpler
-    const std::string method_name_ = "instansiateTask";
-    std::string prefix = formatMessage(this->system_prefix_, this->class_name_, method_name_);
+    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
 
     std::string task_class_name = task.task_info_.getClassName();
 
     // First check that the task has a "class name"
     if (task_class_name.empty())
     {
-        ROS_ERROR( "%s Unset 'class name'", prefix.c_str() );
-        return false;
+        throw error::ErrorStackUtil( coreErr::NAMELESS_TASK_CLASS,
+                                     error::Subsystem::CORE,
+                                     error::Urgency::HIGH,
+                                     prefix + "Task missing a class name",
+                                     ros::Time::now() );
     }
 
     // Check if there is a class with this name
     bool task_class_found = false;
     std::vector<std::string> loaded_classes = class_loader_->getAvailableClasses<Task>();
 
-    for (std::string single_class : loaded_classes)
+    for (std::string loaded_class : loaded_classes)
     {
-        if (single_class.compare(task_class_name) == 0)
+        if (loaded_class == task_class_name)
         {
             task_class_found = true;
             break;
@@ -249,94 +326,56 @@ bool TaskHandler::instantiateTask(RunningTask& task)
             ROS_DEBUG( "%s instatiating task: %s", prefix.c_str(), task_class_name.c_str());
             task.task_pointer_ = class_loader_->createInstance<Task>(task_class_name);
 
-            return true;
+            return;
         }
-
         catch(class_loader::ClassLoaderException& e)
         {
-            ROS_ERROR("%s ClassLoaderException: %s", prefix.c_str(), e.what());
-            return false;
+            // Rethrow the exception
+            throw error::ErrorStackUtil( coreErr::CLASS_LOADER_FAIL,
+                                         error::Subsystem::CORE,
+                                         error::Urgency::HIGH,
+                                         prefix + e.what(),
+                                         ros::Time::now() );
         }
     }
     else
     {
-        ROS_DEBUG( "%s task: '%s' was not found", prefix.c_str(), task_class_name.c_str());
-        return false;
+        throw error::ErrorStackUtil( coreErr::NO_TASK_CLASS,
+                                     error::Subsystem::CORE,
+                                     error::Urgency::HIGH,
+                                     prefix + "Could not find a task class within loaded classes",
+                                     ros::Time::now() );
     }
-
-    return true;
 }
 
 
 /* * * * * * * * *
- *  START TASK WITHOUT ARGUMENTS
- *
- * TODO: CHECK IF THE TASK EVEN EXISTS IN THE LIST OF RUNNING TASKS
- * * * * * * * * */
-
-bool TaskHandler::startTask(RunningTask& task)
-{
-    // Name of the method, used for making debugging a bit simpler
-    const std::string method_name_ = "startTask";
-    std::string prefix = formatMessage(this->system_prefix_, this->class_name_, method_name_);
-
-    try
-    {
-        ROS_DEBUG( "%s starting task: %s", prefix.c_str(), task.task_info_.getName().c_str());
-        task.task_pointer_->startTask();
-        return true;
-    }
-
-    catch ( error::ErrorStackUtil& e )
-    {
-        // Append the error to local ErrorStack
-        e.forward( formatMessage("", this->class_name_, method_name_) );
-        this->error_handler_.append(e);
-    }
-
-    catch (class_loader::ClassLoaderException& e)
-    {
-        ROS_ERROR("%s ClassLoaderException: %s", prefix.c_str(), e.what());
-    }
-
-    return false;
-}
-
-/* * * * * * * * *
- *  START TASK WITH ARGUMENTS
+ *  START TASK
  *
  *  TODO: * check the running tasks lists before doing anything
  * * * * * * * * */
 
-bool TaskHandler::startTask(RunningTask& task, std::vector<boost::any> arguments)
+void TaskHandler::startTask(RunningTask& task, std::vector<boost::any> arguments)
 {
     // Name of the method, used for making debugging a bit simpler
-    const std::string method_name_ = "startTask";
-    std::string prefix = formatMessage(this->system_prefix_, this->class_name_, method_name_).c_str();
+    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
 
-    // If the list is empty then ...
-    if (arguments.empty())
+    try
     {
-        startTask(task);
-        return true;
-    }
-    else
-    {
-        try
-        {
-            ROS_DEBUG( "%s starting task (with arguments): %s", prefix.c_str(), task.task_info_.getName().c_str());
-            task.task_pointer_->startTaskAutojoin(0, arguments);
-            return true;
-        }
-
-        catch(class_loader::ClassLoaderException& e)
-        {
-            ROS_ERROR("%s ClassLoaderException: %s", prefix.c_str(), e.what());
-            return false;
-        }
+        ROS_DEBUG( "%s starting task: %s", prefix.c_str(), task.task_info_.getName().c_str());
+        task.task_pointer_->setID( id_manager_.generateID() );
+        task.task_pointer_->startTaskAutostop( 0, arguments );
     }
 
-    return false;
+    catch(...)
+    {
+        // Rethrow the exception
+        throw error::ErrorStackUtil( coreErr::UNHANDLED,
+                                     error::Subsystem::CORE,
+                                     error::Urgency::HIGH,
+                                     prefix + "Received an unhandled exception",
+                                     ros::Time::now() );
+    }
 }
 
 
@@ -344,13 +383,31 @@ bool TaskHandler::startTask(RunningTask& task, std::vector<boost::any> arguments
  *  START TASK THREAD
  * * * * * * * * */
 
-bool TaskHandler::startTaskThread(RunningTask& task, std::vector<boost::any> arguments)
+void TaskHandler::startTaskThread(RunningTask& task, std::vector<boost::any> arguments)
 {
-    using memfunc_type = bool (TaskHandler::*)(RunningTask&, std::vector<boost::any>);
-    memfunc_type memfunc = &TaskHandler::startTask;
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
 
-    task.task_thread_ = std::thread(memfunc, this, std::ref(task), arguments);
-    return true;
+    try
+    {
+        ROS_DEBUG( "%s starting task: %s", prefix.c_str(), task.task_info_.getName().c_str());
+        task.task_pointer_->setID( id_manager_.generateID() );
+
+        using memfunc_type = bool (Task::*)(int, std::vector<boost::any>);
+        memfunc_type memfunc = &Task::startTask;
+
+        task.task_thread_ = std::thread(memfunc, task.task_pointer_, 0, arguments);
+    }
+
+    catch(...)
+    {
+        // Rethrow the exception
+        throw error::ErrorStackUtil( coreErr::UNHANDLED,
+                                     error::Subsystem::CORE,
+                                     error::Urgency::HIGH,
+                                     prefix + "Received an unhandled exception",
+                                     ros::Time::now() );
+    }
 }
 
 
@@ -361,32 +418,32 @@ bool TaskHandler::startTaskThread(RunningTask& task, std::vector<boost::any> arg
 bool TaskHandler::executeTask(TaskInfo task_info, std::vector<boost::any> arguments)
 {
     // Name of the method, used for making debugging a bit simpler
-    const std::string method_name_ = "executeTask";
-    std::string prefix = formatMessage(this->system_prefix_, this->class_name_, method_name_).c_str();
+    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
 
-    // Create a RunningTask object
-    RunningTask task_to_run;
-    task_to_run.task_info_ = task_info;
+    bool start_attempted = false;
 
-    /*
-     * Use the name of the task to load in the task class. task handler returns the internal
-     * specific name of the task which is used in the next step.
-     */
-    ROS_DEBUG("%s Executing task '%s' ...", prefix.c_str(), task_to_run.task_info_.getName().c_str());
-
-    if ( !loadTask(task_to_run) )
+    try
     {
-        // throw error
-        return false;
-    }
+        // Create a RunningTask object
+        RunningTask task_to_run;
+        task_to_run.task_info_ = task_info;
 
-    /*
-     * Create an instance of the task based on the class name. a task .so file might
-     * contain multiple classes, therefore path is not enough and specific name
-     * must be used
-     */
-    if ( instantiateTask(task_to_run) )
-    {
+        /*
+         * Use the name of the task to load in the task class. task handler returns the internal
+         * specific name of the task which is used in the next step.
+         */
+        ROS_DEBUG("%s Executing task '%s' ...", prefix.c_str(), task_to_run.task_info_.getName().c_str());
+
+        // Load the task library
+        loadTask(task_to_run);
+
+        /*
+         * Create an instance of the task based on the class name. a task .so file might
+         * contain multiple classes, therefore path is not enough and specific name
+         * must be used
+         */
+        instantiateTask(task_to_run);
+
         /*
          * MOVE the task info into the list of running tasks. If the move operation is done
          * after starting the task, the process will likely crash.
@@ -394,39 +451,48 @@ bool TaskHandler::executeTask(TaskInfo task_info, std::vector<boost::any> argume
         ROS_DEBUG("%s Moving the task into the 'running_tasks' vector ...", prefix.c_str());
         running_tasks_.push_back (std::move(task_to_run));
 
+        start_attempted = true;
+
         //Start the task
-        if ( !startTaskThread(running_tasks_.back(), arguments) )
-        {
-            stopTask(running_tasks_.back().task_info_.getName());
-            return false;
-        }
-
+        startTaskThread(running_tasks_.back(), arguments);
     }
+    catch( error::ErrorStackUtil & e )
+    {
+        // Append the error to local ErrorStack
+        e.forward( prefix );
+        error_handler_.append(e);
 
-    return true;
+        if( start_attempted )
+        {
+            try
+            {
+                stopTask(running_tasks_.back().task_info_.getName());
+            }
+            catch( error::ErrorStackUtil & e2 )
+            {
+                e2.forward( prefix );
+                error_handler_.append(e2);
+            }
+        }
+    }
 }
 
 
 /* * * * * * * * *
- *  STOP TASK
- *
- *  TODO: when multiple tasks with the same name are found then do something more reasonable than
- *        just stopping the first one.
+ *  stopTaskByID
  * * * * * * * * */
 
-bool TaskHandler::stopTask(std::string task_name)
+void TaskHandler::stopTaskByID( TemotoID::ID task_id )
 {
-    // Name of the method
-    const std::string method_name_ = "stopTask";
-    std::string prefix = formatMessage(this->system_prefix_, this->class_name_, method_name_);
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = formatMessage( system_prefix_, this->class_name_, __func__);
 
-    // Find the task by iterating through the list of running tasks
-    for (auto it = this->running_tasks_.begin(); it != this->running_tasks_.end(); it++)
+    try
     {
-        // If a task was found then delete it
-        if ((*it).task_info_.getName().compare(task_name) == 0)
+        // Find the task by iterating through the list of running tasks
+        for (auto it = this->running_tasks_.begin(); it != this->running_tasks_.end(); it++)
         {
-            try
+            if ((*it).task_pointer_->getID() == task_id)
             {
                 ROS_DEBUG( "%s Stopping and erasing task: %s", prefix.c_str(), (*it).task_info_.getName().c_str());
                 /*
@@ -444,39 +510,134 @@ bool TaskHandler::stopTask(std::string task_name)
 
                 ROS_DEBUG( "%s Task stopped", prefix.c_str());
 
-                return true;
-            }
-
-            catch(class_loader::ClassLoaderException& e)
-            {
-                ROS_ERROR("%s ClassLoaderException: %s", prefix.c_str(), e.what());
-                return false;
-            }
-
-            catch(...)
-            {
-                ROS_ERROR("%s exception happened", prefix.c_str());
-                return false;
+                return;
             }
         }
-    }
 
-    ROS_ERROR("%s exception happened", prefix.c_str());
-    return false;
+        ROS_DEBUG("%s Could not find any tasks with TID: %d", prefix.c_str(), task_id);
+    }
+    catch(class_loader::ClassLoaderException& e)
+    {
+        // Rethrow the exception
+        throw error::ErrorStackUtil( coreErr::CLASS_LOADER_FAIL,
+                                     error::Subsystem::CORE,
+                                     error::Urgency::HIGH,
+                                     prefix + e.what(),
+                                     ros::Time::now() );
+    }
+    catch(...)
+    {
+        // Rethrow the exception
+        throw error::ErrorStackUtil( coreErr::UNHANDLED,
+                                     error::Subsystem::CORE,
+                                     error::Urgency::HIGH,
+                                     prefix + "Received an unhandled exception",
+                                     ros::Time::now() );
+    }
 }
 
 
 /* * * * * * * * *
- *  UNLOAD LIB
+ *  stopTaskByName
+ *  TODO: when multiple tasks with the same name are found then do something more reasonable than
+ *        just stopping the first one.
  * * * * * * * * */
 
-bool TaskHandler::unloadTaskLib(std::string path_to_lib)
+void TaskHandler::stopTaskByName( std::string task_name )
 {
-    ROS_DEBUG( "[TaskHandler/unloadTaskLib] unloading library");
-    class_loader_->unloadLibrary(path_to_lib);
-    return true;
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+
+    try
+    {
+        // Find the task by iterating through the list of running tasks
+        for (auto it = this->running_tasks_.begin(); it != this->running_tasks_.end(); it++)
+        {
+            // If a task was found then delete it
+            if ((*it).task_info_.getName() == task_name)
+            {
+                ROS_DEBUG( "%s Stopping and erasing task: %s", prefix.c_str(), (*it).task_info_.getName().c_str());
+                /*
+                 * First, call the "stopTask", given that a task is checking the internal "stop_task_" flag
+                 * TODO: Implement a way for brutally forcing  the task thread to stop in case the task is
+                 * stuck inside a loop of some sort
+                 */
+                (*it).task_pointer_->stopTask();
+
+                // If the task is stopped, join the thread
+                (*it).task_thread_.join();
+
+                // Delete the task entry, which also calls the destructor of the task
+                running_tasks_.erase (it);
+
+                ROS_DEBUG( "%s Task stopped", prefix.c_str());
+
+                return;
+            }
+        }
+
+        ROS_DEBUG("%s Could not find any tasks named: %s", prefix.c_str(), task_name.c_str());
+    }
+    catch(class_loader::ClassLoaderException& e)
+    {
+        // Rethrow the exception
+        throw error::ErrorStackUtil( coreErr::CLASS_LOADER_FAIL,
+                                     error::Subsystem::CORE,
+                                     error::Urgency::HIGH,
+                                     prefix + e.what(),
+                                     ros::Time::now() );
+    }
+    catch(...)
+    {
+        // Rethrow the exception
+        throw error::ErrorStackUtil( coreErr::UNHANDLED,
+                                     error::Subsystem::CORE,
+                                     error::Urgency::HIGH,
+                                     prefix + "Received an unhandled exception.",
+                                     ros::Time::now() );
+    }
 }
 
+
+/* * * * * * * * *
+ *  STOP TASK
+ * * * * * * * * */
+
+void TaskHandler::stopTask( std::string task_name, TemotoID::ID task_id)
+{
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+
+    try
+    {
+        // If task_id is specified, then stop the task by ID
+        if( task_id != TemotoID::UNASSIGNED_ID )
+        {
+            stopTaskByID( task_id );
+            return;
+        }
+
+        // If ID was not specified, but name was, then stop the task by name
+        else if( task_name != "" )
+        {
+            stopTaskByName( task_name );
+            return;
+        }
+    }
+    catch( error::ErrorStackUtil & e )
+    {
+        // Rethrow the exception
+        e.forward( prefix );
+        throw e;
+    }
+
+    // If nothing was specified, then throw error
+    throw error::ErrorStackUtil( coreErr::UNSPECIFIED_TASK,
+                                 error::Subsystem::CORE,
+                                 error::Urgency::MEDIUM,
+                                 prefix + "Task name and task ID unspecified.",
+                                 ros::Time::now() );
+}
 
 /* * * * * * * * *
  *  START TASK SERVICE CALLBACK
@@ -486,10 +647,10 @@ bool TaskHandler::unloadTaskLib(std::string path_to_lib)
 bool TaskHandler::startTaskCallback (temoto_2::startTask::Request& req,
                                      temoto_2::startTask::Response& res)
 {
-    ROS_DEBUG( "[%s/TaskHandler::startTaskCallback] Received a request to start task '%s'", this->system_prefix_.c_str(), req.task_name.c_str());
+    ROS_DEBUG( "[%s/TaskHandler::startTaskCallback] Received a request to start task '%s'", this->system_prefix__.c_str(), req.task_name.c_str());
 
     // Load the task
-    ROS_DEBUG( "[%s/TaskHandler::startTaskCallback] Loading the task", this->system_prefix_.c_str());
+    ROS_DEBUG( "[%s/TaskHandler::startTaskCallback] Loading the task", this->system_prefix__.c_str());
     std::string taskClassName = loadTask(req.task_name);
 
     // Check if the loading proccess was successful
@@ -503,7 +664,7 @@ bool TaskHandler::startTaskCallback (temoto_2::startTask::Request& req,
     // Create an instance of the task based on the class name. a task .so file might
     // contain multiple classes, therefore path is not enough and specific name
     // must be used
-    ROS_DEBUG( "[%s/TaskHandler::startTaskCallback] Creating an instance of the task", this->system_prefix_.c_str());
+    ROS_DEBUG( "[%s/TaskHandler::startTaskCallback] Creating an instance of the task", this->system_prefix__.c_str());
 
     if ( !instantiateTask(taskClassName) )
     {
@@ -513,7 +674,7 @@ bool TaskHandler::startTaskCallback (temoto_2::startTask::Request& req,
     }
 
     //Start the task
-    ROS_DEBUG( "[%s/TaskHandler::startTaskCallback] Starting the task", this->system_prefix_.c_str());
+    ROS_DEBUG( "[%s/TaskHandler::startTaskCallback] Starting the task", this->system_prefix__.c_str());
 
     if ( startTask(taskClassName, task.second) )
     {
@@ -526,18 +687,28 @@ bool TaskHandler::startTaskCallback (temoto_2::startTask::Request& req,
  *  STOP TASK SERVICE CALLBACK
  * * * * * * * * */
 
-bool TaskHandler::stopTaskCallback (temoto_2::stopTask::Request& req,
+bool TaskHandler::stopTaskCallback( temoto_2::stopTask::Request& req,
                                     temoto_2::stopTask::Response& res)
 {
-    ROS_DEBUG( "[%s/TaskHandler::stopTaskCallback] Received a request to stop task '%s'", this->system_prefix_.c_str(), req.name.c_str());
-    if ( stopTask(req.name) )
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+
+    ROS_DEBUG( "%s Received a request to stop task '%s'", prefix.c_str(), req.name.c_str());
+
+    try
     {
+        stopTask(req.name, req.task_id);
+
         res.code = 0;
         res.message = "task stopped";
     }
 
-    else
+    catch( error::ErrorStackUtil & e )
     {
+        // Append the error to local ErrorStack
+        e.forward( prefix );
+        error_handler_.append(e);
+
         res.code = 1;
         res.message = "failed to stop the task";
     }
@@ -545,29 +716,24 @@ bool TaskHandler::stopTaskCallback (temoto_2::stopTask::Request& req,
     return true;
 }
 
-
 /* * * * * * * * *
- *  INDEX TASKS SERVICE CALLBACK
+ *  stopTaskMsgCallback
  * * * * * * * * */
 
-bool TaskHandler::indexTasksCallback (temoto_2::indexTasks::Request& req,
-                         temoto_2::indexTasks::Response& res)
+void TaskHandler::stopTaskMsgCallback( temoto_2::StopTaskMsg msg )
 {
-    ROS_DEBUG( "[%s/TaskHandler::indexTasksCallback] Received a request to index tasks at '%s'", this->system_prefix_.c_str(), req.directory.c_str());
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+
+    ROS_DEBUG( "%s Received a request to stop a task (TID = %ld)", prefix.c_str(), msg.task_id);
     try
     {
-        boost::filesystem::directory_entry dir(req.directory);
-        indexTasks(dir, 1);
-        res.code = 0;
-        res.message = "Browsed and indexed the tasks successfully";
-
-        return true;
+         stopTask( "", msg.task_id );
     }
-    catch(...)
+    catch( error::ErrorStackUtil & e )
     {
-        ROS_ERROR("[%s/TaskHandler::indexTasksCallback] Failed to index the tasks", this->system_prefix_.c_str());
-        res.code = 1;
-        res.message = "Failed to index the tasks";
-        return false;
+        // Append the error to local ErrorStack
+        e.forward( prefix );
+        error_handler_.append(e);
     }
 }

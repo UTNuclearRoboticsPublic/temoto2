@@ -32,7 +32,7 @@ private:
 
     std::vector <RequestContainer<temoto_2::ShowInRviz>> active_requests_;
 
-    TemotoIDManager id_manager_;
+    TemotoID::IDManager id_manager_;
 
     ros::ServiceServer show_in_rviz_server_;
 

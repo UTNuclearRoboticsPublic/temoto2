@@ -21,6 +21,7 @@ add_message_files(FILES
 	gestureSpecifier.msg
   BaseError.msg
   ErrorStack.msg
+  StopTaskMsg.msg
 )
 
 add_service_files(

@@ -17,7 +17,7 @@ public:
 private:
     ros::NodeHandle n_;
 
-    TemotoIDManager id_manager_;
+    TemotoID::IDManager id_manager_;
 
     std::vector <temoto_2::getGestures> setupGestureActive_;
     std::vector <temoto_2::getSpeech> setupSpeechActive_;
