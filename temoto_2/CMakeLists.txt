@@ -107,6 +107,13 @@ target_link_libraries(agent_core
    ${TBB_LIBRARIES} )
 add_dependencies(agent_core ${catkin_EXPORTED_TARGETS})
 
+# # # # # # # # # # # #
+# NODE MANAGER
+# # # # # # # # # # # #
+add_executable(node_manager src/node_manager/node_manager.cpp )
+add_dependencies(node_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(node_manager ${catkin_LIBRARIES} )
+
 
 
 # # # # # # # # # # # #   TESTING TOOLS   # # # # # # # # # # # # # # #
@@ -121,13 +128,13 @@ add_executable(blinker_publisher src/tools/blinker_publisher.cpp)
 add_dependencies(blinker_publisher ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(blinker_publisher ${catkin_LIBRARIES} )
 
-add_executable(node_manager src/tools/node_manager.cpp )
-add_dependencies(node_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(node_manager ${catkin_LIBRARIES} )
-
 add_executable(dummy_sensor src/tools/dummy_sensor.cpp)
 add_dependencies(dummy_sensor ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(dummy_sensor ${catkin_LIBRARIES} )
+
+add_executable(broken_node_1 src/tools/broken_node_1.cpp)
+add_dependencies(broken_node_1 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(broken_node_1 ${catkin_LIBRARIES} )
 
 #link_directories(/tmp/usr/local/lib/)
 #add_executable(blinker src/tools/blinker.cpp)

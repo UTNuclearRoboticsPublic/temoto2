@@ -510,13 +510,13 @@ bool RvizManager::stopAllocatedServices( temoto_2::stopAllocatedServices::Reques
 bool RvizManager::compareRequest (temoto_2::ShowInRviz::Request req1,
                                   temoto_2::ShowInRviz::Request req2)
 {
-    if (req1.type == req2.type &&
-		req1.name == req2.name &&
-		req1.topic == req2.topic &&
-		req1.config == req2.config)
-	{
-		return true;
-	}
+    if( req1.type == req2.type &&
+        req1.name == req2.name &&
+        req1.topic == req2.topic &&
+        req1.config == req2.config)
+    {
+        return true;
+    }
 
     return false;
 }
