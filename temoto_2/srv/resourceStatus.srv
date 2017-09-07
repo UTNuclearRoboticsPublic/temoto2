@@ -1,0 +1,12 @@
+# Id of the resource that this info is about:
+int64 resource_id
+
+# Resource status code
+int64 status_code 
+
+# Additional info about what happened with who.
+string message
+
+---
+
+# no return fields yet
