@@ -87,7 +87,8 @@ public:
                 catch( error::ErrorStackUtil& e )
                 {
                     e.forward( prefix );
-                    error_handler_.append(e);
+                    //error_handler_.append(e);
+					throw e;
                 }
             }
         }
@@ -109,7 +110,8 @@ public:
             catch( error::ErrorStackUtil& e )
             {
                 e.forward( prefix );
-                error_handler_.append(e);
+               // error_handler_.append(e);
+			   throw e;
             }
         }
     }

@@ -31,6 +31,7 @@ add_service_files(
 	startSensorRequest.srv
 	stopSensorRequest.srv
 	stopAllocatedServices.srv
+	resourceStatus.srv
 	task_handler/stopTask.srv
 	task_handler/indexTasks.srv
 	context_manager/human_context/getGestures.srv
@@ -110,7 +111,7 @@ add_dependencies(agent_core ${catkin_EXPORTED_TARGETS})
 # # # # # # # # # # # #
 # NODE MANAGER
 # # # # # # # # # # # #
-add_executable(node_manager src/node_manager/node_manager.cpp )
+add_executable(node_manager src/node_manager/node_manager.cpp src/node_manager/node_manager_node.cpp )
 add_dependencies(node_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(node_manager ${catkin_LIBRARIES} )
 
