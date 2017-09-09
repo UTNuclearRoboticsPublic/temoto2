@@ -22,9 +22,12 @@
 namespace node_manager
 {
 
-NodeManager::NodeManager()
+NodeManager::NodeManager():resource_manager_(this)
 {
-    spawn_kill_srv_ = nh_.advertiseService("spawn_kill_process", &NodeManager::spawnKillCb, this);
+	resource_manager_.addResource<temoto_2::nodeSpawnKill>(
+			"spawn_kill_process", 
+			&NodeManager::spawnKillCb);
+
 }
 
 NodeManager::~NodeManager()
@@ -136,6 +139,8 @@ bool NodeManager::spawnKillCb( temoto_2::nodeSpawnKill::Request &req,
 	// Check if the process related to the incoming request is running or not
 	bool request_active = false;
 	pid_t active_pid;
+	
+
 	for( auto& running_process : running_processes_ )
 	{
 		if( compareRequest(running_process.second, req, req.action) )

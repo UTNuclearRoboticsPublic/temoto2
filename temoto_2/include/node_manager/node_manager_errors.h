@@ -12,14 +12,12 @@ namespace node_manager
         NODE_SPAWN_FAIL,             // Failed to spawn new node
         NODE_KILL_FAIL              // Failed to kill a node
     };
-static int fakk;
-//	std::map<error_type, std::string> error_descs;
-//   	= {
-//		{error_type::FORWARDING, "Forwarding"},
-//		{error_type::NODE_KILL_FAIL, "Node kill failed heavily, it was hit by extreme badness"}
-//	};
-		
 
+	static std::map<error_type, std::string> error_descs = {
+		{error_type::FORWARDING, "Forwarding"},
+		{error_type::NODE_KILL_FAIL, "Node kill failed heavily, it was hit by extreme badness"}
+	};
+		
 		
 }
 

@@ -4,6 +4,7 @@
 #include "core/common.h"
 #include "node_manager/node_manager_errors.h"
 #include "node_manager/node_manager_services.h"
+#include "common/resource_manager.h"
 
 namespace node_manager
 {
@@ -37,6 +38,9 @@ namespace node_manager
 			std::map<pid_t, temoto_2::nodeSpawnKill::Request> running_processes_;
 
 			ros::NodeHandle nh_;
+
+			// Resource allocation protocol
+			rap::ResourceManager<NodeManager> resource_manager_;
 
 			//error::ErrorHandler error_handler_;
 
