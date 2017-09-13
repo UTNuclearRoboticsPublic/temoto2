@@ -1,0 +1,25 @@
+# client id
+int64 client_id
+
+# actions (rosrun or roslaunch):
+string action
+
+# name of the package
+string package
+
+# name of the node or launch file
+string name
+
+---
+
+# return code
+#		0: Success
+#		1: Failure
+#	 -1: Undefined
+int64 code
+
+# return message
+string message
+
+int64 resource_id
+int64 client_id

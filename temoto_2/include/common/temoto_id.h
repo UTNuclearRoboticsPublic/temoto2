@@ -1,7 +1,7 @@
 #ifndef TEMOTO_ID_H
 #define TEMOTO_ID_H
 
-namespace TemotoID
+namespace temoto_id
 {
 
 typedef int ID;
@@ -58,4 +58,7 @@ private:
 };
 
 }
+
+// TODO: temporary mapping until code gets clean
+namespace TemotoID = temoto_id;
 #endif

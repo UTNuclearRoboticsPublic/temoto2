@@ -7,12 +7,12 @@
 
 #include <string>
 
-// Resource Allocation Protocol (RAP) for temoto 2
+// Resource Management Protocol (RMP) for temoto 2
 
-namespace rap
+namespace rmp
 {
 
-	template<class Owner>
+template<class Owner>
 class ResourceManager
 {
 	public:
@@ -31,7 +31,6 @@ class ResourceManager
 		{
 			std::shared_ptr<BaseResource> res = std::make_shared<Resource<Service, Owner>>(service_name, callback, owner_);
 			resources_.push_back(res);
-			resources_.clear();
 
 			return true;
 		}

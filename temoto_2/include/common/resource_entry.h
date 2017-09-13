@@ -3,14 +3,17 @@
 
 #include "common/temoto_id.h"
 
-namespace rap
+namespace rmp
 {
 
 	template<class Service>
 	class ResourceEntry
 	{
+		public:
+			ResourceEntry(temoto_id::ID id, Service service):id_(id), service_(service){}
+
 		private:
-			TemotoID::ID id_;
+			temoto_id::ID id_;
 			Service service_;
 	};
 

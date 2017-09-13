@@ -40,7 +40,7 @@ namespace node_manager
 			ros::NodeHandle nh_;
 
 			// Resource allocation protocol
-			rap::ResourceManager<NodeManager> resource_manager_;
+			rmp::ResourceManager<NodeManager> resource_manager_;
 
 			//error::ErrorHandler error_handler_;
 
