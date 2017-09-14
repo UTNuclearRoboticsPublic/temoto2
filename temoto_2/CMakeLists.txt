@@ -26,7 +26,9 @@ add_message_files(FILES
 
 add_service_files(
   FILES
-  nodeSpawnKill.srv
+  	nodeSpawnKill.srv
+	LoadResource.srv
+	UnloadResource.srv
 	listDevices.srv
 	startSensorRequest.srv
 	stopSensorRequest.srv

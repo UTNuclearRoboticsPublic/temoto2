@@ -2,6 +2,9 @@
 #define NODE_MANAGER_SERVICES_H
 
 #include <string>
+#include "temoto_2/LoadResource.h"
+#include "temoto_2/UnloadResource.h"
+
 #include "temoto_2/nodeSpawnKill.h"
 #include "temoto_2/resourceStatus.h"
 

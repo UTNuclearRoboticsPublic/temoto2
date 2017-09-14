@@ -24,9 +24,10 @@ namespace node_manager
 
 NodeManager::NodeManager():resource_manager_(this)
 {
-	resource_manager_.addResource<temoto_2::nodeSpawnKill>(
-			"spawn_kill_process", 
-			&NodeManager::spawnKillCb);
+	resource_manager_.addServer<temoto_2::LoadResource, temoto_2::UnloadResource>(
+			"node_manager_server", 
+			&NodeManager::loadCb,
+			&NodeManager::unloadCb);
 
 }
 
@@ -115,6 +116,18 @@ void NodeManager::formatResponse(temoto_2::nodeSpawnKill::Response &res, int cod
 	res.code = code;
 	res.message = message;
 }
+
+
+bool NodeManager::loadCb(temoto_2::LoadResource::Request &req, temoto_2::LoadResource::Response &res)
+{
+	ROS_INFO("NodeManager: LoadCb reached!");
+}
+
+bool NodeManager::unloadCb(temoto_2::UnloadResource::Request &req, temoto_2::UnloadResource::Response &res)
+{
+	ROS_INFO("NodeManager: LoadCb reached!");
+}
+
 
 bool NodeManager::spawnKillCb( temoto_2::nodeSpawnKill::Request &req,
 		temoto_2::nodeSpawnKill::Response &res)

@@ -4,7 +4,7 @@
 #include "core/common.h"
 #include "node_manager/node_manager_errors.h"
 #include "node_manager/node_manager_services.h"
-#include "common/resource_manager.h"
+#include "rmp/resource_manager.h"
 
 namespace node_manager
 {
@@ -21,6 +21,8 @@ namespace node_manager
 					std::string action);
 
 			void formatResponse(temoto_2::nodeSpawnKill::Response &res, int code, std::string message);
+			bool loadCb(temoto_2::LoadResource::Request &req, temoto_2::LoadResource::Response &res);
+			bool unloadCb(temoto_2::UnloadResource::Request &req, temoto_2::UnloadResource::Response &res);
 			bool spawnKillCb( temoto_2::nodeSpawnKill::Request &req,
 					temoto_2::nodeSpawnKill::Response &res);
 
