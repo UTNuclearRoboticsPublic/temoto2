@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(temoto_2)
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++1y)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -15,6 +15,15 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(TinyXML REQUIRED)
 find_package(TBB REQUIRED)
+find_package(MeTA REQUIRED)
+
+#message(appi appi APPI)
+#message(-----------------------)
+
+#get_cmake_property(_variableNames VARIABLES)
+#foreach (_variableName ${_variableNames})
+#    message(STATUS "${_variableName}=${${_variableName}}")
+#endforeach()
 
 add_message_files(FILES 
 	speechSpecifier.msg
@@ -58,6 +67,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${TinyXML_INCLUDE_DIRS}
   ${TBB_INCLUDE_DIRS}
+  #${MeTA_INCLUDE_DIRS}
 )
 
 # # # # # # # # # # # #   TEMOTO SYSTEM NODES   # # # # # # # # # # # # # # #
@@ -135,6 +145,10 @@ target_link_libraries(dummy_sensor ${catkin_LIBRARIES} )
 add_executable(broken_node_1 src/tools/broken_node_1.cpp)
 add_dependencies(broken_node_1 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(broken_node_1 ${catkin_LIBRARIES} )
+
+add_executable(pos_tagger src/tools/pos_tagger.cpp)
+add_dependencies(pos_tagger ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(pos_tagger ${catkin_LIBRARIES} meta-classify meta-sequence-analyzers meta-parser-analyzers)
 
 #link_directories(/tmp/usr/local/lib/)
 #add_executable(blinker src/tools/blinker.cpp)

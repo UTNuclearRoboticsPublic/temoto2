@@ -72,6 +72,9 @@ bool compareRequest( temoto_2::nodeSpawnKill::Request &req_1,
 // Timer callback where running proceses are checked if they are operational
 void timerCallback( const ros::TimerEvent& )
 {
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = formatMessage( node_name, "", __func__ );
+
     // Run through the list of running processes
     for( auto& running_process : running_processes )
     {
