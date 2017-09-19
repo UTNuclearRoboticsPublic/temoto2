@@ -4,6 +4,8 @@
 #include "common/temoto_id.h"
 #include "rmp/base_resource_server.h"
 #include "rmp/resource_manager.h"
+#include "rmp/resource_query.h"
+
 
 namespace rmp
 {
@@ -44,21 +46,41 @@ class ResourceServer : public BaseResourceServer
 	//	}
 
 
+		bool isNewRequest(typename LoadService::Request& req)
+		{
+
+			for(auto q : queries_)
+			{
+				if(q.getMsg().request == req)
+				{
+
+				}
+			}
+
+			return true;
+		};
+
+
 		bool wrappedLoadCallback(typename LoadService::Request& req, typename LoadService::Response& res)
 		{
-			// when a request with unassigned arrives, generate new id
-			req.client_id = id_manager_.checkID(req.client_id);
+			// Register the client and get its ID from resource manager
+			req.client_id = resource_manager_.checkClientID(req.client_id);
 			res.client_id = req.client_id;
 
+			// generate new id for the resource
+			res.resource_id = res_id_manager_.generateID();
 
-			// call owner's registered callback
-			bool ret = (owner_->*load_callback_)(req,res);
 
-			// TODO: call compare function
-			// if equal, then send back matched response with new id
-			if (ret)
+			//compare request messages
+			if(isNewRequest(req))
 			{
-				//entries_.emplace_back(req.id);
+				queries_.back().addExternalClient(req.status_topic, req.client_id);
+			}
+			else
+			{
+				// same message not found, add new query
+				// call owner's registered callback
+				bool ret = (owner_->*load_callback_)(req,res);
 			}
 
 			return true; 
@@ -78,6 +100,7 @@ class ResourceServer : public BaseResourceServer
 			// call owner's registered callback
 			bool ret = (owner_->*unload_callback_)(req,res);
 
+			//queries_.removeExternalClient
 
 
 			return true; 
@@ -96,7 +119,9 @@ class ResourceServer : public BaseResourceServer
 		ros::ServiceServer load_server_;
 		ros::ServiceServer unload_server_;
 		ros::NodeHandle nh_;
-		TemotoID::IDManager id_manager_;
+		temoto_id::IDManager res_id_manager_;
+
+		std::vector<ResourceQuery<LoadService>> queries_;
 
 
 //		typedef std::pair<TemotoID::ID, std::shared_ptr<BaseResourceClient> ClientConnection;

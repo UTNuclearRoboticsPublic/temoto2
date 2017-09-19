@@ -243,7 +243,6 @@ bool NodeManager::spawnKillCb( temoto_2::nodeSpawnKill::Request &req,
 } // namespace node_manager
 
 
-
 // TODO include or discard the standard streams 
 // Global filehandle for FILL IN THE BLANKS
 // FILE * f;

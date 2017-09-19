@@ -38,6 +38,12 @@ class ResourceManager
 			return true;
 		}
 
+
+		temoto_id::ID checkClientID(temoto_id::ID client_id)
+		{
+			return ext_client_id_manager_.checkID(client_id);
+		}
+
 		
 //		template<class ServiceMsgType>
 //		bool call(std::string client_name, std::string server_name, ServiceMsgType& msg)
@@ -69,6 +75,7 @@ class ResourceManager
 		std::vector<std::shared_ptr<BaseResourceServer>> servers_;
 		std::vector<std::shared_ptr<BaseResourceClient>> clients_;
 		Owner* owner_;
+		temoto_id::IDManager ext_client_id_manager_;
 
 };  
 

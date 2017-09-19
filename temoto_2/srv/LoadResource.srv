@@ -1,6 +1,9 @@
 # client id
 int64 client_id
 
+# topic to which the server sends info about this resource
+string status_topic
+
 # actions (rosrun or roslaunch):
 string action
 
