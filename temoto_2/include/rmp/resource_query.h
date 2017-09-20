@@ -16,9 +16,22 @@ template <class ServiceMsgType>
 class ResourceQuery{
 
 	public:
-		void addExternalClient(std::string status_topic, temoto_id::ID resource_id)
+
+		ResourceQuery()
 		{
-			external_clients_.emplace(resource_id, status_topic);
+
+		}
+
+		// special constructor for resource server
+		ResourceQuery(const typename ServiceMsgType::Request& req)
+		{
+			addExternalClient(req.client_id, req.status_topic);
+			msg_.request = req;
+		}
+
+		void addExternalClient(temoto_id::ID client_id, std::string status_topic)
+		{
+			external_clients_.emplace(client_id, status_topic);
 		}
 
 		// remove the external client and return how many is still connected
@@ -46,21 +59,28 @@ class ResourceQuery{
 
 			}
 
-
-
-
 		}
 
 
-		ServiceMsgType getMsg()
+		const ServiceMsgType& getMsg()
 		{
-			return msg;
+			return msg_;
+		}
+
+		void setMsgResponse(const typename ServiceMsgType::Response& res)
+		{
+			msg_.response = res;
 		}
 
 	private:
+
+		// unique client name is mapped to set of resource ids
 		std::map<std::string, std::set<temoto_id::ID>> internal_clients_;
+
+		// unique client id is mapped with status topic
 		std::map<temoto_id::ID, std::string> external_clients_;
-			ServiceMsgType msg;
+
+		ServiceMsgType msg_;
 	};
 }
 

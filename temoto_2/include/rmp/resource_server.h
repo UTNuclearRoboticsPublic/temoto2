@@ -32,7 +32,7 @@ class ResourceServer : public BaseResourceServer
 			load_server_ = nh_.advertiseService(name_+"/load", &ResourceServer<LoadService,UnloadService,Owner>::wrappedLoadCallback, this);
 			unload_server_ = nh_.advertiseService(name_+"/unload", &ResourceServer<LoadService,UnloadService,Owner>::wrappedUnloadCallback, this);
 
-
+ROS_INFO("ResourceServer: created load and unload server for %s", name_.c_str());
 
 		}
 
@@ -53,7 +53,7 @@ class ResourceServer : public BaseResourceServer
 			{
 				if(q.getMsg().request == req)
 				{
-
+					return false;
 				}
 			}
 
@@ -63,24 +63,38 @@ class ResourceServer : public BaseResourceServer
 
 		bool wrappedLoadCallback(typename LoadService::Request& req, typename LoadService::Response& res)
 		{
+			ROS_INFO("ResourceServer Load callback fired by client %ld, with return status_topic %s", req.client_id, req.status_topic.c_str());
+			
 			// Register the client and get its ID from resource manager
-			req.client_id = resource_manager_.checkClientID(req.client_id);
+			req.client_id = resource_manager_.registerInternalClient(req.client_id);
 			res.client_id = req.client_id;
+
 
 			// generate new id for the resource
 			res.resource_id = res_id_manager_.generateID();
+
+			ROS_INFO("ResourceServer Client id is %ld", req.client_id);
 
 
 			//compare request messages
 			if(isNewRequest(req))
 			{
-				queries_.back().addExternalClient(req.status_topic, req.client_id);
+				queries_.back().addExternalClient(req.client_id, req.status_topic);
 			}
 			else
 			{
-				// same message not found, add new query
+				// equal message not found from queries_, add new query
+				queries_.emplace_back(req);
+				
 				// call owner's registered callback
 				bool ret = (owner_->*load_callback_)(req,res);
+
+			ROS_INFO("ResourceServer resumed from callback");
+
+
+				// update the query with users response
+				queries_.back().setMsgResponse(res);
+				
 			}
 
 			return true; 

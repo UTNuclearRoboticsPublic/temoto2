@@ -9,10 +9,7 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "core/common.h"
-//#include "common/tools.h"
 #include "node_manager/node_manager.h"
-//#include "temoto_2/nodeSpawnKill.h"
-//#include "temoto_2/resourceStatus.h"
 
 #include <stdio.h>
 #include <csignal>
@@ -35,14 +32,14 @@ NodeManager::~NodeManager()
 {}
 
 // Function that formats a neat string from request message
-std::string NodeManager::formatRequest( temoto_2::nodeSpawnKill::Request& req )
+std::string NodeManager::formatRequest( temoto_2::LoadResource::Request& req )
 {
     return "'" + req.action + " " +req.package + " " + req.name + "'";
 }
 
 // Compare request
-bool NodeManager::compareRequest( temoto_2::nodeSpawnKill::Request &req_1,
-                     temoto_2::nodeSpawnKill::Request &req_2,
+bool NodeManager::compareRequest( temoto_2::LoadResource::Request &req_1,
+                     temoto_2::LoadResource::Request &req_2,
                      std::string action)
 {
     // Compare run and launch requests
@@ -100,17 +97,17 @@ void NodeManager::update(const ros::TimerEvent&)
 }
 
 // function for making the response formatting bit compact
-void NodeManager::formatResponse(temoto_2::nodeSpawnKill::Response &res, int code, std::string message)
+void NodeManager::formatResponse(temoto_2::LoadResource::Response &res, int code, std::string message)
 {
 	// Print the message out to the console.
 	if ( (code == 1) || (code == -1))
 	{
-		ROS_ERROR( "[node_manager/spawnKillCb] %s", message.c_str() );
+		ROS_ERROR( "[node_manager/loadCb] %s", message.c_str() );
 	}
 
 	else
 	{
-		ROS_INFO( "[node_manager/spawnKillCb] %s", message.c_str() );
+		ROS_INFO( "[node_manager/loadCb] %s", message.c_str() );
 	}
 
 	res.code = code;
@@ -118,20 +115,16 @@ void NodeManager::formatResponse(temoto_2::nodeSpawnKill::Response &res, int cod
 }
 
 
-bool NodeManager::loadCb(temoto_2::LoadResource::Request &req, temoto_2::LoadResource::Response &res)
-{
-	ROS_INFO("NodeManager: LoadCb reached!");
-}
-
 bool NodeManager::unloadCb(temoto_2::UnloadResource::Request &req, temoto_2::UnloadResource::Response &res)
 {
-	ROS_INFO("NodeManager: LoadCb reached!");
+	ROS_INFO("NodeManager: UnLoadCb reached!");
 }
 
 
-bool NodeManager::spawnKillCb( temoto_2::nodeSpawnKill::Request &req,
-		temoto_2::nodeSpawnKill::Response &res)
+bool NodeManager::loadCb(temoto_2::LoadResource::Request& req,
+		temoto_2::LoadResource::Response& res)
 {
+	ROS_INFO("loadCb reached");
 	// Name of the method, used for making debugging a bit simpler
 	std::string prefix = formatMessage( node_name_, "", __func__ );
 
@@ -140,7 +133,7 @@ bool NodeManager::spawnKillCb( temoto_2::nodeSpawnKill::Request &req,
 	std::string package = req.package;
 	std::string name = req.name;
 
-	ROS_INFO("%s Received a 'spawn_kill' service request: %s ...", prefix.c_str(), formatRequest(req).c_str());
+	ROS_INFO("%s Received a 'LoadResource' service request: %s ...", prefix.c_str(), formatRequest(req).c_str());
 
 	// Test the validity of action command. If the action string is unknown
 	if ( std::find(validActions.begin(), validActions.end(), action) == validActions.end() )

@@ -24,8 +24,6 @@ namespace node_manager
 			const temoto_2::LoadResource::Request& r2)
 	{
 		return(
-				r1.client_id == r2.client_id &&
-				r1.status_topic == r2.status_topic &&
 				r1.action == r2.action &&
 				r1.package == r2.package &&
 				r1.name == r2.name

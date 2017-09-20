@@ -16,7 +16,7 @@
 #include "package_info/package_info.h"
 
 #include "core/common.h"
-#include "temoto_2/nodeSpawnKill.h"
+#include "node_manager/node_manager_services.h"
 #include "temoto_2/listDevices.h"
 #include "temoto_2/startSensorRequest.h"
 #include "temoto_2/stopSensorRequest.h"
@@ -37,7 +37,7 @@ public:
     SensorManager()
     {
         // Start the client
-        nodeSpawnKillClient_ = n_.serviceClient<temoto_2::nodeSpawnKill>("spawn_kill_process");
+        nodeSpawnKillClient_ = n_.serviceClient<temoto_2::LoadResource>("node_manager_server/load");
 
         // Start the servers
         startSensorServer_ = n_.advertiseService("start_sensor", &SensorManager::start_sensor_cb, this);
@@ -100,7 +100,7 @@ private:
         ROS_INFO("[SensorManager::start_sensor_cb] received a request to start a '%s': '%s', '%s'", reqType.c_str(), reqName.c_str(), reqExecutable.c_str());
 
         // Create an empty message that will be filled out by "findSensor" function
-        temoto_2::nodeSpawnKill spawnKillMsg;
+        temoto_2::LoadResource spawnKillMsg;
 
         // Find the suitable sensor
         if (findSensor(spawnKillMsg.request, res, reqType, reqName, reqExecutable))
@@ -142,7 +142,7 @@ private:
                        temoto_2::stopSensorRequest::Response &res)
     {
         // TODO: Check if the request makes sense, check the name and type
-        temoto_2::nodeSpawnKill spawnKillMsg;
+        temoto_2::LoadResource spawnKillMsg;
         spawnKillMsg.request.action = "kill";
         spawnKillMsg.request.package = req.name;
         spawnKillMsg.request.name = req.executable;
@@ -178,7 +178,7 @@ private:
      * @return Returns a boolean. If suitable device was found, then the req param
      * is formatted as a nodeSpawnKill::Request (first one in the list, even if there is more)
      */
-    bool findSensor (temoto_2::nodeSpawnKill::Request &ret,
+    bool findSensor (temoto_2::LoadResource::Request &ret,
                      temoto_2::startSensorRequest::Response &retstartSensor,
                      std::string type,
                      std::string name,

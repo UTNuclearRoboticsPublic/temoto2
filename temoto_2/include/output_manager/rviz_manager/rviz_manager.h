@@ -4,7 +4,6 @@
 #include "core/common.h"
 #include "common/request_container.h"
 #include "common/temoto_id.h"
-#include "temoto_2/nodeSpawnKill.h"
 #include "temoto_2/ShowInRviz.h"
 #include "temoto_2/stopAllocatedServices.h"
 #include "rviz_plugin_manager/PluginLoad.h"
@@ -13,6 +12,7 @@
 #include "rviz_plugin_manager/PluginSetConfig.h"
 #include "output_manager/output_manager_errors.h"
 #include "output_manager/rviz_manager/plugin_info.h"
+#include "node_manager/node_manager_services.h"
 
 class RvizManager
 {

@@ -39,7 +39,7 @@ class ResourceManager
 		}
 
 
-		temoto_id::ID checkClientID(temoto_id::ID client_id)
+		temoto_id::ID registerInternalClient(temoto_id::ID client_id)
 		{
 			return ext_client_id_manager_.checkID(client_id);
 		}

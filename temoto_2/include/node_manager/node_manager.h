@@ -15,16 +15,14 @@ namespace node_manager
 			NodeManager ();
 			virtual ~NodeManager ();
 
-			std::string formatRequest(temoto_2::nodeSpawnKill::Request& req);
-			bool compareRequest(temoto_2::nodeSpawnKill::Request& req1,
-					temoto_2::nodeSpawnKill::Request& req2,
+			std::string formatRequest(temoto_2::LoadResource::Request& req);
+			bool compareRequest(temoto_2::LoadResource::Request& req1,
+					temoto_2::LoadResource::Request& req2,
 					std::string action);
 
-			void formatResponse(temoto_2::nodeSpawnKill::Response &res, int code, std::string message);
+			void formatResponse(temoto_2::LoadResource::Response &res, int code, std::string message);
 			bool loadCb(temoto_2::LoadResource::Request &req, temoto_2::LoadResource::Response &res);
 			bool unloadCb(temoto_2::UnloadResource::Request &req, temoto_2::UnloadResource::Response &res);
-			bool spawnKillCb( temoto_2::nodeSpawnKill::Request &req,
-					temoto_2::nodeSpawnKill::Response &res);
 
 			void update(const ros::TimerEvent& e);
 
@@ -37,20 +35,20 @@ namespace node_manager
 			const std::string class_name_ = "NodeManager";
 			const std::vector<std::string> validActions = {"rosrun", "roslaunch", "kill"};
 
-			std::map<pid_t, temoto_2::nodeSpawnKill::Request> running_processes_;
+			std::map<pid_t, temoto_2::LoadResource::Request> running_processes_;
 
 			ros::NodeHandle nh_;
 
-			// Resource allocation protocol
+			// Resource management protocol
 			rmp::ResourceManager<NodeManager> resource_manager_;
 
 			//error::ErrorHandler error_handler_;
 
 			// Listens for calls to start or kill processes
-			ros::ServiceServer spawn_kill_srv_;
+			//ros::ServiceServer spawn_kill_srv_;
 
 			// Holds clients toi connect and send info to other (Sensor, Context, etc.) managers
-			ros::ServiceClient resource_status_client_;
+			//ros::ServiceClient resource_status_client_;
 
 	};
 }

@@ -7,7 +7,7 @@ RvizManager::RvizManager()
                                                            &RvizManager::stopAllocatedServices,
                                                            this);
 
-    node_spawn_kill_client_ = n_.serviceClient<temoto_2::nodeSpawnKill>("spawn_kill_process");
+    node_spawn_kill_client_ = n_.serviceClient<temoto_2::LoadResource>("/node_manager_server/load");
     load_plugin_client_ = n_.serviceClient<rviz_plugin_manager::PluginLoad>("rviz_plugin_load");
     unload_plugin_client_ = n_.serviceClient<rviz_plugin_manager::PluginUnload>("rviz_plugin_unload");
     get_plugin_config_client_ = n_.serviceClient<rviz_plugin_manager::PluginGetConfig>("rviz_plugin_get_config");
@@ -33,7 +33,7 @@ bool RvizManager::runRviz()
     std::string prefix = formatMessage("", this->class_name_, __func__);
 
     // Create the message and fill out the request part
-    temoto_2::nodeSpawnKill spawn_kill_msg;
+    temoto_2::LoadResource spawn_kill_msg;
     spawn_kill_msg.request.action = "roslaunch";
     spawn_kill_msg.request.package = "rviz_plugin_manager";
     spawn_kill_msg.request.name = "rviz_plugin_manager.launch";
@@ -82,7 +82,7 @@ bool RvizManager::stopRviz()
     std::string prefix = formatMessage("", this->class_name_, __func__);
 
     // Create the message and fill out the request part
-    temoto_2::nodeSpawnKill spawn_kill_msg;
+    temoto_2::LoadResource spawn_kill_msg;
     spawn_kill_msg.request.action = "kill";
     spawn_kill_msg.request.package = "rviz_plugin_manager";
     spawn_kill_msg.request.name = "rviz_plugin_manager.launch";
