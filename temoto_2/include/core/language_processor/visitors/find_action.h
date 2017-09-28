@@ -6,8 +6,8 @@
  * consult the file LICENSE in the root of the project.
  */
 
-#ifndef META_PARSER_BRANCH_FINDER_H_
-#define META_PARSER_BRANCH_FINDER_H_
+#ifndef META_PARSER_ACTION_FINDER_H_
+#define META_PARSER_ACTION_FINDER_H_
 
 #include <memory>
 #include <vector>
@@ -20,22 +20,10 @@ namespace meta
 namespace parser
 {
 
-class Branch
-{
-public:
-
-    std::vector<parser::parse_tree> verb_phrases_;
-
-    std::vector<parser::parse_tree> noun_phrases_;
-
-    std::vector<parser::parse_tree> prep_phrases_;
-
-};
-
 /**
  * This is a visitor that finds and extracts a branch in a parse tree.
  */
-class branch_finder : public const_visitor<void>
+class find_action : public const_visitor<void>
 {
   public:
 
@@ -43,15 +31,19 @@ class branch_finder : public const_visitor<void>
     void operator()(const internal_node&) override;
 
     /**
-     * @brief Returns the phrases found by visitor
+     * @brief Returns the branches found by visitor
      * @return
      */
-    std::vector<Branch> getBranches();
+    std::string getAction();
 
   private:
     /// The storage for the parse trees found so far
-    std::vector<Branch> branches_;
+    std::string action_;
 
+    bool action_found = false;
+
+    std::vector<std::string> branching_categories = {"VP", "SINV", "S"};
+    std::vector<std::string> verb_categories = {"VB", "VBD", "VBG", "VBN", "VBP", "VBZ"};
 };
 
 

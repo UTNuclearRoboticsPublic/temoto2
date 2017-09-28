@@ -23,6 +23,7 @@
 #include "meta/parser/io/ptb_reader.h"
 
 #include "core/language_processor/visitors/branch_finder.h"
+#include "core/language_processor/visitors/find_action.h"
 
 using namespace meta;
 
@@ -161,29 +162,35 @@ int main(int argc, char **argv)
                 parser::branch_finder bf;
 
                 p_tree.visit(bf);
+                std::vector<parser::Branch> branches = bf.getBranches();
 
-                std::cout << "nr of branches found: " << bf.parse_trees.size() << std::endl;
+                std::cout << "nr of branches found: " << branches.size() << std::endl;
 
-                for( auto& branch : bf.parse_trees )
+                for( auto& branch : branches )
                 {
-                    std::cout << branch << std::endl;
+                    /*
+                    parser::find_action fa;
+                    branch.visit(fa);
+                    std::cout << fa.getAction() << std::endl;
+                    */
+                    if ( !branch.verb_phrases_.empty() )
+                    {
+                        std::cout << "Action:" <<  branch.verb_phrases_[0] << std::endl;
+                    }
+
+                    if ( !branch.noun_phrases_.empty() )
+                    {
+                        std::cout << "What:" <<  branch.noun_phrases_[0] << std::endl;
+                    }
+
+                    if ( !branch.prep_phrases_.empty() )
+                    {
+                        std::cout << "Where:" <<  branch.prep_phrases_[0] << std::endl;
+                    }
+
+                    std::cout << std::endl;
                 }
-            /*
-                std::cout << "before: " << p_tree << std::endl;
 
-                std::vector<std::unique_ptr<parser::leaf_node>> leaves;
-
-                leaves = lnf.leaves();
-
-                for (auto& leaf : leaves)
-                {
-                    std::cout << *leaf->word() << std::endl;
-                }
-
-                std::cout << "after: " << p_tree << std::endl;
-            */
-                //stream_tree << p_tree;
-                //std::cout << str.str() << std::endl;
             }
             else
             {

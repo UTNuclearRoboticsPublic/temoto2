@@ -10,8 +10,9 @@
 #include <iostream>
 #include <algorithm>
 
-std::vector<std::string> branching_categories = {"VP", "SINV", "S"};
-std::vector<std::string> phrase_categories = {"VB", "NP", "PP"};
+std::vector<std::string> verb_categories = {"VP", "SINV", "S"};
+std::vector<std::string> noun_categories = {"NP"};
+std::vector<std::string> prep_categories = {"PP"};
 
 namespace meta
 {
@@ -19,20 +20,22 @@ namespace parser
 {
 
 // TODO DESC
-bool checkValidity( class_label current_category, class_label child_category )
+bool checkIfPhrase( class_label current_category,
+                    class_label child_category,
+                    std::vector<std::string>& categories )
 {
     // Check if it is a valid branching category
-    if ( std::find(branching_categories.begin(),
-                   branching_categories.end(),
-                   current_category.id_) == branching_categories.end() )
+    if ( std::find(categories.begin(),
+                   categories.end(),
+                   current_category.id_) == categories.end() )
     {
         return false;
     }
 
     // Check if the childs category is not another branching category
-    if ( std::find(branching_categories.begin(),
-                   branching_categories.end(),
-                   child_category.id_) != branching_categories.end())
+    if ( std::find(categories.begin(),
+                   categories.end(),
+                   child_category.id_) != categories.end())
     {
         return false;
     }
@@ -42,32 +45,45 @@ bool checkValidity( class_label current_category, class_label child_category )
 
 void branch_finder::operator()(const leaf_node& ln)
 {
-    leaves_.push_back(make_unique<leaf_node>(ln));
+    /*
+     * Do something with leaf nodes if necessary
+     */
 }
 
 void branch_finder::operator()(const internal_node& in)
 {
-    // Save the current parent category and replace it with the category of this node
-    //class_label prev_parent_category = this->parent_category_;
-    //parent_category_ = in.category();
-
-    if( checkValidity( in.category(), in.child(0)->category() ))
+    // Check if it is a verb phrase node
+    if( checkIfPhrase( in.category(), in.child(0)->category(), verb_categories) )
     {
-        parse_trees.emplace_back(in.clone());
+        Branch br;
+        br.verb_phrases_.emplace_back(in.child(0)->clone());
+        branches_.push_back(br);
     }
 
+    // Check if noun phrase
+    else
+    if ( checkIfPhrase( in.category(), in.child(0)->category(), noun_categories) )
+    {
+        branches_.back().noun_phrases_.emplace_back(in.clone());
+    }
+
+    // Check if preposition phrase
+    else
+    if ( checkIfPhrase( in.category(), in.child(0)->category(), prep_categories) )
+    {
+        branches_.back().prep_phrases_.emplace_back(in.clone());
+    }
+
+    // Dive in
     in.each_child([&](const node* n)
                   {
                       n->accept(*this);
                   });
-
-    // Restore the contents of the parent_category_
-    //parent_category_ = prev_parent_category;
 }
 
-std::vector<std::unique_ptr<leaf_node>> branch_finder::leaves()
+std::vector<Branch> branch_finder::getBranches()
 {
-    return std::move(leaves_);
+    return std::move(branches_);
 }
 }
 }
