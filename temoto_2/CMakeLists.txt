@@ -150,6 +150,11 @@ add_executable(pos_tagger src/tools/pos_tagger.cpp)
 add_dependencies(pos_tagger ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(pos_tagger ${catkin_LIBRARIES} meta-classify meta-sequence-analyzers meta-parser-analyzers)
 
+add_executable(sentence_parser src/tools/sentence_parser.cpp
+                               src/core/language_processor/visitors/branch_finder.cpp)
+add_dependencies(sentence_parser ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(sentence_parser ${catkin_LIBRARIES} meta-classify meta-sequence-analyzers meta-parser-analyzers)
+
 #link_directories(/tmp/usr/local/lib/)
 #add_executable(blinker src/tools/blinker.cpp)
 #target_link_libraries(blinker

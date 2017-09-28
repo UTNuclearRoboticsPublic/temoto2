@@ -14,6 +14,16 @@
 #include "meta/parser/sr_parser.h"
 #include "meta/sequence/perceptron.h"
 
+#include "meta/parser/trees/visitors/head_finder.h"
+#include "meta/parser/trees/visitors/leaf_node_finder.h"
+#include "meta/parser/trees/internal_node.h"
+#include "meta/parser/trees/leaf_node.h"
+
+#include "meta/parser/trees/visitors/multi_transformer.h"
+#include "meta/parser/io/ptb_reader.h"
+
+#include "core/language_processor/visitors/branch_finder.h"
+
 using namespace meta;
 
 class TaskVerbal
@@ -69,11 +79,18 @@ std::ostream& operator<<(std::ostream& out, const TasksRaw& t)
     return out;
 }
 
+parser::parse_tree tree(std::string input)
+{
+    std::stringstream in_ss{input};
+    auto in_trees = parser::io::extract_trees(in_ss);
+    return std::move(in_trees.front());
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "pos_tagger");
     ros::NodeHandle nh;
-
+/*
     // load the model
     meta::sequence::crf crf{"/home/robert/repos_sdks/meta/models/crf"};
 
@@ -83,6 +100,21 @@ int main(int argc, char **argv)
     // load the sequence analyzer (for feature generation)
     auto analyzer = meta::sequence::default_pos_analyzer();
     analyzer.load("/home/robert/repos_sdks/meta/models/crf");
+*/
+
+    ////////
+    std::cout << "Loading tagging model" << std::endl;
+    // load POS-tagging model
+    sequence::perceptron tagger{"/home/robert/repos_sdks/meta/models/perceptron-tagger"};
+
+    std::cout << "Loading parser model" << std::endl;
+    // load parser model
+    parser::sr_parser parser{"/home/robert/repos_sdks/meta/models/parser"};
+
+    // Create a parse tree visitor
+    parser::leaf_node_finder lnf;
+
+    ////////
 
     std::string line;
 
@@ -99,6 +131,11 @@ int main(int argc, char **argv)
         std::unique_ptr<analyzers::token_stream> stream = make_unique<analyzers::tokenizers::icu_tokenizer>();
         stream->set_content(std::move(line));
 
+        std::ostream stream_tree(nullptr); // useless ostream (badbit set)
+        std::stringbuf str;
+        stream_tree.rdbuf(&str);
+
+/*
         while (*stream)
         {
             auto token = stream->next();
@@ -106,7 +143,54 @@ int main(int argc, char **argv)
                 continue;
             seq.add_observation( {sequence::symbol_t{token}, sequence::tag_t{"[UNK]"}} );
         }
+*/
 
+        while (*stream)
+        {
+            auto token = stream->next();
+            if (token == "<s>")
+            {
+                seq = {};
+            }
+            else if (token == "</s>")
+            {
+                tagger.tag(seq);
+                parser::parse_tree p_tree = parser.parse(seq);
+
+                // Create a parse tree branch finder visitor
+                parser::branch_finder bf;
+
+                p_tree.visit(bf);
+
+                std::cout << "nr of branches found: " << bf.parse_trees.size() << std::endl;
+
+                for( auto& branch : bf.parse_trees )
+                {
+                    std::cout << branch << std::endl;
+                }
+            /*
+                std::cout << "before: " << p_tree << std::endl;
+
+                std::vector<std::unique_ptr<parser::leaf_node>> leaves;
+
+                leaves = lnf.leaves();
+
+                for (auto& leaf : leaves)
+                {
+                    std::cout << *leaf->word() << std::endl;
+                }
+
+                std::cout << "after: " << p_tree << std::endl;
+            */
+                //stream_tree << p_tree;
+                //std::cout << str.str() << std::endl;
+            }
+            else
+            {
+                seq.add_symbol(sequence::symbol_t{token});
+            }
+        }
+/*
         // tag a sequence
         const auto& ana = analyzer; // access the analyzer via const ref
                                     // so that no new feature ids are generated
@@ -115,7 +199,8 @@ int main(int argc, char **argv)
 
         // Vector for storing the base form verbs
         std::vector< std::pair<std::string, int> > verbs;
-
+*/
+/*
         // print the tagged sequence
         for( unsigned int i=0; i<seq.size(); i++ )
         {
@@ -127,7 +212,16 @@ int main(int argc, char **argv)
             std::cout << seq[i].symbol() << "(" << analyzer.tag(seq[i].label()) << ") ";
         }
         std::cout << "\n";
-
+*/
+     /*
+        // print the tagged sequence
+        for( unsigned int i=0; i<seq.size(); i++ )
+        {
+            std::cout << seq[i].symbol() << " (" << seq[i].label() << ")" << std::endl;
+        }
+        std::cout << "\n";
+     */
+/*
         // Divide the intitial sequence by verbs
         TasksRaw tasks_raw;
 
@@ -177,7 +271,7 @@ int main(int argc, char **argv)
 
         // Print out the extracted verbs and potential arguments
         std::cout << tasks_raw << std::endl;
-
+*/
         ros::Duration(0.5).sleep();
     }
 
