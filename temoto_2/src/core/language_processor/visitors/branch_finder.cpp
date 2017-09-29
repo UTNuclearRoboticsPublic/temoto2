@@ -52,6 +52,8 @@ void branch_finder::operator()(const leaf_node& ln)
 
 void branch_finder::operator()(const internal_node& in)
 {
+    bool dive = true;
+
     // Check if it is a verb phrase node
     if( checkIfPhrase( in.category(), in.child(0)->category(), verb_categories) )
     {
@@ -72,13 +74,17 @@ void branch_finder::operator()(const internal_node& in)
     if ( checkIfPhrase( in.category(), in.child(0)->category(), prep_categories) )
     {
         branches_.back().prep_phrases_.emplace_back(in.clone());
+        dive = false;
     }
 
+    if(dive)
+    {
     // Dive in
     in.each_child([&](const node* n)
                   {
                       n->accept(*this);
                   });
+    }
 }
 
 std::vector<Branch> branch_finder::getBranches()

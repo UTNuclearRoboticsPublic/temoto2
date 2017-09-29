@@ -27,57 +27,30 @@
 
 using namespace meta;
 
-class TaskVerbal
+void treePrinter( std::string type, std::vector<parser::parse_tree>& trees )
 {
-public:
-    TaskVerbal(std::string verb,
-               std::vector< meta::sequence::observation > observations)
-        : verb_(verb),
-          observations_(observations)
-    {}
-
-    TaskVerbal(std::string verb)
-        : verb_(verb)
-    {}
-
-    std::string getVerb()
+    if ( !trees.empty() )
     {
-        return verb_;
-    }
+        // Create a parse tree visitor
+        parser::leaf_node_finder lnf;
 
-    std::vector< meta::sequence::observation > getObservations()
-    {
-        return observations_;
-    }
+        std::cout << type << ": ";
 
-private:
-    std::string verb_;
-    std::vector< meta::sequence::observation > observations_;
-};
-
-typedef std::vector<TaskVerbal> TasksRaw;
-
-std::ostream& operator<<(std::ostream& out, const TasksRaw& t)
-{
-    // Start printing out the verbs and according sequences
-    for( auto task_verbal : t)
-    {
-        out << "\nPotential task: '" << task_verbal.getVerb() << "'\n";
-
-        if( !task_verbal.getObservations().empty() )
+        for(auto& tree : trees)
         {
-            out << "Potential args: ";
+            tree.visit(lnf);
+            std::vector<std::unique_ptr<parser::leaf_node>> leaves = lnf.leaves();
 
-            for( auto& obs : task_verbal.getObservations() )
+            // Print out the leaves
+            for(auto& leaf : leaves)
             {
-                out << obs.symbol() << " ";
+                std::cout << *leaf->word() << " ";
             }
+            std::cout << ", ";
         }
 
-        out << std::endl;
+        std::cout << std::endl;
     }
-
-    return out;
 }
 
 parser::parse_tree tree(std::string input)
@@ -173,20 +146,10 @@ int main(int argc, char **argv)
                     branch.visit(fa);
                     std::cout << fa.getAction() << std::endl;
                     */
-                    if ( !branch.verb_phrases_.empty() )
-                    {
-                        std::cout << "Action:" <<  branch.verb_phrases_[0] << std::endl;
-                    }
 
-                    if ( !branch.noun_phrases_.empty() )
-                    {
-                        std::cout << "What:" <<  branch.noun_phrases_[0] << std::endl;
-                    }
-
-                    if ( !branch.prep_phrases_.empty() )
-                    {
-                        std::cout << "Where:" <<  branch.prep_phrases_[0] << std::endl;
-                    }
+                    treePrinter( "Action", branch.verb_phrases_ );
+                    treePrinter( "What", branch.noun_phrases_ );
+                    treePrinter( "Where", branch.prep_phrases_ );
 
                     std::cout << std::endl;
                 }
@@ -197,88 +160,7 @@ int main(int argc, char **argv)
                 seq.add_symbol(sequence::symbol_t{token});
             }
         }
-/*
-        // tag a sequence
-        const auto& ana = analyzer; // access the analyzer via const ref
-                                    // so that no new feature ids are generated
-        ana.analyze(seq);
-        tagger.tag(seq);
 
-        // Vector for storing the base form verbs
-        std::vector< std::pair<std::string, int> > verbs;
-*/
-/*
-        // print the tagged sequence
-        for( unsigned int i=0; i<seq.size(); i++ )
-        {
-            if( static_cast<std::string>(analyzer.tag(seq[i].label())) == "VB" )
-            {
-                verbs.push_back( {seq[i].symbol(), i} );
-            }
-
-            std::cout << seq[i].symbol() << "(" << analyzer.tag(seq[i].label()) << ") ";
-        }
-        std::cout << "\n";
-*/
-     /*
-        // print the tagged sequence
-        for( unsigned int i=0; i<seq.size(); i++ )
-        {
-            std::cout << seq[i].symbol() << " (" << seq[i].label() << ")" << std::endl;
-        }
-        std::cout << "\n";
-     */
-/*
-        // Divide the intitial sequence by verbs
-        TasksRaw tasks_raw;
-
-        // First, check if any verbs were found
-        if( verbs.empty() )
-        {
-            std::cout << "No verbs were found\n\n";
-            continue;
-        }
-
-        // Check if the sequnece contained more than just this verb
-        if(verbs.size() > 1)
-        {
-            for(unsigned int i=0; i<verbs.size()-1; i++)
-            {
-                // Are there any other descriptive words between two verbs?
-                if( (verbs[i+1].second - verbs[i].second) > 1)
-                {
-                    // Get the indices in the main sequence
-                    auto first = seq.begin() + verbs[i].second + 1;  // +1 for excluding the verb itself
-                    auto last = seq.begin() + verbs[i+1].second;
-
-                    // Extract the subsequence and push it into the sequences
-                    std::vector< meta::sequence::observation > sub_seq(first, last);
-                    tasks_raw.emplace_back( verbs[i].first, sub_seq );
-                }
-                else
-                {
-                    tasks_raw.emplace_back( verbs[i].first );
-                }
-            }
-        }
-        // And now add the last verb (or the first if its the only one)
-        if( seq.size() - verbs.back().second > 1)
-        {
-            auto first = seq.begin() + verbs.back().second + 1;  // +1 for excluding the verb itself
-            auto last = seq.end();
-
-            // Extract the subsequence and push it into the sequences
-            std::vector< meta::sequence::observation > sub_seq(first, last);
-            tasks_raw.emplace_back( verbs.back().first, sub_seq );
-        }
-        else
-        {
-            tasks_raw.emplace_back( verbs.back().first );
-        }
-
-        // Print out the extracted verbs and potential arguments
-        std::cout << tasks_raw << std::endl;
-*/
         ros::Duration(0.5).sleep();
     }
 
