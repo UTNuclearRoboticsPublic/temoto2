@@ -17,7 +17,7 @@ namespace node_manager
 }
 
 
-	// Define the equality operator for load service request.
+	// Define the equality operators for load/unload service requests.
 	// This will define whether the resource server fires our callback
 	// or considers resource already open and returns prevous response.
 	static bool operator==(const temoto_2::LoadResource::Request& r1,
@@ -29,4 +29,5 @@ namespace node_manager
 				r1.name == r2.name
 			  );
 	}
+
 #endif

@@ -55,7 +55,10 @@ class ResourceClient : public BaseResourceClient
 			if(!found)
 			{
 				ROS_INFO("ResourceClient[%s]: request not found from existing connections, external call()", name_);
-				if(service_client_.call(new_msg));
+				if(service_client_.call(new_msg))
+{
+
+}
 			}
 
 			active_resources_.push_back(new_msg);

@@ -35,7 +35,7 @@ class ResourceQuery{
 		}
 
 		// remove the external client and return how many is still connected
-		size_t removeExternalClient(temoto_id::ID(client_id))
+		size_t removeExternalClient(temoto_id::ID client_id)
 		{
 			external_clients_.erase(client_id);
 			return external_clients_.count;
@@ -74,10 +74,10 @@ class ResourceQuery{
 
 	private:
 
-		// unique client name is mapped to set of resource ids
+		// unique client name is mapped to a set of resource ids
 		std::map<std::string, std::set<temoto_id::ID>> internal_clients_;
 
-		// unique client id is mapped with status topic
+		// unique resource id is mapped with status topic
 		std::map<temoto_id::ID, std::string> external_clients_;
 
 		ServiceMsgType msg_;

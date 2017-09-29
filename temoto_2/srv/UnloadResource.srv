@@ -1,8 +1,8 @@
 # client id
 int64 client_id
 
-# resource ids to be unloaded
-int64[] resource_ids
+# resource id to be unloaded
+int64 resource_id
 
 ---
 

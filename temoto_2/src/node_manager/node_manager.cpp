@@ -25,73 +25,42 @@ NodeManager::NodeManager():resource_manager_(this)
 			"node_manager_server", 
 			&NodeManager::loadCb,
 			&NodeManager::unloadCb);
-
 }
 
 NodeManager::~NodeManager()
 {}
 
-// Function that formats a neat string from request message
-std::string NodeManager::formatRequest( temoto_2::LoadResource::Request& req )
-{
-    return "'" + req.action + " " +req.package + " " + req.name + "'";
-}
-
-// Compare request
-bool NodeManager::compareRequest( temoto_2::LoadResource::Request &req_1,
-                     temoto_2::LoadResource::Request &req_2,
-                     std::string action)
-{
-    // Compare run and launch requests
-    if( action == "rosrun" || action == "roslaunch")
-    {
-        if( req_1.action == req_2.action &&
-                req_1.package == req_2.package &&
-                req_1.name == req_2.name)
-        {
-            return true;
-        }
-        return false;
-    }
-
-    // Compare kill type requests
-    else if( action == "kill" )
-    {
-        if( req_1.package == req_2.package &&
-                req_1.name == req_2.name)
-        {
-            return true;
-        }
-        return false;
-	}
-}
-
 
 // Timer callback where running proceses are checked if they are operational
 void NodeManager::update(const ros::TimerEvent&)
 {
+	//auto find_it = std::find(running_processes_.begin(), running_processes_.end(), res.resource_id);
+	//if(find_it == running_processes_.end())
+	//{
+	//	ROS_ERROR("%s unable to obtain PID for resource with id %d", res.resource_id);
+	//	return false;
+	//}
 
-	std::string prefix = formatMessage( node_name_, "", __func__ );
-	//if (pipeOpen)
-	//readPipe();
+	std::string prefix = node_name_ + "::" + __func__;
 
 	// Run through the list of running processes
-	for( auto& running_process : running_processes_ )
+	auto proc_it = running_processes_.begin();
+	while (proc_it != running_processes_.end())
 	{
 		int status;
-		int kill_response = waitpid(running_process.first, &status, WNOHANG);
+		int kill_response = waitpid(proc_it->first, &status, WNOHANG);
 
-		std::printf( "Process '%s'(PID = %d) waitpid response = %d, status = %d\n",
-				formatRequest(running_process.second).c_str(), running_process.first,
-				kill_response, status );
+		ROS_INFO("Resource_id '%d'(PID = %d) waitpid response = %d, status = %d\n",
+				proc_it->second, proc_it->first,
+				kill_response, status);
 
 		// If the child process has stopped running,
-		if( kill_response != 0 )
+		if(kill_response != 0)
 		{
-			ROS_ERROR( "%s Process '%s'(PID = %d) has stopped running",
+			ROS_ERROR("%s Process '%d'(PID = %d) has stopped running",
 					prefix.c_str(),
-					formatRequest(running_process.second).c_str(),
-					running_process.first );
+					proc_it->second,
+					proc_it->first);
 		}
 	}
 }
@@ -115,62 +84,33 @@ void NodeManager::formatResponse(temoto_2::LoadResource::Response &res, int code
 }
 
 
+
 bool NodeManager::unloadCb(temoto_2::UnloadResource::Request &req, temoto_2::UnloadResource::Response &res)
 {
-	ROS_INFO("NodeManager: UnLoadCb reached!");
-}
+	std::string prefix = node_name_ + "::" + __func__;
+	ROS_INFO("%s Unload resource requested ...", prefix.c_str());
 
-
-bool NodeManager::loadCb(temoto_2::LoadResource::Request& req,
-		temoto_2::LoadResource::Response& res)
-{
-	ROS_INFO("loadCb reached");
-	// Name of the method, used for making debugging a bit simpler
-	std::string prefix = formatMessage( node_name_, "", __func__ );
-
-	// Get the service parameters
-	std::string action = req.action;
-	std::string package = req.package;
-	std::string name = req.name;
-
-	ROS_INFO("%s Received a 'LoadResource' service request: %s ...", prefix.c_str(), formatRequest(req).c_str());
-
-	// Test the validity of action command. If the action string is unknown
-	if ( std::find(validActions.begin(), validActions.end(), action) == validActions.end() )
+	// Lookup the requested process by its resource id.
+	pid_t active_pid = 0;
+	bool pid_found = false;
+std::vector<temoto_id> ids_with_errors;
+	for (auto& resource_id : req.resources)
 	{
-		formatResponse(res, 1, "Unknown action command");
-		return true;
-	}
-
-	// Check if the process related to the incoming request is running or not
-	bool request_active = false;
-	pid_t active_pid;
-	
-
-	for( auto& running_process : running_processes_ )
-	{
-		if( compareRequest(running_process.second, req, req.action) )
+		for (auto& proc : running_processes_)
 		{
-			request_active = true;
-			active_pid = running_process.first;
-			break;
+			if (proc.second == resource_id)
+			{
+				active_pid = proc.first;
+				pid_found = true;
+				break;
+			}
 		}
-	}
-
-	// TODO: Check if the package and node/launchfile exists
-	// If everything is fine, run the commands
-
-	// "Kill" command
-	if (action.compare("kill") == 0)
-	{
-		ROS_INFO("%s Kill requested ...", prefix.c_str());
-
-		// Check if the requested process exists in the list of running processes
-		if( !request_active )
+		if (!pid_found)
 		{
-			formatResponse( res, 1, "The process does not seem to be running, kill request aborted." );
-			return true;
+			ROS_ERROR("%s unable to obtain PID for resource with id %d", res.resource_id);
+			return false;
 		}
+
 
 		// Kill the process
 		ROS_INFO( "%s killing the child process: %s (PID = %d)",
@@ -184,73 +124,54 @@ bool NodeManager::loadCb(temoto_2::LoadResource::Request& req,
 		// Remove the process from the map
 		running_processes_.erase(active_pid);
 	}
+}
 
-	else
+
+bool NodeManager::loadCb(temoto_2::LoadResource::Request& req,
+		temoto_2::LoadResource::Response& res)
+{
+	ROS_INFO("loadCb reached");
+	// Name of the method, used for making debugging a bit simpler
+	std::string prefix = node_name_ + "::" + __func__;
+
+	// Get the service parameters
+	const std::string& action = req.action;
+	const std::string& package = req.package;
+	const std::string& name = req.name;
+
+	ROS_INFO("%s Received a 'LoadResource' service request: %s ...", prefix.c_str(), formatRequest(req).c_str());
+
+	// Validate the action command. 
+	if ( std::find(validActions.begin(), validActions.end(), action) == validActions.end() )
 	{
-		// Check if the requested node/launchfile is already running
-		if ( request_active )
-		{
-			formatResponse( res, 1, "The process is already running, request aborted." );
-			return true;
-		}
-
-		// create a pipe
-		//pipe(pipefd);
-
-		// Fork the parent process
-		std::cout << "forking the process ..." << std::endl;
-		pid_t PID = fork();
-
-		// Child process
-		if (PID == 0)
-		{
-			// Close the read end and redirect childs standard output to parents pipe
-
-		//	close(pipefd[0]);
-		//	dup2(pipefd[1], STDOUT_FILENO);
-		//	dup2(pipefd[1], STDERR_FILENO);
-
-			// Execute the requested process
-			execlp(action.c_str(), action.c_str(), package.c_str(), name.c_str(), (char*) NULL);
-		}
-
-		// Only parent gets here
-		std::cout << "Process forked. Child PID: " << PID << std::endl;
-		//output = fdopen(pipefd[0], "r");
-		//pipeOpen = true;
-
-		// Insert the pid to map of running processes
-		running_processes_.insert ( {PID, req} );
-
-		// Close the write end of the pipe
-		//close(pipefd[1]);
-		//close(pipefd[0]);
-		//output = fdopen(pipefd[0], "r");
+		ROS_INFO("%s Action '%s' is not supported ...", prefix.c_str(), action.c_str());
+		return false;
 	}
 
-	// Send response
-	formatResponse( res, 0, "Command executed successfully." );
-    return true;
+	// TODO: Check if the package and node/launchfile exists
+	// If everything is fine, run the commands
+
+	// Fork the parent process
+	std::cout << "forking the process ..." << std::endl;
+	pid_t PID = fork();
+
+	// Child process
+	if (PID == 0)
+	{
+		// Execute the requested process
+		execlp(action.c_str(), action.c_str(), package.c_str(), name.c_str(), (char*) NULL);
+	}
+
+	// Only parent gets here
+	std::cout << "Process forked. Child PID: " << PID << std::endl;
+
+	// Insert the pid to map of running processes
+	running_processes_.insert ( {PID, req.resource_id} );
+
+	// Fill response
+	res.code = 0;
+	res.message = "Command executed successfully.";
+	return true;
 }
 
 } // namespace node_manager
-
-
-// TODO include or discard the standard streams 
-// Global filehandle for FILL IN THE BLANKS
-// FILE * f;
-// int pipefd[2];
-// FILE* output;
-// bool pipeOpen = false;
-
-//void NodeManager::readPipe()
-//{
-//    char buffer[100];
-//
-//    if ( fgets(buffer, sizeof(buffer), output) != NULL)
-//    {
-//        std::cout << buffer;
-//    }
-//
-//    //fclose(output);
-//}

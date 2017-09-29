@@ -26,9 +26,10 @@ class ResourceServer : public BaseResourceServer
 				UnloadCbFuncType unload_cb,
 				Owner* owner,
 				ResourceManager<Owner>& resource_manager
-				) : name_(name), load_callback_(load_cb), unload_callback_(unload_cb), 
+				) : load_callback_(load_cb), unload_callback_(unload_cb), 
 					owner_(owner), resource_manager_(resource_manager)
 		{
+			name_ = name;
 			load_server_ = nh_.advertiseService(name_+"/load", &ResourceServer<LoadService,UnloadService,Owner>::wrappedLoadCallback, this);
 			unload_server_ = nh_.advertiseService(name_+"/unload", &ResourceServer<LoadService,UnloadService,Owner>::wrappedUnloadCallback, this);
 
@@ -46,6 +47,7 @@ ROS_INFO("ResourceServer: created load and unload server for %s", name_.c_str())
 	//	}
 
 
+
 		bool isNewRequest(typename LoadService::Request& req)
 		{
 
@@ -60,13 +62,29 @@ ROS_INFO("ResourceServer: created load and unload server for %s", name_.c_str())
 			return true;
 		};
 
+		void registerInternalClient(temoto_id::ID resource_id)
+		{
+			if(!queries_.size())
+			{
+				ROS_ERROR("registerInternalClient called, but queries_ is empty");
+				return;
+			}
+			queries_.back().addInternalClient(resource_id);
+		};
+
 
 		bool wrappedLoadCallback(typename LoadService::Request& req, typename LoadService::Response& res)
 		{
 			ROS_INFO("ResourceServer Load callback fired by client %ld, with return status_topic %s", req.client_id, req.status_topic.c_str());
-			
+
+			if(!owner_)
+			{
+				ROS_ERROR("ResourceServer Owner is NULL");
+				return true;
+			}
+
 			// Register the client and get its ID from resource manager
-			req.client_id = resource_manager_.registerInternalClient(req.client_id);
+			req.client_id = resource_manager_.registerExternalClient(req.client_id);
 			res.client_id = req.client_id;
 
 
@@ -79,22 +97,33 @@ ROS_INFO("ResourceServer: created load and unload server for %s", name_.c_str())
 			//compare request messages
 			if(isNewRequest(req))
 			{
-				queries_.back().addExternalClient(req.client_id, req.status_topic);
-			}
-			else
-			{
+				ROS_INFO("new request");
+
 				// equal message not found from queries_, add new query
 				queries_.emplace_back(req);
-				
+
+				// set this server active in resource manager
+				// when a client call is made from callback, the binding between active server
+				// and the new loaded clients can be made automatically 
+				resource_manager_.setActiveServer(this);
+
 				// call owner's registered callback
 				bool ret = (owner_->*load_callback_)(req,res);
 
-			ROS_INFO("ResourceServer resumed from callback");
+				ROS_INFO("ResourceServer resumed from callback");
 
-
-				// update the query with users response
+				// update the query with the response message filled in the callback
 				queries_.back().setMsgResponse(res);
-				
+
+				// restore active server to NULL in resource manager
+				resource_manager_.setActiveServer(NULL);
+
+			}
+			else
+			{
+				// found equal request, simply reqister this in the query
+				// and respond with unique client_id.
+				queries_.back().addExternalClient(req.client_id, req.status_topic);
 			}
 
 			return true; 
@@ -102,15 +131,17 @@ ROS_INFO("ResourceServer: created load and unload server for %s", name_.c_str())
 
 		bool wrappedUnloadCallback(typename UnloadService::Request& req, typename UnloadService::Response& res)
 		{
-			// check if client_id has any resources loaded
-		//	for (auto& entry : entries_)
-		//   	{
-		//		if(entry.req.client_id == req.client_id)
-		//		{
 
-		//		}
-		//	}
-            
+		// check if this query binds any clients
+	//		for (auto& query : queries_)
+	//	   	{
+	//			if(query.res.resource_id == req.resource_id)
+	//			{
+
+
+	//			}
+	//		}
+        //    
 			// call owner's registered callback
 			bool ret = (owner_->*unload_callback_)(req,res);
 
@@ -124,7 +155,6 @@ ROS_INFO("ResourceServer: created load and unload server for %s", name_.c_str())
 
 	//	std::vector<ResourceEntry<Service>> entries_;
 
-		std::string name_;
 		Owner* owner_;
 		ResourceManager<Owner>& resource_manager_;
 		LoadCbFuncType load_callback_;	

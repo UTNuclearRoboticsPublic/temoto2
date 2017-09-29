@@ -5,6 +5,7 @@
 #include "node_manager/node_manager_errors.h"
 #include "node_manager/node_manager_services.h"
 #include "rmp/resource_manager.h"
+#include <stdio.h> //pid_t TODO: check where pid_t actually is
 
 namespace node_manager
 {
@@ -16,9 +17,9 @@ namespace node_manager
 			virtual ~NodeManager ();
 
 			std::string formatRequest(temoto_2::LoadResource::Request& req);
-			bool compareRequest(temoto_2::LoadResource::Request& req1,
-					temoto_2::LoadResource::Request& req2,
-					std::string action);
+//			bool compareRequest(temoto_2::LoadResource::Request& req1,
+//					temoto_2::LoadResource::Request& req2,
+//					std::string action);
 
 			void formatResponse(temoto_2::LoadResource::Response &res, int code, std::string message);
 			bool loadCb(temoto_2::LoadResource::Request &req, temoto_2::LoadResource::Response &res);
@@ -33,9 +34,9 @@ namespace node_manager
 
 			const std::string node_name_ = "node_manager";
 			const std::string class_name_ = "NodeManager";
-			const std::vector<std::string> validActions = {"rosrun", "roslaunch", "kill"};
+			const std::vector<std::string> validActions = {"rosrun", "roslaunch"};
 
-			std::map<pid_t, temoto_2::LoadResource::Request> running_processes_;
+			std::map<pid_t, temoto_id::ID> running_processes_;
 
 			ros::NodeHandle nh_;
 
