@@ -14,7 +14,7 @@ int main(int argc, char **argv)
 	// set up ROS timer to update the node_manager
     ros::NodeHandle nh;
     ros::Timer timer = nh.createTimer(ros::Duration(1), &node_manager::NodeManager::update, &nm);
-    ros::Rate loop_rate(10);
+    ros::Rate loop_rate(1);
 
     ROS_INFO("[node_manager_node/main] Node Manager Node is good to go");
 

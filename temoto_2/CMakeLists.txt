@@ -26,14 +26,15 @@ add_message_files(FILES
 
 add_service_files(
   FILES
-  	nodeSpawnKill.srv
 	LoadResource.srv
 	UnloadResource.srv
+	ResourceStatus.srv
+
+  	nodeSpawnKill.srv
 	listDevices.srv
 	startSensorRequest.srv
 	stopSensorRequest.srv
 	stopAllocatedServices.srv
-	resourceStatus.srv
 	task_handler/stopTask.srv
 	task_handler/indexTasks.srv
 	context_manager/human_context/getGestures.srv

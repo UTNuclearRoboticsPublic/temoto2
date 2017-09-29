@@ -3,18 +3,14 @@
 #include "ros/ros.h"
 #include "common/temoto_id.h"
 #include "rmp/base_resource_server.h"
-#include "rmp/resource_manager.h"
 #include "rmp/resource_query.h"
 
 
 namespace rmp
 {
 
-template <class Owner>
-class ResourceManager;
-
 template<class LoadService, class UnloadService, class Owner>
-class ResourceServer : public BaseResourceServer
+class ResourceServer : public BaseResourceServer<Owner>
 {
 	
 	public:
@@ -26,15 +22,15 @@ class ResourceServer : public BaseResourceServer
 				UnloadCbFuncType unload_cb,
 				Owner* owner,
 				ResourceManager<Owner>& resource_manager
-				) : load_callback_(load_cb), unload_callback_(unload_cb), 
-					owner_(owner), resource_manager_(resource_manager)
+				) :
+				BaseResourceServer<Owner>(name, resource_manager),
+				load_callback_(load_cb), 
+				unload_callback_(unload_cb),
+				owner_(owner) 
 		{
-			name_ = name;
-			load_server_ = nh_.advertiseService(name_+"/load", &ResourceServer<LoadService,UnloadService,Owner>::wrappedLoadCallback, this);
-			unload_server_ = nh_.advertiseService(name_+"/unload", &ResourceServer<LoadService,UnloadService,Owner>::wrappedUnloadCallback, this);
-
-ROS_INFO("ResourceServer: created load and unload server for %s", name_.c_str());
-
+			load_server_ = nh_.advertiseService(this->name_+"/load", &ResourceServer<LoadService,UnloadService,Owner>::wrappedLoadCallback, this);
+			unload_server_ = nh_.advertiseService(this->name_+"/unload", &ResourceServer<LoadService,UnloadService,Owner>::wrappedUnloadCallback, this);
+ROS_INFO("ResourceServer: created load and unload server for %s", this->name_.c_str());
 		}
 
 		~ResourceServer()
@@ -84,7 +80,7 @@ ROS_INFO("ResourceServer: created load and unload server for %s", name_.c_str())
 			}
 
 			// Register the client and get its ID from resource manager
-			req.client_id = resource_manager_.registerExternalClient(req.client_id);
+			req.client_id = this->resource_manager_.registerExternalClient(req.client_id);
 			res.client_id = req.client_id;
 
 
@@ -105,7 +101,7 @@ ROS_INFO("ResourceServer: created load and unload server for %s", name_.c_str())
 				// set this server active in resource manager
 				// when a client call is made from callback, the binding between active server
 				// and the new loaded clients can be made automatically 
-				resource_manager_.setActiveServer(this);
+				this->activateServer();
 
 				// call owner's registered callback
 				bool ret = (owner_->*load_callback_)(req,res);
@@ -116,7 +112,7 @@ ROS_INFO("ResourceServer: created load and unload server for %s", name_.c_str())
 				queries_.back().setMsgResponse(res);
 
 				// restore active server to NULL in resource manager
-				resource_manager_.setActiveServer(NULL);
+				this->deactivateServer();
 
 			}
 			else
@@ -156,7 +152,6 @@ ROS_INFO("ResourceServer: created load and unload server for %s", name_.c_str())
 	//	std::vector<ResourceEntry<Service>> entries_;
 
 		Owner* owner_;
-		ResourceManager<Owner>& resource_manager_;
 		LoadCbFuncType load_callback_;	
 		UnloadCbFuncType unload_callback_;	
 		

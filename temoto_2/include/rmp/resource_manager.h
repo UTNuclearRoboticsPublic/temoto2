@@ -14,6 +14,7 @@ namespace rmp
 template<class Owner>
 class ResourceManager
 {
+	friend class BaseResourceServer<Owner>;
 	public:
 
 		ResourceManager(Owner* owner):owner_(owner)
@@ -35,8 +36,8 @@ class ResourceManager
 				return false;
 			}
 
-			typedef std::shared_ptr<BaseResourceServer> BaseResPtr;
-			BaseResPtr res_srv = std::make_shared<ResourceServer< LoadService, UnloadService, Owner > > (
+			typedef std::shared_ptr<BaseResourceServer<Owner>> BaseResPtr;
+			BaseResPtr res_srv = std::make_shared<ResourceServer<LoadService, UnloadService, Owner>> (
 					server_name, load_cb, unload_cb, owner_, *this);
 
 			servers_.push_back(res_srv);
@@ -85,13 +86,18 @@ class ResourceManager
 			return true;
 		}
 
+// This method sends error/info message to any client connected to this resource.
+		bool sendStatus(temoto_id::ID resource_id, temoto_2::ResourceStatus& status_msg)
+		{
+//TODO: implement me
+		};
+
 
 
 	private:
 
-		friend class BaseResourceServer;
 
-		bool setActiveServer(BaseResourceClient* active_server)
+		bool setActiveServer(BaseResourceServer<Owner>* active_server)
 		{
 			for(auto& server_shared_ptr : servers_)
 			{
@@ -104,11 +110,11 @@ class ResourceManager
 			return false;
 		};
 
-		std::vector<std::shared_ptr<BaseResourceServer>> servers_;
+		std::vector<std::shared_ptr<BaseResourceServer<Owner>>> servers_;
 		std::vector<std::shared_ptr<BaseResourceClient>> clients_;
 		Owner* owner_;
 		temoto_id::IDManager ext_client_id_manager_;
-		std::shared_ptr<BaseResourceServer> active_server_;
+		std::shared_ptr<BaseResourceServer<Owner>> active_server_;
 };  
 
 
