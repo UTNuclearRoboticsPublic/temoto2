@@ -12,9 +12,9 @@ template <class Owner>
 class ResourceManager;
 
 template<class ServiceMsgType, class Owner>
-class ResourceClient : public BaseResourceClient
+	class ResourceClient : public BaseResourceClient
 {
-	
+
 	public:
 		//typedef bool(Owner::*CbFuncType)(typename Service::Request&, typename Service::Response&);
 
@@ -35,11 +35,8 @@ class ResourceClient : public BaseResourceClient
 		bool call(ServiceMsgType& msg)
 		{
 			ROS_INFO("ResourceClient[%s]: Call()", name_);
-			// when a request with unassigned arrives, generate new id
-			//req.client_id = id_manager_.checkID(req.client_id);
-			//	res.client_id = req.client_id;
-			
-		
+
+
 			ServiceMsgType new_msg;
 			bool found = false;
 			for(auto act_msg : active_resources_)
@@ -56,9 +53,9 @@ class ResourceClient : public BaseResourceClient
 			{
 				ROS_INFO("ResourceClient[%s]: request not found from existing connections, external call()", name_);
 				if(service_client_.call(new_msg))
-{
+				{
 
-}
+				}
 			}
 
 			active_resources_.push_back(new_msg);
@@ -73,8 +70,7 @@ class ResourceClient : public BaseResourceClient
 
 	//	std::vector<ResourceEntry<Service>> entries_;
 
-		std::string name_;
-		TemotoID::ID client_id_; //assigned after first call to a server
+		std::string name_; /// Service name which this client calls.
 		Owner* owner_;
 		ResourceManager<Owner>& resource_manager_;
 		

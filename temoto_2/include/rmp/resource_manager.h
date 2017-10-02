@@ -27,10 +27,10 @@ class ResourceManager
 		{
 		}
 
-		template<class LoadService, class UnloadService>
+		template<class ServiceType>
 		bool addServer(std::string server_name, 
-				bool(Owner::*load_cb)(typename LoadService::Request&, typename LoadService::Response&),
-				bool(Owner::*unload_cb)(typename UnloadService::Request&, typename UnloadService::Response&))
+				void(Owner::*load_cb)(typename ServiceType::Request&, typename ServiceType::Response&),
+				void(Owner::*unload_cb)(typename ServiceType::Request&, typename ServiceType::Response&))
 		{
 
 			if (serverExists(server_name))
@@ -39,7 +39,7 @@ class ResourceManager
 			}
 
 			typedef std::shared_ptr<BaseResourceServer<Owner>> BaseResPtr;
-			BaseResPtr res_srv = std::make_shared<ResourceServer<LoadService, UnloadService, Owner>> (
+			BaseResPtr res_srv = std::make_shared<ResourceServer<ServiceType, Owner>> (
 					server_name, load_cb, unload_cb, owner_, *this);
 
 			servers_.push_back(res_srv);
@@ -72,10 +72,10 @@ class ResourceManager
         }
 
 
-		template<class ServiceMsgType>
-		bool call(std::string client_name, ServiceMsgType& msg)
+		template<class ServiceType>
+		bool call(std::string client_name, ServiceType& msg)
 		{
-			std::shared_ptr<BaseResourceClient> res_client = std::make_shared<ResourceClient<ServiceMsgType, Owner>>(client_name, owner_);
+			std::shared_ptr<BaseResourceClient> res_client = std::make_shared<ResourceClient<ServiceType, Owner>>(client_name, owner_);
 			clients_.push_back(res_client);
 
 

@@ -9,13 +9,13 @@
 namespace rmp
 {
 
-template<class LoadService, class UnloadService, class Owner>
+template<class ServiceType, class Owner>
 class ResourceServer : public BaseResourceServer<Owner>
 {
 	
 	public:
-		typedef bool(Owner::*LoadCbFuncType)(typename LoadService::Request&, typename LoadService::Response&);
-		typedef bool(Owner::*UnloadCbFuncType)(typename UnloadService::Request&, typename UnloadService::Response&);
+		typedef void(Owner::*LoadCbFuncType)(typename ServiceType::Request&, typename ServiceType::Response&);
+		typedef void(Owner::*UnloadCbFuncType)(typename ServiceType::Request&, typename ServiceType::Response&);
 
 		ResourceServer(std::string name,
 				LoadCbFuncType load_cb,
@@ -28,7 +28,7 @@ class ResourceServer : public BaseResourceServer<Owner>
 				unload_callback_(unload_cb),
 				owner_(owner) 
 		{
-			load_server_ = nh_.advertiseService(this->name_, &ResourceServer<LoadService,UnloadService,Owner>::wrappedLoadCallback, this);
+			load_server_ = nh_.advertiseService(this->name_, &ResourceServer<ServiceType,Owner>::wrappedLoadCallback, this);
 ROS_INFO("ResourceServer: created server for %s", this->name_.c_str());
 		}
 
@@ -42,21 +42,6 @@ ROS_INFO("ResourceServer: created server for %s", this->name_.c_str());
 	//	}
 
 
-
-		bool isNewRequest(typename LoadService::Request& req)
-		{
-
-			for(auto q : queries_)
-			{
-				if(q.getMsg().request == req)
-				{
-					return false;
-				}
-			}
-
-			return true;
-		};
-
 		void registerInternalClient(temoto_id::ID resource_id)
 		{
 			if(!queries_.size())
@@ -68,9 +53,9 @@ ROS_INFO("ResourceServer: created server for %s", this->name_.c_str());
 		};
 
 
-		bool wrappedLoadCallback(typename LoadService::Request& req, typename LoadService::Response& res)
+		bool wrappedLoadCallback(typename ServiceType::Request& req, typename ServiceType::Response& res)
 		{
-			ROS_INFO("ResourceServer Load callback fired by client %ld, with return status_topic %s", req.client_id, req.status_topic.c_str());
+			ROS_INFO("ResourceServer Load callback fired by client with return status_topic %s", req.status_topic.c_str());
 
 			if(!owner_)
 			{
@@ -78,24 +63,22 @@ ROS_INFO("ResourceServer: created server for %s", this->name_.c_str());
 				return true;
 			}
 
-			// Register the client and get its ID from resource manager
-			req.client_id = this->resource_manager_.registerExternalClient(req.client_id);
-			res.client_id = req.client_id;
-
-
 			// generate new id for the resource
 			res.resource_id = res_id_manager_.generateID();
 
-			ROS_INFO("ResourceServer Client id is %ld", req.client_id);
+			ROS_INFO("ResourceServer Created resource id %ld", res.resource_id);
 
 
-			//compare request messages
-			if(isNewRequest(req))
+			// New or existing query? Check it out with this hi-tec lambda function :)
+			auto found_query = std::find_if(queries_.begin(), queries_.end(), 
+					[&req](const ResourceQuery<ServiceType>& query) -> bool { return query.getMsg().request == req;  }); 
+
+			if(found_query == queries_.end())
 			{
 				ROS_INFO("new request");
 
 				// equal message not found from queries_, add new query
-				queries_.emplace_back(req);
+				queries_.emplace_back(req, res);
 
 				// set this server active in resource manager
 				// when a client call is made from callback, the binding between active server
@@ -103,7 +86,7 @@ ROS_INFO("ResourceServer: created server for %s", this->name_.c_str());
 				this->activateServer();
 
 				// call owner's registered callback
-				bool ret = (owner_->*load_callback_)(req,res);
+				(owner_->*load_callback_)(req,res);
 
 				ROS_INFO("ResourceServer resumed from callback");
 
@@ -117,8 +100,8 @@ ROS_INFO("ResourceServer: created server for %s", this->name_.c_str());
 			else
 			{
 				// found equal request, simply reqister this in the query
-				// and respond with unique client_id.
-				queries_.back().addExternalClient(req.client_id, req.status_topic);
+				// and respond with unique resoure_id.
+				queries_.back().addExternalClient(req,res);
 			}
 
 			return true; 
@@ -127,26 +110,32 @@ ROS_INFO("ResourceServer: created server for %s", this->name_.c_str());
         
         void unloadResource(temoto_2::UnloadResource::Request& req, temoto_2::UnloadResource::Response& res)
 		{
-
-		// check if this query binds any clients
-	//		for (auto& query : queries_)
-	//	   	{
-	//			if(query.res.resource_id == req.resource_id)
-	//			{
-
-
-	//			}
-	//		}
-        //    
-			// call owner's registered callback
-            (owner_->*unload_callback_)(req,res);
-
-			//queries_.removeExternalClient
-		}
+			// check if this query binds any clients
+			const temoto_id::ID resource_id = req.resource_id;
+			const auto found_query_it = std::find_if(queries_.begin(), queries_.end(), 
+					[resource_id](const ResourceQuery<ServiceType>& query) -> bool {return query.externalClientExists(resource_id);}
+					); 
+			if (found_query_it != queries_.end())
+			{
+				// Query found, try to remove resource from it.
+				size_t clients_remaining = found_query_it->removeExternalClient(req.resource_id);
+				if (clients_remaining <= 0)
+				{
+					// last resource removed, execute owner's unload callback and remove the query from our list
+					//typename LoadService::Request orig_req = found_query_it->getMsg().request;	
+					//typename LoadService::Response orig_res = found_query_it->getMsg().response;	
+					typename ServiceType::Response orig_res;
+					typename ServiceType::Request orig_req;
+					(owner_->*unload_callback_)(orig_req, orig_res);
+					/// TODO: Do or do not something with the response part?
+					queries_.erase(found_query_it);
+				}
+			}
+		};
 
 	private:
 
-	//	std::vector<ResourceEntry<Service>> entries_;
+		//	std::vector<ResourceEntry<Service>> entries_;
 
 		Owner* owner_;
 		LoadCbFuncType load_callback_;	
@@ -156,7 +145,7 @@ ROS_INFO("ResourceServer: created server for %s", this->name_.c_str());
 		ros::NodeHandle nh_;
 		temoto_id::IDManager res_id_manager_;
 
-		std::vector<ResourceQuery<LoadService>> queries_;
+		std::vector<ResourceQuery<ServiceType>> queries_;
 
 
 //		typedef std::pair<TemotoID::ID, std::shared_ptr<BaseResourceClient> ClientConnection;

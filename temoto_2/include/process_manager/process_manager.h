@@ -18,8 +18,8 @@ namespace process_manager
 
 			std::string formatRequest(temoto_2::LoadProcess::Request& req);
 			void formatResponse(temoto_2::LoadProcess::Response &res, int code, std::string message);
-			bool loadCb(temoto_2::LoadProcess::Request &req, temoto_2::LoadProcess::Response &res);
-			bool unloadCb(temoto_2::UnloadResource::Request &req, temoto_2::UnloadResource::Response &res);
+			void loadCb(temoto_2::LoadProcess::Request &req, temoto_2::LoadProcess::Response &res);
+			void unloadCb(temoto_2::LoadProcess::Request &req, temoto_2::LoadProcess::Response &res);
 
 			void update(const ros::TimerEvent& e);
 

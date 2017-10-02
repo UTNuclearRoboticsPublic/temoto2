@@ -23,22 +23,33 @@ class ResourceQuery{
 		}
 
 		// special constructor for resource server
-		ResourceQuery(const typename ServiceMsgType::Request& req)
+		ResourceQuery(const typename ServiceMsgType::Request& req,
+					  const typename ServiceMsgType::Response& res)
 		{
-			addExternalClient(req.client_id, req.status_topic);
+			addExternalClient(req, res);
 			msg_.request = req;
+			// response part is set after executing owners callback
+
 		}
 
-		void addExternalClient(temoto_id::ID client_id, std::string status_topic)
+		void addExternalClient(const typename ServiceMsgType::Request& req,
+			   			       const typename ServiceMsgType::Response& res)
 		{
-			external_clients_.emplace(client_id, status_topic);
+			external_clients_.emplace(res.resource_id, req.status_topic);
 		}
 
-		// remove the external client and return how many is still connected
-		size_t removeExternalClient(temoto_id::ID client_id)
+		// remove the external client from this query and return how many are still connected
+		size_t removeExternalClient(temoto_id::ID resource_id)
 		{
-			external_clients_.erase(client_id);
-			return external_clients_.count;
+			/// Try to erase resource_id from external client map.
+			external_clients_.erase(resource_id);
+			return external_clients_.size();
+		}
+
+		// Check if external client with given resource_id is attached to this query.
+		bool externalClientExists(temoto_id::ID resource_id) const
+		{
+			return external_clients_.find(resource_id) != external_clients_.end(); 
 		}
 
 
@@ -62,7 +73,7 @@ class ResourceQuery{
 		}
 
 
-		const ServiceMsgType& getMsg()
+		const ServiceMsgType& getMsg() const
 		{
 			return msg_;
 		}
@@ -77,10 +88,10 @@ class ResourceQuery{
 		// unique client name is mapped to a set of resource ids
 		std::map<std::string, std::set<temoto_id::ID>> internal_clients_;
 
-		// unique resource id is mapped with status topic
+		// represent external client by its resource_id and status_topic
 		std::map<temoto_id::ID, std::string> external_clients_;
 
-		ServiceMsgType msg_;
+		ServiceMsgType msg_; /// Store request and response, note that RMP specific fields (resource_id, topic, ...) are related to first query and are not intended to be used herein.
 	};
 }
 

@@ -21,7 +21,7 @@ namespace process_manager
 
 ProcessManager::ProcessManager():resource_manager_("process_manager", this)
 {
-	resource_manager_.addServer<temoto_2::LoadProcess, temoto_2::UnloadResource>(
+	resource_manager_.addServer<temoto_2::LoadProcess>(
 			srv_name::SERVER, 
 			&ProcessManager::loadCb,
 			&ProcessManager::unloadCb);
@@ -82,7 +82,7 @@ void ProcessManager::update(const ros::TimerEvent&)
 }
 
 
-bool ProcessManager::unloadCb(temoto_2::UnloadResource::Request &req, temoto_2::UnloadResource::Response &res)
+void ProcessManager::unloadCb(temoto_2::LoadProcess::Request &req, temoto_2::LoadProcess::Response &res)
 {
 	std::string prefix = node_name_ + "::" + __func__;
 	ROS_INFO("%s Unload resource requested ...", prefix.c_str());
@@ -92,7 +92,7 @@ bool ProcessManager::unloadCb(temoto_2::UnloadResource::Request &req, temoto_2::
 	bool pid_found = false;
 	for (auto& proc : running_processes_)
 	{
-		if (proc.second == req.resource_id)
+		if (proc.second == res.resource_id)
 		{
 			active_pid = proc.first;
 			pid_found = true;
@@ -101,8 +101,9 @@ bool ProcessManager::unloadCb(temoto_2::UnloadResource::Request &req, temoto_2::
 	}
 	if (!pid_found)
 	{
-		ROS_ERROR("%s unable to obtain PID for resource with id %ld", prefix.c_str(), req.resource_id);
-		return false;
+		ROS_ERROR("%s unable to obtain PID for resource with id %ld", prefix.c_str(), res.resource_id);
+		//TODO: throw exception
+		return;
 	}
 
 
@@ -117,7 +118,7 @@ bool ProcessManager::unloadCb(temoto_2::UnloadResource::Request &req, temoto_2::
 }
 
 
-bool ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
+	void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
 		temoto_2::LoadProcess::Response& res)
 {
 	ROS_INFO("loadCb reached");
@@ -135,7 +136,7 @@ bool ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
 	if ( std::find(validActions.begin(), validActions.end(), action) == validActions.end() )
 	{
 		ROS_INFO("%s Action '%s' is not supported ...", prefix.c_str(), action.c_str());
-		return false;
+		//TODO THROW EXCEPTION
 	}
 
 	// TODO: Check if the package and node/launchfile exists
@@ -162,7 +163,6 @@ bool ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
 	// Fill response
 	res.code = 0;
 	res.message = "Command executed successfully.";
-	return true;
 }
 
 } // namespace process_manager
