@@ -12,7 +12,7 @@
 #include "rviz_plugin_manager/PluginSetConfig.h"
 #include "output_manager/output_manager_errors.h"
 #include "output_manager/rviz_manager/plugin_info.h"
-#include "node_manager/node_manager_services.h"
+#include "process_manager/process_manager_services.h"
 
 class RvizManager
 {

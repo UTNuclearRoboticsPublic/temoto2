@@ -9,30 +9,30 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "core/common.h"
-#include "node_manager/node_manager.h"
+#include "process_manager/process_manager.h"
 
 #include <stdio.h>
 #include <csignal>
 #include <sys/wait.h>
 #include <algorithm>
 
-namespace node_manager
+namespace process_manager
 {
 
-NodeManager::NodeManager():resource_manager_(this)
+ProcessManager::ProcessManager():resource_manager_("process_manager", this)
 {
-	resource_manager_.addServer<temoto_2::LoadResource, temoto_2::UnloadResource>(
-			"node_manager_server", 
-			&NodeManager::loadCb,
-			&NodeManager::unloadCb);
+	resource_manager_.addServer<temoto_2::LoadProcess, temoto_2::UnloadResource>(
+			srv_name::SERVER, 
+			&ProcessManager::loadCb,
+			&ProcessManager::unloadCb);
 }
 
-NodeManager::~NodeManager()
+ProcessManager::~ProcessManager()
 {}
 
 
 // Timer callback where running proceses are checked if they are operational
-void NodeManager::update(const ros::TimerEvent&)
+void ProcessManager::update(const ros::TimerEvent&)
 {
 	//auto find_it = std::find(running_processes_.begin(), running_processes_.end(), res.resource_id);
 	//if(find_it == running_processes_.end())
@@ -81,27 +81,8 @@ void NodeManager::update(const ros::TimerEvent&)
 	}
 }
 
-// function for making the response formatting bit compact
-void NodeManager::formatResponse(temoto_2::LoadResource::Response &res, int code, std::string message)
-{
-	// Print the message out to the console.
-	if ( (code == 1) || (code == -1))
-	{
-		ROS_ERROR( "[node_manager/loadCb] %s", message.c_str() );
-	}
 
-	else
-	{
-		ROS_INFO( "[node_manager/loadCb] %s", message.c_str() );
-	}
-
-	res.code = code;
-	res.message = message;
-}
-
-
-
-bool NodeManager::unloadCb(temoto_2::UnloadResource::Request &req, temoto_2::UnloadResource::Response &res)
+bool ProcessManager::unloadCb(temoto_2::UnloadResource::Request &req, temoto_2::UnloadResource::Response &res)
 {
 	std::string prefix = node_name_ + "::" + __func__;
 	ROS_INFO("%s Unload resource requested ...", prefix.c_str());
@@ -136,8 +117,8 @@ bool NodeManager::unloadCb(temoto_2::UnloadResource::Request &req, temoto_2::Unl
 }
 
 
-bool NodeManager::loadCb(temoto_2::LoadResource::Request& req,
-		temoto_2::LoadResource::Response& res)
+bool ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
+		temoto_2::LoadProcess::Response& res)
 {
 	ROS_INFO("loadCb reached");
 	// Name of the method, used for making debugging a bit simpler
@@ -148,7 +129,7 @@ bool NodeManager::loadCb(temoto_2::LoadResource::Request& req,
 	const std::string& package = req.package;
 	const std::string& name = req.name;
 
-	ROS_INFO("%s Received a 'LoadResource' service request: %s ...", prefix.c_str(), name.c_str());
+	ROS_INFO("%s Received a 'LoadProcess' service request: %s ...", prefix.c_str(), name.c_str());
 
 	// Validate the action command. 
 	if ( std::find(validActions.begin(), validActions.end(), action) == validActions.end() )
@@ -184,4 +165,4 @@ bool NodeManager::loadCb(temoto_2::LoadResource::Request& req,
 	return true;
 }
 
-} // namespace node_manager
+} // namespace process_manager

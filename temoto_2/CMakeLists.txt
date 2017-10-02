@@ -26,11 +26,13 @@ add_message_files(FILES
 
 add_service_files(
   FILES
-	LoadResource.srv
+    # Resouce Management
 	UnloadResource.srv
 	ResourceStatus.srv
 
-  	nodeSpawnKill.srv
+    # Process Manager
+	LoadProcess.srv
+
 	listDevices.srv
 	startSensorRequest.srv
 	stopSensorRequest.srv
@@ -112,11 +114,11 @@ target_link_libraries(agent_core
 add_dependencies(agent_core ${catkin_EXPORTED_TARGETS})
 
 # # # # # # # # # # # #
-# NODE MANAGER
+# PROCESS MANAGER
 # # # # # # # # # # # #
-add_executable(node_manager src/node_manager/node_manager.cpp src/node_manager/node_manager_node.cpp )
-add_dependencies(node_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(node_manager ${catkin_LIBRARIES} )
+add_executable(process_manager src/process_manager/process_manager.cpp src/process_manager/process_manager_node.cpp )
+add_dependencies(process_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(process_manager ${catkin_LIBRARIES} )
 
 
 

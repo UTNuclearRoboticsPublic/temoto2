@@ -17,7 +17,7 @@ class ResourceManager
 	friend class BaseResourceServer<Owner>;
 	public:
 
-		ResourceManager(Owner* owner):owner_(owner)
+		ResourceManager(std::string name, Owner* owner):owner_(owner), name_(name)
 		{
 		}
 
@@ -64,6 +64,10 @@ class ResourceManager
 		}
 
 
+        const std::string& getName()
+        {
+            return name_;
+        }
 
 
 		template<class ServiceMsgType>
@@ -112,6 +116,7 @@ class ResourceManager
 
 		std::vector<std::shared_ptr<BaseResourceServer<Owner>>> servers_;
 		std::vector<std::shared_ptr<BaseResourceClient>> clients_;
+        std::string name_;
 		Owner* owner_;
 		temoto_id::IDManager ext_client_id_manager_;
 		std::shared_ptr<BaseResourceServer<Owner>> active_server_;

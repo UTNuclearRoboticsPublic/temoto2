@@ -16,7 +16,7 @@
 #include "package_info/package_info.h"
 
 #include "core/common.h"
-#include "node_manager/node_manager_services.h"
+#include "process_manager/process_manager_services.h"
 #include "temoto_2/listDevices.h"
 #include "temoto_2/startSensorRequest.h"
 #include "temoto_2/stopSensorRequest.h"
@@ -36,8 +36,9 @@ public:
      */
     SensorManager()
     {
+        std::string pm_name = process_manager::srv_name::MANAGER +"/"+process_manager::srv_name::SERVER;
         // Start the client
-        nodeSpawnKillClient_ = n_.serviceClient<temoto_2::LoadResource>("node_manager_server/load");
+        nodeSpawnKillClient_ = n_.serviceClient<temoto_2::LoadProcess>(pm_name);
 
         // Start the servers
         startSensorServer_ = n_.advertiseService("start_sensor", &SensorManager::start_sensor_cb, this);
@@ -100,19 +101,19 @@ private:
         ROS_INFO("[SensorManager::start_sensor_cb] received a request to start a '%s': '%s', '%s'", reqType.c_str(), reqName.c_str(), reqExecutable.c_str());
 
         // Create an empty message that will be filled out by "findSensor" function
-        temoto_2::LoadResource spawnKillMsg;
+        temoto_2::LoadProcess load_process_msg;
 
         // Find the suitable sensor
-        if (findSensor(spawnKillMsg.request, res, reqType, reqName, reqExecutable))
+        if (findSensor(load_process_msg.request, res, reqType, reqName, reqExecutable))
         {
             ROS_INFO("[SensorManager::start_sensor_cb] Found a suitable sensor. Trying to call /spawn_kill_process ...");
-            while (!nodeSpawnKillClient_.call(spawnKillMsg))
+            while (!nodeSpawnKillClient_.call(load_process_msg))
             {
                 ROS_ERROR("[SensorManager::start_sensor_cb] Failed to call service /spawn_kill_process, trying again...");
             }
 
-            res.code = spawnKillMsg.response.code;
-            res.message = spawnKillMsg.response.message;
+            res.code = load_process_msg.response.code;
+            res.message = load_process_msg.response.message;
 
             ROS_INFO("[SensorManager::start_sensor_cb] /spawn_kill_process responded: '%s'", res.message.c_str());
 
@@ -142,23 +143,25 @@ private:
                        temoto_2::stopSensorRequest::Response &res)
     {
         // TODO: Check if the request makes sense, check the name and type
-        temoto_2::LoadResource spawnKillMsg;
-        spawnKillMsg.request.action = "kill";
-        spawnKillMsg.request.package = req.name;
-        spawnKillMsg.request.name = req.executable;
+        temoto_2::UnloadResource unload_resource_msg;
+        unload_resource_msg.request.server_name = "load_process";
+        unload_resource_msg.request.resource_id = 0;
+        //unload_resource_msg.request.package = req.name;
+        //unload_resource_msg.request.name = req.executable;
 
-        ROS_INFO("[SensorManager::stop_sensor_cb] received a request to stop a '%s'", spawnKillMsg.request.name.c_str());
+        ROS_INFO("[SensorManager::stop_sensor_cb] received a request to stop a '%s'", req.executable.c_str());
+        ROS_INFO("[SensorManager::stop_sensor_cb] TODO: CONVERT THIS TO USE RMP");
 
-        while (!nodeSpawnKillClient_.call(spawnKillMsg))
-        {
-            ROS_ERROR("[SensorManager::stop_sensor_cb] Failed to call service /spawn_kill_process, trying again...");
-        }
-
-        res.code = spawnKillMsg.response.code;
-        res.message = spawnKillMsg.response.message;
-
-        ROS_INFO("[SensorManager::stop_sensor_cb] /spawn_kill_process responded: '%s'", res.message.c_str());
-
+//        while (!nodeSpawnKillClient_.call(spawnKillMsg))
+//        {
+//            ROS_ERROR("[SensorManager::stop_sensor_cb] Failed to call service /spawn_kill_process, trying again...");
+//        }
+//
+//        res.code = unload_resource_msg.response.code;
+//        res.message = unload_resource_msg.response.message;
+//
+//        ROS_INFO("[SensorManager::stop_sensor_cb] /spawn_kill_process responded: '%s'", res.message.c_str());
+//
         return true;
     }
 
@@ -178,7 +181,7 @@ private:
      * @return Returns a boolean. If suitable device was found, then the req param
      * is formatted as a nodeSpawnKill::Request (first one in the list, even if there is more)
      */
-    bool findSensor (temoto_2::LoadResource::Request &ret,
+    bool findSensor (temoto_2::LoadProcess::Request &ret,
                      temoto_2::startSensorRequest::Response &retstartSensor,
                      std::string type,
                      std::string name,
