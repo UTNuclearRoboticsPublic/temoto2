@@ -19,6 +19,8 @@ class ResourceManager
 
 		ResourceManager(std::string name, Owner* owner):owner_(owner), name_(name)
 		{
+			unload_server_ = nh_.advertiseService(name_+"/unload", &ResourceManager<Owner>::unloadCallback, this);
+			status_server_ = nh_.advertiseService(name_+"/status", &ResourceManager<Owner>::statusCallback, this);
 		}
 
 		~ResourceManager()
@@ -98,6 +100,39 @@ class ResourceManager
 
 
 
+
+		bool unloadCallback(temoto_2::UnloadResource::Request& req, temoto_2::UnloadResource::Response& res)
+		{
+            // Find server with requested name
+			for (auto& server : servers_)
+			{
+				if (server->getName() == req.server_name)
+				{
+                    //try
+                    //{
+                    server->unloadResource(req, res);
+                    ROS_INFO("%s unloadCallback(): Resource %ld unloaded", name_.c_str(), req.resource_id);
+                    //}
+                    //catch )
+                    //{
+                    //}
+                    //else
+                    //{
+                    //    ROS_INFO("%s unloadCallback(): ERROR unloading resource with id %ld", name_, req.resource_id);
+                    //}
+                    break;
+				}
+			}
+
+            return true;
+		};
+
+
+		bool statusCallback(temoto_2::ResourceStatus::Request& req, temoto_2::ResourceStatus::Response& res)
+		{
+            ROS_INFO("%s: Got status from someone", name_.c_str());
+        };
+
 	private:
 
 
@@ -114,12 +149,17 @@ class ResourceManager
 			return false;
 		};
 
+
 		std::vector<std::shared_ptr<BaseResourceServer<Owner>>> servers_;
 		std::vector<std::shared_ptr<BaseResourceClient>> clients_;
         std::string name_;
 		Owner* owner_;
 		temoto_id::IDManager ext_client_id_manager_;
 		std::shared_ptr<BaseResourceServer<Owner>> active_server_;
+
+		ros::NodeHandle nh_;
+		ros::ServiceServer unload_server_;
+		ros::ServiceServer status_server_;
 };  
 
 

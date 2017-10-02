@@ -40,6 +40,7 @@ class BaseResourceServer
 		};
 
 		virtual void registerInternalClient(std::string client_name, temoto_id::ID resource_id){};
+		virtual void unloadResource(temoto_2::UnloadResource::Request& req, temoto_2::UnloadResource::Response& res) = 0;
 
 	protected:
 

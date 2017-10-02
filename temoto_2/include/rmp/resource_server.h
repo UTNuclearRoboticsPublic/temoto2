@@ -28,9 +28,8 @@ class ResourceServer : public BaseResourceServer<Owner>
 				unload_callback_(unload_cb),
 				owner_(owner) 
 		{
-			load_server_ = nh_.advertiseService(this->name_+"/load", &ResourceServer<LoadService,UnloadService,Owner>::wrappedLoadCallback, this);
-			unload_server_ = nh_.advertiseService(this->name_+"/unload", &ResourceServer<LoadService,UnloadService,Owner>::wrappedUnloadCallback, this);
-ROS_INFO("ResourceServer: created load and unload server for %s", this->name_.c_str());
+			load_server_ = nh_.advertiseService(this->name_, &ResourceServer<LoadService,UnloadService,Owner>::wrappedLoadCallback, this);
+ROS_INFO("ResourceServer: created server for %s", this->name_.c_str());
 		}
 
 		~ResourceServer()
@@ -125,7 +124,8 @@ ROS_INFO("ResourceServer: created load and unload server for %s", this->name_.c_
 			return true; 
 		}
 
-		bool wrappedUnloadCallback(typename UnloadService::Request& req, typename UnloadService::Response& res)
+        
+        void unloadResource(temoto_2::UnloadResource::Request& req, temoto_2::UnloadResource::Response& res)
 		{
 
 		// check if this query binds any clients
@@ -139,12 +139,9 @@ ROS_INFO("ResourceServer: created load and unload server for %s", this->name_.c_
 	//		}
         //    
 			// call owner's registered callback
-			bool ret = (owner_->*unload_callback_)(req,res);
+            (owner_->*unload_callback_)(req,res);
 
 			//queries_.removeExternalClient
-
-
-			return true; 
 		}
 
 	private:
@@ -156,7 +153,6 @@ ROS_INFO("ResourceServer: created load and unload server for %s", this->name_.c_
 		UnloadCbFuncType unload_callback_;	
 		
 		ros::ServiceServer load_server_;
-		ros::ServiceServer unload_server_;
 		ros::NodeHandle nh_;
 		temoto_id::IDManager res_id_manager_;
 
