@@ -78,6 +78,8 @@ class ResourceQuery{
 			return msg_;
 		}
 
+        const std::map<std::string, std::set<temoto_id::ID>>& getInternalClients() const {return internal_clients_;}
+
 		void setMsgResponse(const typename ServiceMsgType::Response& res)
 		{
 			msg_.response = res;

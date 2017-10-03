@@ -4,6 +4,8 @@
 #include "common/temoto_id.h"
 #include "rmp/base_resource_client.h"
 #include "rmp/resource_manager.h"
+#include <string>
+#include <set>
 
 namespace rmp
 {
@@ -11,73 +13,117 @@ namespace rmp
 template <class Owner>
 class ResourceManager;
 
-template<class ServiceMsgType, class Owner>
+template<class ServiceType, class Owner>
 	class ResourceClient : public BaseResourceClient
 {
 
 	public:
 		//typedef bool(Owner::*CbFuncType)(typename Service::Request&, typename Service::Response&);
 
-		ResourceClient(std::string name,
-				Owner* owner,
-				ResourceManager<Owner>& resource_manager
-				) : name_(name), owner_(owner), resource_manager_(resource_manager)
+		ResourceClient(std::string resource_manager_name, std::string server_name,
+				Owner* owner, ResourceManager<Owner>& resource_manager
+				) : resource_manager_name_(resource_manager_name), server_name_(server_name), 
+                    owner_(owner), resource_manager_(resource_manager)
 		{
-			// Setup ROS service client
-			service_client_ = nh_.serviceClient<ServiceMsgType>(name_);
+            name_ = resource_manager_name + "/" + server_name;
+            
+			// Setup ROS service clients for loading and unloading the resource
+            std::string unload_name = resource_manager_name+"/unload";
+			service_client_ = nh_.serviceClient<ServiceType>(name_);
+			service_client_unload_ = nh_.serviceClient<temoto_2::UnloadResource>(unload_name);
 		}
 
 		~ResourceClient()
 		{
+            // Send unload service request to all remaining active connections
+            for(const auto& msg : active_resources_)
+            {
+                temoto_2::UnloadResource unload_msg;
+                unload_msg.request.server_name = server_name_;
+                unload_msg.request.resource_id = msg.response.resource_id;
+                service_client_unload_.call(unload_msg);
+            }
 		}
 
 
-		bool call(ServiceMsgType& msg)
+		bool call(ServiceType& msg)
 		{
 			ROS_INFO("ResourceClient[%s]: Call()", name_);
 
 
-			ServiceMsgType new_msg;
-			bool found = false;
-			for(auto act_msg : active_resources_)
-			{
-				if(act_msg.req == msg.req)
+			// search for given request from active resources 
+			auto msg_it = std::find_if(active_resources_.begin(), active_resources_.end(), 
+					[&](const ResourceQuery<ServiceType>& msg) -> bool {return msg.request == msg.request;}
+                    ); 
+            if(msg_it == active_resources_.end())
+            {
+                // New request
+				ROS_INFO("ResourceClient[%s]: new request, performing external call()", name_);
+				if(service_client_.call(msg))
 				{
-					new_msg = act_msg;
-					found = true;
-					break;
+                    auto ret_pair = active_resources_.push_back(msg);
+                    if (!ret_pair.second)
+                    {
+                        ROS_ERROR("ResourceClient[%s]: could not add element to vector of active resources", name_.c_str()); 
+                        return false;
+                    }
+                    msg_it = ret_pair.first; // get newly added element iterator
 				}
+                else
+                {
+                   ROS_ERROR("ResourceClient[%s]: service call failed", name_.c_str()); 
+                   return false;
+                }
 			}
 
-			if(!found)
-			{
-				ROS_INFO("ResourceClient[%s]: request not found from existing connections, external call()", name_);
-				if(service_client_.call(new_msg))
-				{
+            // Generate id for new resource and add it to the map
+            temoto_id::ID generated_id = id_manager_.generateID();
+            ids.emplace(generated_id, msg_it->response.resource_id);
 
-				}
-			}
-
-			active_resources_.push_back(new_msg);
-			msg = new_msg;
-
+            // Update id in response part
+            msg.response.resource_id = generated_id;
 
 			return true; 
 		}
 
+        
+        void unloadResource(temoto_id::ID resource_id)
+        {
+			// search for given resource id to unload 
+			auto found_msg = std::find_if(active_resources_.begin(), active_resources_.end(), 
+					[&](const ResourceQuery<ServiceType>& msg) -> bool {return msg.response.resource_id == resource_id;}
+                    ); 
+            if(found_msg != active_resources_.end())
+            {
+                active_resources_.erase(found_msg);
+            }
+        }
+
+        size_t getConnectionCount() const
+        {
+            return active_resources_.size();
+        }
+
+        const std::string& getName() const {return name_;} 
+
 
 	private:
 
-	//	std::vector<ResourceEntry<Service>> entries_;
-
-		std::string name_; /// Service name which this client calls.
+		std::string name_; /// The unique name of a resource client.
+		std::string server_name_; /// Server name which this client calls.
+		std::string resource_manager_name_; /// Name of resource manager where the server is located.
 		Owner* owner_;
 		ResourceManager<Owner>& resource_manager_;
+		temoto_id::IDManager id_manager_;
 		
 		ros::ServiceClient service_client_;
+		ros::ServiceClient service_client_unload_;
 		ros::NodeHandle nh_;
 
-		std::vector<ServiceMsgType> active_resources_;
+		std::vector<ServiceType> active_resources_;
+
+        // Map given internally shared resource_ids to externally called resource id
+        std::map<temoto_id::ID, temoto_id::ID> ids;
 
 
 //		typedef std::pair<TemotoID::ID, std::shared_ptr<BaseResourceServer> ServerConnection;

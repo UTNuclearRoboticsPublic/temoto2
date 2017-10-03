@@ -26,7 +26,7 @@ class ResourceServer : public BaseResourceServer<Owner>
 				BaseResourceServer<Owner>(name, resource_manager),
 				load_callback_(load_cb), 
 				unload_callback_(unload_cb),
-				owner_(owner) 
+				owner_(owner)
 		{
 			load_server_ = nh_.advertiseService(this->name_, &ResourceServer<ServiceType,Owner>::wrappedLoadCallback, this);
 ROS_INFO("ResourceServer: created server for %s", this->name_.c_str());
@@ -35,11 +35,6 @@ ROS_INFO("ResourceServer: created server for %s", this->name_.c_str());
 		~ResourceServer()
 		{
 		}
-
-	//	void addResourceEntry(ResourceEntry<Service> entry)
-	//	{
-	//		entries_.push_back(entry);
-	//	}
 
 
 		void registerInternalClient(temoto_id::ID resource_id)
@@ -122,20 +117,26 @@ ROS_INFO("ResourceServer: created server for %s", this->name_.c_str());
 				if (clients_remaining <= 0)
 				{
 					// last resource removed, execute owner's unload callback and remove the query from our list
-					//typename LoadService::Request orig_req = found_query_it->getMsg().request;	
-					//typename LoadService::Response orig_res = found_query_it->getMsg().response;	
-					typename ServiceType::Response orig_res;
-					typename ServiceType::Request orig_req;
+					typename ServiceType::Request orig_req = found_query_it->getMsg().request;	
+					typename ServiceType::Response orig_res = found_query_it->getMsg().response;	
 					(owner_->*unload_callback_)(orig_req, orig_res);
+
 					/// TODO: Do or do not something with the response part?
+                    
+                    // Send unload command to all connected clients...
+                    for (auto& map_el : found_query_it->getInternalClients())
+                    {
+                        for (auto& set_el : map_el.second)
+                            this->resource_manager_.unloadClient(map_el.first, set_el);
+                    }
+                    
+                    // Finally, remove the found query.
 					queries_.erase(found_query_it);
 				}
 			}
 		};
 
 	private:
-
-		//	std::vector<ResourceEntry<Service>> entries_;
 
 		Owner* owner_;
 		LoadCbFuncType load_callback_;	
@@ -146,12 +147,6 @@ ROS_INFO("ResourceServer: created server for %s", this->name_.c_str());
 		temoto_id::IDManager res_id_manager_;
 
 		std::vector<ResourceQuery<ServiceType>> queries_;
-
-
-//		typedef std::pair<TemotoID::ID, std::shared_ptr<BaseResourceClient> ClientConnection;
-//		std::vector<ClientConnection> connections_;
-
-//		ResourceManager resource_manager_;
 
 };
 

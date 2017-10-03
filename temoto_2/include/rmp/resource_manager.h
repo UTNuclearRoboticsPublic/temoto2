@@ -60,12 +60,6 @@ class ResourceManager
 		};
 
 
-		temoto_id::ID registerExternalClient(temoto_id::ID client_id)
-		{
-			return ext_client_id_manager_.checkID(client_id);
-		}
-
-
         const std::string& getName()
         {
             return name_;
@@ -128,6 +122,30 @@ class ResourceManager
 		};
 
 
+        void unloadClient(std::string client_name, temoto_id::ID resource_id)
+        {
+            // Go through clients and search for given client by name
+            auto client_it = std::find_if(clients_.begin(),clients_.end(),
+                   [&](const std::shared_ptr<BaseResourceClient>& client_ptr) -> bool {return client_ptr->getName() == client_name;}
+                    );
+            if(client_it != clients_.end())
+            {
+                // found the client, unload resource
+                (*client_it)->unloadResource(resource_id);
+
+                // when all resources for this client are closed, destroy this client
+                if((*client_it)->getConnectionCount() <= 0)
+                {
+                    clients_.erase(client_it);
+                }
+            }
+            else
+            {
+                ROS_ERROR("unloadInternalClient: client %s not found", client_name.c_str());
+            }
+        }
+
+
 		bool statusCallback(temoto_2::ResourceStatus::Request& req, temoto_2::ResourceStatus::Response& res)
 		{
             ROS_INFO("%s: Got status from someone", name_.c_str());
@@ -154,7 +172,7 @@ class ResourceManager
 		std::vector<std::shared_ptr<BaseResourceClient>> clients_;
         std::string name_;
 		Owner* owner_;
-		temoto_id::IDManager ext_client_id_manager_;
+//		temoto_id::IDManager ext_client_id_manager_;
 		std::shared_ptr<BaseResourceServer<Owner>> active_server_;
 
 		ros::NodeHandle nh_;
