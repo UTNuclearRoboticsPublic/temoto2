@@ -1,18 +1,19 @@
-# Type of the devices required. This is included as
-# a required safety measure.
-string type
+# Type of the requested sensor (required).
+string sensor_type
 
-# Name of the devices required (name of the package). If the name is left undefined
+# Name of the ROS package where sensor is located. (optional)
+# If the package name is left undefined
 # then the first known entry under the specified type is executed
-string name
+string package_name
 
-# name of the executable/launchable/runnable
+# name of the executable (optional)
+# When undefined, first defined entry is used.
 string executable
 
 ---
 
 # name of the package
-string name
+string package_name
 
 # name of the executable/launchable/runnable
 string executable

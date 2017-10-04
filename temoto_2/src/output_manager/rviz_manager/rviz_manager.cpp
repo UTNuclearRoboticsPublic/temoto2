@@ -1,13 +1,14 @@
 #include "output_manager/rviz_manager/rviz_manager.h"
 
-RvizManager::RvizManager()
+RvizManager::RvizManager() : resource_manager_("rviz_manager", this),
+							 rviz_resource_id_(temoto_id::UNASSIGNED_ID)
 {
     show_in_rviz_server_ = n_.advertiseService("show_in_rviz", &RvizManager::showInRvizCb, this);
     stop_allocated_services_server_ = n_.advertiseService( "stop_allocated_services_om",
                                                            &RvizManager::stopAllocatedServices,
                                                            this);
 
-    node_spawn_kill_client_ = n_.serviceClient<temoto_2::LoadProcess>("temoto_2/process_manager/load_process");
+//    node_spawn_kill_client_ = n_.serviceClient<temoto_2::LoadProcess>("temoto_2/process_manager/load_process");
     load_plugin_client_ = n_.serviceClient<rviz_plugin_manager::PluginLoad>("rviz_plugin_load");
     unload_plugin_client_ = n_.serviceClient<rviz_plugin_manager::PluginUnload>("rviz_plugin_unload");
     get_plugin_config_client_ = n_.serviceClient<rviz_plugin_manager::PluginGetConfig>("rviz_plugin_get_config");
@@ -33,43 +34,49 @@ bool RvizManager::runRviz()
     std::string prefix = formatMessage("", this->class_name_, __func__);
 
     // Create the message and fill out the request part
-    temoto_2::LoadProcess spawn_kill_msg;
-    spawn_kill_msg.request.action = "roslaunch";
-    spawn_kill_msg.request.package = "rviz_plugin_manager";
-    spawn_kill_msg.request.name = "rviz_plugin_manager.launch";
+    temoto_2::LoadProcess msg;
+    msg.request.action = "roslaunch";
+    msg.request.package_name = "rviz_plugin_manager";
+    msg.request.executable = "rviz_plugin_manager.launch";
 
     ROS_INFO("%s Requesting to launch rviz ...", prefix.c_str());
 
     // Call the server
-    if( node_spawn_kill_client_.call(spawn_kill_msg))
-    {
-        if( spawn_kill_msg.response.code == 0)
-        {
-            ROS_INFO("%s Rviz launched succesfully: %s", prefix.c_str(), spawn_kill_msg.response.message.c_str());
-            rviz_running_ = true;
-
-            // Give some time for the rviz_plugin_manager to setup
-            ros::Duration(3).sleep();
-
-            return true;
-        }
-        else
-        {
-            throw error::ErrorStackUtil( outputManagerErr::RVIZ_OPEN_FAIL,
-                                         error::Subsystem::OUTPUT_MANAGER,
-                                         error::Urgency::MEDIUM,
-                                         prefix + " Failed to launch rviz: " + spawn_kill_msg.response.message,
-                                         ros::Time::now());
-        }
-    }
-    else
+    try
+	{
+		resource_manager_.call<temoto_2::LoadProcess>(
+				process_manager::srv_name::MANAGER,
+				process_manager::srv_name::SERVER,
+				msg);
+	}
+    catch (...)
     {
         throw error::ErrorStackUtil( outputManagerErr::SERVICE_REQ_FAIL,
                                      error::Subsystem::OUTPUT_MANAGER,
                                      error::Urgency::MEDIUM,
-                                     prefix + " Failed to call service /spawn_kill_process",
+                                     prefix + " Failed to start RViz",
                                      ros::Time::now());
     }
+		
+	if( msg.response.code == 0)
+	{
+		ROS_INFO("%s Rviz launched succesfully: %s", prefix.c_str(), msg.response.message.c_str());
+		rviz_running_ = true;
+		rviz_resource_id_ = msg.response.resource_id;
+
+		// Give some time for the rviz_plugin_manager to setup
+		ros::Duration(3).sleep();  // TODO: THIS THING SEEMS SO WRONG HERE
+
+		return true;
+	}
+	else
+	{
+		throw error::ErrorStackUtil( outputManagerErr::RVIZ_OPEN_FAIL,
+				error::Subsystem::OUTPUT_MANAGER,
+				error::Urgency::MEDIUM,
+				prefix + " Failed to launch rviz: " + msg.response.message,
+				ros::Time::now());
+	}
 }
 
 /* * * * * * * * * * * * * * * * *
@@ -81,40 +88,32 @@ bool RvizManager::stopRviz()
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = formatMessage("", this->class_name_, __func__);
 
-    // Create the message and fill out the request part
-    temoto_2::LoadProcess spawn_kill_msg;
-    spawn_kill_msg.request.action = "kill";
-    spawn_kill_msg.request.package = "rviz_plugin_manager";
-    spawn_kill_msg.request.name = "rviz_plugin_manager.launch";
-
     ROS_INFO("%s Requesting to stop rviz ...", prefix.c_str());
 
-    // Call the server
-    if( node_spawn_kill_client_.call(spawn_kill_msg))
-    {
-        if( spawn_kill_msg.response.code == 0)
-        {
-            ROS_INFO("%s Rviz stopped succesfully: %s", prefix.c_str(), spawn_kill_msg.response.message.c_str());
-            rviz_running_ = false;
-            return true;
-        }
-        else
-        {
-            throw error::ErrorStackUtil( outputManagerErr::RVIZ_OPEN_FAIL,
-                                         error::Subsystem::OUTPUT_MANAGER,
-                                         error::Urgency::MEDIUM,
-                                         prefix + " Failed to stop rviz: " + spawn_kill_msg.response.message,
-                                         ros::Time::now());
-        }
-    }
-    else
-    {
-        throw error::ErrorStackUtil( outputManagerErr::SERVICE_REQ_FAIL,
-                                     error::Subsystem::OUTPUT_MANAGER,
-                                     error::Urgency::MEDIUM,
-                                     prefix + " Failed to call service /spawn_kill_process",
-                                     ros::Time::now());
-    }
+	// Build client name, and ask resource manager to close this connection
+	std::string client_name = process_manager::srv_name::MANAGER + "/" + process_manager::srv_name::SERVER;
+	try
+	{
+		resource_manager_.unloadClient(client_name, rviz_resource_id_);
+		ROS_INFO("%s Rviz stopped succesfully: %s", prefix.c_str());
+		rviz_running_ = false;
+		rviz_resource_id_=temoto_id::UNASSIGNED_ID;
+	}
+	catch(...)
+	{
+		throw error::ErrorStackUtil( outputManagerErr::RVIZ_OPEN_FAIL,
+				error::Subsystem::OUTPUT_MANAGER,
+				error::Urgency::MEDIUM,
+				prefix + " Failed to stop rviz ...",
+				ros::Time::now());
+		//throw error::ErrorStackUtil( outputManagerErr::SERVICE_REQ_FAIL,
+		//		error::Subsystem::OUTPUT_MANAGER,
+		//		error::Urgency::MEDIUM,
+		//		prefix + " Failed to call service /spawn_kill_process",
+		//		ros::Time::now());
+	}
+
+	return true;
 }
 
 /* * * * * * * * * * * * * * * * *

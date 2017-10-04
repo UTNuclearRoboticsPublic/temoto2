@@ -5,10 +5,10 @@ string status_topic
 string action
 
 # name of the package
-string package
+string package_name
 
 # name of the node or launch file
-string name
+string executable
 
 ---
 

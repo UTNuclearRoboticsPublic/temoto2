@@ -127,10 +127,10 @@ void ProcessManager::unloadCb(temoto_2::LoadProcess::Request &req, temoto_2::Loa
 
 	// Get the service parameters
 	const std::string& action = req.action;
-	const std::string& package = req.package;
-	const std::string& name = req.name;
+	const std::string& package_name = req.package_name;
+	const std::string& executable = req.executable;
 
-	ROS_INFO("%s Received a 'LoadProcess' service request: %s ...", prefix.c_str(), name.c_str());
+	ROS_INFO("%s Received a 'LoadProcess' service request: %s ...", prefix.c_str(), executable.c_str());
 
 	// Validate the action command. 
 	if ( std::find(validActions.begin(), validActions.end(), action) == validActions.end() )
@@ -150,7 +150,7 @@ void ProcessManager::unloadCb(temoto_2::LoadProcess::Request &req, temoto_2::Loa
 	if (PID == 0)
 	{
 		// Execute the requested process
-		execlp(action.c_str(), action.c_str(), package.c_str(), name.c_str(), (char*) NULL);
+		execlp(action.c_str(), action.c_str(), package_name.c_str(), executable.c_str(), (char*) NULL);
 	}
 
 	// Only parent gets here

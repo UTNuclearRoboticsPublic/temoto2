@@ -3,10 +3,11 @@
 #include "temoto_2/getGestures.h"
 #include "temoto_2/getSpeech.h"
 #include "temoto_2/stopAllocatedServices.h"
-#include "temoto_2/startSensorRequest.h"
-#include "temoto_2/stopSensorRequest.h"
+#include "temoto_2/LoadSensor.h"
+#include "temoto_2/UnloadResource.h"
 #include "temoto_2/gestureSpecifier.h"
 #include "temoto_2/speechSpecifier.h"
+#include "rmp/resource_manager.h"
 
 class HumanContext
 {
@@ -28,11 +29,7 @@ private:
     ros::ServiceServer stop_allocated_services_;
     // ... And other interesting servers
 
-    // Service clients
-    ros::ServiceClient startSensorClient_;
-    ros::ServiceClient stopSensorClient_;
-
-    //ros::ServiceClient nodeSpawnKillClient_;
+	rmp::ResourceManager<HumanContext> resource_manager_;
 
     /**
      * @brief Service that sets up a gesture publisher

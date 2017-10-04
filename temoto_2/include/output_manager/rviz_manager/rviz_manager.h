@@ -13,6 +13,7 @@
 #include "output_manager/output_manager_errors.h"
 #include "output_manager/rviz_manager/plugin_info.h"
 #include "process_manager/process_manager_services.h"
+#include "rmp/resource_manager.h"
 
 class RvizManager
 {
@@ -32,7 +33,11 @@ private:
 
     std::vector <RequestContainer<temoto_2::ShowInRviz>> active_requests_;
 
-    TemotoID::IDManager id_manager_;
+    temoto_id::IDManager id_manager_;
+
+	temoto_id::ID rviz_resource_id_;
+
+	rmp::ResourceManager<RvizManager> resource_manager_;
 
     ros::ServiceServer show_in_rviz_server_;
 
@@ -45,8 +50,6 @@ private:
     ros::ServiceClient set_plugin_config_client_;
 
     ros::ServiceClient get_plugin_config_client_;
-
-    ros::ServiceClient node_spawn_kill_client_;
 
     const std::string class_name_ = "RvizManager";
 

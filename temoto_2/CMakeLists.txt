@@ -33,9 +33,10 @@ add_service_files(
     # Process Manager
 	LoadProcess.srv
 
-	listDevices.srv
-	startSensorRequest.srv
-	stopSensorRequest.srv
+	# Sensor Manager
+	ListDevices.srv
+	LoadSensor.srv
+
 	stopAllocatedServices.srv
 	task_handler/stopTask.srv
 	task_handler/indexTasks.srv
@@ -80,8 +81,9 @@ target_link_libraries(context_manager ${catkin_LIBRARIES} )
 # # # # # # # # # # # #
 # SENSOR MANAGER
 # # # # # # # # # # # #
-add_executable(sensor_manager src/sensor_manager/sensor_manager.cpp
-															src/package_info/package_info.cpp)
+add_executable(sensor_manager src/sensor_manager/sensor_manager.cpp 
+	src/sensor_manager/sensor_manager_node.cpp
+	src/package_info/package_info.cpp)
 add_dependencies(sensor_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(sensor_manager ${catkin_LIBRARIES} )
 
@@ -116,7 +118,8 @@ add_dependencies(agent_core ${catkin_EXPORTED_TARGETS})
 # # # # # # # # # # # #
 # PROCESS MANAGER
 # # # # # # # # # # # #
-add_executable(process_manager src/process_manager/process_manager.cpp src/process_manager/process_manager_node.cpp )
+add_executable(process_manager src/process_manager/process_manager.cpp
+	src/process_manager/process_manager_node.cpp )
 add_dependencies(process_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(process_manager ${catkin_LIBRARIES} )
 

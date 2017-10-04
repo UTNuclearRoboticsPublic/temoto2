@@ -1,7 +1,7 @@
 #ifndef PROCESS_MANAGER_H
 #define PROCESS_MANAGER_H
 
-#include "core/common.h"
+//#include "core/common.h"
 #include "process_manager/process_manager_errors.h"
 #include "process_manager/process_manager_services.h"
 #include "rmp/resource_manager.h"

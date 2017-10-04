@@ -13,56 +13,33 @@
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "package_info/package_info.h"
+//#include "package_info/package_info.h"
 
 #include "core/common.h"
-#include "process_manager/process_manager_services.h"
-#include "temoto_2/listDevices.h"
-#include "temoto_2/startSensorRequest.h"
-#include "temoto_2/stopSensorRequest.h"
-#include "std_msgs/String.h"
-#include <sstream>
+#include "sensor_manager/sensor_manager.h"
+//#include "sensor_manager/sensor_manager_services.h"
+//#include "process_manager/process_manager_services.h"
+//#include <sstream>
 
-class SensorManager
+namespace sensor_manager
 {
-public:
-    /**
-     * @brief List of known sensors
-     */
-    std::vector <package_info> pkgInfoList_;
 
-    /**
-     * @brief SensorManager
-     */
-    SensorManager()
+	SensorManager::SensorManager() : resource_manager_(srv_name::MANAGER, this)
     {
-        std::string pm_name = process_manager::srv_name::MANAGER +"/"+process_manager::srv_name::SERVER;
-        // Start the client
-        nodeSpawnKillClient_ = n_.serviceClient<temoto_2::LoadProcess>(pm_name);
+        // Start the server
+		resource_manager_.addServer<temoto_2::LoadSensor>(
+				srv_name::SERVER, 
+				&SensorManager::startSensorCb,
+				&SensorManager::stopSensorCb);
 
-        // Start the servers
-        startSensorServer_ = n_.advertiseService("start_sensor", &SensorManager::start_sensor_cb, this);
-        stopSensorServer_ = n_.advertiseService("stop_sensor", &SensorManager::stop_sensor_cb, this);
 
+		list_devices_server_ = nh_.advertiseService(srv_name::MANAGER + "/list_devices", &SensorManager::listDevicesCb, this);
         ROS_INFO("[SensorManager::SensorManager::SensorManager] all services initialized, manager is good to go");
     }
 
-private:
 
-    ros::NodeHandle n_;
-    ros::ServiceClient nodeSpawnKillClient_;
-    ros::ServiceServer startSensorServer_;
-    ros::ServiceServer stopSensorServer_;
-
-    /**
-     * @brief Callback to a service that lists all available packages that
-     * are with a requested "type". For example "list all HANDtracking devices"
-     * @param req
-     * @param res
-     * @return
-     */
-    bool list_devices_cb (temoto_2::listDevices::Request &req,
-                          temoto_2::listDevices::Response &res)
+    bool SensorManager::listDevicesCb (temoto_2::ListDevices::Request &req,
+                              temoto_2::ListDevices::Response &res)
     {
         //std::vector <std::string> devList;
 
@@ -91,98 +68,54 @@ private:
      * @param res
      * @return
      */
-    bool start_sensor_cb (temoto_2::startSensorRequest::Request &req,
-                          temoto_2::startSensorRequest::Response &res)
+    void SensorManager::startSensorCb (temoto_2::LoadSensor::Request& req, temoto_2::LoadSensor::Response& res)
     {
-        std::string reqType = req.type;
-        std::string reqName = req.name;
-        std::string reqExecutable = req.executable;
-
-        ROS_INFO("[SensorManager::start_sensor_cb] received a request to start a '%s': '%s', '%s'", reqType.c_str(), reqName.c_str(), reqExecutable.c_str());
+        ROS_INFO("[SensorManager::start_sensor_cb] received a request to start a '%s': '%s', '%s'", 
+				req.sensor_type.c_str(), req.package_name.c_str(), req.executable.c_str());
 
         // Create an empty message that will be filled out by "findSensor" function
         temoto_2::LoadProcess load_process_msg;
 
         // Find the suitable sensor
-        if (findSensor(load_process_msg.request, res, reqType, reqName, reqExecutable))
+        if (findSensor(load_process_msg.request, res, req.sensor_type, req.package_name, req.executable))
         {
-            ROS_INFO("[SensorManager::start_sensor_cb] Found a suitable sensor. Trying to call /spawn_kill_process ...");
-            while (!nodeSpawnKillClient_.call(load_process_msg))
+            ROS_INFO("[SensorManager::start_sensor_cb] Found a suitable sensor. Calling to LoadProcess server ...");
+            if (!resource_manager_.call<temoto_2::LoadProcess>(
+						process_manager::srv_name::MANAGER,
+					    process_manager::srv_name::SERVER,
+					    load_process_msg));
             {
-                ROS_ERROR("[SensorManager::start_sensor_cb] Failed to call service /spawn_kill_process, trying again...");
+                ROS_ERROR("[SensorManager::start_sensor_cb] Failed to call service /spawn_kill_process...");
+				return;
             }
-
             res.code = load_process_msg.response.code;
             res.message = load_process_msg.response.message;
 
-            ROS_INFO("[SensorManager::start_sensor_cb] /spawn_kill_process responded: '%s'", res.message.c_str());
+            ROS_INFO("[SensorManager::start_sensor_cb] LoadProcess server responded: '%s'", res.message.c_str());
 
-            // Check if the /spawn_kill_process service was able to fulfill the request
-            //return ( (res.code == 0) ? true : false);
-            return true;
         }
-
         else
         {
-            res.name = req.name;
+            res.package_name = req.package_name;
             res.executable = "";
             res.topic = "";
             res.code = 1;
             res.message = "Suitable sensor was not found. Aborting the request";
             ROS_INFO("[SensorManager::start_sensor_cb] %s", res.message.c_str());
-
-            return true;
         }
     }
 
-    /**
-     * @brief Stop node service
-     * @return
-     */
-    bool stop_sensor_cb (temoto_2::stopSensorRequest::Request &req,
-                       temoto_2::stopSensorRequest::Response &res)
+
+    void SensorManager::stopSensorCb (temoto_2::LoadSensor::Request& req,
+                             temoto_2::LoadSensor::Response& res)
     {
-        // TODO: Check if the request makes sense, check the name and type
-        temoto_2::UnloadResource unload_resource_msg;
-        unload_resource_msg.request.server_name = "load_process";
-        unload_resource_msg.request.resource_id = 0;
-        //unload_resource_msg.request.package = req.name;
-        //unload_resource_msg.request.name = req.executable;
-
-        ROS_INFO("[SensorManager::stop_sensor_cb] received a request to stop a '%s'", req.executable.c_str());
-        ROS_INFO("[SensorManager::stop_sensor_cb] TODO: CONVERT THIS TO USE RMP");
-
-//        while (!nodeSpawnKillClient_.call(spawnKillMsg))
-//        {
-//            ROS_ERROR("[SensorManager::stop_sensor_cb] Failed to call service /spawn_kill_process, trying again...");
-//        }
-//
-//        res.code = unload_resource_msg.response.code;
-//        res.message = unload_resource_msg.response.message;
-//
-//        ROS_INFO("[SensorManager::stop_sensor_cb] /spawn_kill_process responded: '%s'", res.message.c_str());
-//
-        return true;
+        ROS_INFO("[SensorManager::stop_sensor_cb] received a request to stop sensor with id '%ld'", res.resource_id);
+        return;
     }
 
 
-    //      THIS FUNCTION BELOW IS ULTRA CONFUSING AND SHOULD BE
-    //      BROKEN INTO MULTIPLE, MORE REASONABLE, SEGMENTS.
-    //      PAY ATTENTION AT THE NAMES: "runnable", "launchable",
-    //      "executable". THIS HAS TO BE FIXED. these point to different things
-    /**
-     * @brief Function for finding the right sensor, based on the request parameters
-     * type - requested, name - optional, node - optional
-     * @param ret
-     * @param retstartSensor
-     * @param type
-     * @param name
-     * @param node
-     * @return Returns a boolean. If suitable device was found, then the req param
-     * is formatted as a nodeSpawnKill::Request (first one in the list, even if there is more)
-     */
-    bool findSensor (temoto_2::LoadProcess::Request &ret,
-                     temoto_2::startSensorRequest::Response &retstartSensor,
+    bool SensorManager::findSensor (temoto_2::LoadProcess::Request& ret,
+                     temoto_2::LoadSensor::Response& retstartSensor,
                      std::string type,
                      std::string name,
                      std::string executable)
@@ -229,26 +162,26 @@ private:
         else
         {
             // Get the name of the package
-            ret.package = candidates[0].getName();
+            ret.package_name = candidates[0].getName();
 
             // Check for runnables
             if ( !candidates[0].getRunnables().empty() )
             {
                 ret.action = "rosrun";
-                ret.name = candidates[0].getRunnables().begin()->first;
+                ret.executable = candidates[0].getRunnables().begin()->first;
                 retstartSensor.topic = candidates[0].getRunnables().begin()->second;
             }
 
             else if( !candidates[0].getLaunchables().empty() )
             {
                 ret.action = "roslaunch";
-                ret.name = candidates[0].getLaunchables().begin()->first;
+                ret.executable = candidates[0].getLaunchables().begin()->first;
                 retstartSensor.topic = candidates[0].getLaunchables().begin()->second;
             }
 
             // The name of the topic that this particular runnable publishes to
-            retstartSensor.name = ret.package;
-            retstartSensor.executable = ret.name;
+            retstartSensor.package_name = ret.package_name;
+            retstartSensor.executable = ret.executable;
 
             return true;
         }
@@ -295,12 +228,12 @@ private:
         {
             // Return the first "runnable" of the element in the "candidates" list
             ret.action = "roslaunch";
-            ret.package = name;
-            ret.name = candidates[0].getRunnables().begin()->first;
+            ret.package_name = name;
+            ret.executable = candidates[0].getRunnables().begin()->first;
 
             // The name of the topic that this particular runnable publishes to
-            retstartSensor.name = name;
-            retstartSensor.executable = ret.name;
+            retstartSensor.package_name = name;
+            retstartSensor.executable = ret.executable;
             retstartSensor.topic = candidates[0].getRunnables().begin()->second;
 
             return true;
@@ -308,11 +241,11 @@ private:
 
         // If all above constraints were satisfied, then:
         ret.action = "roslaunch";
-        ret.package = name;
-        ret.name = executable;
+        ret.package_name = name;
+        ret.executable = executable;
 
         // The name of the topic that this particular runnable publishes to
-        retstartSensor.name = name;
+        retstartSensor.package_name = name;
         retstartSensor.executable = executable;
 
 		// Check if runnables were found
@@ -326,34 +259,5 @@ private:
 		}
         return true;
     }
-};
 
-
-int main (int argc, char **argv)
-{
-
-    ros::init (argc, argv, "sensor_manager");
-
-    // Create a SensorManager object
-    SensorManager sensorManager;
-
-    // Add a dummy sensro entry (For testing)
-    sensorManager.pkgInfoList_.push_back (package_info("leap_motion_controller", "hand"));
-    sensorManager.pkgInfoList_[0].addRunnable({"leap_motion", "/leap_motion_output"});
-
-    sensorManager.pkgInfoList_.push_back (package_info("temoto_2", "hand"));
-    sensorManager.pkgInfoList_[1].addRunnable({"dummy_sensor", "/dummy_sensor_data"});
-
-    sensorManager.pkgInfoList_.push_back (package_info("temoto_2", "text"));
-    sensorManager.pkgInfoList_[2].addLaunchable({"test_2.launch", "/human_chatter"});
-
-    sensorManager.pkgInfoList_.push_back (package_info("usb_cam", "camera"));
-    sensorManager.pkgInfoList_[3].addLaunchable({"usb_cam-test.launch", "/usb_cam/image_raw"});
-
-    sensorManager.pkgInfoList_.push_back (package_info("task_take_picture", "camera"));
-    sensorManager.pkgInfoList_[4].addLaunchable({"camera1.launch", "/usb_cam/image_raw"});
-
-    ros::spin();
-
-    return 0;
-}
+} // sensor_manager namespace

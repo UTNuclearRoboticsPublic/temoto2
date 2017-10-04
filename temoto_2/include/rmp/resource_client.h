@@ -3,15 +3,15 @@
 #include "ros/ros.h"
 #include "common/temoto_id.h"
 #include "rmp/base_resource_client.h"
-#include "rmp/resource_manager.h"
+//#include "rmp/resource_manager.h"
 #include <string>
 #include <set>
 
 namespace rmp
 {
 
-template <class Owner>
-class ResourceManager;
+//template <class Owner>
+//class ResourceManager;
 
 template<class ServiceType, class Owner>
 	class ResourceClient : public BaseResourceClient
@@ -21,9 +21,9 @@ template<class ServiceType, class Owner>
 		//typedef bool(Owner::*CbFuncType)(typename Service::Request&, typename Service::Response&);
 
 		ResourceClient(std::string resource_manager_name, std::string server_name,
-				Owner* owner, ResourceManager<Owner>& resource_manager
+				Owner* owner 
 				) : resource_manager_name_(resource_manager_name), server_name_(server_name), 
-                    owner_(owner), resource_manager_(resource_manager)
+                    owner_(owner)
 		{
             name_ = resource_manager_name + "/" + server_name;
             
@@ -48,26 +48,21 @@ template<class ServiceType, class Owner>
 
 		bool call(ServiceType& msg)
 		{
-			ROS_INFO("ResourceClient[%s]: Call()", name_);
+			ROS_INFO("ResourceClient[%s]: Call()", name_.c_str());
 
 
 			// search for given request from active resources 
 			auto msg_it = std::find_if(active_resources_.begin(), active_resources_.end(), 
-					[&](const ResourceQuery<ServiceType>& msg) -> bool {return msg.request == msg.request;}
+					[&](const ServiceType& msg) -> bool {return msg.request == msg.request;}
                     ); 
             if(msg_it == active_resources_.end())
             {
                 // New request
-				ROS_INFO("ResourceClient[%s]: new request, performing external call()", name_);
+				ROS_INFO("ResourceClient[%s]: new request, performing external call()", name_.c_str());
 				if(service_client_.call(msg))
 				{
-                    auto ret_pair = active_resources_.push_back(msg);
-                    if (!ret_pair.second)
-                    {
-                        ROS_ERROR("ResourceClient[%s]: could not add element to vector of active resources", name_.c_str()); 
-                        return false;
-                    }
-                    msg_it = ret_pair.first; // get newly added element iterator
+                    active_resources_.push_back(msg);
+					auto msg_it  = std::prev(active_resources_.end()); // set iterator to the added element
 				}
                 else
                 {
@@ -91,7 +86,7 @@ template<class ServiceType, class Owner>
         {
 			// search for given resource id to unload 
 			auto found_msg = std::find_if(active_resources_.begin(), active_resources_.end(), 
-					[&](const ResourceQuery<ServiceType>& msg) -> bool {return msg.response.resource_id == resource_id;}
+					[&](const ServiceType& msg) -> bool {return msg.response.resource_id == resource_id;}
                     ); 
             if(found_msg != active_resources_.end())
             {
@@ -113,7 +108,7 @@ template<class ServiceType, class Owner>
 		std::string server_name_; /// Server name which this client calls.
 		std::string resource_manager_name_; /// Name of resource manager where the server is located.
 		Owner* owner_;
-		ResourceManager<Owner>& resource_manager_;
+		//ResourceManager<Owner>& resource_manager_;
 		temoto_id::IDManager id_manager_;
 		
 		ros::ServiceClient service_client_;

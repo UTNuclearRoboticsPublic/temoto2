@@ -8,6 +8,8 @@
 namespace rmp
 {
 
+
+
 class BaseResourceClient
 {
 	public:
@@ -19,10 +21,8 @@ class BaseResourceClient
 		}
 
         virtual size_t getConnectionCount() const = 0;
-        virtual void unloadResource(temoto_id::ID resource_id) const = 0;
+        virtual void unloadResource(temoto_id::ID resource_id) = 0;
         virtual const std::string& getName() const = 0;
-        virtual void unloadInternalClient(temoto_id::ID resource_id) = 0;
-
 
 	private:
 

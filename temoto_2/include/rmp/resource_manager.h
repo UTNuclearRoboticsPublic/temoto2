@@ -4,6 +4,7 @@
 //#include "common/temoto_id.h"
 #include "rmp/resource_server.h"
 #include "rmp/resource_client.h"
+#include "rmp/resource_manager_services.h"
 #include <string>
 
 // Resource Management Protocol (RMP) for temoto 2
@@ -28,7 +29,7 @@ class ResourceManager
 		}
 
 		template<class ServiceType>
-		bool addServer(std::string server_name, 
+		bool addServer(const std::string& server_name, 
 				void(Owner::*load_cb)(typename ServiceType::Request&, typename ServiceType::Response&),
 				void(Owner::*unload_cb)(typename ServiceType::Request&, typename ServiceType::Response&))
 		{
@@ -57,7 +58,7 @@ class ResourceManager
 				}
 				return false;
 			}
-		};
+		}
 
 
         const std::string& getName()
@@ -67,20 +68,24 @@ class ResourceManager
 
 
 		template<class ServiceType>
-		bool call(std::string client_name, ServiceType& msg)
+		bool call(std::string resource_manager_name, std::string server_name, ServiceType& msg)
 		{
-			std::shared_ptr<BaseResourceClient> res_client = std::make_shared<ResourceClient<ServiceType, Owner>>(client_name, owner_);
-			clients_.push_back(res_client);
-
+			using ClientType = ResourceClient<ServiceType, Owner>;
+			using ClientPtr = std::shared_ptr<ClientType>;
+			ClientPtr client = std::make_shared<ClientType>(resource_manager_name, server_name, owner_);
+			client->call(msg);
+			// Push to clients and convert to BaseResourceClient type
+		    clients_.push_back(client);
 
 			// check if this call came from server callback.
 			if(active_server_)
 			{
-				active_server_->registerInternalClient(client_name, msg.res.resource_id);
+				active_server_->registerInternalClient(client->getName(), msg.response.resource_id);
+				ROS_INFO("ResourceClient::call() from callback, client and server linked");
 			}
 			else
 			{
-				ROS_INFO("not from callback, owner has to take care of shutting down client connection");
+				ROS_INFO("ResourceClient::call() not from callback");
 			}
 
 			return true;
@@ -90,7 +95,7 @@ class ResourceManager
 		bool sendStatus(temoto_id::ID resource_id, temoto_2::ResourceStatus& status_msg)
 		{
 //TODO: implement me
-		};
+		}
 
 
 
@@ -119,7 +124,7 @@ class ResourceManager
 			}
 
             return true;
-		};
+		}
 
 
         void unloadClient(std::string client_name, temoto_id::ID resource_id)
@@ -149,7 +154,7 @@ class ResourceManager
 		bool statusCallback(temoto_2::ResourceStatus::Request& req, temoto_2::ResourceStatus::Response& res)
 		{
             ROS_INFO("%s: Got status from someone", name_.c_str());
-        };
+        }
 
 	private:
 
@@ -165,7 +170,7 @@ class ResourceManager
 				}
 			}
 			return false;
-		};
+		}
 
 
 		std::vector<std::shared_ptr<BaseResourceServer<Owner>>> servers_;

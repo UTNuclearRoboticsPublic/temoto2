@@ -7,12 +7,13 @@
  */
 
 #include "context_manager/human_context/human_context.h"
+#include "sensor_manager/sensor_manager_services.h"
 
-HumanContext::HumanContext ()
+HumanContext::HumanContext () : resource_manager_("human_context",this)
 {
     // Start the clients
-    this->startSensorClient_ = n_.serviceClient<temoto_2::startSensorRequest>("start_sensor");
-    this->stopSensorClient_ = n_.serviceClient<temoto_2::stopSensorRequest>("stop_sensor");
+//    this->startSensorClient_ = n_.serviceClient<temoto_2::startSensorRequest>("start_sensor");
+//    this->stopSensorClient_ = n_.serviceClient<temoto_2::stopSensorRequest>("stop_sensor");
 
     // Start the servers
     this->gestureServer_ = n_.advertiseService("setup_gesture", &HumanContext::setup_gesture_cb, this);
@@ -49,26 +50,26 @@ bool HumanContext::setup_gesture_cb (temoto_2::getGestures::Request &req,
     // The request was not in "setupSpeechActive_" list. Make a new sensor request
     ROS_INFO("[HumanContext::setup_gestures_cb] This request is unique. Setting up the sensor ...");
 
-    temoto_2::startSensorRequest startSensReq;
-    startSensReq.request.type = req.gesture_specifiers[0].type;
+    temoto_2::LoadSensor msg;
+    msg.request.sensor_type = req.gesture_specifiers[0].type;
 
     // Call the sensor manager
-    while (!startSensorClient_.call(startSensReq))
-    {
-        ROS_ERROR("[HumanContext::setup_gestures_cb] Failed to call service /start_sensor, trying again...");
-    }
+//    while (!startSensorClient_.call(startSensReq))
+//    {
+//        ROS_ERROR("[HumanContext::setup_gestures_cb] Failed to call service /start_sensor, trying again...");
+//    }
 
-    ROS_INFO("[HumanContext::setup_gestures_cb] Got a response from service /start_sensor: '%s'", startSensReq.response.message.c_str());
+    ROS_INFO("[HumanContext::setup_gestures_cb] Got a response from service /start_sensor: '%s'", msg.response.message.c_str());
     res.id = static_cast<int>(id_local);
-    res.topic = startSensReq.response.topic;
-    res.name = startSensReq.response.name;
-    res.executable = startSensReq.response.executable;
-    res.code = startSensReq.response.code;
+    res.topic = msg.response.topic;
+    res.name = msg.response.package_name;
+    res.executable = msg.response.executable;
+    res.code = msg.response.code;
 
     // Check the response message, if all is ok then
-    if (startSensReq.response.code == 0)
+    if (msg.response.code == 0)
     {
-        res.message = startSensReq.response.message = "Gesture Setup request was satisfied: %s", startSensReq.response.message.c_str();
+        res.message = msg.response.message = "Gesture Setup request was satisfied: %s", msg.response.message.c_str();
 
         // Add the request to the "setupSpeechActive_" list
         temoto_2::getGestures reqRes;
@@ -111,26 +112,26 @@ bool HumanContext::setup_speech_cb (temoto_2::getSpeech::Request &req,
     // The request was not in "setupSpeechActive_" list. Make a new sensor request
     ROS_INFO("[HumanContext::setup_speech_cb] This request is unique. Setting up the sensor ...");
 
-    temoto_2::startSensorRequest startSensReq;
-    startSensReq.request.type = req.speech_specifiers[0].type;
+    temoto_2::LoadSensor msg;
+    msg.request.sensor_type = req.speech_specifiers[0].type;
 
     // Call the sensor manager
-    while (!startSensorClient_.call(startSensReq))
-    {
-        ROS_ERROR("[HumanContext::setup_speech_cb] Failed to call service /start_sensor, trying again...");
-    }
+//    while (!startSensorClient_.call(startSensReq))
+//    {
+//        ROS_ERROR("[HumanContext::setup_speech_cb] Failed to call service /start_sensor, trying again...");
+//    }
 
-    ROS_INFO("[HumanContext::setup_speech_cb] Got a response from service /start_sensor: '%s'", startSensReq.response.message.c_str());
+    ROS_INFO("[HumanContext::setup_speech_cb] Got a response from service /start_sensor: '%s'", msg.response.message.c_str());
     res.id = static_cast<int>(id_local);
-    res.topic = startSensReq.response.topic;
-    res.name = startSensReq.response.name;
-    res.executable = startSensReq.response.executable;
-    res.code = startSensReq.response.code;
+    res.topic = msg.response.topic;
+    res.name = msg.response.package_name;
+    res.executable = msg.response.executable;
+    res.code = msg.response.code;
 
     // Check the response message, if all is ok then
-    if (startSensReq.response.code == 0)
+    if (msg.response.code == 0)
     {   
-        res.message = startSensReq.response.message = "Speech Setup request was satisfied: %s", startSensReq.response.message.c_str();
+        res.message = msg.response.message = "Speech Setup request was satisfied: %s", msg.response.message.c_str();
 
         // Add the request to the "setupSpeechActive_" list
         temoto_2::getSpeech reqRes;
@@ -155,6 +156,7 @@ bool HumanContext::setup_speech_cb (temoto_2::getSpeech::Request &req,
 bool HumanContext::stopAllocatedServices (temoto_2::stopAllocatedServices::Request& req,
                                           temoto_2::stopAllocatedServices::Response& res)
 {
+	// TODO: implement in RMP
     ROS_INFO("[HumanContext::stopAllocatedServices] Received a 'stopAllocatedServices' request to ID: '%ld'.", req.id);
 
     // Default the response code to 0
@@ -163,58 +165,58 @@ bool HumanContext::stopAllocatedServices (temoto_2::stopAllocatedServices::Reque
     // Go through the "setupGestureActive_" and "setupSpeechActive_" lists, look for the id
     // and make a request to the Sensor Manager to stop those services.
 
-    for (auto it = setupSpeechActive_.begin(); it != setupSpeechActive_.end(); /*empty*/)
-    {
-        if( req.id == (*it).response.id )
-        {
-            temoto_2::stopSensorRequest stop_sens_local;
-            stop_sens_local.request.name = (*it).response.name;
-            stop_sens_local.request.executable = (*it).response.executable;
-
-            // Call the service
-            while (!stopSensorClient_.call(stop_sens_local))
-            {
-                ROS_ERROR("[HumanContext::stopAllocatedServices] Failed to call service /stop_sensor, trying again...");
-            }
-
-            ROS_INFO("[HumanContext::stopAllocatedServices] /stop_sensor responded: %s", stop_sens_local.response.message.c_str());
-
-            if (stop_sens_local.response.code == 0)
-            {
-                res.code = stop_sens_local.response.code;
-                setupSpeechActive_.erase (it);
-            }
-        }
-        else
-            it++;
-    }
-
-    for (auto it = setupGestureActive_.begin(); it != setupGestureActive_.end(); /*empty*/)
-    {
-        if( req.id == (*it).response.id )
-        {
-            temoto_2::stopSensorRequest stop_sens_local;
-            stop_sens_local.request.name = (*it).response.name;
-            stop_sens_local.request.executable = (*it).response.executable;
-
-            // Call the service
-            while (!stopSensorClient_.call(stop_sens_local))
-            {
-                ROS_ERROR("[HumanContext::stopAllocatedServices] Failed to call service /stop_sensor, trying again...");
-            }
-
-            ROS_INFO("[HumanContext::stopAllocatedServices] /stop_sensor responded: %s", stop_sens_local.response.message.c_str());
-
-            if (stop_sens_local.response.code == 0)
-            {
-                res.code = stop_sens_local.response.code;
-                setupGestureActive_.erase (it);
-            }
-        }
-        else
-            it++;
-    }
-
+//    for (auto it = setupSpeechActive_.begin(); it != setupSpeechActive_.end(); /*empty*/)
+//    {
+//        if( req.id == (*it).response.id )
+//        {
+//            temoto_2::UnloadResource msg;
+//            msg.request.name = (*it).response.name;
+//            msg.request.executable = (*it).response.executable;
+//
+//            // Call the service
+////            while (!stopSensorClient_.call(stop_sens_local))
+////            {
+////                ROS_ERROR("[HumanContext::stopAllocatedServices] Failed to call service /stop_sensor, trying again...");
+////            }
+//
+//            ROS_INFO("[HumanContext::stopAllocatedServices] /stop_sensor responded: %s", msg.response.message.c_str());
+//
+//            if (msg.response.code == 0)
+//            {
+//                res.code = msg.response.code;
+//                setupSpeechActive_.erase (it);
+//            }
+//        }
+//        else
+//            it++;
+//    }
+//
+//    for (auto it = setupGestureActive_.begin(); it != setupGestureActive_.end(); /*empty*/)
+//    {
+//        if( req.id == (*it).response.id )
+//        {
+//            temoto_2::stopSensorRequest stop_sens_local;
+//            stop_sens_local.request.name = (*it).response.name;
+//            stop_sens_local.request.executable = (*it).response.executable;
+//
+//            // Call the service
+////            while (!stopSensorClient_.call(stop_sens_local))
+////            {
+////                ROS_ERROR("[HumanContext::stopAllocatedServices] Failed to call service /stop_sensor, trying again...");
+////            }
+//
+//            ROS_INFO("[HumanContext::stopAllocatedServices] /stop_sensor responded: %s", stop_sens_local.response.message.c_str());
+//
+//            if (stop_sens_local.response.code == 0)
+//            {
+//                res.code = stop_sens_local.response.code;
+//                setupGestureActive_.erase (it);
+//            }
+//        }
+//        else
+//            it++;
+//    }
+//
     return true;
 }
 

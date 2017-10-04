@@ -2,15 +2,26 @@
 #define SENSOR_MANAGER_SERVICES_H
 
 #include <string>
-#include "temoto_2/nodeSpawnKill.h"
-#include "temoto_2/resourceStatus.h"
+#include "rmp/resource_manager_services.h"
+#include "temoto_2/ListDevices.h"
+#include "temoto_2/LoadSensor.h"
 
-namespace node_manager
+namespace sensor_manager
 {
 	namespace srv_name
 	{
-		const std::string SPAWN_KILL = "/temoto_2/node_manager/spawn_kill";
-		const std::string  = "/temoto_2/node_manager/resource_status";
+		const std::string MANAGER = "/temoto_2/sensor_manager";
+		const std::string SERVER = "start_sensor";
 	}
+}
+
+static bool operator==(const temoto_2::LoadSensor::Request& r1,
+		const temoto_2::LoadSensor::Request& r2)
+{
+	return(
+			r1.sensor_type == r2.sensor_type &&
+			r1.package_name == r2.package_name &&
+			r1.executable == r2.executable
+		  );
 }
 #endif
