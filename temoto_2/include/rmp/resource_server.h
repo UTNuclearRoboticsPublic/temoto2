@@ -28,7 +28,8 @@ class ResourceServer : public BaseResourceServer<Owner>
 				unload_callback_(unload_cb),
 				owner_(owner)
 		{
-			load_server_ = nh_.advertiseService(this->name_, &ResourceServer<ServiceType,Owner>::wrappedLoadCallback, this);
+            std::string rm_name = this->resource_manager_.getName();
+			load_server_ = nh_.advertiseService(rm_name + "/" + this->name_, &ResourceServer<ServiceType,Owner>::wrappedLoadCallback, this);
 ROS_INFO("ResourceServer: created server for %s", this->name_.c_str());
 		}
 
@@ -50,7 +51,7 @@ ROS_INFO("ResourceServer: created server for %s", this->name_.c_str());
 
 		bool wrappedLoadCallback(typename ServiceType::Request& req, typename ServiceType::Response& res)
 		{
-			ROS_INFO("ResourceServer Load callback fired by client with return status_topic %s", req.status_topic.c_str());
+			ROS_INFO("ResourceServer Load callback fired by client with return status_topic %s", req.rmp.status_topic.c_str());
 
 			if(!owner_)
 			{
@@ -59,9 +60,9 @@ ROS_INFO("ResourceServer: created server for %s", this->name_.c_str());
 			}
 
 			// generate new id for the resource
-			res.resource_id = res_id_manager_.generateID();
+			res.rmp.resource_id = res_id_manager_.generateID();
 
-			ROS_INFO("ResourceServer Created resource id %ld", res.resource_id);
+			ROS_INFO("ResourceServer Created resource id %ld", res.rmp.resource_id);
 
 
 			// New or existing query? Check it out with this hi-tec lambda function :)

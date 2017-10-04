@@ -80,7 +80,7 @@ class ResourceManager
 			// check if this call came from server callback.
 			if(active_server_)
 			{
-				active_server_->registerInternalClient(client->getName(), msg.response.resource_id);
+				active_server_->registerInternalClient(client->getName(), msg.response.rmp.resource_id);
 				ROS_INFO("ResourceClient::call() from callback, client and server linked");
 			}
 			else

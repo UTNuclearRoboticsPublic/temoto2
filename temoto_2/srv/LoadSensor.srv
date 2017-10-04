@@ -1,3 +1,6 @@
+# Remote Management Request
+temoto_2/RMPRequest rmp
+
 # Type of the requested sensor (required).
 string sensor_type
 
@@ -12,6 +15,9 @@ string executable
 
 ---
 
+# Remote Management Response
+temoto_2/RMPResponse rmp
+
 # name of the package
 string package_name
 
@@ -20,12 +26,3 @@ string executable
 
 # return the name of the topic
 string topic
-
-# return code
-#		0: Success
-#		1: Failure
-#	 -1: Undefined
-int64 code
-
-# return message
-string message

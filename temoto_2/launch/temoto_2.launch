@@ -1,6 +1,6 @@
 <launch>
 	
-  <node name="node_manager" pkg="temoto_2" type="node_manager" output="screen" />
+  <node name="process_manager" pkg="temoto_2" type="process_manager" output="screen" />
 
   <node name="sensor_manager" pkg="temoto_2" type="sensor_manager" output="screen" />
 

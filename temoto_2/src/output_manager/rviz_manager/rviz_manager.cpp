@@ -58,11 +58,11 @@ bool RvizManager::runRviz()
                                      ros::Time::now());
     }
 		
-	if( msg.response.code == 0)
+	if( msg.response.rmp.code == 0)
 	{
-		ROS_INFO("%s Rviz launched succesfully: %s", prefix.c_str(), msg.response.message.c_str());
+		ROS_INFO("%s Rviz launched succesfully: %s", prefix.c_str(), msg.response.rmp.message.c_str());
 		rviz_running_ = true;
-		rviz_resource_id_ = msg.response.resource_id;
+		rviz_resource_id_ = msg.response.rmp.resource_id;
 
 		// Give some time for the rviz_plugin_manager to setup
 		ros::Duration(3).sleep();  // TODO: THIS THING SEEMS SO WRONG HERE
@@ -74,7 +74,7 @@ bool RvizManager::runRviz()
 		throw error::ErrorStackUtil( outputManagerErr::RVIZ_OPEN_FAIL,
 				error::Subsystem::OUTPUT_MANAGER,
 				error::Urgency::MEDIUM,
-				prefix + " Failed to launch rviz: " + msg.response.message,
+				prefix + " Failed to launch rviz: " + msg.response.rmp.message,
 				ros::Time::now());
 	}
 }
@@ -95,7 +95,7 @@ bool RvizManager::stopRviz()
 	try
 	{
 		resource_manager_.unloadClient(client_name, rviz_resource_id_);
-		ROS_INFO("%s Rviz stopped succesfully: %s", prefix.c_str());
+		ROS_INFO("%s Rviz stopped succesfully.", prefix.c_str());
 		rviz_running_ = false;
 		rviz_resource_id_=temoto_id::UNASSIGNED_ID;
 	}

@@ -22,6 +22,10 @@ add_message_files(FILES
   BaseError.msg
   ErrorStack.msg
   StopTaskMsg.msg
+
+  # Resource Management
+  RMPRequest.msg
+  RMPResponse.msg
 )
 
 add_service_files(

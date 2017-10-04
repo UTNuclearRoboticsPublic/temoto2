@@ -38,6 +38,12 @@ namespace sensor_manager
     }
 
 
+    SensorManager::~SensorManager()
+    {
+        ROS_INFO("Destroying sensor_manager.");
+    }
+
+
     bool SensorManager::listDevicesCb (temoto_2::ListDevices::Request &req,
                               temoto_2::ListDevices::Response &res)
     {
@@ -88,10 +94,10 @@ namespace sensor_manager
                 ROS_ERROR("[SensorManager::start_sensor_cb] Failed to call service /spawn_kill_process...");
 				return;
             }
-            res.code = load_process_msg.response.code;
-            res.message = load_process_msg.response.message;
+            res.rmp.code = load_process_msg.response.rmp.code;
+            res.rmp.message = load_process_msg.response.rmp.message;
 
-            ROS_INFO("[SensorManager::start_sensor_cb] LoadProcess server responded: '%s'", res.message.c_str());
+            ROS_INFO("[SensorManager::start_sensor_cb] LoadProcess server responded: '%s'", res.rmp.message.c_str());
 
         }
         else
@@ -99,9 +105,9 @@ namespace sensor_manager
             res.package_name = req.package_name;
             res.executable = "";
             res.topic = "";
-            res.code = 1;
-            res.message = "Suitable sensor was not found. Aborting the request";
-            ROS_INFO("[SensorManager::start_sensor_cb] %s", res.message.c_str());
+            res.rmp.code = 1;
+            res.rmp.message = "Suitable sensor was not found. Aborting the request";
+            ROS_INFO("[SensorManager::start_sensor_cb] %s", res.rmp.message.c_str());
         }
     }
 
@@ -109,7 +115,7 @@ namespace sensor_manager
     void SensorManager::stopSensorCb (temoto_2::LoadSensor::Request& req,
                              temoto_2::LoadSensor::Response& res)
     {
-        ROS_INFO("[SensorManager::stop_sensor_cb] received a request to stop sensor with id '%ld'", res.resource_id);
+        ROS_INFO("[SensorManager::stop_sensor_cb] received a request to stop sensor with id '%ld'", res.rmp.resource_id);
         return;
     }
 

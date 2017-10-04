@@ -35,7 +35,7 @@ class ResourceQuery{
 		void addExternalClient(const typename ServiceMsgType::Request& req,
 			   			       const typename ServiceMsgType::Response& res)
 		{
-			external_clients_.emplace(res.resource_id, req.status_topic);
+			external_clients_.emplace(res.rmp.resource_id, req.rmp.status_topic);
 		}
 
 		// remove the external client from this query and return how many are still connected

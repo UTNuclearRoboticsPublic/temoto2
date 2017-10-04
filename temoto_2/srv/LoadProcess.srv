@@ -1,5 +1,5 @@
-# topic to which the server sends info about this resource
-string status_topic
+# Remote Management Request
+temoto_2/RMPRequest rmp
 
 # actions (rosrun or roslaunch):
 string action
@@ -12,14 +12,5 @@ string executable
 
 ---
 
-# return code
-#		0: Success
-#		1: Failure
-#	 -1: Undefined
-int64 code
-
-# return message
-string message
-
-int64 resource_id
-int64 client_id
+# Remote Management Response
+temoto_2/RMPResponse rmp

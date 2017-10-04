@@ -16,7 +16,7 @@ int main(int argc, char **argv)
     ros::Timer timer = nh.createTimer(ros::Duration(1), &process_manager::ProcessManager::update, &nm);
     ros::Rate loop_rate(1);
 
-    ROS_INFO("[process_manager_node/main] Node Manager Node is good to go");
+    ROS_INFO("[process_manager_node/main] Process Manager Node is good to go");
 
     while (ros::ok())
     {

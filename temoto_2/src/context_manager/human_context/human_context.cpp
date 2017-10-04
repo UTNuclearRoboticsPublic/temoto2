@@ -54,22 +54,29 @@ bool HumanContext::setup_gesture_cb (temoto_2::getGestures::Request &req,
     msg.request.sensor_type = req.gesture_specifiers[0].type;
 
     // Call the sensor manager
-//    while (!startSensorClient_.call(startSensReq))
-//    {
-//        ROS_ERROR("[HumanContext::setup_gestures_cb] Failed to call service /start_sensor, trying again...");
-//    }
+    try
+    {
+        resource_manager_.call<temoto_2::LoadSensor>(
+                sensor_manager::srv_name::MANAGER,
+                sensor_manager::srv_name::SERVER,
+                msg);
+    }
+    catch(...)
+    {
+        ROS_ERROR("[HumanContext::setup_gestures_cb] Failed to call service /start_sensor, trying again...");
+    }
 
-    ROS_INFO("[HumanContext::setup_gestures_cb] Got a response from service /start_sensor: '%s'", msg.response.message.c_str());
+    ROS_INFO("[HumanContext::setup_gestures_cb] Got a response from service /start_sensor: '%s'", msg.response.rmp.message.c_str());
     res.id = static_cast<int>(id_local);
     res.topic = msg.response.topic;
     res.name = msg.response.package_name;
     res.executable = msg.response.executable;
-    res.code = msg.response.code;
+    res.code = msg.response.rmp.code;
 
     // Check the response message, if all is ok then
-    if (msg.response.code == 0)
+    if (msg.response.rmp.code == 0)
     {
-        res.message = msg.response.message = "Gesture Setup request was satisfied: %s", msg.response.message.c_str();
+        res.message = msg.response.rmp.message = "Gesture Setup request was satisfied: %s", msg.response.rmp.message.c_str();
 
         // Add the request to the "setupSpeechActive_" list
         temoto_2::getGestures reqRes;
@@ -116,22 +123,29 @@ bool HumanContext::setup_speech_cb (temoto_2::getSpeech::Request &req,
     msg.request.sensor_type = req.speech_specifiers[0].type;
 
     // Call the sensor manager
-//    while (!startSensorClient_.call(startSensReq))
-//    {
-//        ROS_ERROR("[HumanContext::setup_speech_cb] Failed to call service /start_sensor, trying again...");
-//    }
+    try
+    {
+        resource_manager_.call<temoto_2::LoadSensor>(
+                sensor_manager::srv_name::MANAGER,
+                sensor_manager::srv_name::SERVER,
+                msg);
+    }
+    catch(...)
+    {
+        ROS_ERROR("[HumanContext::setup_speech_cb] Failed to call service /start_sensor, trying again...");
+    }
 
-    ROS_INFO("[HumanContext::setup_speech_cb] Got a response from service /start_sensor: '%s'", msg.response.message.c_str());
+    ROS_INFO("[HumanContext::setup_speech_cb] Got a response from service /start_sensor: '%s'", msg.response.rmp.message.c_str());
     res.id = static_cast<int>(id_local);
     res.topic = msg.response.topic;
     res.name = msg.response.package_name;
     res.executable = msg.response.executable;
-    res.code = msg.response.code;
+    res.code = msg.response.rmp.code;
 
     // Check the response message, if all is ok then
-    if (msg.response.code == 0)
+    if (msg.response.rmp.code == 0)
     {   
-        res.message = msg.response.message = "Speech Setup request was satisfied: %s", msg.response.message.c_str();
+        res.message = msg.response.rmp.message = "Speech Setup request was satisfied: %s", msg.response.rmp.message.c_str();
 
         // Add the request to the "setupSpeechActive_" list
         temoto_2::getSpeech reqRes;

@@ -40,7 +40,7 @@ template<class ServiceType, class Owner>
             {
                 temoto_2::UnloadResource unload_msg;
                 unload_msg.request.server_name = server_name_;
-                unload_msg.request.resource_id = msg.response.resource_id;
+                unload_msg.request.resource_id = msg.response.rmp.resource_id;
                 service_client_unload_.call(unload_msg);
             }
 		}
@@ -73,10 +73,10 @@ template<class ServiceType, class Owner>
 
             // Generate id for new resource and add it to the map
             temoto_id::ID generated_id = id_manager_.generateID();
-            ids.emplace(generated_id, msg_it->response.resource_id);
+            ids.emplace(generated_id, msg_it->response.rmp.resource_id);
 
             // Update id in response part
-            msg.response.resource_id = generated_id;
+            msg.response.rmp.resource_id = generated_id;
 
 			return true; 
 		}
@@ -86,7 +86,7 @@ template<class ServiceType, class Owner>
         {
 			// search for given resource id to unload 
 			auto found_msg = std::find_if(active_resources_.begin(), active_resources_.end(), 
-					[&](const ServiceType& msg) -> bool {return msg.response.resource_id == resource_id;}
+					[&](const ServiceType& msg) -> bool {return msg.response.rmp.resource_id == resource_id;}
                     ); 
             if(found_msg != active_resources_.end())
             {
