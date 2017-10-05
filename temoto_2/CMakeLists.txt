@@ -16,37 +16,44 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(TinyXML REQUIRED)
 find_package(TBB REQUIRED)
 
+# THE FOLLOWING FILES CANNOT BE PLACED UNDER SUBDIRS!
 add_message_files(FILES 
-	speechSpecifier.msg
-	gestureSpecifier.msg
-  BaseError.msg
-  ErrorStack.msg
-  StopTaskMsg.msg
+    BaseError.msg
+    ErrorStack.msg
+    StopTaskMsg.msg
 
-  # Resource Management
-  RMPRequest.msg
-  RMPResponse.msg
+    # Resource Management
+    RMPRequest.msg
+    RMPResponse.msg
+
+    # Human Context
+    SpeechSpecifier.msg
+    GestureSpecifier.msg
 )
 
 add_service_files(
   FILES
     # Resouce Management
-	UnloadResource.srv
-	ResourceStatus.srv
+    RMP/UnloadResource.srv
+    RMP/ResourceStatus.srv
 
     # Process Manager
-	LoadProcess.srv
+	process_manager/LoadProcess.srv
 
 	# Sensor Manager
-	ListDevices.srv
-	LoadSensor.srv
+	sensor_manager/ListDevices.srv
+	sensor_manager/LoadSensor.srv
 
-	stopAllocatedServices.srv
+    # Context Managers
+    context_manager/human_context/LoadGesture.srv
+    context_manager/human_context/LoadSpeech.srv
+
+    # Task Handler
 	task_handler/stopTask.srv
 	task_handler/indexTasks.srv
-	context_manager/human_context/getGestures.srv
-  context_manager/human_context/getSpeech.srv
-  output_manager/ShowInRviz.srv
+
+    # Output Manager
+    output_manager/ShowInRviz.srv
 )
 
 generate_messages(
