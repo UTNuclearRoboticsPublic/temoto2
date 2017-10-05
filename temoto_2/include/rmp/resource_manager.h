@@ -26,6 +26,7 @@ class ResourceManager
 
 		~ResourceManager()
 		{
+			unloadClients();
 		}
 
 		template<class ServiceType>
@@ -128,6 +129,12 @@ class ResourceManager
 
             return true;
 		}
+		
+
+		void unloadClients()
+		{
+			clients_.empty();
+		}
 
 
         void unloadClient(std::string client_name, temoto_id::ID resource_id)
@@ -157,6 +164,11 @@ class ResourceManager
 		bool statusCallback(temoto_2::ResourceStatus::Request& req, temoto_2::ResourceStatus::Response& res)
 		{
             ROS_INFO("%s: Got status from someone", name_.c_str());
+//			if (req.status_code == status_codes::RESOURCE_FAILED)
+//			{
+//				// unload this client, and notify anyone who used this
+//			}
+				return true;
         }
 
 	private:

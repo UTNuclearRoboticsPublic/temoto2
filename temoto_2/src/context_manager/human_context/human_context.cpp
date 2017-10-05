@@ -7,30 +7,32 @@
  */
 
 #include "context_manager/human_context/human_context.h"
-#include "sensor_manager/sensor_manager_services.h"
+
+namespace human_context
+{
 
 HumanContext::HumanContext () : resource_manager_("temoto_2/human_context",this)
 {
     // Fire up servers
     resource_manager_.addServer<temoto_2::LoadGesture>(
             srv_name::GESTURE_SERVER, 
-            &SensorManager::loadGestureCb,
-            &SensorManager::unloadGestureCb);
+            &HumanContext::loadGestureCb,
+            &HumanContext::unloadGestureCb);
     
     resource_manager_.addServer<temoto_2::LoadSpeech>(
             srv_name::SPEECH_SERVER, 
-            &SensorManager::loadSpeechCb,
-            &SensorManager::unloadSpeechCb);
+            &HumanContext::loadSpeechCb,
+            &HumanContext::unloadSpeechCb);
 
     ROS_INFO("[HumanContext::HumanContext] all services and clients initialized, Human Context is good to go.");
 }
 
 
-void HumanContext::loadGestureCb (temoto_2::LoadGestures::Request &req,
-                                  temoto_2::LoadGestures::Response &res)
+void HumanContext::loadGestureCb (temoto_2::LoadGesture::Request& req,
+                                  temoto_2::LoadGesture::Response& res)
 {
-    std::string prefix = "[HumanContext::loadGestureCb]: ";
-    ROS_INFO(prefix + "Gesture requested ...");
+    std::string prefix = "[HumanContext::loadGestureCb]:";
+    ROS_INFO("%s Gesture requested ...", prefix.c_str());
 
     temoto_2::LoadSensor msg;
     msg.request.sensor_type = req.gesture_specifiers[0].type;
@@ -45,24 +47,32 @@ void HumanContext::loadGestureCb (temoto_2::LoadGestures::Request &req,
     }
     catch(...)
     {
-        ROS_ERROR(prefix + "Service call failed.");
+        ROS_ERROR("%s Service call failed.", prefix.c_str());
         return; //TODO: throw here
     }
 
-    ROS_INFO(prefix + "Got a response: '%s'", msg.response.rmp.message.c_str());
+    ROS_INFO("%s Got a response: '%s'", prefix.c_str(), msg.response.rmp.message.c_str());
     res.topic = msg.response.topic;
     res.package_name = msg.response.package_name;
     res.executable = msg.response.executable;
     res.rmp.code = msg.response.rmp.code;
-    res.rmp.message = "Gesture request was " + (msg.response.rmp.code != 0) ? "not " : "" + "satisfied.";
+    res.rmp.message = "Gesture request was ";
+    res.rmp.message =+ (msg.response.rmp.code == 0) ? "satisfied." : "not satisfied.";
     //TODO: send a reasonable response message and code
 
-    return true;
 }
 
 
-void HumanContext::loadSpeechCb (temoto_2::LoadSpeech::Request &req,
-                                 temoto_2::LoadSpeech::Response &res)
+void HumanContext::unloadGestureCb(temoto_2::LoadGesture::Request& req,
+                                   temoto_2::LoadGesture::Response& res)
+{
+    std::string prefix = "[HumanContext::unloadGestureCb]:";
+	ROS_INFO("%s Unloading a gesture or something.", prefix.c_str());
+}
+
+
+void HumanContext::loadSpeechCb (temoto_2::LoadSpeech::Request& req,
+                                 temoto_2::LoadSpeech::Response& res)
 {
 //    ROS_INFO("[HumanContext::setup_speech_cb] Received a speech setup request with specifiers[0]: '%s', '%s', '%s'",
 //			req.speech_specifiers[0].type.c_str(), req.speech_specifiers[0].package.c_str(), req.speech_specifiers[0].executable.c_str());
@@ -124,7 +134,17 @@ void HumanContext::loadSpeechCb (temoto_2::LoadSpeech::Request &req,
 //        res.message = "Speech Setup request was not satisfied";
 //        return true;
 //    }
+} 
+
+
+void HumanContext::unloadSpeechCb(temoto_2::LoadSpeech::Request& req,
+                                  temoto_2::LoadSpeech::Response& res)
+{
+    std::string prefix = "[HumanContext::unloadSpeechCb]:";
+	ROS_INFO("%s Unloading a speech or something.", prefix.c_str());
 }
+
+} // namespace human_context
 
 
 /**

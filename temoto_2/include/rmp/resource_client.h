@@ -52,7 +52,11 @@ template<class ServiceType, class Owner>
                 temoto_2::UnloadResource unload_msg;
                 unload_msg.request.server_name = ext_server_name_;
                 unload_msg.request.resource_id = msg.response.rmp.resource_id;
-                service_client_unload_.call(unload_msg);
+                if(!service_client_unload_.call(unload_msg))
+				{
+					ROS_ERROR("[ResourceClient::~ResourceClient] Sending unload request to %s failed.",
+							service_client_unload_.getService().c_str());
+				}
 			ROS_INFO("Destroyed ResourceClient %s", name_.c_str());
             }
 		}
@@ -117,10 +121,8 @@ template<class ServiceType, class Owner>
             }
         }
 
-        size_t getConnectionCount() const
-        {
-            return active_resources_.size();
-        }
+
+        size_t getConnectionCount() const {return active_resources_.size();}
 
         const std::string& getName() const {return name_;} 
 

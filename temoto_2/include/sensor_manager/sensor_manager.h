@@ -1,7 +1,6 @@
 #ifndef SENSOR_MANAGER_H
 #define SENSOR_MANAGER_H
 
-
 #include "package_info/package_info.h"
 #include "sensor_manager/sensor_manager_services.h"
 #include "process_manager/process_manager_services.h"

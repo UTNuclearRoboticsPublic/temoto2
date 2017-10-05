@@ -32,48 +32,22 @@ public:
         ROS_INFO("TaskTerminal constructed");
     }
 
-    // startTask without arguments
+    // TODO: this signature is here for compatibility purposes.
+	// It is depricated, and is subjected to removal!
     bool startTask()
     {
-        // Name of the method, used for making debugging a bit simpler
-        const std::string method_name_ = "startTask";
-        std::string prefix = formatMessage("", this->class_name_, method_name_);
-
-        // Build a gesture specifier
-        // TODO: This shoud be done via speech specifier helper class
-        std::vector <temoto_2::speechSpecifier> speechSpecifiers;
-        temoto_2::speechSpecifier speechSpecifier;
-        speechSpecifier.dev = "device";
-        speechSpecifier.type = "text";
-
-        speechSpecifiers.push_back(speechSpecifier);
-
-
-        // Subscribe to gesture topic
-        try
-        {
-            hci_.getSpeech(speechSpecifiers, &TaskTerminal::speech_callback, this );
-            true;
-        }
-
-        catch( error::ErrorStackUtil& e )
-        {
-            e.forward( prefix );
-            this->error_handler_.append(e);
-        }
-
-        return true;
+		std::vector<boost::any> arguments;
+		return startTask(0, arguments);
     }
 
-    // startTask with arguments
-    bool startTask(int subtaskNr, std::vector<boost::any> arguments )
+    // starts the task
+    bool startTask(int subtaskNr, std::vector<boost::any> arguments)
     {
-        // Check if arguments vector contains expected amount of arguments
-        if (arguments.size() != numberOfArguments)
+        // Check if arguments vector contains no arguments
+        if (arguments.size() > 0)
         {
-            std::cerr << "[TaskTerminal/startTask]: Wrong number of arguments. Expected: "
-                      << numberOfArguments  << " but got: " << arguments.size() << '\n';
-
+			ROS_ERROR("[TaskTerminal/startTask]: Terminal works with no arguments only,"
+				" but got %ld", arguments.size());
             return false;
         }
 
@@ -83,19 +57,16 @@ public:
 
         // Build a gesture specifier
         // TODO: This shoud be done via speech specifier helper class
-        std::vector <temoto_2::speechSpecifier> speechSpecifiers;
-        temoto_2::speechSpecifier speechSpecifier;
-        speechSpecifier.dev = "device";
-        speechSpecifier.type = "text";
-
-        speechSpecifiers.push_back(speechSpecifier);
-
+        std::vector <temoto_2::SpeechSpecifier> speech_specifiers;
+        temoto_2::SpeechSpecifier speech_specifier;
+        speech_specifier.dev = "device";
+        speech_specifier.type = "text";
+        speech_specifiers.push_back(speech_specifier);
 
         // Subscribe to gesture topic
         try
         {
-            hci_.getSpeech(speechSpecifiers, &TaskTerminal::speech_callback, this );
-            true;
+            hci_.getSpeech(speech_specifiers, &TaskTerminal::speech_callback, this);
         }
 
         catch( error::ErrorStackUtil& e )
@@ -117,19 +88,6 @@ public:
     {
         // Construct an empty vector
         std::vector<boost::any> solutionVector;
-
-        // Check the subtask number
-        if ( subtaskNr == 0)
-        {
-            boost::any retArg0 = arg0;
-            boost::any retArg1 = arg1;
-            boost::any retArg2 = arg2;
-
-            solutionVector.push_back(retArg0);
-            solutionVector.push_back(retArg1);
-            solutionVector.push_back(retArg2);
-        }
-
         return solutionVector;
     }
 
@@ -137,7 +95,7 @@ public:
      * Inherited methods that have to be implemented / END
      * * * * * * * * * * * * * * * * * * * * * * * * */
 
-    // Callback for processing gestures
+    // Callback for processing speech
     void speech_callback(std_msgs::String msg)
     {
         //ROS_INFO("Speech callback got: %s", msg.data.c_str());
@@ -157,12 +115,6 @@ private:
 
     // Human context interface object
     HumanContextInterface <TaskTerminal> hci_;
-
-    int numberOfArguments = 0;
-
-    int arg0;
-    std::string arg1;
-    double arg2;
 
 };
 

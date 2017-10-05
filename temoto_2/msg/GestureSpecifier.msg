@@ -5,7 +5,7 @@ string dev
 string type
 
 # name of the package - not required
-string package
+string package_name
 
 # name of the executable - not required
 string executable

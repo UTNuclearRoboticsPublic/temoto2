@@ -54,6 +54,8 @@ add_service_files(
 
     # Output Manager
     output_manager/ShowInRviz.srv
+
+	stopAllocatedServices.srv
 )
 
 generate_messages(

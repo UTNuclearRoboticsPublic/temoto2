@@ -11,7 +11,7 @@ int main(int argc, char **argv)
     ros::NodeHandle n;
 
     // Create instance of human context
-    HumanContext humanContext;
+	human_context::HumanContext humanContext;
 
     ros::Rate loop_rate(10);
 

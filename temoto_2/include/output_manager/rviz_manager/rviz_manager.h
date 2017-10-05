@@ -5,7 +5,6 @@
 #include "common/request_container.h"
 #include "common/temoto_id.h"
 #include "temoto_2/ShowInRviz.h"
-#include "temoto_2/stopAllocatedServices.h"
 #include "rviz_plugin_manager/PluginLoad.h"
 #include "rviz_plugin_manager/PluginUnload.h"
 #include "rviz_plugin_manager/PluginGetConfig.h"
@@ -13,7 +12,10 @@
 #include "output_manager/output_manager_errors.h"
 #include "output_manager/rviz_manager/plugin_info.h"
 #include "process_manager/process_manager_services.h"
+#include "context_manager/human_context/human_context_services.h"
 #include "rmp/resource_manager.h"
+
+#include "temoto_2/stopAllocatedServices.h"
 
 class RvizManager
 {
@@ -29,7 +31,7 @@ public:
 
 private:
 
-    ros::NodeHandle n_;
+    ros::NodeHandle nh_;
 
     std::vector <RequestContainer<temoto_2::ShowInRviz>> active_requests_;
 

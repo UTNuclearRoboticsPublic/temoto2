@@ -3,16 +3,16 @@
 RvizManager::RvizManager() : resource_manager_("rviz_manager", this),
 							 rviz_resource_id_(temoto_id::UNASSIGNED_ID)
 {
-    show_in_rviz_server_ = n_.advertiseService("show_in_rviz", &RvizManager::showInRvizCb, this);
-    stop_allocated_services_server_ = n_.advertiseService( "stop_allocated_services_om",
+    show_in_rviz_server_ = nh_.advertiseService("show_in_rviz", &RvizManager::showInRvizCb, this);
+    stop_allocated_services_server_ = nh_.advertiseService( "stop_allocated_services_om",
                                                            &RvizManager::stopAllocatedServices,
                                                            this);
 
-//    node_spawn_kill_client_ = n_.serviceClient<temoto_2::LoadProcess>("temoto_2/process_manager/load_process");
-    load_plugin_client_ = n_.serviceClient<rviz_plugin_manager::PluginLoad>("rviz_plugin_load");
-    unload_plugin_client_ = n_.serviceClient<rviz_plugin_manager::PluginUnload>("rviz_plugin_unload");
-    get_plugin_config_client_ = n_.serviceClient<rviz_plugin_manager::PluginGetConfig>("rviz_plugin_get_config");
-    set_plugin_config_client_ = n_.serviceClient<rviz_plugin_manager::PluginSetConfig>("rviz_plugin_set_config");
+//    node_spawn_kill_client_ = nh_.serviceClient<temoto_2::LoadProcess>("temoto_2/process_manager/load_process");
+    load_plugin_client_ = nh_.serviceClient<rviz_plugin_manager::PluginLoad>("rviz_plugin_load");
+    unload_plugin_client_ = nh_.serviceClient<rviz_plugin_manager::PluginUnload>("rviz_plugin_unload");
+    get_plugin_config_client_ = nh_.serviceClient<rviz_plugin_manager::PluginGetConfig>("rviz_plugin_get_config");
+    set_plugin_config_client_ = nh_.serviceClient<rviz_plugin_manager::PluginSetConfig>("rviz_plugin_set_config");
 
     /*
      * Add some plugin entries to the "plugin_info_handler_". This should be done via

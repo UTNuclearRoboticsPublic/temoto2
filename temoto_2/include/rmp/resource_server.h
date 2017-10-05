@@ -47,7 +47,7 @@ ROS_INFO("ResourceServer constructed, listening on %s", this->load_server_.getSe
 				return;
 			}
 			queries_.back().addInternalClient(resource_id);
-		};
+		}
 
 
 		bool wrappedLoadCallback(typename ServiceType::Request& req, typename ServiceType::Response& res)
@@ -107,16 +107,20 @@ ROS_INFO("ResourceServer constructed, listening on %s", this->load_server_.getSe
 		}
 
         
+		// This function is called from resource manager when /unload request arrives 
+		// (e.g. when some external client is being destroyed)
+		// We look up the related query and unload binded internal clients
+		
         void unloadResource(temoto_2::UnloadResource::Request& req, temoto_2::UnloadResource::Response& res)
 		{
-			// check if this query binds any clients
+			// find first query that contains resource that should be unloaded
 			const temoto_id::ID resource_id = req.resource_id;
 			const auto found_query_it = std::find_if(queries_.begin(), queries_.end(), 
 					[resource_id](const ResourceQuery<ServiceType>& query) -> bool {return query.externalClientExists(resource_id);}
 					); 
 			if (found_query_it != queries_.end())
 			{
-				// Query found, try to remove resource from it.
+				// Query found, try to remove client from it.
 				size_t clients_remaining = found_query_it->removeExternalClient(req.resource_id);
 				if (clients_remaining <= 0)
 				{
@@ -138,7 +142,8 @@ ROS_INFO("ResourceServer constructed, listening on %s", this->load_server_.getSe
 					queries_.erase(found_query_it);
 				}
 			}
-		};
+		}
+
 
 	private:
 

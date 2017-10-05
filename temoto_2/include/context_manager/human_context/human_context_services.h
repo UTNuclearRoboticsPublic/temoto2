@@ -6,12 +6,13 @@
 #include "temoto_2/LoadGesture.h"
 #include "temoto_2/LoadSpeech.h"
 
-namespace sensor_manager
+namespace human_context
 {
 	namespace srv_name
 	{
 		const std::string MANAGER = "/temoto_2/human_context";
-		const std::string SERVER = "load";
+		const std::string GESTURE_SERVER = "load_gesture";
+		const std::string SPEECH_SERVER = "load_speech";
 	}
 }
 
@@ -29,9 +30,10 @@ static bool operator==(const temoto_2::LoadGesture::Request& r1,
     while (it1 != r1.gesture_specifiers.end() && 
            it2 != r2.gesture_specifiers.end()) 
     {
-        if(it1->type != it2->type ||
-                it1->package_name != it2->package_name ||
-                it1->executable != it2->executable)
+        if( it1->dev != it2->dev ||
+			it1->type != it2->type ||
+            it1->package_name != it2->package_name ||
+            it1->executable != it2->executable)
         {
             return false;
         }
@@ -56,9 +58,10 @@ static bool operator==(const temoto_2::LoadSpeech::Request& r1,
     while (it1 != r1.speech_specifiers.end() && 
            it2 != r2.speech_specifiers.end()) 
     {
-        if(it1->type != it2->type ||
-                it1->package_name != it2->package_name ||
-                it1->executable != it2->executable)
+        if( it1->dev != it2->dev ||
+			it1->type != it2->type ||
+            it1->package_name != it2->package_name ||
+            it1->executable != it2->executable)
         {
             return false;
         }
