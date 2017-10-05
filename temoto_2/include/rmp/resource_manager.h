@@ -70,25 +70,28 @@ class ResourceManager
 		template<class ServiceType>
 		bool call(std::string resource_manager_name, std::string server_name, ServiceType& msg)
 		{
+			std::string prefix = "ResourceManager::call() [" + name_ + "]: creating new ResourceClient";
+			ROS_INFO("%s ...", prefix.c_str());
+
 			using ClientType = ResourceClient<ServiceType, Owner>;
 			using ClientPtr = std::shared_ptr<ClientType>;
 			ClientPtr client = std::make_shared<ClientType>(resource_manager_name, server_name, owner_);
-			client->call(msg);
+			bool ret = client->call(msg);
 			// Push to clients and convert to BaseResourceClient type
 		    clients_.push_back(client);
 
 			// check if this call came from server callback.
 			if(active_server_)
 			{
+				ROS_INFO("%s was called from owners cb (active_server_ is not NULL)", prefix.c_str());
 				active_server_->registerInternalClient(client->getName(), msg.response.rmp.resource_id);
-				ROS_INFO("ResourceClient::call() from callback, client and server linked");
 			}
 			else
 			{
-				ROS_INFO("ResourceClient::call() not from callback");
+				ROS_INFO("%s was not called from owners cb (active_server_ is NULL)", prefix.c_str());
 			}
 
-			return true;
+			return ret;
 		}
 
 // This method sends error/info message to any client connected to this resource.

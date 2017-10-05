@@ -85,15 +85,19 @@ namespace sensor_manager
         // Find the suitable sensor
         if (findSensor(load_process_msg.request, res, req.sensor_type, req.package_name, req.executable))
         {
-            ROS_INFO("[SensorManager::start_sensor_cb] Found a suitable sensor. Calling to LoadProcess server ...");
-            if (!resource_manager_.call<temoto_2::LoadProcess>(
+            ROS_INFO("[SensorManager::start_sensor_cb] Found a suitable sensor. Calling to LoadProcess server: '%s', '%s', '%s'", load_process_msg.request.action.c_str(), load_process_msg.request.package_name.c_str(), load_process_msg.request.executable.c_str());
+            if (resource_manager_.call<temoto_2::LoadProcess>(
 						process_manager::srv_name::MANAGER,
 					    process_manager::srv_name::SERVER,
-					    load_process_msg));
+					    load_process_msg))
             {
-                ROS_ERROR("[SensorManager::start_sensor_cb] Failed to call service /spawn_kill_process...");
-				return;
+                ROS_INFO("[SensorManager::start_sensor_cb] Call to server on ProcessManager was sucessful.");
             }
+			else
+			{
+                ROS_ERROR("[SensorManager::start_sensor_cb] Failed to call server on ProcessManager ...");
+				return;
+			}
             res.rmp.code = load_process_msg.response.rmp.code;
             res.rmp.message = load_process_msg.response.rmp.message;
 
@@ -107,7 +111,7 @@ namespace sensor_manager
             res.topic = "";
             res.rmp.code = 1;
             res.rmp.message = "Suitable sensor was not found. Aborting the request";
-            ROS_INFO("[SensorManager::start_sensor_cb] %s", res.rmp.message.c_str());
+            ROS_ERROR("[SensorManager::start_sensor_cb] %s", res.rmp.message.c_str());
         }
     }
 

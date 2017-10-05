@@ -9,7 +9,7 @@
 #include "context_manager/human_context/human_context.h"
 #include "sensor_manager/sensor_manager_services.h"
 
-HumanContext::HumanContext () : resource_manager_("human_context",this)
+HumanContext::HumanContext () : resource_manager_("temoto_2/human_context",this)
 {
     // Start the clients
 //    this->startSensorClient_ = n_.serviceClient<temoto_2::startSensorRequest>("start_sensor");
@@ -30,67 +30,67 @@ HumanContext::HumanContext () : resource_manager_("human_context",this)
 bool HumanContext::setup_gesture_cb (temoto_2::getGestures::Request &req,
                                      temoto_2::getGestures::Response &res)
 {
-    ROS_INFO("[HumanContext::setup_gestures_cb] Received a gesture setup request ...");
-
-    // Check the id of the req. If there is none (the first call from a task) then provide one
-    TemotoID::ID id_local = id_manager_.checkID(req.id);
-
-    // Look if similar resource is already allocated
-    for (auto& activeReq : setupGestureActive_)
-    {
-        if (compareGestureRequest(req, activeReq.request))
-        {
-            ROS_INFO("[HumanContext::setup_gestures_cb] Same request already available.");
-            res = activeReq.response;
-            res.id = static_cast<int>(id_local);
-            return true;
-        }
-    }
-
-    // The request was not in "setupSpeechActive_" list. Make a new sensor request
-    ROS_INFO("[HumanContext::setup_gestures_cb] This request is unique. Setting up the sensor ...");
-
-    temoto_2::LoadSensor msg;
-    msg.request.sensor_type = req.gesture_specifiers[0].type;
-
-    // Call the sensor manager
-    try
-    {
-        resource_manager_.call<temoto_2::LoadSensor>(
-                sensor_manager::srv_name::MANAGER,
-                sensor_manager::srv_name::SERVER,
-                msg);
-    }
-    catch(...)
-    {
-        ROS_ERROR("[HumanContext::setup_gestures_cb] Failed to call service /start_sensor, trying again...");
-    }
-
-    ROS_INFO("[HumanContext::setup_gestures_cb] Got a response from service /start_sensor: '%s'", msg.response.rmp.message.c_str());
-    res.id = static_cast<int>(id_local);
-    res.topic = msg.response.topic;
-    res.name = msg.response.package_name;
-    res.executable = msg.response.executable;
-    res.code = msg.response.rmp.code;
-
-    // Check the response message, if all is ok then
-    if (msg.response.rmp.code == 0)
-    {
-        res.message = msg.response.rmp.message = "Gesture Setup request was satisfied: %s", msg.response.rmp.message.c_str();
-
-        // Add the request to the "setupSpeechActive_" list
-        temoto_2::getGestures reqRes;
-        reqRes.request = req;
-        reqRes.response = res;
-        setupGestureActive_.push_back(reqRes);
-
-        return true;
-    }
-    else
-    {
-        res.message = "Gesture Setup request was not satisfied";
-        return true;
-    }
+//    ROS_INFO("[HumanContext::setup_gestures_cb] Received a gesture setup request ...");
+//
+//    // Check the id of the req. If there is none (the first call from a task) then provide one
+//    TemotoID::ID id_local = id_manager_.checkID(req.id);
+//
+//    // Look if similar resource is already allocated
+//    for (auto& activeReq : setupGestureActive_)
+//    {
+//        if (compareGestureRequest(req, activeReq.request))
+//        {
+//            ROS_INFO("[HumanContext::setup_gestures_cb] Same request already available.");
+//            res = activeReq.response;
+//            res.id = static_cast<int>(id_local);
+//            return true;
+//        }
+//    }
+//
+//    // The request was not in "setupSpeechActive_" list. Make a new sensor request
+//    ROS_INFO("[HumanContext::setup_gestures_cb] This request is unique. Setting up the sensor ...");
+//
+//    temoto_2::LoadSensor msg;
+//    msg.request.sensor_type = req.gesture_specifiers[0].type;
+//
+//    // Call the sensor manager to arrange us a gesture sensor
+//    try
+//    {
+//        resource_manager_.call<temoto_2::LoadSensor>(
+//                sensor_manager::srv_name::MANAGER,
+//                sensor_manager::srv_name::SERVER,
+//                msg);
+//    }
+//    catch(...)
+//    {
+//        ROS_ERROR("[HumanContext::setup_gestures_cb] Failed to call service /start_sensor, trying again...");
+//    }
+//
+//    ROS_INFO("[HumanContext::setup_gestures_cb] Got a response from service /start_sensor: '%s'", msg.response.rmp.message.c_str());
+//    res.id = static_cast<int>(id_local);
+//    res.topic = msg.response.topic;
+//    res.name = msg.response.package_name;
+//    res.executable = msg.response.executable;
+//    res.code = msg.response.rmp.code;
+//
+//    // Check the response message, if all is ok then
+//    if (msg.response.rmp.code == 0)
+//    {
+//        res.message = msg.response.rmp.message = "Gesture Setup request was satisfied: %s", msg.response.rmp.message.c_str();
+//
+//        // Add the request to the "setupSpeechActive_" list
+//        temoto_2::getGestures reqRes;
+//        reqRes.request = req;
+//        reqRes.response = res;
+//        setupGestureActive_.push_back(reqRes);
+//
+//        return true;
+//    }
+//    else
+//    {
+//        res.message = "Gesture Setup request was not satisfied";
+//        return true;
+//    }
 }
 
 /*
@@ -100,7 +100,8 @@ bool HumanContext::setup_gesture_cb (temoto_2::getGestures::Request &req,
 bool HumanContext::setup_speech_cb (temoto_2::getSpeech::Request &req,
                                     temoto_2::getSpeech::Response &res)
 {
-    ROS_INFO("[HumanContext::setup_speech_cb] Received a speech setup request ...");
+    ROS_INFO("[HumanContext::setup_speech_cb] Received a speech setup request with specifiers[0]: '%s', '%s', '%s'",
+			req.speech_specifiers[0].type.c_str(), req.speech_specifiers[0].package.c_str(), req.speech_specifiers[0].executable.c_str());
 
     // Check the id of the req. If there is none (the first call from a task) then provide one
     TemotoID::ID id_local = id_manager_.checkID(req.id);

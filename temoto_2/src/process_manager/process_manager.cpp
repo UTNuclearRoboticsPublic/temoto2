@@ -19,7 +19,7 @@
 namespace process_manager
 {
 
-ProcessManager::ProcessManager():resource_manager_("process_manager", this)
+ProcessManager::ProcessManager():resource_manager_(srv_name::MANAGER, this)
 {
 	resource_manager_.addServer<temoto_2::LoadProcess>(
 			srv_name::SERVER, 

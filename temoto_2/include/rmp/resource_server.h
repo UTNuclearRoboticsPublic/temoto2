@@ -30,11 +30,12 @@ class ResourceServer : public BaseResourceServer<Owner>
 		{
             std::string rm_name = this->resource_manager_.getName();
 			load_server_ = nh_.advertiseService(rm_name + "/" + this->name_, &ResourceServer<ServiceType,Owner>::wrappedLoadCallback, this);
-ROS_INFO("ResourceServer: created server for %s", this->name_.c_str());
+ROS_INFO("ResourceServer constructed, listening on %s", this->load_server_.getService().c_str());
 		}
 
 		~ResourceServer()
 		{
+			ROS_INFO("ResourceServer[%s] destroyed.", this->name_.c_str());
 		}
 
 
@@ -51,18 +52,19 @@ ROS_INFO("ResourceServer: created server for %s", this->name_.c_str());
 
 		bool wrappedLoadCallback(typename ServiceType::Request& req, typename ServiceType::Response& res)
 		{
-			ROS_INFO("ResourceServer Load callback fired by client with return status_topic %s", req.rmp.status_topic.c_str());
+			std::string prefix = "ResourceServer::wrappedLoadCallback() [" + this->name_ + "]:";
+			ROS_INFO("%s Got query with status_topic: '%s'", prefix.c_str(), req.rmp.status_topic.c_str());
 
 			if(!owner_)
 			{
-				ROS_ERROR("ResourceServer Owner is NULL");
+				ROS_ERROR("%s ResourceServer Owner is NULL", prefix.c_str());
 				return true;
 			}
 
 			// generate new id for the resource
 			res.rmp.resource_id = res_id_manager_.generateID();
 
-			ROS_INFO("ResourceServer Created resource id %ld", res.rmp.resource_id);
+			ROS_INFO("%s Created resource with id %ld", prefix.c_str(), res.rmp.resource_id);
 
 
 			// New or existing query? Check it out with this hi-tec lambda function :)
@@ -71,7 +73,7 @@ ROS_INFO("ResourceServer: created server for %s", this->name_.c_str());
 
 			if(found_query == queries_.end())
 			{
-				ROS_INFO("new request");
+				ROS_INFO("%s New query, going for owners callback", prefix.c_str());
 
 				// equal message not found from queries_, add new query
 				queries_.emplace_back(req, res);
@@ -84,22 +86,23 @@ ROS_INFO("ResourceServer: created server for %s", this->name_.c_str());
 				// call owner's registered callback
 				(owner_->*load_callback_)(req,res);
 
-				ROS_INFO("ResourceServer resumed from callback");
+				ROS_INFO("%s Resumed from owners callback", prefix.c_str());
 
 				// update the query with the response message filled in the callback
 				queries_.back().setMsgResponse(res);
 
 				// restore active server to NULL in resource manager
 				this->deactivateServer();
-
 			}
 			else
 			{
 				// found equal request, simply reqister this in the query
 				// and respond with unique resoure_id.
+				ROS_INFO("%s Existing query, linking to the found query.", prefix.c_str());
 				queries_.back().addExternalClient(req,res);
 			}
 
+			ROS_INFO("%s Returning true.", prefix.c_str());
 			return true; 
 		}
 
