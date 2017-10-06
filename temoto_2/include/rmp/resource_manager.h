@@ -78,6 +78,7 @@ class ResourceManager
 			using ClientPtr = std::shared_ptr<ClientType>;
 			ClientPtr client = std::make_shared<ClientType>(resource_manager_name, server_name, owner_);
 			bool ret = client->call(msg);
+
 			// Push to clients and convert to BaseResourceClient type
 		    clients_.push_back(client);
 
@@ -164,10 +165,25 @@ class ResourceManager
 		bool statusCallback(temoto_2::ResourceStatus::Request& req, temoto_2::ResourceStatus::Response& res)
 		{
             ROS_INFO("%s: Got status from someone", name_.c_str());
-//			if (req.status_code == status_codes::RESOURCE_FAILED)
-//			{
-//				// unload this client, and notify anyone who used this
-//			}
+			if (req.status_code == status_codes::FAILED)
+			{
+				// unload this client, and notify anyone who used it
+                
+                // Go through clients and locate the one from 
+                // which the request arrived
+                std::string client_name = req.manager_name + "/" + req.server_name;
+                auto client_it = std::find_if(clients_.begin(),clients_.end(),
+                        [&](const std::shared_ptr<BaseResourceClient>& client_ptr) -> bool {return client_ptr->getName() == client_name;}
+                        );
+                if(client_it != clients_.end())
+                {
+client_it->
+                }
+                else
+                {
+                    ROS_INFO("%s: statusCallback failed to find the client", name_.c_str());
+                }
+			}
 				return true;
         }
 

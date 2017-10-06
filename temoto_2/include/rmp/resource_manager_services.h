@@ -4,5 +4,14 @@
 #include "temoto_2/UnloadResource.h"
 #include "temoto_2/ResourceStatus.h"
 
+namespace rmp
+{
+    enum class status_codes : int
+    {
+        OK = 0,
+        FAILED,
+    };
+}
+
 #endif
 
