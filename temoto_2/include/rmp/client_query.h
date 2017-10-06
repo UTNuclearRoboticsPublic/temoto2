@@ -1,75 +1,80 @@
-#ifndef RESOURCE_QUERY_H
-#define RESOURCE_QUERY_H
+#ifndef CLIENT_QUERY_H
+#define CLIENT_QUERY_H
 
 #include <string>
 #include <vector>
 #include <map>
-#include <set>
 #include <utility>
 #include "common/temoto_id.h"
 
 namespace rmp
 {
 
-	// class for storing resource requests and hold their bingdings to clients
+	// class for storing resource requests and hold their bingdings to external servers 
 template <class ServiceMsgType>
-class ResourceQuery{
+class ClientQuery{
 
 	public:
 
-		ResourceQuery()
+		ClientQuery()
 		{
 
 		}
 
-		// special constructor for resource server
-		ResourceQuery(const typename ServiceMsgType::Request& req,
+
+		// special constructor for resource client
+		ClientQuery(const typename ServiceMsgType::Request& req,
 					  const typename ServiceMsgType::Response& res)
 		{
-			addExternalClient(req, res);
 			msg_.request = req;
-			// response part is set after executing owners callback
-
+			msg_.response = res;
 		}
+		
 
-		void addExternalClient(const typename ServiceMsgType::Request& req,
-			   			       const typename ServiceMsgType::Response& res)
-		{
-			external_clients_.emplace(res.rmp.resource_id, req.rmp.status_topic);
-		}
-
-		// remove the external client from this query and return how many are still connected
-		size_t removeExternalClient(temoto_id::ID resource_id)
-		{
-			/// Try to erase resource_id from external client map.
-			external_clients_.erase(resource_id);
-			return external_clients_.size();
-		}
-
-		// Check if external client with given resource_id is attached to this query.
-		bool externalClientExists(temoto_id::ID resource_id) const
-		{
-			return external_clients_.find(resource_id) != external_clients_.end(); 
-		}
-
-
-		void addinternalClient(std::string client_name, temoto_id::ID resource_id)
+		void addinternalResource(std::string server_name, temoto_id::ID resource_id)
 		{
 			//try to insert to map
-			auto ret = internal_clients_.emplace(client_name, std::set<temoto_id::ID>(resource_id));
+			auto ret = internal_clients_.emplace(server_name, std::set<temoto_id::ID>(resource_id));
 
 			if (ret.second == false)
 			{
-				// client already exists, add current id to its set
+				// server already exists, add current id to its set
 				auto ins_ret = ret.first->second.insert(resource_id);
 				if(ins_ret.second == false)
 				{
-					ROS_ERROR("An extreme badness has happened in ResourceQuery."
-							"Somebody tried to bind same resource twice to a resource_server.");
+					ROS_ERROR("[ClientQuery::addInternalResource]: not allowed to add internal resources with identical ids.");
 				}
-
 			}
+		}
 
+
+		// remove the internal resource from this query and return how many are still connected
+		size_t removeInternalResource(temoto_id::ID resource_id)
+		{
+			auto it = internal_resources_.find(resource_id);
+			if(it == internal_resources_.end())
+			{
+				throw "[ClientQuery::getInternalCaller] Not found!";
+			}
+			std::string caller_name = it->second;
+
+			/// Erase resource_id from internal resource map.
+			internal_resources_.erase(it);
+
+			/// Count how many internal connections we have left with the erased caller.
+			size_t cnt = count_if(internal_resources_.begin(), internal_resources_.end(),
+					[&](const std::pair<temoto_id::ID, std::string>& r) -> bool 
+					{return r.second == caller_name}
+					);
+
+			return cnt;
+		}
+
+
+		// Check if given internal resource_id is attached to this query.
+		bool internalResourceExists(temoto_id::ID resource_id) const
+		{
+			return internal_resources_.find(resource_id) != internal_resources_.end(); 
 		}
 
 
@@ -78,20 +83,19 @@ class ResourceQuery{
 			return msg_;
 		}
 
+		
+		const temoto_id::ID getExternalId() const
+		{
+			return msg_.response.rmp.resource_id;
+		}
+
         const std::map<std::string, std::set<temoto_id::ID>>& getInternalClients() const {return internal_clients_;}
 
-		void setMsgResponse(const typename ServiceMsgType::Response& res)
-		{
-			msg_.response = res;
-		}
 
 	private:
 
-		// unique client name is mapped to a set of resource ids
-		std::map<std::string, std::set<temoto_id::ID>> internal_clients_;
-
-		// represent external client by its resource_id and status_topic
-		std::map<temoto_id::ID, std::string> external_clients_;
+		// internal resource ids and their callers name
+		std::map<temoto_id::ID, std::string> internal_resources_;
 
 		ServiceMsgType msg_; /// Store request and response, note that RMP specific fields (resource_id, topic, ...) are related to first query and are not intended to be used herein.
 	};

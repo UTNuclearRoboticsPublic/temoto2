@@ -100,13 +100,17 @@ template<class ServiceType, class Owner>
         void unloadResource(temoto_id::ID resource_id)
         {
 			// search for given resource id to unload 
-			auto found_msg = std::find_if(active_resources_.begin(), active_resources_.end(), 
-					[&](const ServiceType& msg) -> bool {return msg.response.rmp.resource_id == resource_id;}
+			auto q_it = std::find_if(queries_.begin(), queries_.end(), 
+					[&](const ClientQuery<ServiceType>& q) -> bool {return q.internalResourceExists(resource_id);}
                     ); 
-            if(found_msg != active_resources_.end())
+            if(q_it != queries_.end())
             {
-                sendUnload(resource_id)
-                active_resources_.erase(found_msg);
+				size_t caller_cnt = q_it->removeInternalResource(resource_id);
+				if(caller_cnt <= 0)
+				{
+					queries_.erase(it);
+					sendUnload(resource_id)
+				}
             }
         }
         
@@ -145,7 +149,7 @@ template<class ServiceType, class Owner>
 		ros::ServiceClient service_client_unload_;
 		ros::NodeHandle nh_;
 
-		std::vector<ServiceType> active_resources_;
+		std::vector<ClientQuery<ServiceType>> queries_;
 
         // Map given internally shared resource_ids to externally called resource id
         std::map<temoto_id::ID, temoto_id::ID> ids;

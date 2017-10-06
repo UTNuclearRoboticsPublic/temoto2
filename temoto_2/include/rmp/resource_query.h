@@ -1,5 +1,5 @@
-#ifndef CLIENT_QUERY_H
-#define CLIENT_QUERY_H
+#ifndef RESOURCE_QUERY_H
+#define RESOURCE_QUERY_H
 
 #include <string>
 #include <vector>
@@ -11,22 +11,22 @@
 namespace rmp
 {
 
-	// class for storing resource requests and hold their bingdings to external servers 
+	// class for storing resource requests and hold their bingdings to clients
 template <class ServiceMsgType>
-class ClientQuery{
+class ResourceQuery{
 
 	public:
 
-		ClientQuery()
+		ResourceQuery()
 		{
 
 		}
 
-		// special constructor for resource client
-		ClientQuery(const typename ServiceMsgType::Request& req,
+		// special constructor for resource server
+		ResourceQuery(const typename ServiceMsgType::Request& req,
 					  const typename ServiceMsgType::Response& res)
 		{
-			addExternalServer(req, res);
+			addExternalClient(req, res);
 			msg_.request = req;
 			// response part is set after executing owners callback
 
@@ -64,7 +64,7 @@ class ClientQuery{
 				auto ins_ret = ret.first->second.insert(resource_id);
 				if(ins_ret.second == false)
 				{
-					ROS_ERROR("An extreme badness has happened in ClientQuery."
+					ROS_ERROR("An extreme badness has happened in ResourceQuery."
 							"Somebody tried to bind same resource twice to a resource_server.");
 				}
 
@@ -87,11 +87,11 @@ class ClientQuery{
 
 	private:
 
-		// internal resource ids and their callers name
-		std::map<temoto_id::ID, std::string> internal_id_map_;
+		// unique client name is mapped to a set of resource ids
+		std::map<std::string, std::set<temoto_id::ID>> internal_clients_;
 
-        // id returned from external server when first query was made
-		temoto_id::ID external_resource_id_;
+		// represent external client by its resource_id and status_topic
+		std::map<temoto_id::ID, std::string> external_clients_;
 
 		ServiceMsgType msg_; /// Store request and response, note that RMP specific fields (resource_id, topic, ...) are related to first query and are not intended to be used herein.
 	};
