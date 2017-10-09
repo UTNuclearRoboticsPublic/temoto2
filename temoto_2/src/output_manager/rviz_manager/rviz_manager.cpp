@@ -1,14 +1,16 @@
 #include "output_manager/rviz_manager/rviz_manager.h"
 
-RvizManager::RvizManager() : resource_manager_("rviz_manager", this),
+namespace
+{
+RvizManager::RvizManager() : resource_manager_(srv_name::SERVER, this),
 							 rviz_resource_id_(temoto_id::UNASSIGNED_ID)
 {
-    show_in_rviz_server_ = nh_.advertiseService("show_in_rviz", &RvizManager::showInRvizCb, this);
-    stop_allocated_services_server_ = nh_.advertiseService( "stop_allocated_services_om",
-                                                           &RvizManager::stopAllocatedServices,
-                                                           this);
+	resource_manager_.addServer<temoto_2::ShowInRviz>(
+			rviz_manager::srv_name::SERVER
+			&RvizManager::LoadRvizCb,
+			&RvizManager::UnloadRvizCb
+			);
 
-//    node_spawn_kill_client_ = nh_.serviceClient<temoto_2::LoadProcess>("temoto_2/process_manager/load_process");
     load_plugin_client_ = nh_.serviceClient<rviz_plugin_manager::PluginLoad>("rviz_plugin_load");
     unload_plugin_client_ = nh_.serviceClient<rviz_plugin_manager::PluginUnload>("rviz_plugin_unload");
     get_plugin_config_client_ = nh_.serviceClient<rviz_plugin_manager::PluginGetConfig>("rviz_plugin_get_config");
@@ -27,8 +29,7 @@ RvizManager::RvizManager() : resource_manager_("rviz_manager", this),
 /* * * * * * * * * * * * * * * * *
  *  runRviz
  * * * * * * * * * * * * * * * * */
-
-bool RvizManager::runRviz()
+void RvizManager::runRviz()
 {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = formatMessage("", this->class_name_, __func__);
@@ -66,8 +67,6 @@ bool RvizManager::runRviz()
 
 		// Give some time for the rviz_plugin_manager to setup
 		ros::Duration(3).sleep();  // TODO: THIS THING SEEMS SO WRONG HERE
-
-		return true;
 	}
 	else
 	{
@@ -85,34 +84,34 @@ bool RvizManager::runRviz()
 
 bool RvizManager::stopRviz()
 {
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage("", this->class_name_, __func__);
-
-    ROS_INFO("%s Requesting to stop rviz ...", prefix.c_str());
-
-	// Build client name, and ask resource manager to close this connection
-	std::string client_name = process_manager::srv_name::MANAGER + "/" + process_manager::srv_name::SERVER;
-	try
-	{
-		resource_manager_.unloadClient(client_name, rviz_resource_id_);
-		ROS_INFO("%s Rviz stopped succesfully.", prefix.c_str());
-		rviz_running_ = false;
-		rviz_resource_id_=temoto_id::UNASSIGNED_ID;
-	}
-	catch(...)
-	{
-		throw error::ErrorStackUtil( outputManagerErr::RVIZ_OPEN_FAIL,
-				error::Subsystem::OUTPUT_MANAGER,
-				error::Urgency::MEDIUM,
-				prefix + " Failed to stop rviz ...",
-				ros::Time::now());
-		//throw error::ErrorStackUtil( outputManagerErr::SERVICE_REQ_FAIL,
-		//		error::Subsystem::OUTPUT_MANAGER,
-		//		error::Urgency::MEDIUM,
-		//		prefix + " Failed to call service /spawn_kill_process",
-		//		ros::Time::now());
-	}
-
+//    // Name of the method, used for making debugging a bit simpler
+//    std::string prefix = formatMessage("", this->class_name_, __func__);
+//
+//    ROS_INFO("%s Requesting to stop rviz ...", prefix.c_str());
+//
+//	// Build client name, and ask resource manager to close this connection
+//	std::string client_name = process_manager::srv_name::MANAGER + "/" + process_manager::srv_name::SERVER;
+//	try
+//	{
+//		resource_manager_.unloadClient(client_name, rviz_resource_id_);
+//		ROS_INFO("%s Rviz stopped succesfully.", prefix.c_str());
+//		rviz_running_ = false;
+//		rviz_resource_id_=temoto_id::UNASSIGNED_ID;
+//	}
+//	catch(...)
+//	{
+//		throw error::ErrorStackUtil( outputManagerErr::RVIZ_OPEN_FAIL,
+//				error::Subsystem::OUTPUT_MANAGER,
+//				error::Urgency::MEDIUM,
+//				prefix + " Failed to stop rviz ...",
+//				ros::Time::now());
+//		//throw error::ErrorStackUtil( outputManagerErr::SERVICE_REQ_FAIL,
+//		//		error::Subsystem::OUTPUT_MANAGER,
+//		//		error::Urgency::MEDIUM,
+//		//		prefix + " Failed to call service /spawn_kill_process",
+//		//		ros::Time::now());
+//	}
+//
 	return true;
 }
 
@@ -265,58 +264,37 @@ bool RvizManager::setPluginConfigRequest( rviz_plugin_manager::PluginSetConfig& 
  *  showInRvizCb
  * * * * * * * * * * * * * * * * */
 
-bool RvizManager::showInRvizCb( temoto_2::ShowInRviz::Request &req,
-                                temoto_2::ShowInRviz::Response &res )
+void RvizManager::loadRvizCb( temoto_2::LoadRviz::Request &req,
+                                temoto_2::LoadRviz::Response &res )
 {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = formatMessage("", this->class_name_, __func__);
 
-    ROS_INFO("%s Received a 'show_in_rviz' request", prefix.c_str());
+    ROS_INFO("%s Received a new 'load_rviz' request", prefix.c_str());
 	ROS_INFO_STREAM(req);
 
-    // Check the id of the req. If there is none (the first call from a task) then provide one
-    TemotoID::ID id_local = id_manager_.checkID(req.id);
 
-	// Check if same resource was requested
-    for( auto& active_req : active_requests_ )
-    {
-        if( compareRequest(req, active_req.getReq()) )
-        {
-            ROS_INFO("%s Same request already available.", prefix.c_str());
-            res = active_req.getRes();
-            res.id = static_cast<int>(id_local);
+	// Tell process manager that we need rviz
+	try
+	{
+		runRviz();
+	}
+	catch(error::ErrorStackUtil& e)
+	{
+		// Format the rmp service response
+		res.rmp.code = 1;
+		res.rmp.message = e.getStack().back().message;
 
-            // Add the ID of the client to the active_req ID list
-            active_req.addID(id_local);
-            return true;
-        }
-    }
+		// Append the error to local ErrorStack
+		e.forward( prefix );
+		this->error_handler_.append(e);
+	}
 
     // Check the type of the requested display plugin and run if found
     PluginInfo plugin_info;
 
     if( plugin_info_handler_.findPlugin( req.type, plugin_info ) )
     {
-        // If Rviz is not running yet, then send a launch request to the Node Manager
-        if( !rviz_running_ )
-        {
-            try
-            {
-                runRviz();
-            }
-            catch( error::ErrorStackUtil& e )
-            {
-                // Format the service response
-                res.code = 1;
-                res.message = e.getStack().back().message;
-
-                // Append the error to local ErrorStack
-                e.forward( prefix );
-                this->error_handler_.append(e);
-
-                return true;
-            }
-        }
 
         // Create the message and fill out the request part
         rviz_plugin_manager::PluginLoad load_plugin_srv;
@@ -330,16 +308,16 @@ bool RvizManager::showInRvizCb( temoto_2::ShowInRviz::Request &req,
             loadPluginRequest (load_plugin_srv);
 
             // Fill out the response message
-            res.id = static_cast<int>(id_local);
-            res.plugin_uid = load_plugin_srv.response.plugin_uid;
-            res.code = load_plugin_srv.response.code;
+            //res.plugin_uid = load_plugin_srv.response.plugin_uid;
+			//store plugin uid
+            res.rmp.code = load_plugin_srv.response.code;
             res.message = load_plugin_srv.response.message;
 
             // Add the request and ID into the active_requests_
-            temoto_2::ShowInRviz show_in_rviz_local;
-            show_in_rviz_local.request = req;
-            show_in_rviz_local.response = res;
-            active_requests_.emplace_back (show_in_rviz_local, id_local);
+            temoto_2::ShowInRviz srv_msg;
+            srv_msg.request = req;
+            srv_msg.response = res;
+            active_requests_.emplace_back (srv_msg);
 
 			if (req.config != "")
 			{
@@ -519,3 +497,5 @@ bool RvizManager::compareRequest (temoto_2::ShowInRviz::Request req1,
 
     return false;
 }
+
+} // namespace rviz_manager

@@ -11,11 +11,15 @@
 #include "rviz_plugin_manager/PluginSetConfig.h"
 #include "output_manager/output_manager_errors.h"
 #include "output_manager/rviz_manager/plugin_info.h"
+#include "output_manager/rviz_manager/rviz_manager_services.h"
 #include "process_manager/process_manager_services.h"
 #include "context_manager/human_context/human_context_services.h"
 #include "rmp/resource_manager.h"
 
 #include "temoto_2/stopAllocatedServices.h"
+
+namespace 
+{
 
 class RvizManager
 {
@@ -63,7 +67,7 @@ private:
 
 
 
-    bool runRviz();
+    void runRviz();
 
     bool stopRviz();
 
@@ -75,10 +79,10 @@ private:
 	
     bool setPluginConfigRequest ( rviz_plugin_manager::PluginSetConfig& set_plugin_config_srv );
 
-    bool showInRvizCb (temoto_2::ShowInRviz::Request &req,
+    void loadRvizCb (temoto_2::ShowInRviz::Request &req,
                        temoto_2::ShowInRviz::Response &res);
 
-    bool stopAllocatedServices (temoto_2::stopAllocatedServices::Request& req,
+    bool unloadCb (temoto_2::stopAllocatedServices::Request& req,
                                 temoto_2::stopAllocatedServices::Response& res);
 
     PluginInfo findPlugin( std::string plugin_type );
@@ -86,5 +90,7 @@ private:
     bool compareRequest (temoto_2::ShowInRviz::Request req1,
                          temoto_2::ShowInRviz::Request req2);
 };
+
+} // namespace rviz_manager
 
 #endif

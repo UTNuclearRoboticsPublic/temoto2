@@ -1,0 +1,19 @@
+# Remote Management Request
+temoto_2/RMPRequest rmp
+
+# Rviz display plugin type
+string type
+
+# Rviz display plugin name
+string name
+
+# Topic that is used to send info to rviz plugin
+string topic
+
+# Plugin configuration XML string
+string config
+
+---
+
+# Remote Management Response
+temoto_2/RMPResponse rmp
