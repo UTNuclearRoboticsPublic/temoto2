@@ -39,14 +39,15 @@ ROS_INFO("ResourceServer constructed, listening on %s", this->load_server_.getSe
 		}
 
 
-		void registerInternalClient(temoto_id::ID resource_id)
+		void registerInternalClient(std::string client_name, temoto_id::ID resource_id)
 		{
+            ROS_INFO("[ResourceServer::registerInternalClient] [%s] id %d", this->name_.c_str(), resource_id);
 			if(!queries_.size())
 			{
 				ROS_ERROR("registerInternalClient called, but queries_ is empty");
 				return;
 			}
-			queries_.back().addInternalClient(resource_id);
+			queries_.back().addInternalClient(client_name, resource_id);
 		}
 
 
@@ -61,10 +62,11 @@ ROS_INFO("ResourceServer constructed, listening on %s", this->load_server_.getSe
 				return true;
 			}
 
-			// generate new id for the resource
-			res.rmp.resource_id = res_id_manager_.generateID();
+			// generate new external id for the resource
+            temoto_id::ID ext_resource_id = res_id_manager_.generateID();
 
-			ROS_INFO("%s Created resource with id %ld", prefix.c_str(), res.rmp.resource_id);
+
+			ROS_INFO("%s Created resource with external id:%d", prefix.c_str(), ext_resource_id);
 
 
 			// New or existing query? Check it out with this hi-tec lambda function :)
@@ -73,10 +75,18 @@ ROS_INFO("ResourceServer constructed, listening on %s", this->load_server_.getSe
 
 			if(found_query == queries_.end())
 			{
-				ROS_INFO("%s New query, going for owners callback", prefix.c_str());
+                // generate new internal id, and give it to owners callback.
+                // with this owner can send status messages later when necessary
+                temoto_id::ID int_resource_id = this->resource_manager_.generateInternalID();
+                res.rmp.resource_id = int_resource_id;
+				ROS_INFO("%s New query, internal id:%d", prefix.c_str(), int_resource_id);
 
 				// equal message not found from queries_, add new query
 				queries_.emplace_back(req, res);
+
+                // register owner as a nonamed client
+                std::string client_name = "";
+                queries_.back().addInternalClient(client_name, int_resource_id);
 
 				// set this server active in resource manager
 				// when a client call is made from callback, the binding between active server
@@ -113,6 +123,7 @@ ROS_INFO("ResourceServer constructed, listening on %s", this->load_server_.getSe
 		
         void unloadResource(temoto_2::UnloadResource::Request& req, temoto_2::UnloadResource::Response& res)
 		{
+            ROS_INFO("[ResourceServer::unloadResource] [%s]", this->name_.c_str());
 			// find first query that contains resource that should be unloaded
 			const temoto_id::ID resource_id = req.resource_id;
 			const auto found_query_it = std::find_if(queries_.begin(), queries_.end(), 
@@ -120,8 +131,11 @@ ROS_INFO("ResourceServer constructed, listening on %s", this->load_server_.getSe
 					); 
 			if (found_query_it != queries_.end())
 			{
+                ROS_INFO("[ResourceServer::unloadResource] [%s] Query found", this->name_.c_str());
+                ROS_INFO("[ResourceServer::unloadResource] [%s] internal clients %lu", this->name_.c_str(), found_query_it->getInternalClients().size());
 				// Query found, try to remove client from it.
 				size_t clients_remaining = found_query_it->removeExternalClient(req.resource_id);
+                ROS_INFO("[ResourceServer::unloadResource] [%s] clients remaining %lu", this->name_.c_str(), clients_remaining);
 				if (clients_remaining <= 0)
 				{
 					// last resource removed, execute owner's unload callback and remove the query from our list
@@ -131,7 +145,8 @@ ROS_INFO("ResourceServer constructed, listening on %s", this->load_server_.getSe
 
 					/// TODO: Do or do not something with the response part?
                     
-                    // Send unload command to all connected clients...
+                    // Send unload command to all internal clients...
+                    ROS_INFO("[ResourceServer::unloadResource] [%s] internal clients %lu", this->name_.c_str(), found_query_it->getInternalClients().size());
                     for (auto& map_el : found_query_it->getInternalClients())
                     {
                         for (auto& set_el : map_el.second)
@@ -143,6 +158,44 @@ ROS_INFO("ResourceServer constructed, listening on %s", this->load_server_.getSe
 				}
 			}
 		}
+
+        
+        bool internalResourceExists(temoto_id::ID resource_id) const
+        {
+            auto found_q = find_if(queries_.begin(), queries_.end(),
+                    [&](const ResourceQuery<ServiceType>& q) -> bool 
+                    {return q.internalResourceExists(resource_id);}
+                    );
+            return found_q != queries_.end();
+        }
+
+        
+		void notifyClients(std::string int_client_name, temoto_2::ResourceStatus& msg)
+        {
+        // TODO: check which query contains connection with resource_id given in msg
+        // overwrite resource id to external id and send the msg out to status server.
+        
+            auto q_it = std::find_if(queries_.begin(),queries_.end(),
+                   [&](const ResourceQuery<ServiceType>& q) -> bool {return q.internalClientExists(int_client_name);}
+                   );
+            
+            if(q_it != queries_.end())
+            {
+
+                ros::NodeHandle nh_;
+                
+                const auto ext_clients = q_it->getExternalClients();
+                for(const auto ext_client : ext_clients)
+                {
+                    ros::ServiceClient service_client = nh_.serviceClient<temoto_2::ResourceStatus>(ext_client.second);
+ROS_INFO("SENDING ResourceStatus to %s", ext_client.second.c_str());
+                    msg.request.resource_id = ext_client.first;
+                    msg.request.server_name = this->name_;
+                    msg.request.manager_name = this->resource_manager_.getName();
+                    service_client.call(msg);
+                }
+            }
+        }
 
 
 	private:

@@ -6,7 +6,7 @@
 
 namespace rmp
 {
-    enum class status_codes : int
+    enum status_codes : int
     {
         OK = 0,
         FAILED,

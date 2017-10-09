@@ -82,6 +82,7 @@ public:
         // Call the server
 		try
 		{
+            ROS_INFO("getting speech");
         resource_manager_.template call<temoto_2::LoadSpeech>(
 				human_context::srv_name::MANAGER,
 				human_context::srv_name::SPEECH_SERVER,
