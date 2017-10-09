@@ -21,8 +21,8 @@ public:
     OutputManagerInterface()
     {
         // Start the clients
-        this->show_in_rviz_client_ = n_.serviceClient<temoto_2::ShowInRviz>("show_in_rviz");
-        this->stop_allocated_services_ = n_.serviceClient<temoto_2::stopAllocatedServices>("stop_allocated_services_om");
+        this->show_in_rviz_client_ = nh_.serviceClient<temoto_2::ShowInRviz>("show_in_rviz");
+        this->stop_allocated_services_ = nh_.serviceClient<temoto_2::stopAllocatedServices>("stop_allocated_services_om");
     }
 
     /**
@@ -154,7 +154,7 @@ private:
 
     const std::string class_name_ = "OutputManagerInterface";
 
-    ros::NodeHandle n_;
+    ros::NodeHandle nh_;
 
     error::ErrorHandler error_handler_;
 

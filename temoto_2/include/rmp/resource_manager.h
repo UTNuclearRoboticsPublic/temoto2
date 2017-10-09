@@ -30,9 +30,11 @@ class ResourceManager
 		}
 
 		template<class ServiceType>
-		bool addServer(const std::string& server_name, 
+		bool addServer(
+				const std::string& server_name, 
 				void(Owner::*load_cb)(typename ServiceType::Request&, typename ServiceType::Response&),
-				void(Owner::*unload_cb)(typename ServiceType::Request&, typename ServiceType::Response&))
+				void(Owner::*unload_cb)(typename ServiceType::Request&, typename ServiceType::Response&)
+				)
 		{
 
 			if (serverExists(server_name))
@@ -157,6 +159,14 @@ class ResourceManager
 		}
 
 
+		// For unloading owners resources
+		void unloadResource(temoto_id::ID resource_id)
+		{
+			unloadClient("", resource_id);
+		}
+
+
+		// Wrapper for unloading resource clients
         void unloadClient(std::string client_name, temoto_id::ID resource_id)
         {
 
@@ -178,7 +188,7 @@ class ResourceManager
             }
             else
             {
-                ROS_ERROR("unloadInternalClient: client %s not found", client_name.c_str());
+                ROS_WARN("ResourceMananager::unloadInternalClient[%s]: client '%s' not found. Already removed?",name_.c_str(), client_name.c_str());
             }
         }
 

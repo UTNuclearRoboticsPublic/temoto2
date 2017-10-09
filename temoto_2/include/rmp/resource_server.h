@@ -147,12 +147,19 @@ ROS_INFO("ResourceServer constructed, listening on %s", this->load_server_.getSe
                     
                     // Send unload command to all internal clients...
                     ROS_INFO("[ResourceServer::unloadResource] [%s] internal clients %lu", this->name_.c_str(), found_query_it->getInternalClients().size());
-                    for (auto& map_el : found_query_it->getInternalClients())
-                    {
-                        for (auto& set_el : map_el.second)
-                            this->resource_manager_.unloadClient(map_el.first, set_el);
-                    }
-                    
+					for (auto& map_el : found_query_it->getInternalClients())
+					{
+						// 
+						if(map_el.first == "")
+						{
+							continue; // do not unload the owner's resource
+						}
+						for (auto& set_el : map_el.second)
+						{
+							this->resource_manager_.unloadClient(map_el.first, set_el);
+						}
+					}
+
                     // Finally, remove the found query.
 					queries_.erase(found_query_it);
 				}

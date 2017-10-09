@@ -16,7 +16,6 @@
 // Task specific includes
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-#include "temoto_2/startSensorRequest.h"
 #include "output_manager/output_manager_interface.h"
 #include "sensor_manager/sensor_manager_interface.h"
 
