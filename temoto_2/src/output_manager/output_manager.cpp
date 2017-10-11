@@ -11,7 +11,7 @@ int main(int argc, char **argv)
     ros::NodeHandle n;
 
     // Create instance of human context
-    RvizManager rviz_manager;
+    rviz_manager::RvizManager rviz_manager;
 
     ros::Rate loop_rate(10);
 

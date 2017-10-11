@@ -38,22 +38,22 @@ add_service_files(
     RMP/ResourceStatus.srv
 
     # Process Manager
-	process_manager/LoadProcess.srv
+    process_manager/LoadProcess.srv
 
 	# Sensor Manager
-	sensor_manager/ListDevices.srv
-	sensor_manager/LoadSensor.srv
+    sensor_manager/ListDevices.srv
+    sensor_manager/LoadSensor.srv
 
     # Context Managers
     context_manager/human_context/LoadGesture.srv
     context_manager/human_context/LoadSpeech.srv
 
     # Task Handler
-	task_handler/stopTask.srv
-	task_handler/indexTasks.srv
+    task_handler/stopTask.srv
+    task_handler/indexTasks.srv
 
     # Output Manager
-    output_manager/ShowInRviz.srv
+    output_manager/rviz_manager/LoadRvizPlugin.srv
 
 	stopAllocatedServices.srv
 )

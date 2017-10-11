@@ -4,7 +4,7 @@
 #include "core/common.h"
 #include "common/request_container.h"
 #include "common/temoto_id.h"
-#include "temoto_2/ShowInRviz.h"
+#include "temoto_2/LoadRvizPlugin.h"
 #include "rviz_plugin_manager/PluginLoad.h"
 #include "rviz_plugin_manager/PluginUnload.h"
 #include "rviz_plugin_manager/PluginGetConfig.h"
@@ -18,79 +18,58 @@
 
 #include "temoto_2/stopAllocatedServices.h"
 
-namespace 
+namespace rviz_manager
 {
-
 class RvizManager
 {
 public:
-    /**
-     * @brief error_handler_
-     */
-    error::ErrorHandler error_handler_;
+  /**
+   * @brief error_handler_
+   */
+  error::ErrorHandler error_handler_;
 
-    RvizManager ();
+  RvizManager();
 
-    RvizManager (std::string path_to_default_conf);
+  RvizManager(std::string path_to_default_conf);
 
 private:
+  std::map<long, temoto_id::ID> active_requests_;
 
-    ros::NodeHandle nh_;
+  rmp::ResourceManager<RvizManager> resource_manager_;
 
-    std::vector <RequestContainer<temoto_2::ShowInRviz>> active_requests_;
+  ros::NodeHandle nh_;
 
-    temoto_id::IDManager id_manager_;
+  ros::ServiceClient load_plugin_client_;
 
-	temoto_id::ID rviz_resource_id_;
+  ros::ServiceClient unload_plugin_client_;
 
-	rmp::ResourceManager<RvizManager> resource_manager_;
+  ros::ServiceClient set_plugin_config_client_;
 
-    ros::ServiceServer show_in_rviz_server_;
+  ros::ServiceClient get_plugin_config_client_;
 
-    ros::ServiceServer stop_allocated_services_server_;
+  const std::string class_name_ = "RvizManager";
 
-    ros::ServiceClient load_plugin_client_;
+  PluginInfoHandler plugin_info_handler_;
 
-    ros::ServiceClient unload_plugin_client_;
+  void runRviz();
 
-    ros::ServiceClient set_plugin_config_client_;
+  bool loadPluginRequest(rviz_plugin_manager::PluginLoad& load_plugin_srv);
 
-    ros::ServiceClient get_plugin_config_client_;
+  bool unloadPluginRequest(rviz_plugin_manager::PluginUnload& unload_plugin_srv);
 
-    const std::string class_name_ = "RvizManager";
+  bool getPluginConfigRequest(rviz_plugin_manager::PluginGetConfig& get_plugin_config_srv);
 
-    std::string path_to_default_conf_;
+  bool setPluginConfigRequest(rviz_plugin_manager::PluginSetConfig& set_plugin_config_srv);
 
-    PluginInfoHandler plugin_info_handler_;
+  void LoadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
+                        temoto_2::LoadRvizPlugin::Response& res);
 
-    bool rviz_running_ = false;
+  void unloadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
+                          temoto_2::LoadRvizPlugin::Response& res);
 
-
-
-    void runRviz();
-
-    bool stopRviz();
-
-    bool loadPluginRequest ( rviz_plugin_manager::PluginLoad& load_plugin_srv );
-
-    bool unloadPluginRequest ( rviz_plugin_manager::PluginUnload& unload_plugin_srv );
-
-    bool getPluginConfigRequest ( rviz_plugin_manager::PluginGetConfig& get_plugin_config_srv );
-	
-    bool setPluginConfigRequest ( rviz_plugin_manager::PluginSetConfig& set_plugin_config_srv );
-
-    void loadRvizCb (temoto_2::ShowInRviz::Request &req,
-                       temoto_2::ShowInRviz::Response &res);
-
-    bool unloadCb (temoto_2::stopAllocatedServices::Request& req,
-                                temoto_2::stopAllocatedServices::Response& res);
-
-    PluginInfo findPlugin( std::string plugin_type );
-
-    bool compareRequest (temoto_2::ShowInRviz::Request req1,
-                         temoto_2::ShowInRviz::Request req2);
+  PluginInfo findPlugin(std::string plugin_type);
 };
 
-} // namespace rviz_manager
+}  // namespace rviz_manager
 
 #endif
