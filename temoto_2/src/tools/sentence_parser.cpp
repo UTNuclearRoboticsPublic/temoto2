@@ -27,32 +27,6 @@
 
 using namespace meta;
 
-void treePrinter( std::string type, std::vector<parser::parse_tree>& trees )
-{
-    if ( !trees.empty() )
-    {
-        // Create a parse tree visitor
-        parser::leaf_node_finder lnf;
-
-        std::cout << type << ": ";
-
-        for(auto& tree : trees)
-        {
-            tree.visit(lnf);
-            std::vector<std::unique_ptr<parser::leaf_node>> leaves = lnf.leaves();
-
-            // Print out the leaves
-            for(auto& leaf : leaves)
-            {
-                std::cout << *leaf->word() << " ";
-            }
-            std::cout << ", ";
-        }
-
-        std::cout << std::endl;
-    }
-}
-
 parser::parse_tree tree(std::string input)
 {
     std::stringstream in_ss{input};
@@ -64,19 +38,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "pos_tagger");
     ros::NodeHandle nh;
-/*
-    // load the model
-    meta::sequence::crf crf{"/home/robert/repos_sdks/meta/models/crf"};
 
-    // create a tagger
-    auto tagger = crf.make_tagger();
-
-    // load the sequence analyzer (for feature generation)
-    auto analyzer = meta::sequence::default_pos_analyzer();
-    analyzer.load("/home/robert/repos_sdks/meta/models/crf");
-*/
-
-    ////////
     std::cout << "Loading tagging model" << std::endl;
     // load POS-tagging model
     sequence::perceptron tagger{"/home/robert/repos_sdks/meta/models/perceptron-tagger"};
@@ -84,11 +46,6 @@ int main(int argc, char **argv)
     std::cout << "Loading parser model" << std::endl;
     // load parser model
     parser::sr_parser parser{"/home/robert/repos_sdks/meta/models/parser"};
-
-    // Create a parse tree visitor
-    parser::leaf_node_finder lnf;
-
-    ////////
 
     std::string line;
 
@@ -109,16 +66,6 @@ int main(int argc, char **argv)
         std::stringbuf str;
         stream_tree.rdbuf(&str);
 
-/*
-        while (*stream)
-        {
-            auto token = stream->next();
-            if (token == " " || token == "<s>" || token == "</s>")
-                continue;
-            seq.add_observation( {sequence::symbol_t{token}, sequence::tag_t{"[UNK]"}} );
-        }
-*/
-
         while (*stream)
         {
             auto token = stream->next();
@@ -135,25 +82,14 @@ int main(int argc, char **argv)
                 parser::branch_finder bf;
 
                 p_tree.visit(bf);
-                std::vector<parser::Branch> branches = bf.getBranches();
+                std::vector<TLF::TaskDescriptor> task_descs = bf.getTaskDescs();
 
-                std::cout << "nr of branches found: " << branches.size() << std::endl;
+                std::cout << "nr of potential tasks found: " << task_descs.size() << std::endl;
 
-                for( auto& branch : branches )
+                for( auto& task_descriptor : task_descs )
                 {
-                    /*
-                    parser::find_action fa;
-                    branch.visit(fa);
-                    std::cout << fa.getAction() << std::endl;
-                    */
-
-                    treePrinter( "Action", branch.verb_phrases_ );
-                    treePrinter( "What", branch.noun_phrases_ );
-                    treePrinter( "Where", branch.prep_phrases_ );
-
-                    std::cout << std::endl;
+                    std::cout << task_descriptor << std::endl;
                 }
-
             }
             else
             {

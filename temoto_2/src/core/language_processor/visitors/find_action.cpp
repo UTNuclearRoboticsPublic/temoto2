@@ -1,6 +1,6 @@
 /**
- * @file leaf_node_finder.cpp
- * @author Chase Geigle
+ * @file find_action.cpp
+ * @author Robert Valner
  */
 
 #include "meta/parser/trees/internal_node.h"

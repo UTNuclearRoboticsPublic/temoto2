@@ -151,6 +151,7 @@ add_dependencies(pos_tagger ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTE
 target_link_libraries(pos_tagger ${catkin_LIBRARIES} meta-classify meta-sequence-analyzers meta-parser-analyzers)
 
 add_executable(sentence_parser src/tools/sentence_parser.cpp
+                               src/core/language_processor/temoto_language_format.cpp
                                src/core/language_processor/visitors/branch_finder.cpp
                                src/core/language_processor/visitors/find_action.cpp)
 add_dependencies(sentence_parser ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})

@@ -14,23 +14,12 @@
 
 #include "meta/parser/trees/visitors/visitor.h"
 #include "meta/parser/sr_parser.h"
+#include "core/language_processor/temoto_language_format.h"
 
 namespace meta
 {
 namespace parser
 {
-
-class Branch
-{
-public:
-
-    std::vector<parser::parse_tree> verb_phrases_;
-
-    std::vector<parser::parse_tree> noun_phrases_;
-
-    std::vector<parser::parse_tree> prep_phrases_;
-
-};
 
 /**
  * This is a visitor that finds and extracts a branch in a parse tree.
@@ -46,11 +35,11 @@ class branch_finder : public const_visitor<void>
      * @brief Returns the phrases found by visitor
      * @return
      */
-    std::vector<Branch> getBranches();
+    std::vector<TLF::TaskDescriptor> getTaskDescs();
 
   private:
-    /// The storage for the parse trees found so far
-    std::vector<Branch> branches_;
+    /// The storage for the task descriptors found so far
+    std::vector<TLF::TaskDescriptor> task_descs_;
 
 };
 

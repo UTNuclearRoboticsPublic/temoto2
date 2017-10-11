@@ -1,18 +1,21 @@
 /**
- * @file leaf_node_finder.cpp
- * @author Chase Geigle
+ * @file branch_finder.cpp
+ * @author Robert Valner
  */
 
 #include "meta/parser/trees/internal_node.h"
 #include "meta/parser/trees/leaf_node.h"
 #include "core/language_processor/visitors/branch_finder.h"
+#include "meta/parser/trees/visitors/leaf_node_finder.h"
 #include "meta/util/shim.h"
 #include <iostream>
+#include <sstream>
 #include <algorithm>
 
-std::vector<std::string> verb_categories = {"VP", "SINV", "S"};
+std::vector<std::string> verb_categories = {"VP", "SINV", "S", "SQ"};
 std::vector<std::string> noun_categories = {"NP"};
 std::vector<std::string> prep_categories = {"PP"};
+std::vector<std::string> advb_categories = {"ADVP"};
 
 namespace meta
 {
@@ -43,6 +46,24 @@ bool checkIfPhrase( class_label current_category,
     return true;
 }
 
+std::string nodesAsString (parser::parse_tree& tree)
+{
+    // Visit the tree and get the leaf nodes
+    parser::leaf_node_finder lnf_;
+    tree.visit(lnf_);
+    std::vector<std::unique_ptr<parser::leaf_node>> leaves = lnf_.leaves();
+
+    std::stringstream ss;
+
+    // Put the leaves into the stringstream
+    for(auto& leaf : leaves)
+    {
+        ss << *leaf->word() << " ";
+    }
+
+    return ss.str();
+}
+
 void branch_finder::operator()(const leaf_node& ln)
 {
     /*
@@ -52,44 +73,61 @@ void branch_finder::operator()(const leaf_node& ln)
 
 void branch_finder::operator()(const internal_node& in)
 {
+    // stupid little variable for indicating wether all the words under a branch
+    // belong together or not
     bool dive = true;
 
     // Check if it is a verb phrase node
     if( checkIfPhrase( in.category(), in.child(0)->category(), verb_categories) )
     {
-        Branch br;
-        br.verb_phrases_.emplace_back(in.child(0)->clone());
-        branches_.push_back(br);
+        TLF::TaskDescriptor task_desc;
+        parser::parse_tree tree(in.child(0)->clone());
+
+        task_desc.setAction( nodesAsString(tree) );
+        task_descs_.push_back( task_desc );
+
     }
 
     // Check if noun phrase
     else
     if ( checkIfPhrase( in.category(), in.child(0)->category(), noun_categories) )
     {
-        branches_.back().noun_phrases_.emplace_back(in.clone());
+        parser::parse_tree tree(in.clone());
+        task_descs_.back().addWhat( nodesAsString(tree) );
+    }
+
+
+    // Check if adverb phrase
+    else
+    if ( checkIfPhrase( in.category(), in.child(0)->category(), advb_categories) )
+    {
+        parser::parse_tree tree(in.clone());
+        task_descs_.back().addWhereAdv( nodesAsString(tree) );
     }
 
     // Check if preposition phrase
     else
     if ( checkIfPhrase( in.category(), in.child(0)->category(), prep_categories) )
     {
-        branches_.back().prep_phrases_.emplace_back(in.clone());
+        parser::parse_tree tree(in.clone());
+        task_descs_.back().addWhere( nodesAsString(tree) );
+
         dive = false;
     }
 
     if(dive)
     {
-    // Dive in
-    in.each_child([&](const node* n)
-                  {
-                      n->accept(*this);
-                  });
+        // Dive in
+        in.each_child([&](const node* n)
+                      {
+                          n->accept(*this);
+                      });
     }
 }
 
-std::vector<Branch> branch_finder::getBranches()
+std::vector<TLF::TaskDescriptor> branch_finder::getTaskDescs()
 {
-    return std::move(branches_);
+    return std::move(task_descs_);
 }
 }
 }
