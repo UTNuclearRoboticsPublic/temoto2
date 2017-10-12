@@ -13,17 +13,28 @@ class TaskTreeNode
 {
 public:
 
-    TaskTreeNode( IODescriptor io_descriptor );
+    /**
+     * @brief A default constructor that is used for creating root nodes only
+     */
+    TaskTreeNode();
+
+    TaskTreeNode( Action action );
+
+    TaskTreeNode( Action action, IODescriptor io_descriptor );
 
     TaskTreeNode( TaskDescriptor task_descriptor );
 
-    void addChildNode( std::unique_ptr<TaskTreeNode> child );
+    friend std::ostream& operator<<( std::ostream& stream, const TaskTreeNode& ttn);
+
+    void addChildNode( TaskTreeNode child );
+
+    TaskTreeNode* lastChild();
 
 private:
 
     TaskDescriptor task_descriptor_;
 
-    std::vector<std::unique_ptr<TaskTreeNode>> child_nodes_;
+    std::vector<TaskTreeNode> child_nodes_;
 };
 
 /**
@@ -32,10 +43,12 @@ private:
 class TaskTree
 {
 public:
-    TaskTree( std::unique_ptr<TaskTreeNode> root_node);
+    TaskTree( TaskTreeNode root_node);
+
+    friend std::ostream& operator<<( std::ostream& stream, const TaskTree& tt);
 
 private:
-    std::unique_ptr<TaskTreeNode> root_node_;
+    TaskTreeNode root_node_;
 };
 
 /**
@@ -45,9 +58,15 @@ class TaskTreeBuilder
 {
 public:
 
-    TaskTree build( std::vector<IODescriptor> input_descs );
+    //TaskTree build( std::vector<IODescriptor> input_descs );
+
+    TaskTreeBuilder(){}
 
     TaskTree build( std::vector<TaskDescriptor>& input_task_descs );
+
+private:
+
+    bool checkIfDependent(TaskDescriptor& task_desc) const;
 };
 }
 #endif

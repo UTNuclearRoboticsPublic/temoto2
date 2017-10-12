@@ -4,11 +4,6 @@
 namespace TTP
 {
 
-void IODescriptor::setAction( Action action )
-{
-    action_ = action;
-}
-
 void IODescriptor::addWhat( std::string word )
 {
     What what;
@@ -30,11 +25,6 @@ void IODescriptor::addWhereAdv( std::string word )
     where_advs_.push_back(where_adv);
 }
 
-Action IODescriptor::getAction() const
-{
-    return action_;
-}
-
 const std::vector<What>& IODescriptor::getWhats() const
 {
     return whats_;
@@ -52,12 +42,6 @@ const std::vector<Where>& IODescriptor::getWhereAdvs() const
 
 std::ostream& operator<<( std::ostream& stream, const TTP::IODescriptor& td)
 {
-    // Print out the action
-    if (td.getAction() != "")
-    {
-        stream << "Action: " << td.getAction() << std::endl;
-    }
-
     // Print out the whats
     if (!td.getWhats().empty())
     {

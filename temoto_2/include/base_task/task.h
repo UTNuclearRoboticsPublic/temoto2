@@ -78,7 +78,7 @@ public:
      * @brief ~Task Implemented virtual constructor. If it would not be implemented,
      * a magical undefined .so reference error will appear if the task is destructed
      */
-    virtual ~Task(){};
+    virtual ~Task(){}
 
     /**
      * @brief error_handler_

@@ -24,6 +24,7 @@
 
 #include "core/language_processor/visitors/branch_finder.h"
 #include "core/language_processor/visitors/find_action.h"
+#include "TTP/task_tree.h"
 
 using namespace meta;
 
@@ -81,14 +82,26 @@ int main(int argc, char **argv)
                 // Create a parse tree branch finder visitor
                 parser::branch_finder bf;
 
-                p_tree.visit(bf);
-                std::vector<TTP::IODescriptor> task_descs = bf.getTaskDescs();
-
-                std::cout << "nr of potential tasks found: " << task_descs.size() << std::endl;
-
-                for( auto& task_descriptor : task_descs )
+                try
                 {
-                    std::cout << task_descriptor << std::endl;
+                    p_tree.visit(bf);
+                    std::vector<TTP::TaskDescriptor> task_descs = bf.getTaskDescs();
+
+                    std::cout << "nr of potential tasks found: " << task_descs.size() << std::endl;
+
+                    for( auto& task_descriptor : task_descs )
+                    {
+                        std::cout << task_descriptor << std::endl;
+                    }
+
+                    // Build a task tree
+                    TTP::TaskTreeBuilder ttb;
+                    TTP::TaskTree task_tree = ttb.build(task_descs);
+                    std::cout << "Task Tree: " << task_tree;
+                }
+                catch(...)
+                {
+                    std::cout << "PERSSES\n";
                 }
             }
             else

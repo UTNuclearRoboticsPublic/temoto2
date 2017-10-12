@@ -2,10 +2,12 @@
 #define TASK_DESCRIPTOR_H
 
 #include "TTP/io_descriptor.h"
-#include "TTP/base_task/base_task.h"
+//#include "TTP/base_task/base_task.h"
 
 namespace TTP
 {
+
+typedef std::string Action;
 
 struct TaskInterface
 {
@@ -21,16 +23,30 @@ class TaskDescriptor
 {
 public:
 
-    TaskDescriptor( IODescriptor& input_descriptor );
+    TaskDescriptor(){}
 
-    TaskDescriptor( TaskInterface& task_interface );
+    TaskDescriptor( Action action );
 
-    TaskDescriptor( std::vector<TaskInterface>& task_interfaces );
+    TaskDescriptor( Action action, IODescriptor& input_descriptor );
+
+    TaskDescriptor( Action action, TaskInterface& task_interface );
+
+    TaskDescriptor( Action action, std::vector<TaskInterface>& task_interfaces );
+
+    friend std::ostream& operator<<( std::ostream& stream, const TaskDescriptor& td);
+
+    const Action& getAction() const;
+
+    std::vector<TaskInterface>& getInterfaces();
+
+    const IODescriptor& getFirstInputDescriptor();
+
+    bool empty();
 
 private:
     std::vector<TaskInterface> task_interfaces_;
 
-    std::string task_name_;
+    Action action_;
 
     std::string task_class_name_;
 
@@ -38,7 +54,7 @@ private:
 
     std::string task_lib_path_;
 
-    boost::shared_ptr<Task> task_pointer_;
+    //boost::shared_ptr<Task> task_pointer_;
 };
 }
 

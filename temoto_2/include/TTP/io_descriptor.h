@@ -35,7 +35,6 @@ struct Subject
     Data data;
 };
 
-typedef std::string Action;
 typedef Subject What;
 typedef Subject Where;
 typedef Subject WhereAdv;
@@ -48,15 +47,13 @@ class IODescriptor
 {
 public:
 
-    void setAction( Action action );
+    IODescriptor(){}
 
     void addWhat( std::string word );
 
     void addWhere( std::string word );
 
     void addWhereAdv( std::string word );
-
-    Action getAction() const;
 
     const std::vector<What>& getWhats() const;
 
@@ -67,7 +64,6 @@ public:
 
 private:
 
-    Action action_;
     std::vector<What> whats_;
     std::vector<Where> wheres_;
     std::vector<WhereAdv> where_advs_;
