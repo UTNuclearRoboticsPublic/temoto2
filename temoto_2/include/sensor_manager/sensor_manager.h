@@ -9,13 +9,14 @@
 namespace sensor_manager
 {
 
+
 class SensorManager
 {
 public:
     /**
      * @brief List of known sensors
      */
-    std::vector <package_info> pkgInfoList_;
+    std::vector <PackageInfoPtr> pkg_infos_;
 
     /**
      * @brief SensorManager
@@ -32,6 +33,7 @@ private:
     ros::NodeHandle nh_;
     ros::ServiceServer list_devices_server_;
 	rmp::ResourceManager<SensorManager> resource_manager_;
+  std::map<temoto_id::ID, PackageInfoPtr> allocated_sensors_;
 
     /**
      * @brief Callback to a service that lists all available packages that
@@ -62,6 +64,12 @@ private:
      * @return
      */
     void stopSensorCb (temoto_2::LoadSensor::Request& req, temoto_2::LoadSensor::Response& res);
+   
+    /**
+     * @brief Called when sensor is unloaded. Nothing to do here.
+     * @return
+     */
+    void statusCb (temoto_2::ResourceStatus& srv);
 
     /**
      * @brief Function for finding the right sensor, based on the request parameters
@@ -74,7 +82,7 @@ private:
      * @return Returns a boolean. If suitable device was found, then the req param
      * is formatted as a nodeSpawnKill::Request (first one in the list, even if there is more)
      */
-    bool findSensor (temoto_2::LoadProcess::Request& ret,
+    PackageInfoPtr findSensor (temoto_2::LoadProcess::Request& ret,
                      temoto_2::LoadSensor::Response& retstartSensor,
                      std::string type,
                      std::string name,

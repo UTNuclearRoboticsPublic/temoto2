@@ -5,34 +5,42 @@
 #include <vector>
 #include <map>
 #include <ctype.h>
+#include <memory>  // shared_ptr
 
-class package_info
+class PackageInfo
 {
 public:
   /**
-   * @brief package_info
+   * @brief PackageInfo
    */
-  package_info();
+  PackageInfo();
 
-  package_info(std::string name, std::string type);
+  PackageInfo(std::string name, std::string type);
 
   bool setDescription(std::string description);
 
   bool setRunnables(std::map<std::string, std::string> runnables);
 
   bool setLaunchables(std::map<std::string, std::string> launchables);
-  
-  void increaseReliability();
-  
-  void decreaseReliability();
+
+  /**
+   * \brief Adjust reliability
+   * \param reliability the new reliability contribution to the moving average filter. The value has
+   * to be in range [0-1], 0 being not reliable at all and 1.0 is very
+   * reliable.
+   */
+  void adjustReliability(float reliability = 1.0);
 
   std::string getName();
 
   std::string getType();
 
   std::string getDescription();
-  
-  float getReliability();
+
+  float getReliability() const
+  {
+    return reliability_average;
+  };
 
   std::map<std::string, std::string> getRunnables();
 
@@ -73,9 +81,20 @@ private:
   std::map<std::string, std::string> launchables_;
 
   /**
+   * @brief Reliability ratings of the package.
+   */
+  std::array<float, 100> reliabilities_;
+
+  /**
+   * @brief Reliability moving average.
+   */
+  unsigned int reliability_average;
+
+  /**
    * @brief Reliability rating of the package.
    */
-  float reliability;
+  unsigned int reliability_idx;
 };
 
+typedef std::shared_ptr<PackageInfo> PackageInfoPtr;
 #endif

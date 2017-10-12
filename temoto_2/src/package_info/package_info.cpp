@@ -4,15 +4,17 @@
  *     CONSTRUCTORS
  * * * * * * * * * * * */
 
-package_info::package_info()
+PackageInfo::PackageInfo()
 {
-  runs_total = 1;
-  runs_success = 1;
+  // Fill array with initial reliability values of 0.5;
+  reliabilities_.fill(0.8);
+  reliability_average = 0.8;
+  reliability_idx = 0;
 }
 
-package_info::package_info(std::string name, std::string type) : name_(name), type_(type)
+PackageInfo::PackageInfo(std::string name, std::string type) : name_(name), type_(type)
 {
-  reliability = 0.5;
+  PackageInfo();
 }
 
 /* * * * * * * * * * * *
@@ -20,21 +22,21 @@ package_info::package_info(std::string name, std::string type) : name_(name), ty
  * * * * * * * * * * * */
 
 // Set description
-bool package_info::setDescription(std::string description)
+bool PackageInfo::setDescription(std::string description)
 {
   this->description_ = description;
   return true;
 }
 
 // Set runnables
-bool package_info::setRunnables(std::map<std::string, std::string> runnables)
+bool PackageInfo::setRunnables(std::map<std::string, std::string> runnables)
 {
   this->runnables_ = runnables;
   return true;
 }
 
 // Set launchables
-bool package_info::setLaunchables(std::map<std::string, std::string> launchables)
+bool PackageInfo::setLaunchables(std::map<std::string, std::string> launchables)
 {
   this->launchables_ = launchables;
   return true;
@@ -45,31 +47,42 @@ bool package_info::setLaunchables(std::map<std::string, std::string> launchables
  * * * * * * * * * * * */
 
 // Get name
-std::string package_info::getName()
+std::string PackageInfo::getName()
 {
   return this->name_;
 }
 
 // Get type
-std::string package_info::getType()
+std::string PackageInfo::getType()
 {
   return this->type_;
 }
 
 // Get description
-std::string package_info::getDescription()
+std::string PackageInfo::getDescription()
 {
   return this->description_;
 }
 
+
+// Adds a reliability contribution to a moving average filter
+void PackageInfo::adjustReliability(float reliability)
+{
+  reliability = std::max(std::min(reliability, 1.0f), 0.0f); // clamp into [0-1]
+  ++reliability_idx %= reliabilities_.size(); // rolling index
+  reliability_average -= reliabilities_[reliability_idx] / (float)reliabilities_.size();
+  reliabilities_[reliability_idx % reliabilities_.size()] =
+      reliability / (float)reliabilities_.size();
+}
+
 // Get runnables
-std::map<std::string, std::string> package_info::getRunnables()
+std::map<std::string, std::string> PackageInfo::getRunnables()
 {
   return this->runnables_;
 }
 
 // Get launchables
-std::map<std::string, std::string> package_info::getLaunchables()
+std::map<std::string, std::string> PackageInfo::getLaunchables()
 {
   return this->launchables_;
 }
@@ -79,28 +92,28 @@ std::map<std::string, std::string> package_info::getLaunchables()
  * * * * * * * * * * * */
 
 // Add a runnable into the list of runnables
-bool package_info::addRunnable(std::pair<std::string, std::string> runnable)
+bool PackageInfo::addRunnable(std::pair<std::string, std::string> runnable)
 {
   this->runnables_.insert(runnable);
   return true;
 }
 
 // Add a launchable into the list of launchables
-bool package_info::addLaunchable(std::pair<std::string, std::string> launchable)
+bool PackageInfo::addLaunchable(std::pair<std::string, std::string> launchable)
 {
   this->launchables_.insert(launchable);
   return true;
 }
 
 // Remove a runnable from the list of runnables
-bool package_info::removeRunnable(std::string runnable)
+bool PackageInfo::removeRunnable(std::string runnable)
 {
   this->runnables_.erase(runnable);
   return true;
 }
 
 // Remove a launchable from the list of launchables
-bool package_info::removeLaunchable(std::string launchable)
+bool PackageInfo::removeLaunchable(std::string launchable)
 {
   this->launchables_.erase(launchable);
   return true;
