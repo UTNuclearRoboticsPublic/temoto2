@@ -46,6 +46,7 @@ bool checkIfPhrase( class_label current_category,
     return true;
 }
 
+// TODO DESC
 std::string nodesAsString (parser::parse_tree& tree)
 {
     // Visit the tree and get the leaf nodes
@@ -80,19 +81,18 @@ void branch_finder::operator()(const internal_node& in)
     // Check if it is a verb phrase node
     if( checkIfPhrase( in.category(), in.child(0)->category(), verb_categories) )
     {
-        TLF::TaskDescriptor task_desc;
-        parser::parse_tree tree(in.child(0)->clone());
+        TTP::IODescriptor task_desc;
+        parser::parse_tree tree( in.child(0)->clone() );
 
         task_desc.setAction( nodesAsString(tree) );
         task_descs_.push_back( task_desc );
-
     }
 
     // Check if noun phrase
     else
     if ( checkIfPhrase( in.category(), in.child(0)->category(), noun_categories) )
     {
-        parser::parse_tree tree(in.clone());
+        parser::parse_tree tree( in.clone() );
         task_descs_.back().addWhat( nodesAsString(tree) );
     }
 
@@ -101,7 +101,7 @@ void branch_finder::operator()(const internal_node& in)
     else
     if ( checkIfPhrase( in.category(), in.child(0)->category(), advb_categories) )
     {
-        parser::parse_tree tree(in.clone());
+        parser::parse_tree tree( in.clone() );
         task_descs_.back().addWhereAdv( nodesAsString(tree) );
     }
 
@@ -109,7 +109,7 @@ void branch_finder::operator()(const internal_node& in)
     else
     if ( checkIfPhrase( in.category(), in.child(0)->category(), prep_categories) )
     {
-        parser::parse_tree tree(in.clone());
+        parser::parse_tree tree( in.clone() );
         task_descs_.back().addWhere( nodesAsString(tree) );
 
         dive = false;
@@ -125,7 +125,7 @@ void branch_finder::operator()(const internal_node& in)
     }
 }
 
-std::vector<TLF::TaskDescriptor> branch_finder::getTaskDescs()
+std::vector<TTP::IODescriptor> branch_finder::getTaskDescs()
 {
     return std::move(task_descs_);
 }

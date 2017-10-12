@@ -1,14 +1,14 @@
-#ifndef TEMOTO_LANGUAGE_FORMAT_H
-#define TEMOTO_LANGUAGE_FORMAT_H
+#ifndef IO_DESCRIPTOR_H
+#define IO_DESCRIPTOR_H
 
 #include <boost/any.hpp>
 #include <string>
 #include <vector>
 
 /**
- * Temoto Language Format
+ * Temoto Tasking Protocol
  */
-namespace TLF
+namespace TTP
 {
 
 /**
@@ -42,9 +42,9 @@ typedef Subject WhereAdv;
 typedef Subject Numerical;
 
 /**
- * @brief The TaskDescriptor struct
+ * @brief The IODescriptor struct
  */
-class TaskDescriptor
+class IODescriptor
 {
 public:
 
@@ -74,6 +74,6 @@ private:
     std::vector<Numerical> numerics_;
 };
 
-std::ostream& operator<<( std::ostream& stream, const TaskDescriptor& td);
+std::ostream& operator<<( std::ostream& stream, const IODescriptor& td);
 }
 #endif

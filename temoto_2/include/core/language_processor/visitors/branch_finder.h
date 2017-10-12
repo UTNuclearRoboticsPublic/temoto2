@@ -14,7 +14,7 @@
 
 #include "meta/parser/trees/visitors/visitor.h"
 #include "meta/parser/sr_parser.h"
-#include "core/language_processor/temoto_language_format.h"
+#include "TTP/io_descriptor.h"
 
 namespace meta
 {
@@ -35,12 +35,11 @@ class branch_finder : public const_visitor<void>
      * @brief Returns the phrases found by visitor
      * @return
      */
-    std::vector<TLF::TaskDescriptor> getTaskDescs();
+    std::vector<TTP::IODescriptor> getTaskDescs();
 
   private:
     /// The storage for the task descriptors found so far
-    std::vector<TLF::TaskDescriptor> task_descs_;
-
+    std::vector<TTP::IODescriptor> task_descs_;
 };
 
 

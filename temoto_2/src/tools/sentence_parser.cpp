@@ -82,7 +82,7 @@ int main(int argc, char **argv)
                 parser::branch_finder bf;
 
                 p_tree.visit(bf);
-                std::vector<TLF::TaskDescriptor> task_descs = bf.getTaskDescs();
+                std::vector<TTP::IODescriptor> task_descs = bf.getTaskDescs();
 
                 std::cout << "nr of potential tasks found: " << task_descs.size() << std::endl;
 
