@@ -31,7 +31,8 @@ ProcessManager::~ProcessManager()
 // Timer callback where running proceses are checked if they are operational
 void ProcessManager::update(const ros::TimerEvent&)
 {
-  // auto find_it = std::find(running_processes_.begin(), running_processes_.end(), res.resource_id);
+  // auto find_it = std::find(running_processes_.begin(), running_processes_.end(),
+  // res.resource_id);
   // if(find_it == running_processes_.end())
   //{
   //	ROS_ERROR("%s unable to obtain PID for resource with id %d", res.resource_id);
@@ -47,14 +48,14 @@ void ProcessManager::update(const ros::TimerEvent&)
     int status;
     int kill_response = waitpid(proc_it->first, &status, WNOHANG);
 
-    ROS_INFO("Resource_id '%d'(PID = %d) waitpid response = %d, status = %d\n", proc_it->second, proc_it->first,
-             kill_response, status);
+    ROS_INFO("Resource_id '%d'(PID = %d) waitpid response = %d, status = %d\n", proc_it->second,
+             proc_it->first, kill_response, status);
 
     // If the child process has stopped running,
     if (kill_response != 0)
     {
-      ROS_ERROR("%s Process '%d'(PID = %d) has stopped, removing from process list and reporting", prefix.c_str(),
-                proc_it->second, proc_it->first);
+      ROS_ERROR("%s Process '%d'(PID = %d) has stopped, removing from process list and reporting",
+                prefix.c_str(), proc_it->second, proc_it->first);
 
       // TODO: send error information to all related connections
       temoto_2::ResourceStatus status_msg;
@@ -76,7 +77,8 @@ void ProcessManager::update(const ros::TimerEvent&)
   }
 }
 
-void ProcessManager::unloadCb(temoto_2::LoadProcess::Request& req, temoto_2::LoadProcess::Response& res)
+void ProcessManager::unloadCb(temoto_2::LoadProcess::Request& req,
+                              temoto_2::LoadProcess::Response& res)
 {
   std::string prefix = node_name_ + "::" + __func__;
   ROS_INFO("%s Unload resource requested ...", prefix.c_str());
@@ -95,7 +97,8 @@ void ProcessManager::unloadCb(temoto_2::LoadProcess::Request& req, temoto_2::Loa
   }
   if (!pid_found)
   {
-    ROS_ERROR("%s unable to obtain PID for resource with id %ld", prefix.c_str(), res.rmp.resource_id);
+    ROS_ERROR("%s unable to obtain PID for resource with id %ld", prefix.c_str(),
+              res.rmp.resource_id);
     // TODO: throw exception
     return;
   }
@@ -110,7 +113,8 @@ void ProcessManager::unloadCb(temoto_2::LoadProcess::Request& req, temoto_2::Loa
   running_processes_.erase(active_pid);
 }
 
-void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req, temoto_2::LoadProcess::Response& res)
+void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
+                            temoto_2::LoadProcess::Response& res)
 {
   ROS_INFO("loadCb reached");
   // Name of the method, used for making debugging a bit simpler
@@ -121,7 +125,8 @@ void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req, temoto_2::LoadP
   const std::string& package_name = req.package_name;
   const std::string& executable = req.executable;
 
-  ROS_INFO("%s Received a 'LoadProcess' service request: %s ...", prefix.c_str(), executable.c_str());
+  ROS_INFO("%s Received a 'LoadProcess' service request: %s ...", prefix.c_str(),
+           executable.c_str());
 
   // Validate the action command.
   if (std::find(validActions.begin(), validActions.end(), action) == validActions.end())

@@ -4,104 +4,104 @@
  *     CONSTRUCTORS
  * * * * * * * * * * * */
 
-package_info::package_info () {}
+package_info::package_info()
+{
+  runs_total = 1;
+  runs_success = 1;
+}
 
-package_info::package_info (std::string name,
-                            std::string type)
-    : name_(name),
-      type_(type)
-{}
-
+package_info::package_info(std::string name, std::string type) : name_(name), type_(type)
+{
+  reliability = 0.5;
+}
 
 /* * * * * * * * * * * *
  *     SETTERS
  * * * * * * * * * * * */
 
 // Set description
-bool package_info::setDescription (std::string description)
+bool package_info::setDescription(std::string description)
 {
-    this->description_ = description;
-    return true;
+  this->description_ = description;
+  return true;
 }
 
 // Set runnables
-bool package_info::setRunnables (std::map<std::string, std::string> runnables)
+bool package_info::setRunnables(std::map<std::string, std::string> runnables)
 {
-    this->runnables_ = runnables;
-    return true;
+  this->runnables_ = runnables;
+  return true;
 }
 
 // Set launchables
-bool package_info::setLaunchables (std::map<std::string, std::string> launchables)
+bool package_info::setLaunchables(std::map<std::string, std::string> launchables)
 {
-    this->launchables_ = launchables;
-    return true;
+  this->launchables_ = launchables;
+  return true;
 }
-
 
 /* * * * * * * * * * * *
  *     GETTERS
  * * * * * * * * * * * */
 
 // Get name
-std::string package_info::getName ()
+std::string package_info::getName()
 {
-    return this->name_;
+  return this->name_;
 }
 
 // Get type
-std::string package_info::getType ()
+std::string package_info::getType()
 {
-    return this->type_;
+  return this->type_;
 }
 
 // Get description
-std::string package_info::getDescription ()
+std::string package_info::getDescription()
 {
-    return this->description_;
+  return this->description_;
 }
 
 // Get runnables
-std::map<std::string, std::string> package_info::getRunnables ()
+std::map<std::string, std::string> package_info::getRunnables()
 {
-    return this->runnables_;
+  return this->runnables_;
 }
 
 // Get launchables
-std::map<std::string, std::string> package_info::getLaunchables ()
+std::map<std::string, std::string> package_info::getLaunchables()
 {
-    return this->launchables_;
+  return this->launchables_;
 }
-
 
 /* * * * * * * * * * * *
  *     OTHER
  * * * * * * * * * * * */
 
 // Add a runnable into the list of runnables
-bool package_info::addRunnable (std::pair<std::string, std::string> runnable)
+bool package_info::addRunnable(std::pair<std::string, std::string> runnable)
 {
-    this->runnables_.insert(runnable);
-    return true;
+  this->runnables_.insert(runnable);
+  return true;
 }
 
 // Add a launchable into the list of launchables
-bool package_info::addLaunchable (std::pair<std::string, std::string> launchable)
+bool package_info::addLaunchable(std::pair<std::string, std::string> launchable)
 {
-    this->launchables_.insert(launchable);
-    return true;
+  this->launchables_.insert(launchable);
+  return true;
 }
 
 // Remove a runnable from the list of runnables
-bool package_info::removeRunnable (std::string runnable)
+bool package_info::removeRunnable(std::string runnable)
 {
-    this->runnables_.erase(runnable);
-    return true;
+  this->runnables_.erase(runnable);
+  return true;
 }
 
 // Remove a launchable from the list of launchables
-bool package_info::removeLaunchable (std::string launchable)
+bool package_info::removeLaunchable(std::string launchable)
 {
-    this->launchables_.erase(launchable);
-    return true;
+  this->launchables_.erase(launchable);
+  return true;
 }
