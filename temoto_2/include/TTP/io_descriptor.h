@@ -17,28 +17,34 @@ namespace TTP
 struct Data
 {
     std::string type = "";
-    boost::any payload;
+    boost::any value;
 };
+
+std::ostream& operator<<( std::ostream& stream, const Data& data);
 
 // Valid datatypes
 const std::vector<std::string> valid_datatypes = {"topic",
                                                   "number",
                                                   "pointer",
-                                                  "other"};
+                                                  "other",
+                                                  "string"};
 
 /**
  * @brief The Subject struct
  */
 struct Subject
 {
-    std::string word;
-    Data data;
+    std::vector<std::string> words;
+    std::string pos_tag;
+    std::vector<Data> data;
 };
+
+std::ostream& operator<<( std::ostream& stream, const Subject& subject);
 
 typedef Subject What;
 typedef Subject Where;
 typedef Subject WhereAdv;
-typedef Subject Numerical;
+typedef Subject Numeric;
 
 /**
  * @brief The IODescriptor struct
@@ -49,11 +55,31 @@ public:
 
     IODescriptor(){}
 
+    /*
+     * SETTERS
+     */
+
     void addWhat( std::string word );
+
+    void addWhat( What what );
+
 
     void addWhere( std::string word );
 
+    void addWhere( Where where );
+
+
     void addWhereAdv( std::string word );
+
+
+    void addNumeric( std::string word );
+
+    void addNumeric( Numeric numeric );
+
+
+    /*
+     * GETTERS
+     */
 
     const std::vector<What>& getWhats() const;
 
@@ -61,13 +87,15 @@ public:
 
     const std::vector<WhereAdv>& getWhereAdvs() const;
 
+    const std::vector<Numeric>& getNumerics() const;
+
 
 private:
 
     std::vector<What> whats_;
     std::vector<Where> wheres_;
     std::vector<WhereAdv> where_advs_;
-    std::vector<Numerical> numerics_;
+    std::vector<Numeric> numerics_;
 };
 
 std::ostream& operator<<( std::ostream& stream, const IODescriptor& td);

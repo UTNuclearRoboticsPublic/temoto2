@@ -12,10 +12,12 @@
 #include <sstream>
 #include <algorithm>
 
-std::vector<std::string> verb_categories = {"VP", "SINV", "S", "SQ"};
-std::vector<std::string> noun_categories = {"NP"};
-std::vector<std::string> prep_categories = {"PP"};
-std::vector<std::string> advb_categories = {"ADVP"};
+std::vector<std::string> verb_phrases = {"VP", "SINV", "S", "SQ"};
+std::vector<std::string> noun_phrases = {"NP"};
+std::vector<std::string> prep_phrases = {"PP"};
+std::vector<std::string> advb_phrases = {"ADVP"};
+
+std::vector<std::string> verb_categories = {"VB", "VBD", "VBG", "VBN", "VBP", "VBZ"};
 
 namespace meta
 {
@@ -28,22 +30,29 @@ bool checkIfPhrase( class_label current_category,
                     std::vector<std::string>& categories )
 {
     // Check if it is a valid branching category
-    if ( std::find(categories.begin(),
-                   categories.end(),
-                   current_category.id_) == categories.end() )
+    if (std::find(categories.begin(), categories.end(), current_category.id_) == categories.end())
     {
         return false;
     }
 
     // Check if the childs category is not another branching category
-    if ( std::find(categories.begin(),
-                   categories.end(),
-                   child_category.id_) != categories.end())
+    if (std::find(categories.begin(), categories.end(), child_category.id_) != categories.end())
     {
         return false;
     }
 
     return true;
+}
+
+// TODO DESC
+bool checkIfContains(class_label category, std::vector<std::string>& categories)
+{
+    if (std::find(categories.begin(), categories.end(), category.id_) != categories.end())
+    {
+        return true;
+    }
+
+    return false;
 }
 
 // TODO DESC
@@ -59,7 +68,11 @@ std::string nodesAsString (parser::parse_tree& tree)
     // Put the leaves into the stringstream
     for(auto& leaf : leaves)
     {
-        ss << *leaf->word() << " ";
+        ss << *leaf->word();
+        if (&leaf != &leaves.back())
+        {
+            ss << " ";
+        }
     }
 
     return ss.str();
@@ -79,7 +92,8 @@ void branch_finder::operator()(const internal_node& in)
     bool dive = true;
 
     // Check if it is a verb phrase node
-    if( checkIfPhrase( in.category(), in.child(0)->category(), verb_categories) )
+    if( checkIfPhrase( in.category(), in.child(0)->category(), verb_phrases) &&
+        checkIfContains(in.child(0)->category(), verb_categories))
     {
         parser::parse_tree tree( in.child(0)->clone() );
 
@@ -89,29 +103,43 @@ void branch_finder::operator()(const internal_node& in)
 
     // Check if noun phrase
     else
-    if ( checkIfPhrase( in.category(), in.child(0)->category(), noun_categories) )
+    if ( checkIfPhrase( in.category(), in.child(0)->category(), noun_phrases) )
     {
         parser::parse_tree tree( in.clone() );
-        task_descs_.back().getInterfaces().back().input_descriptor.addWhat( nodesAsString(tree) );
+
+        if (task_descs_.empty())
+        {
+            addressable_ = nodesAsString(tree);
+        }
+        else
+        {
+            task_descs_.back().getInterfaces().back().input_descriptor.addWhat( nodesAsString(tree) );
+        }
     }
 
 
     // Check if adverb phrase
     else
-    if ( checkIfPhrase( in.category(), in.child(0)->category(), advb_categories) )
+    if ( checkIfPhrase( in.category(), in.child(0)->category(), advb_phrases) )
     {
-        parser::parse_tree tree( in.clone() );
-        task_descs_.back().getInterfaces().back().input_descriptor.addWhereAdv( nodesAsString(tree) );
+        if (!task_descs_.empty())
+        {
+            parser::parse_tree tree( in.clone() );
+            task_descs_.back().getInterfaces().back().input_descriptor.addWhereAdv( nodesAsString(tree) );
+        }
     }
 
     // Check if preposition phrase
     else
-    if ( checkIfPhrase( in.category(), in.child(0)->category(), prep_categories) )
+    if ( checkIfPhrase( in.category(), in.child(0)->category(), prep_phrases) )
     {
-        parser::parse_tree tree( in.clone() );
-        task_descs_.back().getInterfaces().back().input_descriptor.addWhere( nodesAsString(tree) );
+        if (!task_descs_.empty())
+        {
+            parser::parse_tree tree( in.clone() );
+            task_descs_.back().getInterfaces().back().input_descriptor.addWhere( nodesAsString(tree) );
 
-        dive = false;
+            dive = false;
+        }
     }
 
     if(dive)
@@ -127,6 +155,11 @@ void branch_finder::operator()(const internal_node& in)
 std::vector<TTP::TaskDescriptor> branch_finder::getTaskDescs()
 {
     return std::move(task_descs_);
+}
+
+std::string branch_finder::getAddressable()
+{
+    return addressable_;
 }
 }
 }

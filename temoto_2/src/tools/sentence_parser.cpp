@@ -25,6 +25,9 @@
 #include "core/language_processor/visitors/branch_finder.h"
 #include "core/language_processor/visitors/find_action.h"
 #include "TTP/task_tree.h"
+#include "TTP/task_descriptor_processor.h"
+
+#include "base_error/base_error.h"
 
 using namespace meta;
 
@@ -39,6 +42,23 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "pos_tagger");
     ros::NodeHandle nh;
+
+    try
+    {
+        std::cout << "---- Task Descriptor Processor test ----" << std::endl;
+
+        TTP::TaskDescriptorProcessor tdp("/home/robert/catkin_ws/src/temoto2/tasks/task_demo");
+        TTP::TaskDescriptor td = tdp.getTaskDescriptor();
+
+        std::cout << td;
+
+        std::cout << "---- Task Descriptor Processor test end ----" << std::endl;
+    }
+    catch( error::ErrorStackUtil& e )
+    {
+        // Rethrow the error
+        std::cout << e.getStack();
+    }
 
     std::cout << "Loading tagging model" << std::endl;
     // load POS-tagging model
@@ -87,7 +107,7 @@ int main(int argc, char **argv)
                     p_tree.visit(bf);
                     std::vector<TTP::TaskDescriptor> task_descs = bf.getTaskDescs();
 
-                    std::cout << "nr of potential tasks found: " << task_descs.size() << std::endl;
+                    std::cout << "Found " << task_descs.size() << " potential tasks addressed to: " << bf.getAddressable() << std::endl;
 
                     for( auto& task_descriptor : task_descs )
                     {
@@ -98,6 +118,8 @@ int main(int argc, char **argv)
                     TTP::TaskTreeBuilder ttb;
                     TTP::TaskTree task_tree = ttb.build(task_descs);
                     std::cout << "Task Tree: " << task_tree;
+
+                    std::cout << "----------------------------------------------------------\n";
                 }
                 catch(...)
                 {

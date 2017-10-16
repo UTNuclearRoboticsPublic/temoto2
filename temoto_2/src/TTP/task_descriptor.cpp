@@ -56,10 +56,11 @@ bool TaskDescriptor::empty()
 std::ostream& operator<<( std::ostream& stream, const TaskDescriptor& td)
 {
     stream << "Action: " << td.getAction() << std::endl;
-    stream << "Interfaces:" << std::endl;
     for (auto& task_interface : td.task_interfaces_)
     {
-        stream << task_interface.input_descriptor;
+        stream << "Interface:" << std::endl;
+        stream << "  -- in --\n" << task_interface.input_descriptor;
+        stream << "  -- out --\n" << task_interface.output_descriptor;
     }
     return stream;
 }

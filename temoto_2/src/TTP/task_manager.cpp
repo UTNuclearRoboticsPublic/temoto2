@@ -6,27 +6,27 @@
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "core/task_handler/task_handler.h"
+#include "TTP/task_manager.h"
 
 /* * * * * * * * *
  *  CONSTRUCTOR
  * * * * * * * * */
 
-TaskHandler::TaskHandler (std::string system_prefix)
+TaskManager::TaskManager (std::string system_prefix)
     : system_prefix_(system_prefix)
 {
     // Initialize the vector of indexed tasks
-    tasks_indexed_ = new std::vector <TaskInfo>(1);
+    tasks_indexed_ = new std::vector <TaskDescriptor>(1);
 
     // Construct the classloader
     class_loader_ = new class_loader::MultiLibraryClassLoader(false);
 
     // Start the servers
-    stop_task_server_ = n_.advertiseService (system_prefix_ + "/stop_task", &TaskHandler::stopTaskCallback, this);
-    index_tasks_server_ = n_.advertiseService (system_prefix_ + "/index_tasks", &TaskHandler::indexTasksCallback, this);
+    stop_task_server_ = n_.advertiseService (system_prefix_ + "/stop_task", &TaskManager::stopTaskCallback, this);
+    index_tasks_server_ = n_.advertiseService (system_prefix_ + "/index_tasks", &TaskManager::indexTasksCallback, this);
 
     // Start subscribers
-    stop_task_subscriber_ = n_.subscribe("temoto/stop_task", 10, &TaskHandler::stopTaskMsgCallback, this);
+    stop_task_subscriber_ = n_.subscribe("temoto/stop_task", 10, &TaskManager::stopTaskMsgCallback, this);
 }
 
 
@@ -34,9 +34,9 @@ TaskHandler::TaskHandler (std::string system_prefix)
  *  FIND TASK
  * * * * * * * * */
 
-std::vector <TaskInfo> TaskHandler::findTask(std::string task_to_find, const std::vector <TaskInfo>& tasks)
+std::vector <TaskDescriptor> TaskManager::findTask(std::string task_to_find, const std::vector <TaskDescriptor>& tasks)
 {
-    std::vector <TaskInfo> tasks_found;
+    std::vector <TaskDescriptor> tasks_found;
     for (auto& task : tasks)
     {
         if (task_to_find.compare(task.getName()) == 0)
@@ -52,7 +52,7 @@ std::vector <TaskInfo> TaskHandler::findTask(std::string task_to_find, const std
  *  FIND TASK LOCAL
  * * * * * * * * */
 
-std::vector <TaskInfo> TaskHandler::findTaskLocal(std::string task_to_find)
+std::vector <TaskDescriptor> TaskManager::findTaskLocal(std::string task_to_find)
 {
     return findTask(task_to_find, *(this->tasks_indexed_));
 }
@@ -62,7 +62,7 @@ std::vector <TaskInfo> TaskHandler::findTaskLocal(std::string task_to_find)
  *  FIND TASK RUNNING
  * * * * * * * * */
 /*
-std::vector <TaskInfo> TaskHandler::findTaskRunning(std::string task_to_find)
+std::vector <TaskDescriptor> TaskManager::findTaskRunning(std::string task_to_find)
 {
     return findTask(task_to_find, this->running_tasks_);
 }
@@ -72,7 +72,7 @@ std::vector <TaskInfo> TaskHandler::findTaskRunning(std::string task_to_find)
  *  FIND TASK FROM FILESYSTEM
  * * * * * * * * */
 
-std::vector <TaskInfo> TaskHandler::findTaskFilesys( std::string task_to_find,
+std::vector <TaskDescriptor> TaskManager::findTaskFilesys( std::string task_to_find,
                                                      boost::filesystem::directory_entry base_path,
                                                      int search_depth)
 {
@@ -81,7 +81,7 @@ std::vector <TaskInfo> TaskHandler::findTaskFilesys( std::string task_to_find,
 
     boost::filesystem::path current_dir (base_path);
     boost::filesystem::directory_iterator end_itr;
-    std::vector <TaskInfo> tasks_found;
+    std::vector <TaskDescriptor> tasks_found;
 
     try
     {
@@ -92,7 +92,7 @@ std::vector <TaskInfo> TaskHandler::findTaskFilesys( std::string task_to_find,
             // if its a directory and depth limit is not there yet, go inside it
             if ( boost::filesystem::is_directory(*itr) && (search_depth > 0) )
             {
-                std::vector<TaskInfo> sub_tasks_found = findTaskFilesys( task_to_find, *itr, (search_depth - 1) );
+                std::vector<TaskDescriptor> sub_tasks_found = findTaskFilesys( task_to_find, *itr, (search_depth - 1) );
 
                 // Append the subtasks if not empty
                 if ( !sub_tasks_found.empty() )
@@ -113,8 +113,8 @@ std::vector <TaskInfo> TaskHandler::findTaskFilesys( std::string task_to_find,
                     boost::filesystem::path hackdir ((*itr)); //HACKATON
                     DescriptionProcessor desc_processor( hackdir.parent_path().string() );
 
-                    // Get TaskInfo
-                    TaskInfo task_info = desc_processor.getTaskInfo();
+                    // Get TaskDescriptor
+                    TaskDescriptor task_info = desc_processor.getTaskDescriptor();
                     tasks_found.push_back( task_info );
                 }
 
@@ -153,7 +153,7 @@ std::vector <TaskInfo> TaskHandler::findTaskFilesys( std::string task_to_find,
  *  INDEX TASKS
  * * * * * * * * */
 
-void TaskHandler::indexTasks (boost::filesystem::directory_entry base_path, int search_depth)
+void TaskManager::indexTasks (boost::filesystem::directory_entry base_path, int search_depth)
 {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
@@ -175,7 +175,7 @@ void TaskHandler::indexTasks (boost::filesystem::directory_entry base_path, int 
  *  GET THE INDEX TASKS
  * * * * * * * * */
 
-std::vector <TaskInfo>* TaskHandler::getIndexedTasks()
+std::vector <TaskDescriptor>* TaskManager::getIndexedTasks()
 {
     return this->tasks_indexed_;
 }
@@ -185,7 +185,7 @@ std::vector <TaskInfo>* TaskHandler::getIndexedTasks()
  *  INDEX TASKS SERVICE CALLBACK
  * * * * * * * * */
 
-bool TaskHandler::indexTasksCallback( temoto_2::indexTasks::Request& req,
+bool TaskManager::indexTasksCallback( temoto_2::indexTasks::Request& req,
                                       temoto_2::indexTasks::Response& res)
 {
     // Name of the method, used for making debugging a bit simpler
@@ -218,7 +218,7 @@ bool TaskHandler::indexTasksCallback( temoto_2::indexTasks::Request& req,
  *  LOAD TASK
  * * * * * * * * */
 
-void TaskHandler::loadTask(RunningTask& task)
+void TaskManager::loadTask(RunningTask& task)
 {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
@@ -263,14 +263,14 @@ void TaskHandler::loadTask(RunningTask& task)
  *  UNLOAD LIB
  * * * * * * * * */
 
-void TaskHandler::unloadTaskLib(std::string path_to_lib)
+void TaskManager::unloadTaskLib(std::string path_to_lib)
 {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
 
     try
     {
-        ROS_DEBUG( "[TaskHandler/unloadTaskLib] unloading library");
+        ROS_DEBUG( "[TaskManager/unloadTaskLib] unloading library");
         class_loader_->unloadLibrary(path_to_lib);
     }
     catch(class_loader::ClassLoaderException& e)
@@ -288,7 +288,7 @@ void TaskHandler::unloadTaskLib(std::string path_to_lib)
  *  INSTANTIATE TASK
  * * * * * * * * */
 
-void TaskHandler::instantiateTask(RunningTask& task)
+void TaskManager::instantiateTask(RunningTask& task)
 {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
@@ -355,7 +355,7 @@ void TaskHandler::instantiateTask(RunningTask& task)
  *  TODO: * check the running tasks lists before doing anything
  * * * * * * * * */
 
-void TaskHandler::startTask(RunningTask& task, std::vector<boost::any> arguments)
+void TaskManager::startTask(RunningTask& task, std::vector<boost::any> arguments)
 {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
@@ -378,44 +378,11 @@ void TaskHandler::startTask(RunningTask& task, std::vector<boost::any> arguments
     }
 }
 
-
-/* * * * * * * * *
- *  START TASK THREAD
- * * * * * * * * */
-
-void TaskHandler::startTaskThread(RunningTask& task, std::vector<boost::any> arguments)
-{
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
-
-    try
-    {
-        ROS_DEBUG( "%s starting task: %s", prefix.c_str(), task.task_info_.getName().c_str());
-        task.task_pointer_->setID( id_manager_.generateID() );
-
-        using memfunc_type = bool (Task::*)(int, std::vector<boost::any>);
-        memfunc_type memfunc = &Task::startTask;
-
-        task.task_thread_ = std::thread(memfunc, task.task_pointer_, 0, arguments);
-    }
-
-    catch(...)
-    {
-        // Rethrow the exception
-        throw error::ErrorStackUtil( coreErr::UNHANDLED,
-                                     error::Subsystem::CORE,
-                                     error::Urgency::HIGH,
-                                     prefix + "Received an unhandled exception",
-                                     ros::Time::now() );
-    }
-}
-
-
 /* * * * * * * * *
  *  EXECUTE TASK
  * * * * * * * * */
 
-bool TaskHandler::executeTask(TaskInfo task_info, std::vector<boost::any> arguments)
+bool TaskManager::executeTask(TaskDescriptor task_info, std::vector<boost::any> arguments)
 {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
@@ -482,7 +449,7 @@ bool TaskHandler::executeTask(TaskInfo task_info, std::vector<boost::any> argume
  *  stopTaskByID
  * * * * * * * * */
 
-void TaskHandler::stopTaskByID( TemotoID::ID task_id )
+void TaskManager::stopTaskByID( TemotoID::ID task_id )
 {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = formatMessage( system_prefix_, this->class_name_, __func__);
@@ -543,7 +510,7 @@ void TaskHandler::stopTaskByID( TemotoID::ID task_id )
  *        just stopping the first one.
  * * * * * * * * */
 
-void TaskHandler::stopTaskByName( std::string task_name )
+void TaskManager::stopTaskByName( std::string task_name )
 {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
@@ -603,7 +570,7 @@ void TaskHandler::stopTaskByName( std::string task_name )
  *  STOP TASK
  * * * * * * * * */
 
-void TaskHandler::stopTask( std::string task_name, TemotoID::ID task_id)
+void TaskManager::stopTask( std::string task_name, TemotoID::ID task_id)
 {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
@@ -644,13 +611,13 @@ void TaskHandler::stopTask( std::string task_name, TemotoID::ID task_id)
  * * * * * * * * */
 
 /*
-bool TaskHandler::startTaskCallback (temoto_2::startTask::Request& req,
+bool TaskManager::startTaskCallback (temoto_2::startTask::Request& req,
                                      temoto_2::startTask::Response& res)
 {
-    ROS_DEBUG( "[%s/TaskHandler::startTaskCallback] Received a request to start task '%s'", this->system_prefix__.c_str(), req.task_name.c_str());
+    ROS_DEBUG( "[%s/TaskManager::startTaskCallback] Received a request to start task '%s'", this->system_prefix__.c_str(), req.task_name.c_str());
 
     // Load the task
-    ROS_DEBUG( "[%s/TaskHandler::startTaskCallback] Loading the task", this->system_prefix__.c_str());
+    ROS_DEBUG( "[%s/TaskManager::startTaskCallback] Loading the task", this->system_prefix__.c_str());
     std::string taskClassName = loadTask(req.task_name);
 
     // Check if the loading proccess was successful
@@ -664,7 +631,7 @@ bool TaskHandler::startTaskCallback (temoto_2::startTask::Request& req,
     // Create an instance of the task based on the class name. a task .so file might
     // contain multiple classes, therefore path is not enough and specific name
     // must be used
-    ROS_DEBUG( "[%s/TaskHandler::startTaskCallback] Creating an instance of the task", this->system_prefix__.c_str());
+    ROS_DEBUG( "[%s/TaskManager::startTaskCallback] Creating an instance of the task", this->system_prefix__.c_str());
 
     if ( !instantiateTask(taskClassName) )
     {
@@ -674,11 +641,11 @@ bool TaskHandler::startTaskCallback (temoto_2::startTask::Request& req,
     }
 
     //Start the task
-    ROS_DEBUG( "[%s/TaskHandler::startTaskCallback] Starting the task", this->system_prefix__.c_str());
+    ROS_DEBUG( "[%s/TaskManager::startTaskCallback] Starting the task", this->system_prefix__.c_str());
 
     if ( startTask(taskClassName, task.second) )
     {
-        taskHandler.stopTask(taskClassName);
+        TaskManager.stopTask(taskClassName);
     }
 }
 */
@@ -687,7 +654,7 @@ bool TaskHandler::startTaskCallback (temoto_2::startTask::Request& req,
  *  STOP TASK SERVICE CALLBACK
  * * * * * * * * */
 
-bool TaskHandler::stopTaskCallback( temoto_2::stopTask::Request& req,
+bool TaskManager::stopTaskCallback( temoto_2::stopTask::Request& req,
                                     temoto_2::stopTask::Response& res)
 {
     // Name of the method, used for making debugging a bit simpler
@@ -720,7 +687,7 @@ bool TaskHandler::stopTaskCallback( temoto_2::stopTask::Request& req,
  *  stopTaskMsgCallback
  * * * * * * * * */
 
-void TaskHandler::stopTaskMsgCallback( temoto_2::StopTaskMsg msg )
+void TaskManager::stopTaskMsgCallback( temoto_2::StopTaskMsg msg )
 {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);

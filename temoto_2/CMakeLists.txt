@@ -151,13 +151,18 @@ add_dependencies(pos_tagger ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTE
 target_link_libraries(pos_tagger ${catkin_LIBRARIES} meta-classify meta-sequence-analyzers meta-parser-analyzers)
 
 add_executable(sentence_parser src/tools/sentence_parser.cpp
+                               src/TTP/task_descriptor_processor.cpp
                                src/TTP/io_descriptor.cpp
                                src/TTP/task_descriptor.cpp
                                src/TTP/task_tree.cpp
+                               src/base_error/base_error.cpp
                                src/core/language_processor/visitors/branch_finder.cpp
                                src/core/language_processor/visitors/find_action.cpp)
 add_dependencies(sentence_parser ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(sentence_parser ${catkin_LIBRARIES} meta-classify meta-sequence-analyzers meta-parser-analyzers)
+target_link_libraries(sentence_parser 
+                      ${catkin_LIBRARIES}
+                      ${TinyXML_LIBRARIES} 
+                      meta-classify meta-sequence-analyzers meta-parser-analyzers)
 
 #link_directories(/tmp/usr/local/lib/)
 #add_executable(blinker src/tools/blinker.cpp)

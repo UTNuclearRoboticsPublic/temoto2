@@ -37,9 +37,14 @@ class branch_finder : public const_visitor<void>
      */
     std::vector<TTP::TaskDescriptor> getTaskDescs();
 
+    std::string getAddressable();
+
   private:
-    /// The storage for the task descriptors found so far
+    // The storage for the task descriptors found so far
     std::vector<TTP::TaskDescriptor> task_descs_;
+
+    // String that contains info about who/what was addressed
+    std::string addressable_ = "";
 };
 
 

@@ -15,12 +15,16 @@ struct TaskInterface
     IODescriptor output_descriptor;
 };
 
+class TaskDescriptorProcessor;
+
 /**
  * @brief This class contains all the information needed for finding, loading
  * and executing a given task.
  */
 class TaskDescriptor
 {
+    friend TaskDescriptorProcessor;
+
 public:
 
     TaskDescriptor(){}

@@ -92,7 +92,7 @@ TaskTree TaskTreeBuilder::build( std::vector<TaskDescriptor>& input_task_descs )
     try
     {
         // Make sure "input_task_descs" is not empty
-        if ( input_task_descs.empty() )
+        if (input_task_descs.empty())
         {
             // THROW A TEMOTO ERROR HERE
             throw;
@@ -153,7 +153,7 @@ bool TaskTreeBuilder::checkIfDependent(TaskDescriptor& task_desc) const
     const std::vector<What>& whats = input_desc.getWhats();
     for (auto& what : whats)
     {
-        if (what.word == "it ")
+        if (what.words[0] == "it")
         {
             isDependent = true;
             break;
