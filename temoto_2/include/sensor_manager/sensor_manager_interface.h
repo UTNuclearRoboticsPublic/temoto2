@@ -15,6 +15,7 @@ public:
      */
     SensorManagerInterface() : resource_manager_("SensorManagerInterface", this)
     {
+      resource_manager_.registerStatusCb(&SensorManagerInterface::statusInfoCb);
     }
 
     /**
@@ -125,6 +126,45 @@ public:
 						ros::Time::now());
 			}
 		}
+    }
+
+
+    void statusInfoCb (temoto_2::ResourceStatus& srv)
+    {
+        std::string prefix = formatMessage("", this->class_name_, __func__);
+      // if any resource should fail, just unload it and try again
+      // there is a chance that sensor manager gives us better sensor this time
+      if (srv.request.status_code == rmp::status_codes::FAILED)
+      {
+        ROS_WARN("Sensor manager interface detected sensor failure. Unloading and trying again");
+        auto sens_it = std::find_if(allocated_sensors_.begin(), allocated_sensors_.end(),
+            [&](const temoto_2::LoadSensor& sens) -> bool {return sens.response.rmp.resource_id == srv.request.resource_id;}
+            );
+        if(sens_it != allocated_sensors_.end())
+        {
+          resource_manager_.unloadResource(sens_it->response.rmp.resource_id);
+          if (!resource_manager_.template call<temoto_2::LoadSensor>(
+                  sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, *sens_it))
+          {
+            throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK,
+                                        error::Urgency::MEDIUM, prefix + " Failed to call service",
+                                        ros::Time::now());
+          }
+
+          // If the request was fulfilled, then add the srv to the list of allocated sensors
+          if (sens_it->response.rmp.code == 0)
+          {
+            // @TODO: send somehow topic to whoever is using this thing
+          }
+          else
+          {
+            throw error::ErrorStackUtil(
+                taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK, error::Urgency::MEDIUM,
+                prefix + " Unsuccessful call to sensor manager: " + sens_it->response.rmp.message,
+                ros::Time::now());
+          }
+        }
+      }
     }
 
     ~SensorManagerInterface()

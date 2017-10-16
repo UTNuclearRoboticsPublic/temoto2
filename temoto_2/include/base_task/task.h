@@ -24,7 +24,7 @@ public:
      * @brief Start the task
      * @return
      */
-    virtual bool startTask(){};
+    virtual bool startTask(){return true;};
 
     /**
      * @brief startTask

@@ -6,6 +6,7 @@
 #include "rmp/resource_client.h"
 #include "rmp/resource_manager_services.h"
 #include <string>
+#include <memory>  // dynamic_pointer_cast
 
 // Resource Management Protocol (RMP) for temoto 2
 
@@ -24,6 +25,7 @@ public:
         nh_.advertiseService(name_ + "/unload", &ResourceManager<Owner>::unloadCallback, this);
     status_server_ =
         nh_.advertiseService(name_ + "/status", &ResourceManager<Owner>::statusCallback, this);
+    last_generated_id = temoto_id::UNASSIGNED_ID;
   }
 
   ~ResourceManager()
@@ -65,8 +67,8 @@ public:
       {
         return true;
       }
-      return false;
     }
+    return false;
   }
 
   const std::string& getName()
@@ -78,33 +80,65 @@ public:
   bool call(std::string resource_manager_name, std::string server_name, ServiceType& msg)
   {
     std::string prefix = "ResourceManager::call() [" + name_ + "]:";
-    ROS_INFO("%s Creating new resource client ...", prefix.c_str());
-
     using ClientType = ResourceClient<ServiceType, Owner>;
     using ClientPtr = std::shared_ptr<ClientType>;
-    ClientPtr client =
-        std::make_shared<ClientType>(resource_manager_name, server_name, owner_, *this);
-    bool ret = client->call(msg);
+    using BaseClientType = BaseResourceClient<Owner>;
+    using BaseClientPtr = std::shared_ptr<BaseClientType>;
 
-    // Push to clients and convert to BaseResourceClient type
-    clients_.push_back(client);
+    ClientPtr client_ptr = NULL;
 
-    // check if this call came from server callback.
-    if (active_server_)
+    // check if this client already exists
+    std::string client_name = resource_manager_name + "/" + server_name;
+    typename std::vector<BaseClientPtr>::iterator client_it =
+        std::find_if(clients_.begin(), clients_.end(),
+                     [&](const BaseClientPtr& c) -> bool { return c->getName() == client_name; });
+    if (client_it == clients_.end())
     {
-      ROS_INFO("%s was called from owners cb (active_server_ is not NULL)", prefix.c_str());
-      active_server_->registerInternalClient(client->getName(), msg.response.rmp.resource_id);
+      ROS_INFO("%s Creating new resource client ...", prefix.c_str());
+
+      client_ptr = std::make_shared<ClientType>(resource_manager_name, server_name, owner_, *this);
+      // Push to clients and convert to BaseResourceClient type
+      clients_.push_back(client_ptr);
+      client_it = std::prev(clients_.end());  // set iterator to the client pointer we just added
     }
     else
     {
-      ROS_INFO("%s was not called from owners cb (active_server_ is NULL)", prefix.c_str());
+      client_ptr = std::dynamic_pointer_cast<ClientType>(*client_it);
+      if (!client_ptr)
+      {
+        // cast failed
+        ROS_ERROR("%s Dynamic Cast failed, someone is misusing RMP", prefix.c_str());
+        return false;
+      }
+    }
+
+    if (!active_server_)
+    {
+      // generate new if for owner as the call was not initiated from any servers callback
+      msg.response.rmp.resource_id = generateInternalID();
+    }
+    else
+    {
+      // called from servers callback. use the same internal ID for client to make then binding
+      msg.response.rmp.resource_id = last_generated_id;
+    }
+
+    // make the call to server
+    bool ret = client_ptr->call(msg);
+
+    // if call was sucessful and the call was initiated from server callback,
+    // register the client in server
+    if (ret && active_server_)  // @TODO: go from bool ret to try-catch
+    {
+      ROS_INFO("%s called from servers callback, registering internal client", prefix.c_str());
+      active_server_->registerInternalClient(client_ptr->getName(), msg.response.rmp.resource_id);
     }
 
     return ret;
   }
 
   // This method sends error/info message to any client connected to this resource.
-  bool sendStatus(temoto_id::ID resource_id, temoto_2::ResourceStatus& status_msg)
+  void sendStatus(temoto_id::ID resource_id, temoto_2::ResourceStatus& status_msg)
   {
     auto s_it = find_if(servers_.begin(), servers_.end(),
                         [&](const std::shared_ptr<BaseResourceServer<Owner>>& server_ptr) -> bool {
@@ -112,7 +146,7 @@ public:
                         });
     if (s_it != servers_.end())
     {
-      (*s_it)->notifyClients("", status_msg);
+      (*s_it)->notifyClients(status_msg);
     }
     else
     {
@@ -123,8 +157,8 @@ public:
   bool unloadCallback(temoto_2::UnloadResource::Request& req,
                       temoto_2::UnloadResource::Response& res)
   {
-    ROS_INFO("[ResourceManager::unloadCallback] %s: Got request: server:%s, id: %ld", name_.c_str(),
-             req.server_name.c_str(), req.resource_id);
+    ROS_INFO("[ResourceManager::unloadCallback] %s: Unload request to server:%s, ext id: %ld",
+             name_.c_str(), req.server_name.c_str(), req.resource_id);
     // Find server with requested name
     for (auto& server : servers_)
     {
@@ -201,29 +235,28 @@ public:
   bool statusCallback(temoto_2::ResourceStatus::Request& req,
                       temoto_2::ResourceStatus::Response& res)
   {
-    ROS_INFO("%s: Got status from someone", name_.c_str());
-    
-    // call owners status callback if registered
-    if (status_callback_)
-    {
-            temoto_2::ResourceStatus srv;
-            srv.request = req;
-            srv.response = res;
-      (owner_->*status_callback_)(srv);
-    }
+    std::string prefix = "ResourceManager::statusCallback [" + name_ + "]:";
+    ROS_INFO("%s Got status: ", prefix.c_str());
+    ROS_INFO_STREAM(req);
+
 
     if (req.status_code == status_codes::FAILED)
     {
       // unload this client, and notify anyone who used it
-
+      ROS_INFO("START DEBUGGING CLIENTS");
+      for (auto& client : clients_)
+      {
+        client->debug();
+      }
+      ROS_INFO("END DEBUGGING CLIENTS");
       // Go through clients and locate the one from
       // which the request arrived
       std::string client_name = req.manager_name + "/" + req.server_name;
-      ROS_INFO("Looking for client %s", client_name.c_str());
+      ROS_INFO("%s code==failed -> Looking for client %s", prefix.c_str(), client_name.c_str());
       auto client_it =
           std::find_if(clients_.begin(), clients_.end(),
                        [&](const std::shared_ptr<BaseResourceClient<Owner>>& client_ptr) -> bool {
-                         ROS_INFO("%s", client_ptr->getName().c_str());
+                         ROS_INFO("comparing client: %s", client_ptr->getName().c_str());
                          return client_ptr->getName() == client_name;
                        });
       if (client_it != clients_.end())
@@ -231,8 +264,20 @@ public:
         // client found, get all internal calls to this client, and
         // forward status info to all of them
         const auto resources = (*client_it)->getInternalResources(req.resource_id);
+        // ROS_INFO("RESOURCES: %lu", resources.size());
         for (const auto& resource : resources)
         {
+          temoto_2::ResourceStatus srv;
+          srv.request = req;
+          srv.response = res;
+          // overwrite id with internal id
+          srv.request.resource_id = resource.first;
+          // call owners status callback if registered
+          if (status_callback_)
+          {
+            (owner_->*status_callback_)(srv);
+          }
+
           auto s_it =
               find_if(servers_.begin(), servers_.end(),
                       [&](const std::shared_ptr<BaseResourceServer<Owner>>& server_ptr) -> bool {
@@ -240,23 +285,20 @@ public:
                       });
           if (s_it != servers_.end())
           {
-            temoto_2::ResourceStatus msg;
-            msg.request = req;
-            msg.response = res;
-            // overwrite id with internal id
-            msg.request.resource_id = resource.first;
-            (*s_it)->notifyClients((*client_it)->getName(), msg);
+            // notify all connected clients in the server
+            (*s_it)->notifyClients(srv);
           }
           else
           {
-            ROS_ERROR("ResourceManager::statusCallback server that was listed in a client query "
-                      "could not be found from servers_");
+            //   ROS_ERROR("ResourceManager::statusCallback server that was listed in a client query
+            //   "
+            //            "could not be found from servers_");
           }
         }
       }
       else
       {
-        ROS_INFO("%s: statusCallback failed to find the client", name_.c_str());
+        // ROS_INFO("%s: statusCallback failed to find the client", name_.c_str());
       }
     }
 
@@ -265,7 +307,8 @@ public:
 
   temoto_id::ID generateInternalID()
   {
-    return internal_id_manager_.generateID();
+    last_generated_id = internal_id_manager_.generateID();
+    return last_generated_id;
   }
 
   void notifyServer(temoto_2::ResourceStatus& msg)
@@ -303,6 +346,7 @@ private:
   Owner* owner_;
   temoto_id::IDManager internal_id_manager_;
   std::shared_ptr<BaseResourceServer<Owner>> active_server_;
+  temoto_id::ID last_generated_id;
   void (Owner::*status_callback_)(temoto_2::ResourceStatus& srv);
 
   ros::NodeHandle nh_;

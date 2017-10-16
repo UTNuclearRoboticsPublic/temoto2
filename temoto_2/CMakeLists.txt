@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(temoto_2)
-add_compile_options(-std=c++11)
+SET (CMAKE_C_COMPILER "/usr/bin/clang-4.0")
+SET (CMAKE_CXX_COMPILER "/usr/bin/clang++-4.0")
+add_compile_options(-std=c++11 -Wno-deprecated-declarations)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -67,7 +69,7 @@ catkin_package(
   INCLUDE_DIRS include
   # LIBRARIES temoto_2
   CATKIN_DEPENDS roscpp rospy std_msgs message_runtime human_msgs
-  DEPENDS system_lib TinyXML
+  DEPENDS TinyXML
 )
 
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})

@@ -88,7 +88,7 @@ private:
   /**
    * @brief Reliability moving average.
    */
-  unsigned int reliability_average;
+  float reliability_average;
 
   /**
    * @brief Reliability rating of the package.

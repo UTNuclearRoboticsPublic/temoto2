@@ -23,19 +23,14 @@ class ResourceQuery{
 		}
 
 		// special constructor for resource server
-		ResourceQuery(const typename ServiceMsgType::Request& req,
-					  const typename ServiceMsgType::Response& res)
+		ResourceQuery(const typename ServiceMsgType::Request& req)
 		{
-			addExternalClient(req, res);
-			msg_.request = req;
-			// response part is set after executing owners callback
-
+			msg_.request = req; // response part is set after executing owners callback
 		}
 
-		void addExternalClient(const typename ServiceMsgType::Request& req,
-			   			       const typename ServiceMsgType::Response& res)
-		{
-			external_clients_.emplace(res.rmp.resource_id, req.rmp.status_topic);
+    void addExternalClient(temoto_id::ID external_resource_id, const std::string& status_topic)
+    {
+      external_clients_.emplace(external_resource_id, status_topic);
 		}
 
 		// remove the external client from this query and return how many are still connected
@@ -53,12 +48,6 @@ class ResourceQuery{
 			return external_clients_.find(resource_id) != external_clients_.end(); 
 		}
         
-        
-		// Check if external client with given resource_id is attached to this query.
-		bool internalClientExists(const std::string& client_name) const
-		{
-			 return internal_clients_.find(client_name) != internal_clients_.end(); 
-		}
 
 		// Check if external client with given resource_id is attached to this query.
 		bool internalResourceExists(temoto_id::ID resource_id) const

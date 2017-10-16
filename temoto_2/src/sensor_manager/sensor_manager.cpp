@@ -44,6 +44,7 @@ SensorManager::~SensorManager()
 
 void SensorManager::statusCb(temoto_2::ResourceStatus& srv)
 {
+        ROS_WARN("[SensorManager::statusCb] ...");
     // adjust package reliability when someone reported that it has failed.
     if (srv.request.status_code == rmp::status_codes::FAILED)
     {

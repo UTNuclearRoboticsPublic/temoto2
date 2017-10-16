@@ -415,7 +415,7 @@ void TaskHandler::startTaskThread(RunningTask& task, std::vector<boost::any> arg
  *  EXECUTE TASK
  * * * * * * * * */
 
-bool TaskHandler::executeTask(TaskInfo task_info, std::vector<boost::any> arguments)
+void TaskHandler::executeTask(TaskInfo task_info, std::vector<boost::any> arguments)
 {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);

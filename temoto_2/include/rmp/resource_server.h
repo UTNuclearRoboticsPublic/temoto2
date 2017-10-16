@@ -80,7 +80,8 @@ public:
       ROS_INFO("%s New query, internal id:%d", prefix.c_str(), int_resource_id);
 
       // equal message not found from queries_, add new query
-      queries_.emplace_back(req, res);
+      queries_.emplace_back(req);
+      queries_.back().addExternalClient(ext_resource_id, req.rmp.status_topic);
 
       // register owner as a nonamed client
       std::string client_name = "";
@@ -108,7 +109,7 @@ public:
       // found equal request, simply reqister this in the query
       // and respond with unique resoure_id.
       ROS_INFO("%s Existing query, linking to the found query.", prefix.c_str());
-      queries_.back().addExternalClient(req, res);
+      queries_.back().addExternalClient(ext_resource_id, req.rmp.status_topic);
     }
 
     ROS_INFO("%s Returning true.", prefix.c_str());
@@ -130,6 +131,9 @@ public:
     const auto found_query_it =
         std::find_if(queries_.begin(), queries_.end(),
                      [resource_id](const ResourceQuery<ServiceType>& query) -> bool {
+                     ROS_INFO_STREAM(query.getMsg().request);
+                     ROS_INFO_STREAM(query.getMsg().response);
+                     ROS_INFO("%d", query.externalClientExists(resource_id));
                        return query.externalClientExists(resource_id);
                      });
     if (found_query_it != queries_.end())
@@ -183,14 +187,14 @@ public:
     return found_q != queries_.end();
   }
 
-  void notifyClients(std::string int_client_name, temoto_2::ResourceStatus& msg)
+  // checks which query contains connection with resource_id given in msg
+  // overwrite resource id to external id and send the msg out to status server.
+  void notifyClients(temoto_2::ResourceStatus& msg)
   {
-    // TODO: check which query contains connection with resource_id given in msg
-    // overwrite resource id to external id and send the msg out to status server.
-
+    ROS_INFO("ResourceServer::NotifyClients()[%s]",this->name_.c_str());
     auto q_it = std::find_if(queries_.begin(), queries_.end(),
                              [&](const ResourceQuery<ServiceType>& q) -> bool {
-                               return q.internalClientExists(int_client_name);
+                               return q.internalResourceExists(msg.request.resource_id);
                              });
 
     if (q_it != queries_.end())

@@ -83,7 +83,7 @@ public:
      * @param arguments
      * @return
      */
-    bool executeTask(TaskInfo task_info, std::vector<boost::any> arguments);
+    void executeTask(TaskInfo task_info, std::vector<boost::any> arguments);
 
     /**
      * @brief loadTask

@@ -41,16 +41,16 @@ class BaseResourceServer
 		virtual void registerInternalClient(std::string client_name, temoto_id::ID resource_id) = 0;
 		virtual bool internalResourceExists(temoto_id::ID resource_id) const = 0;
 		virtual void unloadResource(temoto_2::UnloadResource::Request& req, temoto_2::UnloadResource::Response& res) = 0;
-		virtual void notifyClients(std::string internal_client_name, temoto_2::ResourceStatus& msg) = 0;
+		virtual void notifyClients(temoto_2::ResourceStatus& msg) = 0;
 
 	protected:
 
-		bool activateServer()
+		void activateServer()
 		{
 			resource_manager_.setActiveServer(this);
 		};
 
-		bool deactivateServer()
+		void deactivateServer()
 		{
 			resource_manager_.setActiveServer(NULL);
 		};
