@@ -114,7 +114,7 @@ public:
 			if (found_sensor_it != allocated_sensors_.end())
 			{
 				// do the unloading
-				resource_manager_.unloadResource(found_sensor_it->response.rmp.resource_id);
+				resource_manager_.unloadClientResource(found_sensor_it->response.rmp.resource_id);
 				cur_sensor_it = found_sensor_it;
 			}
 			else if(cur_sensor_it == allocated_sensors_.begin())
@@ -129,20 +129,20 @@ public:
     }
 
 
-    void statusInfoCb (temoto_2::ResourceStatus& srv)
+    void statusInfoCb (temoto_2::RMPStatus& status_msg)
     {
         std::string prefix = formatMessage("", this->class_name_, __func__);
       // if any resource should fail, just unload it and try again
       // there is a chance that sensor manager gives us better sensor this time
-      if (srv.request.status_code == rmp::status_codes::FAILED)
+      if (status_msg.status_code == rmp::status_codes::FAILED)
       {
         ROS_WARN("Sensor manager interface detected sensor failure. Unloading and trying again");
         auto sens_it = std::find_if(allocated_sensors_.begin(), allocated_sensors_.end(),
-            [&](const temoto_2::LoadSensor& sens) -> bool {return sens.response.rmp.resource_id == srv.request.resource_id;}
+            [&](const temoto_2::LoadSensor& sens) -> bool {return sens.response.rmp.resource_id == status_msg.resource_id;}
             );
         if(sens_it != allocated_sensors_.end())
         {
-          resource_manager_.unloadResource(sens_it->response.rmp.resource_id);
+          resource_manager_.unloadClientResource(sens_it->response.rmp.resource_id);
           if (!resource_manager_.template call<temoto_2::LoadSensor>(
                   sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, *sens_it))
           {
@@ -163,6 +163,10 @@ public:
                 prefix + " Unsuccessful call to sensor manager: " + sens_it->response.rmp.message,
                 ros::Time::now());
           }
+        }
+        else
+        {
+
         }
       }
     }

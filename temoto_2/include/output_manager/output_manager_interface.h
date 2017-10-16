@@ -85,7 +85,7 @@ public:
 			if (found_plugin_it != plugins_.end())
 			{
 				// do the unloading
-				resource_manager_.unloadResource(found_plugin_it->response.rmp.resource_id);
+				resource_manager_.unloadClientResource(found_plugin_it->response.rmp.resource_id);
 				cur_plugin_it = found_plugin_it;
 			}
 			else if(cur_plugin_it == plugins_.begin())

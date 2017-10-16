@@ -14,15 +14,18 @@ int main(int argc, char **argv)
 	// set up ROS timer to update the process_manager
     ros::NodeHandle nh;
     ros::Timer timer = nh.createTimer(ros::Duration(1), &process_manager::ProcessManager::update, &nm);
-    ros::Rate loop_rate(1);
+  //  ros::Rate loop_rate(1);
 
     ROS_INFO("[process_manager_node/main] Process Manager Node is good to go");
 
-    while (ros::ok())
-    {
-        ros::spinOnce();
-        loop_rate.sleep();
-    }
+  ros::AsyncSpinner spinner(4); // Use 4 threads
+  spinner.start();
+  ros::waitForShutdown();
+  //   while (ros::ok())
+  //   {
+  //       ros::spinOnce();
+  //       loop_rate.sleep();
+  //   }
 
     return 0;
 }

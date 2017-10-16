@@ -13,6 +13,3 @@ int64 status_code
 # Additional info about what happened with who.
 string message
 
----
-
-# no return fields yet

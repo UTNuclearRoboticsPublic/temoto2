@@ -195,6 +195,16 @@ public:
     return internal_resources;
   }
 
+  bool internalResourceExists(temoto_id::ID resource_id)
+  {
+    std::string prefix = "ResourceClient::internalResourceExists [" + name_ + "]:";
+    auto q_it = std::find_if(queries_.begin(), queries_.end(),
+                             [&](const ClientQuery<ServiceType>& q) -> bool {
+                               return q.internalResourceExists(resource_id);
+                             });
+    return q_it != queries_.end();
+  }
+
   size_t getQueryCount() const
   {
     return queries_.size();

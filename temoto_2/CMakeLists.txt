@@ -27,6 +27,7 @@ add_message_files(FILES
     # Resource Management
     RMPRequest.msg
     RMPResponse.msg
+    RMPStatus.msg
 
     # Human Context
     SpeechSpecifier.msg
@@ -37,7 +38,6 @@ add_service_files(
   FILES
     # Resouce Management
     RMP/UnloadResource.srv
-    RMP/ResourceStatus.srv
 
     # Process Manager
     process_manager/LoadProcess.srv

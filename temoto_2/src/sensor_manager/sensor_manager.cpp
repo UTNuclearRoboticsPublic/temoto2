@@ -42,13 +42,13 @@ SensorManager::~SensorManager()
 }
 
 
-void SensorManager::statusCb(temoto_2::ResourceStatus& srv)
+void SensorManager::statusCb(temoto_2::RMPStatus& status_msg)
 {
         ROS_WARN("[SensorManager::statusCb] ...");
     // adjust package reliability when someone reported that it has failed.
-    if (srv.request.status_code == rmp::status_codes::FAILED)
+    if (status_msg.status_code == rmp::status_codes::FAILED)
     {
-      auto it = allocated_sensors_.find(srv.request.resource_id);
+      auto it = allocated_sensors_.find(status_msg.resource_id);
       if(it != allocated_sensors_.end())
       {
         ROS_WARN("[SensorManager::statusCb] Sensor failed, adjusting package reliability ...");

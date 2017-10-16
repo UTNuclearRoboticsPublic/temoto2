@@ -23,8 +23,9 @@ public:
   {
     unload_server_ =
         nh_.advertiseService(name_ + "/unload", &ResourceManager<Owner>::unloadCallback, this);
-    status_server_ =
-        nh_.advertiseService(name_ + "/status", &ResourceManager<Owner>::statusCallback, this);
+    status_sub_ = 
+        nh_.subscribe(name_ + "/status", 1000, &ResourceManager<Owner>::statusCallback, this);
+//        nh_.advertiseService(name_ + "/status", &ResourceManager<Owner>::statusCallback, this);
     last_generated_id = temoto_id::UNASSIGNED_ID;
   }
 
@@ -54,7 +55,7 @@ public:
     return true;
   }
 
-  void registerStatusCb(void (Owner::*status_cb)(temoto_2::ResourceStatus&))
+  void registerStatusCb(void (Owner::*status_cb)(temoto_2::RMPStatus&))
   {
     status_callback_ = status_cb;
   }
@@ -138,7 +139,7 @@ public:
   }
 
   // This method sends error/info message to any client connected to this resource.
-  void sendStatus(temoto_id::ID resource_id, temoto_2::ResourceStatus& status_msg)
+  void sendStatus(temoto_id::ID resource_id, temoto_2::RMPStatus& status_msg)
   {
     auto s_it = find_if(servers_.begin(), servers_.end(),
                         [&](const std::shared_ptr<BaseResourceServer<Owner>>& server_ptr) -> bool {
@@ -196,22 +197,15 @@ public:
     clients_.clear();
   }
 
-  // For unloading owners resources
-  void unloadResource(temoto_id::ID resource_id)
-  {
-    unloadClient("", resource_id);
-  }
-
   // Wrapper for unloading resource clients
-  void unloadClient(std::string client_name, temoto_id::ID resource_id)
+  void unloadClientResource(temoto_id::ID resource_id)
   {
-    ROS_INFO("[ResourceManager::unloadClient] [%s] name:%s, id:%d", name_.c_str(),
-             client_name.c_str(), resource_id);
+    ROS_INFO("[ResourceManager::unloadClientResource] [%s] id:%d", name_.c_str(), resource_id);
     // Go through clients and search for given client by name
     auto client_it =
         std::find_if(clients_.begin(), clients_.end(),
                      [&](const std::shared_ptr<BaseResourceClient<Owner>>& client_ptr) -> bool {
-                       return client_ptr->getName() == client_name;
+                       return client_ptr->internalResourceExists(resource_id);
                      });
     if (client_it != clients_.end())
     {
@@ -226,21 +220,21 @@ public:
     }
     else
     {
-      ROS_WARN("ResourceMananager::unloadInternalClient[%s]: client '%s' not found. Already "
+      ROS_WARN("ResourceMananager::unloadInternalClient[%s]: internal id '%d' not found. Already "
                "removed?",
-               name_.c_str(), client_name.c_str());
+               name_.c_str(), resource_id);
     }
   }
 
-  bool statusCallback(temoto_2::ResourceStatus::Request& req,
-                      temoto_2::ResourceStatus::Response& res)
+  void statusCallback(const temoto_2::RMPStatus& msg)
   {
+    temoto_2::RMPStatus status_msg = msg;
     std::string prefix = "ResourceManager::statusCallback [" + name_ + "]:";
     ROS_INFO("%s Got status: ", prefix.c_str());
-    ROS_INFO_STREAM(req);
+    ROS_INFO_STREAM(status_msg);
 
 
-    if (req.status_code == status_codes::FAILED)
+    if (status_msg.status_code == status_codes::FAILED)
     {
       // unload this client, and notify anyone who used it
       ROS_INFO("START DEBUGGING CLIENTS");
@@ -251,7 +245,7 @@ public:
       ROS_INFO("END DEBUGGING CLIENTS");
       // Go through clients and locate the one from
       // which the request arrived
-      std::string client_name = req.manager_name + "/" + req.server_name;
+      std::string client_name = status_msg.manager_name + "/" + status_msg.server_name;
       ROS_INFO("%s code==failed -> Looking for client %s", prefix.c_str(), client_name.c_str());
       auto client_it =
           std::find_if(clients_.begin(), clients_.end(),
@@ -263,19 +257,16 @@ public:
       {
         // client found, get all internal calls to this client, and
         // forward status info to all of them
-        const auto resources = (*client_it)->getInternalResources(req.resource_id);
+        const auto resources = (*client_it)->getInternalResources(status_msg.resource_id);
         // ROS_INFO("RESOURCES: %lu", resources.size());
         for (const auto& resource : resources)
         {
-          temoto_2::ResourceStatus srv;
-          srv.request = req;
-          srv.response = res;
           // overwrite id with internal id
-          srv.request.resource_id = resource.first;
+          status_msg.resource_id = resource.first;
           // call owners status callback if registered
           if (status_callback_)
           {
-            (owner_->*status_callback_)(srv);
+            (owner_->*status_callback_)(status_msg);
           }
 
           auto s_it =
@@ -286,7 +277,7 @@ public:
           if (s_it != servers_.end())
           {
             // notify all connected clients in the server
-            (*s_it)->notifyClients(srv);
+            (*s_it)->notifyClients(status_msg);
           }
           else
           {
@@ -302,7 +293,6 @@ public:
       }
     }
 
-    return true;
   }
 
   temoto_id::ID generateInternalID()
@@ -311,11 +301,6 @@ public:
     return last_generated_id;
   }
 
-  void notifyServer(temoto_2::ResourceStatus& msg)
-  {
-    ROS_INFO("Sending notification to '%s', id:'%ld'", msg.request.server_name,
-             msg.request.resource_id);
-  }
 
   const std::string getActiveServerName() const
   {
@@ -347,11 +332,11 @@ private:
   temoto_id::IDManager internal_id_manager_;
   std::shared_ptr<BaseResourceServer<Owner>> active_server_;
   temoto_id::ID last_generated_id;
-  void (Owner::*status_callback_)(temoto_2::ResourceStatus& srv);
+  void (Owner::*status_callback_)(temoto_2::RMPStatus&);
 
   ros::NodeHandle nh_;
   ros::ServiceServer unload_server_;
-  ros::ServiceServer status_server_;
+  ros::Subscriber status_sub_;
 };
 
 }  // namespace rmp

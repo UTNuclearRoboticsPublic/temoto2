@@ -58,14 +58,14 @@ void ProcessManager::update(const ros::TimerEvent&)
                 prefix.c_str(), proc_it->second, proc_it->first);
 
       // TODO: send error information to all related connections
-      temoto_2::ResourceStatus status_msg;
-      status_msg.request.resource_id = proc_it->second;
-      status_msg.request.status_code = rmp::status_codes::FAILED;
+      temoto_2::RMPStatus status_msg;
+      status_msg.resource_id = proc_it->second;
+      status_msg.status_code = rmp::status_codes::FAILED;
       std::stringstream ss;
       ss << "The process with PID = ";
       ss << proc_it->first;
       ss << " was stopped.";
-      status_msg.request.message = ss.str();
+      status_msg.message = ss.str();
 
       resource_manager_.sendStatus(proc_it->second, status_msg);
 

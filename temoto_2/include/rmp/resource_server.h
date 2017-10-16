@@ -168,7 +168,7 @@ public:
           }
           for (auto& set_el : map_el.second)
           {
-            this->resource_manager_.unloadClient(map_el.first, set_el);
+            this->resource_manager_.unloadClientResource(set_el);
           }
         }
 
@@ -189,28 +189,36 @@ public:
 
   // checks which query contains connection with resource_id given in msg
   // overwrite resource id to external id and send the msg out to status server.
-  void notifyClients(temoto_2::ResourceStatus& msg)
+  void notifyClients(temoto_2::RMPStatus& status_msg)
   {
     ROS_INFO("ResourceServer::NotifyClients()[%s]",this->name_.c_str());
     auto q_it = std::find_if(queries_.begin(), queries_.end(),
                              [&](const ResourceQuery<ServiceType>& q) -> bool {
-                               return q.internalResourceExists(msg.request.resource_id);
+                               return q.internalResourceExists(status_msg.resource_id);
                              });
 
     if (q_it != queries_.end())
     {
-      ros::NodeHandle nh_;
-
       const auto ext_clients = q_it->getExternalClients();
       for (const auto ext_client : ext_clients)
       {
-        ros::ServiceClient service_client =
-            nh_.serviceClient<temoto_2::ResourceStatus>(ext_client.second);
+        ros::Publisher pub =
+            nh_.advertise<temoto_2::RMPStatus>(ext_client.second,1000);
         ROS_INFO("SENDING ResourceStatus to %s", ext_client.second.c_str());
-        msg.request.resource_id = ext_client.first;
-        msg.request.server_name = this->name_;
-        msg.request.manager_name = this->resource_manager_.getName();
-        service_client.call(msg);
+        status_msg.resource_id = ext_client.first;
+        status_msg.server_name = this->name_;
+        status_msg.manager_name = this->resource_manager_.getName();
+        if(pub)
+        {
+          int i=0;
+          while(true)
+          {
+            ROS_INFO("publishing %d", i++);
+            pub.publish(status_msg);
+            ros::spinOnce();  // send status immediately
+            ros::Duration(5).sleep();
+          }
+        }
       }
     }
   }
