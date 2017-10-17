@@ -69,7 +69,7 @@ private:
      * @brief Called when sensor is unloaded. Nothing to do here.
      * @return
      */
-    void statusCb (temoto_2::RMPStatus& srv);
+    void statusCb (temoto_2::ResourceStatus& srv);
 
     /**
      * @brief Function for finding the right sensor, based on the request parameters

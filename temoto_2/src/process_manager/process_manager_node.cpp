@@ -18,9 +18,10 @@ int main(int argc, char **argv)
 
     ROS_INFO("[process_manager_node/main] Process Manager Node is good to go");
 
-  ros::AsyncSpinner spinner(4); // Use 4 threads
-  spinner.start();
-  ros::waitForShutdown();
+ // ros::AsyncSpinner spinner(4); // Use 4 threads
+ // spinner.start();
+ // ros::waitForShutdown();
+ros::spin();
   //   while (ros::ok())
   //   {
   //       ros::spinOnce();

@@ -129,16 +129,16 @@ public:
     }
 
 
-    void statusInfoCb (temoto_2::RMPStatus& status_msg)
+    void statusInfoCb (temoto_2::ResourceStatus& srv)
     {
         std::string prefix = formatMessage("", this->class_name_, __func__);
       // if any resource should fail, just unload it and try again
       // there is a chance that sensor manager gives us better sensor this time
-      if (status_msg.status_code == rmp::status_codes::FAILED)
+      if (srv.request.status_code == rmp::status_codes::FAILED)
       {
         ROS_WARN("Sensor manager interface detected sensor failure. Unloading and trying again");
         auto sens_it = std::find_if(allocated_sensors_.begin(), allocated_sensors_.end(),
-            [&](const temoto_2::LoadSensor& sens) -> bool {return sens.response.rmp.resource_id == status_msg.resource_id;}
+            [&](const temoto_2::LoadSensor& sens) -> bool {return sens.response.rmp.resource_id == srv.request.resource_id;}
             );
         if(sens_it != allocated_sensors_.end())
         {

@@ -189,12 +189,14 @@ public:
 
   // checks which query contains connection with resource_id given in msg
   // overwrite resource id to external id and send the msg out to status server.
-  void notifyClients(temoto_2::RMPStatus& status_msg)
+
+  void notifyClients(temoto_2::ResourceStatus& srv)
   {
-    ROS_INFO("ResourceServer::NotifyClients()[%s]",this->name_.c_str());
+    std::string prefix = "[ResourceServer::notifyClients] [" + this->name_ + "]:";
+    ROS_INFO("%s",prefix.c_str());
     auto q_it = std::find_if(queries_.begin(), queries_.end(),
                              [&](const ResourceQuery<ServiceType>& q) -> bool {
-                               return q.internalResourceExists(status_msg.resource_id);
+                               return q.internalResourceExists(srv.request.resource_id);
                              });
 
     if (q_it != queries_.end())
@@ -202,22 +204,17 @@ public:
       const auto ext_clients = q_it->getExternalClients();
       for (const auto ext_client : ext_clients)
       {
-        ros::Publisher pub =
-            nh_.advertise<temoto_2::RMPStatus>(ext_client.second,1000);
-        ROS_INFO("SENDING ResourceStatus to %s", ext_client.second.c_str());
-        status_msg.resource_id = ext_client.first;
-        status_msg.server_name = this->name_;
-        status_msg.manager_name = this->resource_manager_.getName();
-        if(pub)
+        ros::ServiceClient service_client = nh_.serviceClient<temoto_2::ResourceStatus>(ext_client.second);
+        srv.request.resource_id = ext_client.first;
+        srv.request.server_name = this->name_;
+        srv.request.manager_name = this->resource_manager_.getName();
+        if(service_client.call(srv))
         {
-          int i=0;
-          while(true)
-          {
-            ROS_INFO("publishing %d", i++);
-            pub.publish(status_msg);
-            ros::spinOnce();  // send status immediately
-            ros::Duration(5).sleep();
-          }
+          ROS_INFO("%s SENDING ResourceStatus to %s", prefix.c_str(), ext_client.second.c_str());
+        }
+        else
+        {
+          ROS_ERROR("%s SENDING ResourceStatus to %s failed", prefix.c_str(), ext_client.second.c_str());
         }
       }
     }

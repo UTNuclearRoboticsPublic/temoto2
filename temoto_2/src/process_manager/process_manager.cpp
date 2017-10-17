@@ -58,16 +58,16 @@ void ProcessManager::update(const ros::TimerEvent&)
                 prefix.c_str(), proc_it->second, proc_it->first);
 
       // TODO: send error information to all related connections
-      temoto_2::RMPStatus status_msg;
-      status_msg.resource_id = proc_it->second;
-      status_msg.status_code = rmp::status_codes::FAILED;
+      temoto_2::ResourceStatus srv;
+      srv.request.resource_id = proc_it->second;
+      srv.request.status_code = rmp::status_codes::FAILED;
       std::stringstream ss;
       ss << "The process with PID = ";
       ss << proc_it->first;
       ss << " was stopped.";
-      status_msg.message = ss.str();
+      srv.request.message = ss.str();
 
-      resource_manager_.sendStatus(proc_it->second, status_msg);
+      resource_manager_.sendStatus(proc_it->second, srv);
 
       // remove stopped process from the map
       running_processes_.erase(proc_it++);
@@ -99,7 +99,7 @@ void ProcessManager::unloadCb(temoto_2::LoadProcess::Request& req,
   }
   if (!pid_found)
   {
-    ROS_ERROR("%s unable to obtain PID for resource with id %ld", prefix.c_str(),
+    ROS_WARN("%s unable to obtain PID for resource with id %ld. Resource might already be unloaded.", prefix.c_str(),
               res.rmp.resource_id);
     // TODO: throw exception
     return;

@@ -26,7 +26,7 @@ public:
   void addInternalResource(temoto_id::ID resource_id, std::string& server_name)
   {
     // try to insert to map
-    ROS_INFO("ClientQuery::addInternalResource id:%d, topic:%s", resource_id, server_name.c_str());
+    ROS_INFO("ClientQuery::addInternalResource id:%d, server_name:'%s'", resource_id, server_name.c_str());
     auto ret = internal_resources_.emplace(resource_id, server_name);
 
     if (!ret.second)
@@ -81,7 +81,7 @@ public:
     ROS_INFO("    Internal resources:");
     for (auto& r : internal_resources_)
     {
-      ROS_INFO("      id:%d topic:%s", r.first, r.second.c_str());
+      ROS_INFO("      id:%d server_name:'%s'", r.first, r.second.c_str());
     }
   }
 
