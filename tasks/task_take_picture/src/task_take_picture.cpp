@@ -80,7 +80,7 @@ public:
 		try 
 		{
 			// Start the camera with our custom launch file
-			std::string camera_topic = smi_.startSensor("camera", "task_take_picture", "camera1.launch");
+			std::string camera_topic = smi_.startSensor("camera");
 			std::cout << prefix << "Got camera on topic '" << camera_topic << "'" << std::endl; 
 			
 			// Show the image in rviz

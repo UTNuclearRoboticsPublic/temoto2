@@ -53,11 +53,11 @@ bool startTask()
 
     // Build a gesture specifier
     // TODO: This shoud be done via speech specifier helper class
-    std::vector <temoto_2::gestureSpecifier> gestureSpecifiers;
-    temoto_2::gestureSpecifier gestureSpecifier;
-    gestureSpecifier.dev = "device";
-    gestureSpecifier.type = "hand";
-    gestureSpecifiers.push_back(gestureSpecifier);
+    std::vector <temoto_2::GestureSpecifier> gesture_specifiers;
+    temoto_2::GestureSpecifier gesture_specifier;
+    gesture_specifier.dev = "device";
+    gesture_specifier.type = "hand";
+    gesture_specifiers.push_back(gesture_specifier);
 
 
     // Register the speech request and bind a callback
@@ -76,7 +76,7 @@ bool startTask()
         marker_pub_ = n_.advertise<visualization_msgs::Marker>("/temoto_task_markers", 1);
 
         // Register the gesture request and bind a callback
-        hci_.getGestures(gestureSpecifiers, &TaskTemoto::gestureCallback, this );
+        hci_.getGestures(gesture_specifiers, &TaskTemoto::gestureCallback, this );
 
         // Make rviz load a marker display
         omi_.showInRviz( "marker", "/temoto_task_markers" );

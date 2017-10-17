@@ -1,20 +1,16 @@
 #include "package_info/package_info.h"
+#include "ros/ros.h"
 
 /* * * * * * * * * * * *
  *     CONSTRUCTORS
  * * * * * * * * * * * */
 
-PackageInfo::PackageInfo()
+PackageInfo::PackageInfo(std::string name, std::string type) : name_(name), type_(type)
 {
-  // Fill array with initial reliability values of 0.5;
+  // Fill array with initial reliability values;
   reliabilities_.fill(0.8);
   reliability_average = 0.8;
   reliability_idx = 0;
-}
-
-PackageInfo::PackageInfo(std::string name, std::string type) : name_(name), type_(type)
-{
-  PackageInfo();
 }
 
 /* * * * * * * * * * * *
@@ -71,7 +67,7 @@ void PackageInfo::adjustReliability(float reliability)
   reliability = std::max(std::min(reliability, 1.0f), 0.0f); // clamp into [0-1]
   ++reliability_idx %= reliabilities_.size(); // rolling index
   reliability_average -= reliabilities_[reliability_idx] / (float)reliabilities_.size();
-  reliabilities_[reliability_idx % reliabilities_.size()] =
+  reliabilities_[reliability_idx] =
       reliability / (float)reliabilities_.size();
 }
 
