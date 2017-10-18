@@ -4,6 +4,8 @@
 #include "common/temoto_id.h"
 #include "rmp/base_resource_server.h"
 #include "rmp/resource_query.h"
+#include "ros/callback_queue.h"
+#include <mutex>
 
 namespace rmp
 {
@@ -22,17 +24,25 @@ public:
     , load_callback_(load_cb)
     , unload_callback_(unload_cb)
     , owner_(owner)
+    , load_spinner_(1,&load_cb_queue_)
+
   {
     std::string rm_name = this->resource_manager_.getName();
-    load_server_ =
-        nh_.advertiseService(rm_name + "/" + this->name_,
-                             &ResourceServer<ServiceType, Owner>::wrappedLoadCallback, this);
+    ros::AdvertiseServiceOptions load_service_opts =
+        ros::AdvertiseServiceOptions::create<ServiceType>(
+            rm_name + "/" + this->name_, boost::bind(&ResourceServer<ServiceType, Owner>::wrappedLoadCallback,this,_1,_2), ros::VoidPtr(), &this->load_cb_queue_);
+    load_server_ = nh_.advertiseService(load_service_opts);
+    load_spinner_.start();
+   // load_server_ =
+   //     nh_.advertiseService(rm_name + "/" + this->name_,
+    //                         &ResourceServer<ServiceType, Owner>::wrappedLoadCallback, this);
     ROS_INFO("ResourceServer constructed, listening on %s",
              this->load_server_.getService().c_str());
   }
 
   ~ResourceServer()
   {
+    load_spinner_.stop();
     ROS_INFO("ResourceServer[%s] destroyed.", this->name_.c_str());
   }
 
@@ -62,8 +72,10 @@ public:
 
     // generate new external id for the resource
     temoto_id::ID ext_resource_id = res_id_manager_.generateID();
-
     ROS_INFO("%s Generated external id:%d", prefix.c_str(), ext_resource_id);
+
+    // lock the queries
+    queries_mutex_.lock();
 
     // New or existing query? Check it out with this hi-tec lambda function :)
     auto found_query = std::find_if(queries_.begin(), queries_.end(),
@@ -90,19 +102,36 @@ public:
       // set this server active in resource manager
       // when a client call is made from callback, the binding between active server
       // and the new loaded clients can be made automatically
+      active_server_mutex_.lock();
       this->activateServer();
 
-      // call owner's registered callback
+      // call owner's registered callback and release the lock during the callback so that owner is
+      // able to use rmp inside the callback
+      queries_mutex_.unlock();
       (owner_->*load_callback_)(req, res);
-
-      ROS_INFO("%s Resumed from owners callback, returning response from last query",
-               prefix.c_str());
-
-      // update the query with the response message filled in the callback
-      queries_.back().setMsgResponse(res);
-
+      queries_mutex_.lock();
+      
       // restore active server to NULL in resource manager
       this->deactivateServer();
+      active_server_mutex_.unlock();
+      
+      ROS_INFO("%s Resumed from owners callback",
+               prefix.c_str());
+      // verify that our query is still on the list
+      auto q_it = std::find_if(queries_.begin(), queries_.end(),
+          [&](const ResourceQuery<ServiceType>& q) -> bool {return q.internalResourceExists(int_resource_id);});
+      if(q_it != queries_.end())
+      {
+        // update the query with the response message filled in the callback
+        q_it->setMsgResponse(res);
+      }
+      else
+      {
+        res.rmp.code = status_codes::FAILED;
+        res.rmp.message += " Could not create resource.";
+        ROS_ERROR("%s Query got missing during owners callback, oh well...", prefix.c_str());
+      }
+      
     }
     else
     {
@@ -111,6 +140,9 @@ public:
       ROS_INFO("%s Existing query, linking to the found query.", prefix.c_str());
       queries_.back().addExternalClient(ext_resource_id, req.rmp.status_topic);
     }
+
+    //release the queries lock
+    queries_mutex_.unlock();
 
     ROS_INFO("%s Returning true.", prefix.c_str());
     return true;
@@ -128,6 +160,7 @@ public:
     ROS_INFO_STREAM(prefix);
     // find first query that contains resource that should be unloaded
     const temoto_id::ID resource_id = req.resource_id;
+    queries_mutex_.lock();
     const auto found_query_it =
         std::find_if(queries_.begin(), queries_.end(),
                      [resource_id](const ResourceQuery<ServiceType>& query) -> bool {
@@ -176,6 +209,7 @@ public:
         queries_.erase(found_query_it);
       }
     }
+    queries_mutex_.unlock();
   }
 
   bool internalResourceExists(temoto_id::ID resource_id) const
@@ -194,6 +228,8 @@ public:
   {
     std::string prefix = "[ResourceServer::notifyClients] [" + this->name_ + "]:";
     ROS_INFO("%s",prefix.c_str());
+
+    queries_mutex_.lock();
     auto q_it = std::find_if(queries_.begin(), queries_.end(),
                              [&](const ResourceQuery<ServiceType>& q) -> bool {
                                return q.internalResourceExists(srv.request.resource_id);
@@ -201,6 +237,7 @@ public:
 
     if (q_it != queries_.end())
     {
+      queries_mutex_.unlock();
       const auto ext_clients = q_it->getExternalClients();
       for (const auto ext_client : ext_clients)
       {
@@ -218,6 +255,7 @@ public:
         }
       }
     }
+    queries_mutex_.unlock();
   }
 
 private:
@@ -225,11 +263,17 @@ private:
   LoadCbFuncType load_callback_;
   UnloadCbFuncType unload_callback_;
 
-  ros::ServiceServer load_server_;
   ros::NodeHandle nh_;
-  temoto_id::IDManager res_id_manager_;
+  ros::ServiceServer load_server_;
+  ros::CallbackQueue load_cb_queue_;
+  ros::AsyncSpinner load_spinner_;
 
+  temoto_id::IDManager res_id_manager_;
   std::vector<ResourceQuery<ServiceType>> queries_;
+
+  // mutexes
+  std::mutex queries_mutex_;
+  std::mutex active_server_mutex_;
 };
 }
 

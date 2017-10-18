@@ -142,7 +142,9 @@ public:
             );
         if(sens_it != allocated_sensors_.end())
         {
+          ROS_WARN("SMI is Unloading");
           resource_manager_.unloadClientResource(sens_it->response.rmp.resource_id);
+          ROS_WARN("SMI is asking the same sensor again");
           if (!resource_manager_.template call<temoto_2::LoadSensor>(
                   sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, *sens_it))
           {
@@ -155,6 +157,7 @@ public:
           if (sens_it->response.rmp.code == 0)
           {
             // @TODO: send somehow topic to whoever is using this thing
+            // or do topic remapping
           }
           else
           {
