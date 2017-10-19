@@ -43,9 +43,9 @@ public:
 
   ~ResourceManager()
   {
+    unloadClients();
     unload_spinner_.stop();
     status_spinner_.stop();
-    unloadClients();
   }
 
   template <class ServiceType>
@@ -102,7 +102,7 @@ public:
 
     ClientPtr client_ptr = NULL;
 
-    clients_mutex_.lock();
+    waitForLock(clients_mutex_);
 
     // check if this client already exists
     std::string client_name = resource_manager_name + "/" + server_name;
@@ -159,7 +159,7 @@ public:
   // This method sends error/info message to any client connected to this resource.
   void sendStatus(temoto_id::ID resource_id, temoto_2::ResourceStatus& srv)
   {
-    servers_mutex_.lock();
+    waitForLock(servers_mutex_);
     auto s_it = find_if(servers_.begin(), servers_.end(),
                         [&](const std::shared_ptr<BaseResourceServer<Owner>>& server_ptr) -> bool {
                           return server_ptr->internalResourceExists(resource_id);
@@ -183,7 +183,7 @@ public:
     ROS_INFO("[ResourceManager::unloadCallback] %s: Unload request to server:%s, ext id: %ld",
              name_.c_str(), req.server_name.c_str(), req.resource_id);
     // Find server with requested name
-    //servers_mutex_.lock();
+    waitForLock(servers_mutex_);
     for (auto& server : servers_)
     {
       if (server->getName() == req.server_name)
@@ -193,14 +193,14 @@ public:
         break;
       }
     }
-    //servers_mutex_.unlock();
+    servers_mutex_.unlock();
 
     return true;
   }
 
   void unloadClients()
   {
-    clients_mutex_.lock();
+    waitForLock(clients_mutex_);
     ROS_INFO("[ResourceManager::unloadClients] [%s] clients:%lu", name_.c_str(), clients_.size());
     for (auto client : clients_)
     {
@@ -215,7 +215,7 @@ public:
   // Wrapper for unloading resource clients
   void unloadClientResource(temoto_id::ID resource_id)
   {
-    clients_mutex_.lock();
+    waitForLock(clients_mutex_);
     ROS_INFO("[ResourceManager::unloadClientResource] [%s] id:%d", name_.c_str(), resource_id);
     // Go through clients and search for given client by name
     auto client_it =
@@ -266,7 +266,8 @@ public:
       // which the request arrived
       std::string client_name = srv.request.manager_name + "/" + srv.request.server_name;
       ROS_INFO("%s code == FAILED -> Looking for client %s", prefix.c_str(), client_name.c_str());
-      //clients_mutex_.lock();
+      
+      waitForLock(clients_mutex_);
       auto client_it =
           std::find_if(clients_.begin(), clients_.end(),
                        [&](const std::shared_ptr<BaseResourceClient<Owner>>& client_ptr) -> bool {
@@ -277,48 +278,91 @@ public:
       {
         // client found, get all internal calls to this client, and
         // forward status info to all of them
-        const auto resources = (*client_it)->getInternalResources(srv.request.resource_id);
-       // clients_mutex_.unlock();
+        const auto inr_resources = (*client_it)->getInternalResources(srv.request.resource_id);
+        clients_mutex_.unlock();
         // ROS_INFO("RESOURCES: %lu", resources.size());
-        for (const auto& resource : resources)
+        for (const auto& int_resource : inr_resources)
         {
+          temoto::ID internal_resource_id = int_resource.first;
+          std::string server_name = int_resource.second;
+
+          srv.request.manager_name = name_;
+          srv.request.server_name = server_name;
+
           // overwrite id with internal id
-          srv.request.resource_id = resource.first;
+          srv.request.resource_id = internal_resource_id;
+
           // call owners status callback if registered
           if (status_callback_)
           {
             (owner_->*status_callback_)(srv);
           }
 
-        //  servers_mutex_.lock();
-          auto s_it =
-              find_if(servers_.begin(), servers_.end(),
-                      [&](const std::shared_ptr<BaseResourceServer<Owner>>& server_ptr) -> bool {
-                        return server_ptr->getName() == resource.second;
-                      });
-          if (s_it != servers_.end())
+          waitForLock(servers_mutex_);
+          auto ext_resources = getServerExtResources(internal_resource_id, server_name);
+          for (const auto ext_resource : ext_resources)
           {
-            std::shared_ptr<BaseResourceServer<Owner>> server_ptr;
-         //   servers_mutex_.unlock();
             // notify all connected clients in the server
-            server_ptr->notifyClients(srv);
+              ros::ServiceClient service_client =
+                  nh_.serviceClient<temoto_2::ResourceStatus>(ext_resource.second);
+              srv.request.resource_id = ext_resource.first;
+              if (service_client.call(srv))
+              {
+                ROS_INFO("%s SENDING ResourceStatus to %s", prefix.c_str(),
+                         ext_client.second.c_str());
+              }
+              else
+              {
+                ROS_ERROR("%s SENDING ResourceStatus to %s failed", prefix.c_str(),
+                          ext_client.second.c_str());
+              }
+            }
           }
-          else
-          {
-          //  servers_mutex_.unlock();
-            //   ROS_ERROR("ResourceManager::statusCallback server that was listed in a client query
-            //   "
-            //            "could not be found from servers_");
-          }
+
+          servers_mutex_.unlock();
         }
       }
       else
       {
-        //clients_mutex_.unlock();
+        clients_mutex_.unlock();
         // ROS_INFO("%s: statusCallback failed to find the client", name_.c_str());
       }
     }
 return true;
+  }
+
+  std::vector<std::pair<temoto_id::ID external_id, std::string status_topic>>
+  getServerExtResources(internal_resource_id, std::string& server_name)
+  {
+    waitForLock(servers_mutex_);
+    auto s_it = find_if(servers_.begin(), servers_.end(),
+                        [&](const std::shared_ptr<BaseResourceServer<Owner>>& server_ptr) -> bool {
+                          return server_ptr->getName() == server_name;
+                        });
+    if (s_it != servers_.end())
+    {
+      (*s_it)->getExternalResources(internal_resource_id)
+    }
+    servers_mutex_.unlock();
+  }
+  
+  void notifyClients(temoto_2::ResourceStatus& srv)
+  {
+    std::string prefix = "[ResourceServer::notifyClients] [" + this->name_ + "]:";
+    ROS_INFO("%s",prefix.c_str());
+
+    waitForLock(queries_mutex_);
+    auto q_it = std::find_if(queries_.begin(), queries_.end(),
+                             [&](const ResourceQuery<ServiceType>& q) -> bool {
+                               return q.internalResourceExists(srv.request.resource_id);
+                             });
+
+    if (q_it != queries_.end())
+    {
+      queries_mutex_.unlock();
+      const auto ext_clients = q_it->getExternalClients();
+    }
+    queries_mutex_.unlock();
   }
 
   temoto_id::ID generateInternalID()
@@ -350,6 +394,18 @@ private:
       }
     }
     return false;
+  }
+
+
+  void waitForLock(std::mutex& m)
+  {
+    std::string prefix = "[ResourceManager::waitForLock] [" + this->name_ + "]:";
+    while (!m.try_lock())
+    {
+      ROS_WARN("%s Waiting for lock()", prefix.c_str());
+      ros::Duration(0.01).sleep();  // sleep for few ms
+    }
+    ROS_INFO("%s Obtained lock()", prefix.c_str());
   }
 
   std::vector<std::shared_ptr<BaseResourceServer<Owner>>> servers_;

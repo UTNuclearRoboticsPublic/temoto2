@@ -15,11 +15,7 @@ int main(int argc, char **argv)
 
     ros::Rate loop_rate(10);
 
-    while (ros::ok())
-    {
-        ros::spinOnce();
-        loop_rate.sleep();
-    }
+    ros::spin();
 
     return 0;
 }

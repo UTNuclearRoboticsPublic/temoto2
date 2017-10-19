@@ -28,7 +28,9 @@ int main(int argc, char** argv)
   sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("task_take_picture", "camera"));
   sm.pkg_infos_.back()->addLaunchable({ "camera0.launch", "/usb_cam/image_raw" });
 
+  //use single threaded spinner for global callback queue
    ros::spin();
+
 //  ros::AsyncSpinner spinner(4); // Use 4 threads
 //  spinner.start();
 //  ros::waitForShutdown();

@@ -132,6 +132,8 @@ public:
     void statusInfoCb (temoto_2::ResourceStatus& srv)
     {
         std::string prefix = formatMessage("", this->class_name_, __func__);
+        ROS_WARN("%s status info reached here", prefix.c_str());
+        ROS_INFO_STREAM(srv.request);
       // if any resource should fail, just unload it and try again
       // there is a chance that sensor manager gives us better sensor this time
       if (srv.request.status_code == rmp::status_codes::FAILED)

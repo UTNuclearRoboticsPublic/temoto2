@@ -48,8 +48,8 @@ void ProcessManager::update(const ros::TimerEvent&)
     int status;
     int kill_response = waitpid(proc_it->first, &status, WNOHANG);
 
-    ROS_INFO("Resource_id '%d'(PID = %d) waitpid response = %d, status = %d\n", proc_it->second,
-             proc_it->first, kill_response, status);
+    //ROS_INFO("Resource_id '%d'(PID = %d) waitpid response = %d, status = %d\n", proc_it->second,
+     //        proc_it->first, kill_response, status);
 
     // If the child process has stopped running,
     if (kill_response != 0)

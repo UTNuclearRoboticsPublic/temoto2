@@ -75,7 +75,7 @@ public:
     ROS_INFO("%s Generated external id:%d", prefix.c_str(), ext_resource_id);
 
     // lock the queries
-    queries_mutex_.lock();
+    waitForLock(queries_mutex_);
 
     // New or existing query? Check it out with this hi-tec lambda function :)
     auto found_query = std::find_if(queries_.begin(), queries_.end(),
@@ -102,15 +102,15 @@ public:
       // set this server active in resource manager
       // when a client call is made from callback, the binding between active server
       // and the new loaded clients can be made automatically
-      active_server_mutex_.lock();
+      waitForLock(active_server_mutex_);
       this->activateServer();
 
       // call owner's registered callback and release the lock during the callback so that owner is
       // able to use rmp inside the callback
       queries_mutex_.unlock();
       (owner_->*load_callback_)(req, res);
-      queries_mutex_.lock();
-      
+      waitForLock(queries_mutex_);
+
       // restore active server to NULL in resource manager
       this->deactivateServer();
       active_server_mutex_.unlock();
@@ -160,7 +160,7 @@ public:
     ROS_INFO_STREAM(prefix);
     // find first query that contains resource that should be unloaded
     const temoto_id::ID resource_id = req.resource_id;
-    queries_mutex_.lock();
+    waitForLock(queries_mutex_);
     const auto found_query_it =
         std::find_if(queries_.begin(), queries_.end(),
                      [resource_id](const ResourceQuery<ServiceType>& query) -> bool {
@@ -221,41 +221,37 @@ public:
     return found_q != queries_.end();
   }
 
-  // checks which query contains connection with resource_id given in msg
-  // overwrite resource id to external id and send the msg out to status server.
-
-  void notifyClients(temoto_2::ResourceStatus& srv)
+  std::vector<std::pair<temoto::ID ext_id, std::string status_topic>>
+  getExternalResources(temoto_id::ID internal_resource_id)
   {
     std::string prefix = "[ResourceServer::notifyClients] [" + this->name_ + "]:";
-    ROS_INFO("%s",prefix.c_str());
 
-    queries_mutex_.lock();
-    auto q_it = std::find_if(queries_.begin(), queries_.end(),
-                             [&](const ResourceQuery<ServiceType>& q) -> bool {
-                               return q.internalResourceExists(srv.request.resource_id);
-                             });
+    waitForLock(queries_mutex_);
 
-    if (q_it != queries_.end())
+    std::vector<std::pair<temoto::ID ext_id, std::string status_topic>> ext_resources;
+    for (q : queries_)
     {
-      queries_mutex_.unlock();
-      const auto ext_clients = q_it->getExternalClients();
-      for (const auto ext_client : ext_clients)
+      if (q.internalResourceExists(internal_resource_id))
       {
-        ros::ServiceClient service_client = nh_.serviceClient<temoto_2::ResourceStatus>(ext_client.second);
-        srv.request.resource_id = ext_client.first;
-        srv.request.server_name = this->name_;
-        srv.request.manager_name = this->resource_manager_.getName();
-        if(service_client.call(srv))
+        for (auto resource : q.getExternalResources())
         {
-          ROS_INFO("%s SENDING ResourceStatus to %s", prefix.c_str(), ext_client.second.c_str());
-        }
-        else
-        {
-          ROS_ERROR("%s SENDING ResourceStatus to %s failed", prefix.c_str(), ext_client.second.c_str());
+          ext_resources.push_back(resource);
         }
       }
     }
     queries_mutex_.unlock();
+    return ext_resources;
+  }
+
+  void waitForLock(std::mutex& m)
+  {
+    std::string prefix = "[ResourceServer::waitForLock] [" + this->name_ + "]:";
+    while (!m.try_lock())
+    {
+      ROS_WARN("%s Waiting for lock()", prefix.c_str());
+      ros::Duration(0.01).sleep();  // sleep for few ms
+    }
+    ROS_INFO("%s Obtained lock()", prefix.c_str());
   }
 
 private:
