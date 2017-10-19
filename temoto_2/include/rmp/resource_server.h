@@ -24,7 +24,7 @@ public:
     , load_callback_(load_cb)
     , unload_callback_(unload_cb)
     , owner_(owner)
-    , load_spinner_(1,&load_cb_queue_)
+    , load_spinner_(2,&load_cb_queue_)
 
   {
     std::string rm_name = this->resource_manager_.getName();

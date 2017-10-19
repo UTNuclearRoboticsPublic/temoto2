@@ -248,7 +248,7 @@ int main(int argc, char **argv)
         start.try_put( continue_msg() );
         g.wait_for_all();
 */
-        ros::spinOnce();
+//        ros::spinOnce();
         loop_rate.sleep();
     }
 
