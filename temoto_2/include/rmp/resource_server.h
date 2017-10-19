@@ -46,16 +46,16 @@ public:
     ROS_INFO("ResourceServer[%s] destroyed.", this->name_.c_str());
   }
 
-  void registerInternalClient(std::string client_name, temoto_id::ID resource_id)
+  void registerInternalResource(std::string client_name, temoto_id::ID resource_id)
   {
-    ROS_INFO("[ResourceServer::registerInternalClient] [%s] id %d", this->name_.c_str(),
+    ROS_INFO("[ResourceServer::registerInternalResource] [%s] id %d", this->name_.c_str(),
              resource_id);
     if (!queries_.size())
     {
-      ROS_ERROR("registerInternalClient called, but queries_ is empty");
+      ROS_ERROR("registerInternalResource called, but queries_ is empty");
       return;
     }
-    queries_.back().addInternalClient(client_name, resource_id);
+    queries_.back().addInternalResource(client_name, resource_id);
   }
 
   bool wrappedLoadCallback(typename ServiceType::Request& req, typename ServiceType::Response& res)
@@ -93,15 +93,15 @@ public:
 
       // equal message not found from queries_, add new query
       queries_.emplace_back(req);
-      queries_.back().addExternalClient(ext_resource_id, req.rmp.status_topic);
+      queries_.back().addExternalResource(ext_resource_id, req.rmp.status_topic);
 
       // register owner as a nonamed client
       std::string client_name = "";
-      queries_.back().addInternalClient(client_name, int_resource_id);
+      queries_.back().addInternalResource(client_name, int_resource_id);
 
       // set this server active in resource manager
       // when a client call is made from callback, the binding between active server
-      // and the new loaded clients can be made automatically
+      // and the new loaded resources can be made automatically
       waitForLock(active_server_mutex_);
       this->activateServer();
 
@@ -138,7 +138,7 @@ public:
       // found equal request, simply reqister this in the query
       // and respond with unique resoure_id.
       ROS_INFO("%s Existing query, linking to the found query.", prefix.c_str());
-      queries_.back().addExternalClient(ext_resource_id, req.rmp.status_topic);
+      queries_.back().addExternalResource(ext_resource_id, req.rmp.status_topic);
     }
 
     //release the queries lock
@@ -166,19 +166,19 @@ public:
                      [resource_id](const ResourceQuery<ServiceType>& query) -> bool {
                      ROS_INFO_STREAM(query.getMsg().request);
                      ROS_INFO_STREAM(query.getMsg().response);
-                     ROS_INFO("%d", query.externalClientExists(resource_id));
-                       return query.externalClientExists(resource_id);
+                     ROS_INFO("%d", query.externalResourceExists(resource_id));
+                       return query.externalResourceExists(resource_id);
                      });
     if (found_query_it != queries_.end())
     {
       ROS_INFO("%s Query with ext id %d was found", prefix.c_str(), resource_id);
-      ROS_INFO("%s internal client count: %lu",prefix.c_str(), 
-               found_query_it->getInternalClients().size());
+      ROS_INFO("%s internal resource count: %lu",prefix.c_str(), 
+               found_query_it->getInternalResources().size());
       // Query found, try to remove client from it.
-      size_t clients_remaining = found_query_it->removeExternalClient(req.resource_id);
+      size_t resources_left = found_query_it->removeExternalResource(req.resource_id);
       ROS_INFO("%s internal clients remaining %lu", prefix.c_str(),
-               clients_remaining);
-      if (clients_remaining <= 0)
+               resources_left);
+      if (resources_left <= 0)
       {
         // last resource removed, execute owner's unload callback and remove the query from our list
         typename ServiceType::Request orig_req = found_query_it->getMsg().request;
@@ -189,8 +189,8 @@ public:
 
         // Send unload command to all internal clients...
         ROS_INFO("%s internal clients %lu", prefix.c_str(),
-                 found_query_it->getInternalClients().size());
-        for (auto& map_el : found_query_it->getInternalClients())
+                 found_query_it->getInternalResources().size());
+        for (auto& map_el : found_query_it->getInternalResources())
         {
           //
           if (map_el.first == "")
@@ -221,15 +221,15 @@ public:
     return found_q != queries_.end();
   }
 
-  std::vector<std::pair<temoto::ID ext_id, std::string status_topic>>
+  std::vector<std::pair<temoto_id::ID, std::string>>
   getExternalResources(temoto_id::ID internal_resource_id)
   {
-    std::string prefix = "[ResourceServer::notifyClients] [" + this->name_ + "]:";
+    std::string prefix = "[ResourceServer::getExternalResources] [" + this->name_ + "]:";
 
     waitForLock(queries_mutex_);
 
-    std::vector<std::pair<temoto::ID ext_id, std::string status_topic>> ext_resources;
-    for (q : queries_)
+    std::vector<std::pair<temoto_id::ID, std::string>> ext_resources;
+    for (const auto& q : queries_)
     {
       if (q.internalResourceExists(internal_resource_id))
       {

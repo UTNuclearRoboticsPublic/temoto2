@@ -156,26 +156,6 @@ public:
     return ret;
   }
 
-  // This method sends error/info message to any client connected to this resource.
-  void sendStatus(temoto_id::ID resource_id, temoto_2::ResourceStatus& srv)
-  {
-    waitForLock(servers_mutex_);
-    auto s_it = find_if(servers_.begin(), servers_.end(),
-                        [&](const std::shared_ptr<BaseResourceServer<Owner>>& server_ptr) -> bool {
-                          return server_ptr->internalResourceExists(resource_id);
-                        });
-    if (s_it != servers_.end())
-    {
-      std::shared_ptr<BaseResourceServer<Owner>>& server_ptr = *s_it;
-      servers_mutex_.unlock();
-      server_ptr->notifyClients(srv);
-    }
-    else
-    {
-      ROS_ERROR("ResourceManager::sendStatus internal resource id was not found from any queries.");
-    }
-    servers_mutex_.unlock();
-  }
 
   bool unloadCallback(temoto_2::UnloadResource::Request& req,
                       temoto_2::UnloadResource::Response& res)
@@ -243,30 +223,61 @@ public:
     clients_mutex_.unlock();
   }
 
+  // This method sends error/info message to any client connected to this resource.
+  void sendStatus(temoto_2::ResourceStatus& srv)
+  {
+    struct ResourceInfo
+    {
+      std::string status_topic;
+      temoto_2::ResourceStatus srv;
+    };
+    std::vector<ResourceInfo> infos;
+
+    waitForLock(servers_mutex_);
+    auto s_it = find_if(servers_.begin(), servers_.end(),
+                        [&](const std::shared_ptr<BaseResourceServer<Owner>>& server_ptr) -> bool {
+                          return server_ptr->internalResourceExists(srv.resource_id);
+                        });
+    if (s_it != servers_.end())
+    {
+      auto ext_resources = getServerExtResources(srv.resource_id);
+      for (const auto& ext_resource : ext_resources)
+      {
+        // ext_resource.first ==> external resource id
+        // ext_resource.second ==> status topic
+        info.srv.request.resource_id = ext_resource.first;
+        info.status_topic = ext_resource.second;
+        infos.push_back(info);
+      }
+      servers_mutex_.unlock();
+    }
+    else
+    {
+      ROS_ERROR("ResourceManager::sendStatus internal resource id was not found from any queries.");
+    }
+    servers_mutex_.unlock();
+  }
+
   bool statusCallback(temoto_2::ResourceStatus::Request& req, temoto_2::ResourceStatus::Response& res)
   {
-    temoto_2::ResourceStatus srv;
-    srv.request = req;
-    srv.response = res;
     std::string prefix = "ResourceManager::statusCallback [" + name_ + "]:";
     ROS_INFO("%s Got status: ", prefix.c_str());
-    ROS_INFO_STREAM(srv.request);
+    ROS_INFO_STREAM(req);
 
-
-    if (srv.request.status_code == status_codes::FAILED)
+    if (req.status_code == status_codes::FAILED)
     {
-//      ROS_INFO("START DEBUGGING CLIENTS");
-//      for (auto& client : clients_)
-//      {
-//        client->debug();
-//      }
-//      ROS_INFO("END DEBUGGING CLIENTS");
+      //      ROS_INFO("START DEBUGGING CLIENTS");
+      //      for (auto& client : clients_)
+      //      {
+      //        client->debug();
+      //      }
+      //      ROS_INFO("END DEBUGGING CLIENTS");
 
       // Go through clients and locate the one from
       // which the request arrived
-      std::string client_name = srv.request.manager_name + "/" + srv.request.server_name;
+      std::string client_name = req.manager_name + "/" + req.server_name;
       ROS_INFO("%s code == FAILED -> Looking for client %s", prefix.c_str(), client_name.c_str());
-      
+
       waitForLock(clients_mutex_);
       auto client_it =
           std::find_if(clients_.begin(), clients_.end(),
@@ -278,48 +289,64 @@ public:
       {
         // client found, get all internal calls to this client, and
         // forward status info to all of them
-        const auto inr_resources = (*client_it)->getInternalResources(srv.request.resource_id);
-        clients_mutex_.unlock();
-        // ROS_INFO("RESOURCES: %lu", resources.size());
-        for (const auto& int_resource : inr_resources)
+        struct ResourceInfo
         {
-          temoto::ID internal_resource_id = int_resource.first;
-          std::string server_name = int_resource.second;
+          std::string status_topic;
+          temoto_2::ResourceStatus srv;
+        };
+        std::vector<ResourceInfo> infos;
 
-          srv.request.manager_name = name_;
-          srv.request.server_name = server_name;
+        // based on incoming external id, find the assigned internal ids
+        // and for each internal id, find the external ids where to forward this status message
+        const auto int_resources = (*client_it)->getInternalResources(req.resource_id);
+        clients_mutex_.unlock();
+        for (const auto& int_resource : int_resources)
+        {
+          // int_resource.first ==> internal resource id
+          // int_resource.second ==> server name
+          ResourceInfo info;
+          info.srv.request = req;
+          info.srv.response = res;
 
-          // overwrite id with internal id
-          srv.request.resource_id = internal_resource_id;
+          // overwrite request id with internal id for callback
+          info.srv.request.resource_id = int_resource.first;
 
           // call owners status callback if registered
+          // srv will be stored and later forwarded to each external client on a server side
           if (status_callback_)
           {
-            (owner_->*status_callback_)(srv);
+            (owner_->*status_callback_)(info.srv);
           }
 
-          waitForLock(servers_mutex_);
-          auto ext_resources = getServerExtResources(internal_resource_id, server_name);
-          for (const auto ext_resource : ext_resources)
+          // prepare info for forwarding, define which server and manager is sending the status
+          info.srv.request.server_name = int_resource.second;
+          info.srv.request.manager_name = name_;
+
+          auto ext_resources = getServerExtResources(int_resource.first, int_resource.second);
+          for (const auto& ext_resource : ext_resources)
           {
-            // notify all connected clients in the server
-              ros::ServiceClient service_client =
-                  nh_.serviceClient<temoto_2::ResourceStatus>(ext_resource.second);
-              srv.request.resource_id = ext_resource.first;
-              if (service_client.call(srv))
-              {
-                ROS_INFO("%s SENDING ResourceStatus to %s", prefix.c_str(),
-                         ext_client.second.c_str());
-              }
-              else
-              {
-                ROS_ERROR("%s SENDING ResourceStatus to %s failed", prefix.c_str(),
-                          ext_client.second.c_str());
-              }
-            }
+            // ext_resource.first ==> external resource id
+            // ext_resource.second ==> status topic
+            info.srv.request.resource_id = ext_resource.first;
+            info.status_topic = ext_resource.second;
+            infos.push_back(info);
           }
+        }
 
-          servers_mutex_.unlock();
+        // forward status info to whoever is related with the given resource
+        for (const auto& info : infos)
+        {
+          ros::ServiceClient service_client =
+              nh_.serviceClient<temoto_2::ResourceStatus>(info.status_topic);
+          if (service_client.call(info.srv))
+          {
+            ROS_INFO("%s Sent ResourceStatus to %s", prefix.c_str(), info.status_topic.c_str());
+          }
+          else
+          {
+            ROS_ERROR("%s Failed to send ResourceStatus to %s", prefix.c_str(),
+                      info.status_topic.c_str());
+          }
         }
       }
       else
@@ -327,43 +354,27 @@ public:
         clients_mutex_.unlock();
         // ROS_INFO("%s: statusCallback failed to find the client", name_.c_str());
       }
-    }
-return true;
+    }  // if code == FAILED
+    return true;
   }
 
-  std::vector<std::pair<temoto_id::ID external_id, std::string status_topic>>
-  getServerExtResources(internal_resource_id, std::string& server_name)
+  std::vector<std::pair<temoto_id::ID, std::string>>
+  getServerExtResources(temoto_id::ID internal_resource_id, const std::string& server_name)
   {
-    waitForLock(servers_mutex_);
+ waitForLock(servers_mutex_);
+   std::vector<std::pair<temoto_id::ID, std::string>> ext_resources;
     auto s_it = find_if(servers_.begin(), servers_.end(),
                         [&](const std::shared_ptr<BaseResourceServer<Owner>>& server_ptr) -> bool {
                           return server_ptr->getName() == server_name;
                         });
     if (s_it != servers_.end())
     {
-      (*s_it)->getExternalResources(internal_resource_id)
+      ext_resources = (*s_it)->getExternalResources(internal_resource_id);
     }
     servers_mutex_.unlock();
+    return ext_resources;
   }
   
-  void notifyClients(temoto_2::ResourceStatus& srv)
-  {
-    std::string prefix = "[ResourceServer::notifyClients] [" + this->name_ + "]:";
-    ROS_INFO("%s",prefix.c_str());
-
-    waitForLock(queries_mutex_);
-    auto q_it = std::find_if(queries_.begin(), queries_.end(),
-                             [&](const ResourceQuery<ServiceType>& q) -> bool {
-                               return q.internalResourceExists(srv.request.resource_id);
-                             });
-
-    if (q_it != queries_.end())
-    {
-      queries_mutex_.unlock();
-      const auto ext_clients = q_it->getExternalClients();
-    }
-    queries_mutex_.unlock();
-  }
 
   temoto_id::ID generateInternalID()
   {
