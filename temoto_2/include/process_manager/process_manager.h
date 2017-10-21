@@ -32,7 +32,9 @@ namespace process_manager
 			const std::string class_name_ = "ProcessManager";
 			const std::vector<std::string> validActions = {"rosrun", "roslaunch"};
 
+			std::vector<temoto_2::LoadProcess> loading_processes_;
 			std::map<pid_t, temoto_id::ID> running_processes_;
+			std::map<pid_t, temoto_id::ID> unloading_processes_;
 
 			ros::NodeHandle nh_;
 
