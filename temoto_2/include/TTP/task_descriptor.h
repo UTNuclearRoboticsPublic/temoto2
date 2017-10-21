@@ -11,11 +11,12 @@ typedef std::string Action;
 
 struct TaskInterface
 {
-    IODescriptor input_descriptor;
-    IODescriptor output_descriptor;
+    std::vector<Subject> input_subjects_;
+    std::vector<Subject> output_subjects_;
 };
 
 class TaskDescriptorProcessor;
+class TaskTreeBuilder;
 
 /**
  * @brief This class contains all the information needed for finding, loading
@@ -24,6 +25,7 @@ class TaskDescriptorProcessor;
 class TaskDescriptor
 {
     friend TaskDescriptorProcessor;
+    friend TaskTreeBuilder;
 
 public:
 
@@ -31,7 +33,7 @@ public:
 
     TaskDescriptor( Action action );
 
-    TaskDescriptor( Action action, IODescriptor& input_descriptor );
+    TaskDescriptor( Action action, std::vector<Subject>& input_subjects );
 
     TaskDescriptor( Action action, TaskInterface& task_interface );
 
@@ -39,11 +41,17 @@ public:
 
     friend std::ostream& operator<<( std::ostream& stream, const TaskDescriptor& td);
 
+
+    void addIncompleteSubject(Subject subject);
+
+
     const Action& getAction() const;
 
     std::vector<TaskInterface>& getInterfaces();
 
-    const IODescriptor& getFirstInputDescriptor();
+    std::vector<Subject>& getFirstInputSubjects();
+
+    std::vector<Subject>& getIncompleteSubjects();
 
     bool empty();
 
@@ -57,6 +65,8 @@ private:
     std::string task_package_name_;
 
     std::string task_lib_path_;
+
+    std::vector<Subject> incomplete_subjects_;
 
     //boost::shared_ptr<Task> task_pointer_;
 };

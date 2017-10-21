@@ -151,13 +151,15 @@ add_dependencies(pos_tagger ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTE
 target_link_libraries(pos_tagger ${catkin_LIBRARIES} meta-classify meta-sequence-analyzers meta-parser-analyzers)
 
 add_executable(sentence_parser src/tools/sentence_parser.cpp
+                               src/TTP/language_processors/meta/meta_lp.cpp
+                               src/TTP/language_processors/meta/branch_finder.cpp
+                               src/TTP/task_manager.cpp
                                src/TTP/task_descriptor_processor.cpp
                                src/TTP/io_descriptor.cpp
                                src/TTP/task_descriptor.cpp
+                               src/TTP/task_tree_node.cpp
                                src/TTP/task_tree.cpp
-                               src/base_error/base_error.cpp
-                               src/core/language_processor/visitors/branch_finder.cpp
-                               src/core/language_processor/visitors/find_action.cpp)
+                               src/base_error/base_error.cpp)
 add_dependencies(sentence_parser ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(sentence_parser 
                       ${catkin_LIBRARIES}

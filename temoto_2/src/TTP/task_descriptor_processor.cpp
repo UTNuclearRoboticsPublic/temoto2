@@ -199,9 +199,6 @@ std::string TaskDescriptorProcessor::getTaskName()
     return task_name;
 }
 
-
-///////////////////////////
-
 /* * * * * * * * *
  *  GET TASK DESCRIPTOR
  * * * * * * * * */
@@ -231,6 +228,10 @@ TaskDescriptor TaskDescriptorProcessor::getTaskDescriptor()
 
     return task_descriptor;
 }
+
+/* * * * * * * * *
+ *  GET INTERFACES
+ * * * * * * * * */
 
 std::vector<TaskInterface> TaskDescriptorProcessor::getInterfaces()
 {
@@ -270,6 +271,9 @@ std::vector<TaskInterface> TaskDescriptorProcessor::getInterfaces()
     return std::move(task_interfaces);
 }
 
+/* * * * * * * * *
+ *  GET INTERFACE
+ * * * * * * * * */
 
 TaskInterface TaskDescriptorProcessor::getInterface(TiXmlElement* interface_element)
 {
@@ -280,8 +284,8 @@ TaskInterface TaskDescriptorProcessor::getInterface(TiXmlElement* interface_elem
 
     try
     {
-        task_interface.input_descriptor = getIODescriptor("in", interface_element);
-        task_interface.output_descriptor = getIODescriptor("out", interface_element);
+        task_interface.input_subjects_ = getIOSubjects("in", interface_element);
+        task_interface.output_subjects_ = getIOSubjects("out", interface_element);
     }
     catch( error::ErrorStackUtil& e )
     {
@@ -292,12 +296,16 @@ TaskInterface TaskDescriptorProcessor::getInterface(TiXmlElement* interface_elem
     return std::move(task_interface);
 }
 
-IODescriptor TaskDescriptorProcessor::getIODescriptor(std::string direction, TiXmlElement* interface_element)
+/* * * * * * * * *
+ *  GET IODESCRIPTOR
+ * * * * * * * * */
+
+std::vector<Subject> TaskDescriptorProcessor::getIOSubjects(std::string direction, TiXmlElement* interface_element)
 {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = formatMessage("", class_name_, __func__);
 
-    IODescriptor io_descriptor;
+    std::vector<Subject> io_subjects;
 
     try
     {
@@ -320,25 +328,22 @@ IODescriptor TaskDescriptorProcessor::getIODescriptor(std::string direction, TiX
              subject_element != NULL;
              subject_element = subject_element->NextSiblingElement())
         {
+            // Check if the subject type is valid
+            std::string sub_type = std::string(subject_element->Value());
+            if (std::find(valid_subjects.begin(), valid_subjects.end(), sub_type) == valid_subjects.end())
+            {
+                // Throw error
+                error::ErrorStackUtil error_stack_util(TTPErr::DESC_INVALID_ARG,
+                                                       error::Subsystem::CORE,
+                                                       error::Urgency::LOW,
+                                                       prefix + "Invalid datatype: " + desc_file_path_,
+                                                       ros::Time::now() );
+                throw error_stack_util;
+            }
+
+            // Parse the subject and add it to the IO-Descriptor
             Subject subject = getSubject(subject_element);
-
-            // Check for What
-            if (std::string(subject_element->Value()) == "what")
-            {
-                io_descriptor.addWhat(subject);
-            }
-
-            // Check for Where
-            else if (std::string(subject_element->Value()) == "where")
-            {
-                io_descriptor.addWhere(subject);
-            }
-
-            // Check for Numeric
-            else if (std::string(subject_element->Value()) == "numeric")
-            {
-                io_descriptor.addNumeric(subject);
-            }
+            io_subjects.push_back(subject);
         }
     }
     catch( error::ErrorStackUtil& e )
@@ -348,9 +353,13 @@ IODescriptor TaskDescriptorProcessor::getIODescriptor(std::string direction, TiX
         throw e;
     }
 
-    return std::move(io_descriptor);
+    return std::move(io_subjects);
 
 }
+
+/* * * * * * * * *
+ *  GET SUBJECT
+ * * * * * * * * */
 
 Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
 {
@@ -361,6 +370,9 @@ Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
 
     try
     {
+        // Get the type
+        subject.type_ = std::string(subject_element->Value());
+
         /*
          * Get the arg element. If it's missing, then that's not good
          */
@@ -391,7 +403,7 @@ Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
             throw error_stack_util;
         }
 
-        subject.words = std::move(parseString(std::string(word_attribute), ','));
+        subject.words_ = std::move(parseString(std::string(word_attribute), ','));
 
         // Get the Part Of Speech Tag (pos_tag) attribute. REQUIRED
         const char* pos_tag_attribute = arg_element->Attribute("pos_tag");
@@ -406,7 +418,7 @@ Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
             throw error_stack_util;
         }
 
-        subject.pos_tag = std::string(pos_tag_attribute);
+        subject.pos_tag_ = std::string(pos_tag_attribute);
 
         /*
          * Get the data element. If it's missing, then that's ok. It means that there
@@ -420,7 +432,7 @@ Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
             return subject;
         }
 
-        subject.data = getData(data_element);
+        subject.data_ = getData(data_element);
     }
     catch( error::ErrorStackUtil& e )
     {
@@ -431,6 +443,10 @@ Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
 
     return subject;
 }
+
+/* * * * * * * * *
+ *  GET DATA
+ * * * * * * * * */
 
 std::vector<Data> TaskDescriptorProcessor::getData(TiXmlElement* data_element)
 {
@@ -522,11 +538,6 @@ std::vector<Data> TaskDescriptorProcessor::getData(TiXmlElement* data_element)
 
     return datas;
 }
-
-
-///////////////////////////
-
-
 
 /* * * * * * * * *
  *  CHECK DESC INTEGRITY

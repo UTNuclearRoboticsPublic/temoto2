@@ -4,134 +4,77 @@
 namespace TTP
 {
 
-/*
- * SETTERS
- */
-
-// What
-void IODescriptor::addWhat( What what )
+Subject::Subject(std::string type, std::string word)
+    : type_(type)
 {
-    whats_.push_back(what);
+    words_.push_back(word);
 }
 
-void IODescriptor::addWhat( std::string word )
+void Subject::markIncomplete()
 {
-    What what;
-    what.words.push_back(word);
-    whats_.push_back(what);
+    is_complete_ = false;
 }
 
-// Where
-void IODescriptor::addWhere( Where where )
+void Subject::markComplete()
 {
-    wheres_.push_back(where);
+    is_complete_ = true;
 }
 
-void IODescriptor::addWhere( std::string word )
+// Subjects streaming operator
+std::ostream& operator<<( std::ostream& stream, const std::vector<Subject>& subjects)
 {
-    Where where;
-    where.words.push_back(word);
-    wheres_.push_back(where);
-}
 
-void IODescriptor::addWhereAdv( std::string word )
-{
-    WhereAdv where_adv;
-    where_adv.words.push_back(word);
-    where_advs_.push_back(where_adv);
-}
-
-// Numeric
-void IODescriptor::addNumeric( Numeric numeric )
-{
-    numerics_.push_back(numeric);
-}
-
-void IODescriptor::addNumeric( std::string word )
-{
-    Numeric numeric;
-    numeric.words.push_back(word);
-    numerics_.push_back(numeric);
-}
-
-
-/*
- * GETTERS
- */
-
-const std::vector<What>& IODescriptor::getWhats() const
-{
-    return whats_;
-}
-
-const std::vector<Where>& IODescriptor::getWheres() const
-{
-    return wheres_;
-}
-
-const std::vector<Where>& IODescriptor::getWhereAdvs() const
-{
-    return where_advs_;
-}
-
-std::ostream& operator<<( std::ostream& stream, const TTP::IODescriptor& td)
-{
     // Print out the whats
-    if (!td.getWhats().empty())
+    if (!subjects.empty())
     {
-        stream << "  What: ";
-        for (auto& what : td.getWhats())
+        for (const auto& subject : subjects)
         {
-            stream << what;
+            stream << "| |_ " << subject;
         }
-        stream << std::endl;
-    }
-
-    // Print out the wheres (prepositions)
-    if (!td.getWheres().empty())
-    {
-        stream << "  Where (prep/kus): ";
-        for (auto& where : td.getWheres())
-        {
-            stream << where;
-        }
-        stream << std::endl;
-    }
-
-    // Print out the wheres (adverbs)
-    if (!td.getWhereAdvs().empty())
-    {
-        stream << "  Where (adv/kuhu): ";
-        for (auto& where : td.getWhereAdvs())
-        {
-            stream << where;
-        }
-        stream << std::endl;
+        stream << "|" << std::endl;
     }
 
     return stream;
 }
 
+// Subject streaming operator
 std::ostream& operator<<( std::ostream& stream, const Subject& subject)
 {
-    stream << "[";
-    for (auto& word : subject.words)
+    // Print out the type
+    stream << subject.type_ << ": ";
+
+    // Print out if the subject is complete or not
+    if (subject.is_complete_)
+    {
+        stream << " Complete";
+    }
+    else
+    {
+        stream << " Incomplete";
+    }
+
+    stream << " [";
+
+    // Print out the word (candidate words)
+    for (auto& word : subject.words_)
     {
         stream << word;
-        if (&word != &subject.words.back())
+        if (&word != &subject.words_.back())
         {
             stream << ", ";
         }
     }
 
     stream << "]";
-    if (!subject.data.empty())
+
+    // Print out the data
+    if (!subject.data_.empty())
     {
         stream << " + data {";
-        for (auto& data : subject.data)
+        for (auto& data : subject.data_)
         {
             stream << data;
-            if (&data != &subject.data.back())
+            if (&data != &subject.data_.back())
             {
                 stream << ", ";
             }
@@ -139,11 +82,12 @@ std::ostream& operator<<( std::ostream& stream, const Subject& subject)
         stream << "}";
     }
 
-    stream << "\n        ";
+    stream << std::endl;
 
     return stream;
 }
 
+// Data streaming operator
 std::ostream& operator<<( std::ostream& stream, const Data& data)
 {
     stream << "[" << data.type;

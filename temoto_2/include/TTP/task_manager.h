@@ -8,11 +8,15 @@
 
 #include "common/temoto_id.h"
 #include "TTP/task_descriptor.h"
-#include "TTP/task_descriptor_processor.h"
+#include "TTP/task_tree.h"
 #include "TTP/base_task/task.h"
+
 #include "temoto_2/stopTask.h"
 #include "temoto_2/indexTasks.h"
 #include "temoto_2/StopTaskMsg.h"
+
+namespace TTP
+{
 
 class TaskManager
 {
@@ -45,13 +49,6 @@ public:
     std::vector <TaskDescriptor> findTaskLocal(std::string task_to_find);
 
     /**
-     * @brief findTaskRunning
-     * @param task_to_find
-     * @return
-     */
-    //std::vector <TaskDescriptor> findTaskRunning(std::string task_to_find);
-
-    /**
      * @brief findTask
      * @param task_to_find
      * @param base_path
@@ -71,58 +68,60 @@ public:
      * @brief getIndexedTasks
      * @return
      */
-    std::vector <TaskDescriptor>* getIndexedTasks();
+    std::vector <TaskDescriptor>& getIndexedTasks();
 
-    /**
-     * @brief executeTask
-     * @param task_info
-     * @param arguments
-     * @returns
-     */
-    bool executeTask(TaskDescriptor task_info, std::vector<boost::any> arguments);
+    void connectTasks(TaskTreeNode& node, unsigned int depth);
 
-    /**
-     * @brief loadTask
-     * @param task
-     * @return
-     */
-    void loadTask(RunningTask& task);
+//    /**
+//     * @brief executeTask
+//     * @param task_info
+//     * @param arguments
+//     * @returns
+//     */
+//    bool executeTask(TaskDescriptor task_info, std::vector<boost::any> arguments);
 
-    /**
-     * @brief instantiateTask
-     * @param task
-     * @return
-     */
-    void instantiateTask(RunningTask& task);
+//    /**
+//     * @brief loadTask
+//     * @param task
+//     * @return
+//     */
+//    void loadTask(RunningTask& task);
 
-    /**
-     * @brief startTask
-     * @param task
-     * @param arguments
-     * @return
-     */
-    void startTask(RunningTask& task, std::vector<boost::any> arguments);
+//    /**
+//     * @brief instantiateTask
+//     * @param task
+//     * @return
+//     */
+//    void instantiateTask(RunningTask& task);
 
-    /**
-     * @brief stopTask
-     * @param task_name
-     * @param task_id
-     * @return
-     */
-    void stopTask(std::string task_name = "", TemotoID::ID task_id = TemotoID::UNASSIGNED_ID);
+//    /**
+//     * @brief startTask
+//     * @param task
+//     * @param arguments
+//     * @return
+//     */
+//    void startTask(RunningTask& task, std::vector<boost::any> arguments);
 
-    /**
-     * @brief unloadTaskLib
-     * @param path_to_lib
-     * @return
-     */
-    void unloadTaskLib(std::string path_to_lib);
+//    /**
+//     * @brief stopTask
+//     * @param task_name
+//     * @param task_id
+//     * @return
+//     */
+//    void stopTask(std::string task_name = "", TemotoID::ID task_id = TemotoID::UNASSIGNED_ID);
+
+//    /**
+//     * @brief unloadTaskLib
+//     * @param path_to_lib
+//     * @return
+//     */
+//    void unloadTaskLib(std::string path_to_lib);
 
 private:
 
     const std::string class_name_ = "TaskManager";
 
-    const std::string description_file_ = "description.xml";
+    const std::string description_file_ = "descriptor.xml";
 
     /**
      * @brief n_
@@ -153,14 +152,9 @@ private:
     std::string system_prefix_;
 
     /**
-     * @brief runningTasks_
-     */
-    std::vector <RunningTask> running_tasks_;
-
-    /**
      * @brief tasks_indexed_
      */
-    std::vector <TaskDescriptor>* tasks_indexed_;
+    std::vector <TaskDescriptor> tasks_indexed_;
 
     /**
      * @brief class_loader_
@@ -171,38 +165,40 @@ private:
      * @brief langProcessor_
      */
 
-    /**
-     * @brief stopTaskByID
-     * @param task_id
-     */
-    void stopTaskByID( TemotoID::ID task_id );
+//    /**
+//     * @brief stopTaskByID
+//     * @param task_id
+//     */
+//    void stopTaskByID( TemotoID::ID task_id );
 
-    /**
-     * @brief stopTaskByName
-     * @param task_name
-     */
-    void stopTaskByName( std::string task_name );
+//    /**
+//     * @brief stopTaskByName
+//     * @param task_name
+//     */
+//    void stopTaskByName( std::string task_name );
 
-    /**
-     * @brief stopTaskCallback
-     * @param req
-     * @param res
-     * @return
-     */
-    bool stopTaskCallback (temoto_2::stopTask::Request& req,
-                           temoto_2::stopTask::Response& res);
+//    /**
+//     * @brief stopTaskCallback
+//     * @param req
+//     * @param res
+//     * @return
+//     */
+//    bool stopTaskCallback (temoto_2::stopTask::Request& req,
+//                           temoto_2::stopTask::Response& res);
 
-    /**
-     * @brief indexTasksCallback
-     * @param req
-     * @param res
-     * @return
-     */
-    bool indexTasksCallback (temoto_2::indexTasks::Request& req,
-                             temoto_2::indexTasks::Response& res);
+//    /**
+//     * @brief indexTasksCallback
+//     * @param req
+//     * @param res
+//     * @return
+//     */
+//    bool indexTasksCallback (temoto_2::indexTasks::Request& req,
+//                             temoto_2::indexTasks::Response& res);
 
-    void stopTaskMsgCallback( temoto_2::StopTaskMsg msg );
+//    void stopTaskMsgCallback( temoto_2::StopTaskMsg msg );
 
 };
+
+}// END of TTP namespace
 
 #endif

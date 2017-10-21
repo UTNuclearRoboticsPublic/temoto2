@@ -6,71 +6,6 @@ namespace TTP
 {
 
 /*
- * --------------- Task Tree Node implementations ---------------
- */
-TaskTreeNode::TaskTreeNode(){}
-
-TaskTreeNode::TaskTreeNode( Action action )
-{
-    // Create a task descriptor
-    TaskDescriptor task_descriptor( action );
-
-    // Assign it to the local task descriptor
-    task_descriptor_ = std::move( task_descriptor );
-}
-
-TaskTreeNode::TaskTreeNode( Action action, IODescriptor io_descriptor )
-{
-    // Create a task descriptor
-    TaskDescriptor task_descriptor( action, io_descriptor );
-
-    // Assign it to the local task descriptor
-    task_descriptor_ = std::move( task_descriptor );
-}
-
-TaskTreeNode::TaskTreeNode( TaskDescriptor task_descriptor ) : task_descriptor_( task_descriptor ){}
-
-void TaskTreeNode::addChildNode( TaskTreeNode child )
-{
-    child_nodes_.push_back(child);
-}
-
-TaskTreeNode* TaskTreeNode::lastChild()
-{
-    return &(child_nodes_.back());
-}
-
-std::ostream& operator<<( std::ostream& stream, const TaskTreeNode& ttn)
-{
-    // If it is a root node, then print the root label
-    if (ttn.task_descriptor_.getAction() == "ROOT")
-    {
-        stream << "ROOT";
-    }
-    else
-    {
-        stream << ttn.task_descriptor_.getAction();
-    }
-
-    // If the child nodes are not empty, then print them out
-    if (!ttn.child_nodes_.empty())
-    {
-        stream << "->(";
-        for (auto& child : ttn.child_nodes_)
-        {
-            stream << child;
-            if (&child != &ttn.child_nodes_.back())
-            {
-                stream << ", ";
-            }
-        }
-        stream << ")";
-    }
-
-    return stream;
-}
-
-/*
  * --------------- Task Tree implementations ---------------
  */
 TaskTree::TaskTree( TaskTreeNode root_node )
@@ -84,11 +19,21 @@ std::ostream& operator<<( std::ostream& stream, const TaskTree& tt)
     return stream;
 }
 
+TaskTreeNode& TaskTree::getRootNode()
+{
+    return root_node_;
+}
+
 /*
  * --------------- Task Tree Builder implementations ---------------
  */
 TaskTree TaskTreeBuilder::build( std::vector<TaskDescriptor>& input_task_descs )
 {
+    /*
+     * Create the first (root) node. The root node just points to the first tasks
+     */
+    TaskTreeNode root_node("ROOT");
+
     try
     {
         // Make sure "input_task_descs" is not empty
@@ -97,11 +42,6 @@ TaskTree TaskTreeBuilder::build( std::vector<TaskDescriptor>& input_task_descs )
             // THROW A TEMOTO ERROR HERE
             throw;
         }
-
-        /*
-         * Create the first (root) node. The root node just points to the first tasks
-         */
-        TaskTreeNode root_node("ROOT");
 
         /*
          * Create two intermediate nodes. These are used during tree building process
@@ -134,30 +74,43 @@ TaskTree TaskTreeBuilder::build( std::vector<TaskDescriptor>& input_task_descs )
                 previous_node = active_parent_node->lastChild();
             }
         }
-
-        return TaskTree(std::move(root_node));
     }
     catch(...)
     {
         // CATCH TEMOTO ERRORS HERE
     }
+
+    return TaskTree(std::move(root_node));
 }
 
-bool TaskTreeBuilder::checkIfDependent(TaskDescriptor& task_desc) const
+bool TaskTreeBuilder::checkIfDependent(TaskDescriptor& task_descriptor)
 {
     bool isDependent = false;
 
-    const IODescriptor input_desc = task_desc.getFirstInputDescriptor();
-
     // Check the "whats"
-    const std::vector<What>& whats = input_desc.getWhats();
-    for (auto& what : whats)
+    std::vector<Subject>& subjects = task_descriptor.getFirstInputSubjects();
+    for (auto& subject : subjects)
     {
-        if (what.words[0] == "it")
+        // Look for "what" types
+        if (subject.type_ == "what")
         {
-            isDependent = true;
-            break;
+            if (subject.words_[0] == "it")
+            {
+                /*
+                 * Mark this "what" phrase as incomplete. This indicates that
+                 * this phase has to be filled with additional information during
+                 * runtime. Also create a copy of this subject into node's
+                 * "incomplete_subjects" set
+                 */
+                subject.markIncomplete();
+                task_descriptor.addIncompleteSubject(subject);
+
+                isDependent = true;
+                break;
+            }
         }
+
+        // TODO: Look for other types
     }
 
     return isDependent;

@@ -1,41 +1,10 @@
 #ifndef TASK_TREE_H
 #define TASK_TREE_H
 
-#include "TTP/task_descriptor.h"
+#include "TTP/task_tree_node.h"
 
 namespace TTP
 {
-
-/**
- * @brief The TaskTreeNode class
- */
-class TaskTreeNode
-{
-public:
-
-    /**
-     * @brief A default constructor that is used for creating root nodes only
-     */
-    TaskTreeNode();
-
-    TaskTreeNode( Action action );
-
-    TaskTreeNode( Action action, IODescriptor io_descriptor );
-
-    TaskTreeNode( TaskDescriptor task_descriptor );
-
-    friend std::ostream& operator<<( std::ostream& stream, const TaskTreeNode& ttn);
-
-    void addChildNode( TaskTreeNode child );
-
-    TaskTreeNode* lastChild();
-
-private:
-
-    TaskDescriptor task_descriptor_;
-
-    std::vector<TaskTreeNode> child_nodes_;
-};
 
 /**
  * @brief The TaskTree class
@@ -43,9 +12,18 @@ private:
 class TaskTree
 {
 public:
+
+    TaskTree() = default;
+
+    /**
+     * @brief TaskTree
+     * @param root_node
+     */
     TaskTree( TaskTreeNode root_node);
 
     friend std::ostream& operator<<( std::ostream& stream, const TaskTree& tt);
+
+    TaskTreeNode& getRootNode();
 
 private:
     TaskTreeNode root_node_;
@@ -60,13 +38,21 @@ public:
 
     //TaskTree build( std::vector<IODescriptor> input_descs );
 
+    /**
+     * @brief TaskTreeBuilder
+     */
     TaskTreeBuilder(){}
 
+    /**
+     * @brief build
+     * @param input_task_descs
+     * @return
+     */
     TaskTree build( std::vector<TaskDescriptor>& input_task_descs );
 
 private:
 
-    bool checkIfDependent(TaskDescriptor& task_desc) const;
+    bool checkIfDependent(TaskDescriptor& task_descriptor);
 };
 }
 #endif

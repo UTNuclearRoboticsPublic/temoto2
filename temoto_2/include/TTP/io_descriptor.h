@@ -29,75 +29,32 @@ const std::vector<std::string> valid_datatypes = {"topic",
                                                   "other",
                                                   "string"};
 
+// Valid subjects
+const std::vector<std::string> valid_subjects = {"what",
+                                                 "where"};
+
 /**
  * @brief The Subject struct
  */
-struct Subject
+class Subject
 {
-    std::vector<std::string> words;
-    std::string pos_tag;
-    std::vector<Data> data;
+public:
+    std::string type_;
+    std::string pos_tag_;
+    std::vector<std::string> words_;
+    std::vector<Data> data_;
+    bool is_complete_ = true;
+
+    Subject() = default;
+
+    Subject(std::string type, std::string word);
+
+    void markIncomplete();
+    void markComplete();
 };
 
 std::ostream& operator<<( std::ostream& stream, const Subject& subject);
 
-typedef Subject What;
-typedef Subject Where;
-typedef Subject WhereAdv;
-typedef Subject Numeric;
-
-/**
- * @brief The IODescriptor struct
- */
-class IODescriptor
-{
-public:
-
-    IODescriptor(){}
-
-    /*
-     * SETTERS
-     */
-
-    void addWhat( std::string word );
-
-    void addWhat( What what );
-
-
-    void addWhere( std::string word );
-
-    void addWhere( Where where );
-
-
-    void addWhereAdv( std::string word );
-
-
-    void addNumeric( std::string word );
-
-    void addNumeric( Numeric numeric );
-
-
-    /*
-     * GETTERS
-     */
-
-    const std::vector<What>& getWhats() const;
-
-    const std::vector<Where>& getWheres() const;
-
-    const std::vector<WhereAdv>& getWhereAdvs() const;
-
-    const std::vector<Numeric>& getNumerics() const;
-
-
-private:
-
-    std::vector<What> whats_;
-    std::vector<Where> wheres_;
-    std::vector<WhereAdv> where_advs_;
-    std::vector<Numeric> numerics_;
-};
-
-std::ostream& operator<<( std::ostream& stream, const IODescriptor& td);
+std::ostream& operator<<( std::ostream& stream, const std::vector<Subject>& subjects);
 }
 #endif

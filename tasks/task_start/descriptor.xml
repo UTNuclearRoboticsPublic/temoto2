@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+
+<task action="start" >
+ 
+  <!--Interface block-->
+  <interface id="0">
+    
+    <!--Input block-->
+    <in>    
+      <what>
+        <arg pos_tag="NN" word=""/>
+      </what>
+    </in>
+    
+    <!--Output block-->
+    <out>
+      <what>
+        <arg pos_tag="NN" word=""/>
+        <data>
+          <field datatype="topic"/>
+        </data>
+      </what> 
+    </out>
+
+  </interface>
+
+</task>

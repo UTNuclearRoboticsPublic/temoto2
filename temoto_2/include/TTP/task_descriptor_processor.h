@@ -50,7 +50,7 @@ private:
 
     TaskInterface getInterface(TiXmlElement* interface_element);
 
-    IODescriptor getIODescriptor(std::string direction, TiXmlElement* interface_element);
+    std::vector<Subject> getIOSubjects(std::string direction, TiXmlElement* interface_element);
 
     Subject getSubject(TiXmlElement* subject_element);
 
