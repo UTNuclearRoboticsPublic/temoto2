@@ -282,6 +282,20 @@ TaskInterface TaskDescriptorProcessor::getInterface(TiXmlElement* interface_elem
 
     TaskInterface task_interface;
 
+    // Get the interface id
+    const char* id_attribute = interface_element->Attribute("id");
+    if (id_attribute == NULL)
+    {
+        error::ErrorStackUtil error_stack_util(TTPErr::DESC_NO_ATTR,
+                                               error::Subsystem::CORE,
+                                               error::Urgency::LOW,
+                                               prefix + "Missing id attribute in: " + desc_file_path_,
+                                               ros::Time::now() );
+        throw error_stack_util;
+    }
+
+    task_interface.id_ = atoi(id_attribute);
+
     try
     {
         task_interface.input_subjects_ = getIOSubjects("in", interface_element);
@@ -494,27 +508,25 @@ std::vector<Data> TaskDescriptorProcessor::getData(TiXmlElement* data_element)
 
             // Get the value attribute. NOT REQUIRED
             const char* value_attribute = field_element->Attribute("value");
-            if ( value_attribute == NULL )
+            if ( value_attribute != NULL )
             {
-                break;
-            }
+                std::string value_str = std::string(value_attribute);
 
-            std::string value_str = std::string(value_attribute);
+                if (data.type == "string")
+                {
+                    data.value = boost::any_cast<std::string>(value_str);
+                }
 
-            if (data.type == "string")
-            {
-                data.value = boost::any_cast<std::string>(value_str);
-            }
+                if (data.type == "topic")
+                {
+                    data.value = boost::any_cast<std::string>(value_str);
+                }
 
-            if (data.type == "topic")
-            {
-                data.value = boost::any_cast<std::string>(value_str);
-            }
-
-            if (data.type == "number")
-            {
-                double value_num = atof(value_str .c_str());
-                data.value = boost::any_cast<double>(value_num);
+                if (data.type == "number")
+                {
+                    double value_num = atof(value_str.c_str());
+                    data.value = boost::any_cast<double>(value_num);
+                }
             }
 
             datas.push_back(data);

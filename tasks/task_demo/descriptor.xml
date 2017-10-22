@@ -9,6 +9,10 @@
     <in>    
       <what>
         <arg pos_tag="NN" word="cat,dog,the frog"/>
+
+        <data>
+          <field datatype="topic" value="/some_topic"/>
+        </data>
       </what>
 
       <what>

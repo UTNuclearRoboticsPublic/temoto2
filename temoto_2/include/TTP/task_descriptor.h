@@ -11,12 +11,14 @@ typedef std::string Action;
 
 struct TaskInterface
 {
+    unsigned int id_;
     std::vector<Subject> input_subjects_;
     std::vector<Subject> output_subjects_;
 };
 
 class TaskDescriptorProcessor;
 class TaskTreeBuilder;
+class TaskManager;
 
 /**
  * @brief This class contains all the information needed for finding, loading
@@ -26,6 +28,7 @@ class TaskDescriptor
 {
     friend TaskDescriptorProcessor;
     friend TaskTreeBuilder;
+    friend TaskManager;
 
 public:
 

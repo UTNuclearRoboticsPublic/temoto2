@@ -64,6 +64,13 @@ int main(int argc, char **argv)
 
             // Print out the task tree
             std::cout << "Task Tree: " << tt;
+
+            // Find connecting tasks
+            std::vector<TTP::Subject> empty_subs; // stupid hack
+            task_manager.connectTasks(tt.getRootNode(), empty_subs);
+
+            // Print task tree task descriptors
+            tt.printTaskDescriptors(tt.getRootNode());
         }
         catch (error::ErrorStackUtil& e)
         {

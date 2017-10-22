@@ -24,6 +24,15 @@ TaskTreeNode& TaskTree::getRootNode()
     return root_node_;
 }
 
+void TaskTree::printTaskDescriptors(TaskTreeNode& node)
+{
+    std::cout << node.getTaskDescriptor();
+    for (auto& child : node.getChildren())
+    {
+        printTaskDescriptors(child);
+    }
+}
+
 /*
  * --------------- Task Tree Builder implementations ---------------
  */
@@ -104,6 +113,9 @@ bool TaskTreeBuilder::checkIfDependent(TaskDescriptor& task_descriptor)
                  */
                 subject.markIncomplete();
                 task_descriptor.addIncompleteSubject(subject);
+
+                // Clean
+                // subject.words_.clear();
 
                 isDependent = true;
                 break;

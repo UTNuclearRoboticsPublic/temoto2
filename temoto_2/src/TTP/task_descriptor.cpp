@@ -71,7 +71,7 @@ std::ostream& operator<<( std::ostream& stream, const TaskDescriptor& td)
     stream << GREEN << "ACTION: " << td.getAction() << RESET << std::endl;
     for (auto& task_interface : td.task_interfaces_)
     {
-        stream << "INTERFACE:" << std::endl;
+        stream << "INTERFACE " << task_interface.id_ << ":" << std::endl;
         stream << "|__ in __\n" << task_interface.input_subjects_;
         stream << "|__ out __\n" << task_interface.output_subjects_;
     }

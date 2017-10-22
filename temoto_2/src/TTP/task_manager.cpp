@@ -11,8 +11,25 @@
 #include "common/tools.h"
 #include "TTP/TTP_errors.h"
 
+#include <algorithm>
+
 namespace TTP
 {
+
+struct CandidateInterface
+{
+    CandidateInterface(TaskInterface inf, unsigned int score):inf_(inf), score_(score){}
+    TaskInterface inf_;
+    int score_;
+};
+
+struct CandidateTask
+{
+    CandidateTask(TaskDescriptor td, CandidateInterface ci):td_(td), ci_(ci){}
+    TaskDescriptor td_;
+    CandidateInterface ci_;
+};
+
 
 /* * * * * * * * *
  *  CONSTRUCTOR
@@ -174,93 +191,346 @@ std::vector <TaskDescriptor>& TaskManager::getIndexedTasks()
 }
 
 /* * * * * * * * *
+ *  FIND NONSTRICT MATCH
+ * * * * * * * * */
+
+unsigned int findNonstrictMatch(const std::vector<Subject>& complete_subjects,
+                                const std::vector<Subject>& incomplete_subjects)
+{
+    // create a copy of complete subjects
+    std::vector<Subject> complete_subjects_c = complete_subjects;
+    unsigned int score = 0;
+
+    for (auto& i_subject : incomplete_subjects)
+    {
+        bool subject_match = false;
+        for (unsigned int i=0; i<complete_subjects_c.size(); i++)
+        {
+            // Check for type match
+            if (i_subject.type_ != complete_subjects_c[i].type_)
+            {
+                continue;
+            }
+
+            subject_match = true;
+            score += complete_subjects_c[i].data_.size();
+            complete_subjects_c.erase(complete_subjects_c.begin() + i);
+            break;
+        }
+        if (subject_match != true)
+        {
+            return score;
+        }
+    }
+    return score;
+}
+
+
+/* * * * * * * * *
  *  CONNECT TASKS
  * * * * * * * * */
 
-void TaskManager::connectTasks(TaskTreeNode& node, unsigned int depth = 0)
+void TaskManager::connectTasks(TaskTreeNode& node, std::vector<Subject> parent_subjects, unsigned int depth)
 {
+    /*
+     *
+     * TODO: this function is currently quite a mess, a lot of repetitive
+     *       stuff going on. Has to be organized
+     *
+     */
+
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = formatMessage("", class_name_, __func__);
+
     // If its the root node (depth = 0), then dont look for a task
-    if (depth != 0)
+    if (depth == 0)
     {
-        try
+        for (auto& child : node.getChildren())
         {
-            // A vector that will contain the incomplete i-subjects of all dependent children
-            std::vector<Subject> incomplete_subjects;
+            connectTasks(child, parent_subjects, depth + 1);
+        }
+
+        return;
+    }
+
+    /////////////////////////////    *** PREPARATIONS ***    ////////////////////////////////
+    //
+    //                  Preparations to manage the upcoming magic
+
+    // A set that contains all tasks that fit the criteria set below. Each matching task has
+    // a score that shows how strong the match was.
+    std::vector<CandidateTask> candidate_tasks;
+
+    // Variables of the task tree node that are frequently used
+    TaskDescriptor& node_task_descriptor = node.getTaskDescriptor();
+    const Action& node_action = node_task_descriptor.getAction();
+    TaskInterface& node_interface = node_task_descriptor.getInterfaces()[0];
+    std::vector<Subject>& node_subjects = node_interface.input_subjects_;
+
+    // A vector that will contain the incomplete i-subjects of all dependent children
+    std::vector<Subject> incomplete_subjects;
+    //
+    //
+    /////////////////////////////////////////////////////////////////////////////////////////
+
+    /*
+     * Check if this node depends on the parent node. This is done by
+     * checking if the task descriptor contains any incomplete subjects
+     */
+    if (!node_task_descriptor.getIncompleteSubjects().empty())
+    {
+        std::cout << "[" << node_action << "] depends on parent node, retrieving missing information ...\n";
+        /*
+         * Check the node subjects and get the missing information from
+         * the parent, making a ALMOST (will get additional information
+         * during runtime) complete subject.
+         */
+        for (auto& n_sub : node_subjects)
+        {
+            if (n_sub.is_complete_)
+            {
+                continue;
+            }
+
+            // Clean the incomlete subject. This means that all pronouns are removed
+            n_sub.words_.clear();
+
+            // go through the parent subjects
+            for (auto& p_sub : parent_subjects)
+            {
+                // If the subject types match, then this is our guy. Copy the contents
+                // of the parent subjects into the current incomplete subject
+                if (n_sub.type_ == p_sub.type_)
+                {
+                    n_sub = p_sub;
+                }
+            }
+            std::cout << "[" << node_action << "] got:\n" << n_sub;
+        }
+    }
+
+    /*
+     * Get the incomplete i-subjects of all dependent children
+     */
+    for (auto& child : node.getChildren())
+    {
+        // For every dependent (contains incomplete subjects) child ...
+        if (child.getTaskDescriptor().getIncompleteSubjects().size() != 0)
+        {
+            incomplete_subjects.insert(incomplete_subjects.end(),
+                                       child.getTaskDescriptor().getIncompleteSubjects().begin(),
+                                       child.getTaskDescriptor().getIncompleteSubjects().end());
+        }
+    }
+
+    std::cout << "[" << node_action << "] has " << incomplete_subjects.size() << " incomplete subjects and these are:\n";
+    for (auto& i_s : incomplete_subjects){std::cout << i_s;}
+
+    /*
+     * If there were any incomplete subjects then ...
+     */
+    if (!incomplete_subjects.empty())
+    {
+        /*
+         * Elimineate duplicate i-subjects (based only on type)
+         */
+        for (unsigned int i=incomplete_subjects.size()-1; i<=0; i--)
+        {
+            Subject& ics = incomplete_subjects[i];
 
             /*
-             * Get the incomplete i-subjects of all dependent children
+             * Start looping backwards, starting from the next element to
+             * the left of the ics element
              */
-            for (auto& child : node.getChildren())
+            for (unsigned int j=i-1; j<=0; j--)
             {
-                // For every dependent (contains incomplete subjects) child ...
-                if (child.getTaskDescriptor().getIncompleteSubjects().size() != 0)
+                if(incomplete_subjects[j].type_ == ics.type_)
                 {
-                    incomplete_subjects.insert(incomplete_subjects.end(),
-                                               child.getTaskDescriptor().getIncompleteSubjects().begin(),
-                                               child.getTaskDescriptor().getIncompleteSubjects().end());
+                    // Erase the element
+                    incomplete_subjects.erase(incomplete_subjects.begin()+i);
+                    break;
                 }
+            }
+        }
+
+        std::cout << "[" << node_action << "]" << " after eliminating duplicates we have:\n";
+        for (auto& i_s : incomplete_subjects){std::cout << i_s;}
+
+        /*
+         * Clean the incomlete subjects. This means that all pronouns are removed
+         */
+        for (auto& incomplete_subject : incomplete_subjects)
+        {
+            incomplete_subject.words_.clear();
+        }
+
+        std::cout << "[" << node_action << "]" << " after cleaning the incomplete subs we have:\n";
+        for (auto& i_s : incomplete_subjects){std::cout << i_s;}
+
+        std::cout << "[" << node_action << "]" << " looking for a suitable task\n";
+        /*
+         * Find task that matches own i-subjects + that has a matching
+         * o-subjects with dependent children incomplete i-subjects
+         */
+        for (auto& task_descriptor : tasks_indexed_)
+        {
+            std::cout << "[" << node_action << "]" << " looking at '" << task_descriptor.getAction() << "'\n";
+
+            // Look for the task with the same action type
+            if (task_descriptor.getAction() != node_action)
+            {
+                std::cout << "[" << node_action << "]" << " action does not match\n";
+                continue;
+            }
+
+            std::vector<CandidateInterface> candidate_interfaces;
+
+            // Loop over the interfaces and ...
+            for (auto& interface : task_descriptor.getInterfaces())
+            {
+                // ... look for STRICT i-subjects match
+                if (interface.input_subjects_ != node_subjects)
+                {
+                    std::cout << "[" << node_action << "]" << " input subjects do not match\n";
+                    std::cout << "[" << node_action << "]" << " and we are talking about:\n";
+                    std::cout << interface.input_subjects_ << "and\n";
+                    std::cout << node_subjects << "\n";
+
+                    continue;
+                }
+
+                // ... look for NONSTRICT o-subjects match
+                unsigned int match_score = findNonstrictMatch(interface.output_subjects_, incomplete_subjects);
+                if (match_score == 0)
+                {
+                    std::cout << "[" << node_action << "]" << " dependent children do not have a match\n";
+                    continue;
+                }
+
+                // And we have a candidate
+                candidate_interfaces.emplace_back(interface, match_score);
             }
 
             /*
-             * Elimineate duplicate i-subjects (based only on type)
+             * If this task contains any suitable interfaces, pick the one with
+             * the best match and push the task to the candidate tasks set
              */
-            for (unsigned int i=incomplete_subjects.size()-1; i<=0; i--)
+            if (!candidate_interfaces.empty())
             {
-                Subject& ics = incomplete_subjects[i];
+                std::cout << "[" << node_action << "]" << " IS A SUITABLE CANDIDATE\n";
 
-                /*
-                 * Start looping backwards, starting from the next element to
-                 * the left of the ics element
-                 */
-                for (unsigned int j=i-1; j<=0; j--)
-                {
-                    if(incomplete_subjects[j].type_ == ics.type_)
-                    {
-                        // Erase the element
-                        incomplete_subjects.erase(incomplete_subjects.begin()+i);
-                        break;
-                    }
-                }
+                // Sort the candidates with decreasing score and pick the first candidate
+                std::sort(candidate_interfaces.begin(),
+                          candidate_interfaces.end(),
+                          [](CandidateInterface& i1, CandidateInterface& i2)
+                          {
+                              return i1.score_ > i2.score_;
+                          });
+
+                // DEBUG - print out the scores
+                for (auto& inf : candidate_interfaces){std::cout << "SCORES " << inf.score_ << ",";} std::cout<<"\n";
+
+                candidate_tasks.emplace_back(task_descriptor, candidate_interfaces[0]);
+            }
+        }
+    }
+
+    /*
+     * If there were no incomplete subjects then ...
+     */
+    else
+    {
+        /*
+         * Find task that matches own i-subjects
+         */
+        std::cout << "[" << node_action << "]" << " looking for a suitable task\n";
+
+        for (auto& task_descriptor : tasks_indexed_)
+        {
+            std::cout << "[" << node_action << "]" << " looking at '" << task_descriptor.getAction() << "'\n";
+
+            // Look for the task with the same action type
+            if (task_descriptor.getAction() != node_action)
+            {
+                std::cout << "[" << node_action << "]" << " action does not match\n";
+                continue;
             }
 
-            /*
-             * Find task that matches own i-subjects + that has a matching
-             * o-subjects with dependent children incomplete i-subjects
-             */
-            Action& action = node.getTaskDescriptor().getAction();
-            std::vector<Subject>& node_subjects = node.getTaskDescriptor().getSubjects();
+            std::vector<CandidateInterface> candidate_interfaces;
 
-            for (auto& task_descriptor : tasks_indexed_)
+            // Loop over the interfaces and ...
+            for (auto& interface : task_descriptor.getInterfaces())
             {
-                // Look for the task with the same action type
-                if (task_descriptor.getAction() != action)
+                // ... look for STRICT input subjects match
+                if (interface.input_subjects_ != node_subjects) // DEFINE DAT OPERATOR
                 {
                     continue;
                 }
 
-                // Loop over the interfaces and look for i-subjects match
-                for (auto& interface : task_descriptor.getInterfaces())
-                {
-                    if (interface.input_subjects_ != node_subjects) // DEFINE DAT OPERATOR
-                    {
-                        continue;
-                    }
-
-                    // Look for the o-subjects match
-                    if (interface.output_subjects_ != incomplete_subjects) // DEFINE DAT OPERATOR
-                    {
-                        continue;
-                    }
-
-                    //
-                }
+                // And we have a candidate
+                candidate_interfaces.emplace_back(interface, 0);
             }
 
+            /*
+             * If this task contains any suitable interfaces, pick the one with
+             * the best match and push the task to the candidate tasks set
+             */
+            if (!candidate_interfaces.empty())
+            {
+                // Sort the candidates with decreasing score and pick the first candidate
+                std::sort(candidate_interfaces.begin(),
+                          candidate_interfaces.end(),
+                          [](CandidateInterface& i1, CandidateInterface& i2)
+                          {
+                              return i1.score_ > i2.score_;
+                          });
+
+                // DEBUG - print out the scores
+                for (auto& inf : candidate_interfaces){std::cout << "SCORES " << inf.score_ << ",";} std::cout<<"\n";
+
+                candidate_tasks.emplace_back(task_descriptor, candidate_interfaces[0]);
+            }
         }
-        catch(error::ErrorStackUtil& e)
-        {
-            // THINGS TODO
-        }
+    }
+
+    /*
+     * If no suitable tasks were found then throw an error
+     */
+    if (candidate_tasks.empty())
+    {
+        // Throw error
+        error::ErrorStackUtil error_stack_util(TTPErr::NLP_NO_TASK,
+                                               error::Subsystem::CORE,
+                                               error::Urgency::MEDIUM,
+                                               prefix + "Couldn't find a suitable task for action: " + node_action,
+                                               ros::Time::now() );
+        throw error_stack_util;
+    }
+
+    // Sort the candidates with decreasing order and pick the first candidate
+    std::sort(candidate_tasks.begin(),
+              candidate_tasks.end(),
+              [](CandidateTask& t1, CandidateTask& t2)
+              {
+                  return t1.ci_.score_ > t2.ci_.score_;
+              });
+
+    CandidateTask& cand_task = candidate_tasks[0];
+
+    /*
+     * Get a bunch of information out of the prime candidate task
+     */
+    node_interface.id_ = cand_task.ci_.inf_.id_;
+    node_interface.output_subjects_ = cand_task.ci_.inf_.output_subjects_;
+    node_task_descriptor.task_package_name_ = cand_task.td_.task_package_name_;
+    node_task_descriptor.task_lib_path_ = cand_task.td_.task_lib_path_;
+
+    /*
+     * Process the child nodes of the tree
+     */
+    for (auto& child : node.getChildren())
+    {
+        connectTasks(child, node_interface.output_subjects_, depth + 1);
     }
 }
 

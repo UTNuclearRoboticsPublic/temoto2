@@ -70,7 +70,7 @@ public:
      */
     std::vector <TaskDescriptor>& getIndexedTasks();
 
-    void connectTasks(TaskTreeNode& node, unsigned int depth);
+    void connectTasks(TaskTreeNode& node, std::vector<Subject> parent_subjects, unsigned int depth = 0);
 
 //    /**
 //     * @brief executeTask

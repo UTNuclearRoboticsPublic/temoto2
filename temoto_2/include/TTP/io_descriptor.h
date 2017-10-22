@@ -22,6 +22,10 @@ struct Data
 
 std::ostream& operator<<( std::ostream& stream, const Data& data);
 
+bool operator==(const Data& d1, const Data& d2);
+
+bool operator==(const std::vector<Data>& dv1, const std::vector<Data>& dv2);
+
 // Valid datatypes
 const std::vector<std::string> valid_datatypes = {"topic",
                                                   "number",
@@ -48,6 +52,8 @@ public:
     Subject() = default;
 
     Subject(std::string type, std::string word);
+
+    friend bool operator==(const std::vector<Subject>& subs_1, const std::vector<Subject>& subs_2);
 
     void markIncomplete();
     void markComplete();

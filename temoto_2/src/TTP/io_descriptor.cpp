@@ -20,6 +20,51 @@ void Subject::markComplete()
     is_complete_ = true;
 }
 
+bool operator==(const std::vector<Subject>& subs_1, const std::vector<Subject>& subs_2)
+{
+    // create a copy of subs_2
+    std::vector<Subject> subs_2_c = subs_2;
+    bool all_match = false;
+
+    for (auto& sub_1 : subs_1)
+    {
+        bool subject_match = false;
+        for (unsigned int i=0; i<subs_2_c.size(); i++)
+        {
+            // Check for type match
+            if (sub_1.type_ != subs_2_c[i].type_)
+            {
+                std::cout << "    subject types do not match\n";
+                continue;
+            }
+
+            // Check data size
+            if (sub_1.data_.size() != subs_2_c[i].data_.size())
+            {
+                std::cout << "    data size does not match\n";
+                continue;
+            }
+
+            // Check data
+            if (sub_1.data_ != subs_2_c[i].data_)
+            {
+                std::cout << "    data does not match\n";
+                continue;
+            }
+
+            std::cout << "    we got a winner\n";
+            subject_match = true;
+            subs_2_c.erase(subs_2_c.begin() + i);
+            break;
+        }
+        if (subject_match != true)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 // Subjects streaming operator
 std::ostream& operator<<( std::ostream& stream, const std::vector<Subject>& subjects)
 {
@@ -85,6 +130,38 @@ std::ostream& operator<<( std::ostream& stream, const Subject& subject)
     stream << std::endl;
 
     return stream;
+}
+
+// Data comparison operator
+bool operator==(const Data& d1, const Data& d2)
+{
+    return (d1.type == d2.type);
+}
+
+// Data vector comparison operator
+bool operator==(const std::vector<Data>& dv1, const std::vector<Data>& dv2)
+{
+    // Create a copy of dv2
+    std::vector<Data> dv2_c = dv2;
+
+    for (auto& d1 : dv1)
+    {
+        bool d_match = false;
+        for (unsigned int i=0; i<dv2.size(); i++)
+        {
+            if (d1 == dv2_c[i])
+            {
+                d_match = true;
+                dv2_c.erase(dv2_c.begin() + i);
+                break;
+            }
+        }
+        if (d_match != true)
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 // Data streaming operator
