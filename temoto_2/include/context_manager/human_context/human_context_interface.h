@@ -139,11 +139,16 @@ public:
         stopAllocatedServices();
     }
 
+    const std::string& getName() const
+    {
+      return class_name_;
+    }
+
 private:
 
 	rmp::ResourceManager<HumanContextInterface> resource_manager_;
 
-    const std::string class_name_ = "HumanContextInterface";
+    const std::string class_name_ = "human_context_interface";
 
     ros::NodeHandle nh_;
     ros::Subscriber gesture_subscriber_;

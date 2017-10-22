@@ -17,6 +17,7 @@
 
 #include "core/common.h"
 #include "sensor_manager/sensor_manager.h"
+#include <algorithm>
 //#include "sensor_manager/sensor_manager_services.h"
 //#include "process_manager/process_manager_services.h"
 //#include <sstream>
@@ -32,32 +33,28 @@ SensorManager::SensorManager() : resource_manager_(srv_name::MANAGER, this)
 
   list_devices_server_ = nh_.advertiseService(srv_name::MANAGER + "/list_devices",
                                               &SensorManager::listDevicesCb, this);
-  ROS_INFO("[SensorManager::SensorManager::SensorManager] all services initialized, manager is "
-           "good to go");
+  ROS_INFO_STREAM_NAMED(node_name_, node_name_ << " is good to go.");
 }
 
 SensorManager::~SensorManager()
 {
-  ROS_INFO("Destroying sensor_manager.");
 }
-
 
 void SensorManager::statusCb(temoto_2::ResourceStatus& srv)
 {
-        ROS_WARN("[SensorManager::statusCb] ...");
-    // adjust package reliability when someone reported that it has failed.
-    if (srv.request.status_code == rmp::status_codes::FAILED)
+  std::string prefix = node_name_ + "::" + __func__;
+  ROS_DEBUG_NAMED(node_name_, "%s Status received.", prefix.c_str());
+  // adjust package reliability when someone reported that it has failed.
+  if (srv.request.status_code == rmp::status_codes::FAILED)
+  {
+    auto it = allocated_sensors_.find(srv.request.resource_id);
+    if (it != allocated_sensors_.end())
     {
-      auto it = allocated_sensors_.find(srv.request.resource_id);
-      if(it != allocated_sensors_.end())
-      {
-        ROS_WARN("[SensorManager::statusCb] Sensor failed, adjusting package reliability ...");
-        it->second->adjustReliability(0.0);
-      }
-      
+      ROS_WARN_NAMED(node_name_, "Sensor failure detected, adjusting reliability.");
+      it->second->adjustReliability(0.0);
     }
+  }
 }
-
 
 bool SensorManager::listDevicesCb(temoto_2::ListDevices::Request& req,
                                   temoto_2::ListDevices::Response& res)
@@ -92,29 +89,31 @@ bool SensorManager::listDevicesCb(temoto_2::ListDevices::Request& req,
 void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
                                   temoto_2::LoadSensor::Response& res)
 {
-  ROS_INFO("[SensorManager::start_sensor_cb] received a request to start a '%s': '%s', '%s'",
-           req.sensor_type.c_str(), req.package_name.c_str(), req.executable.c_str());
+  std::string prefix = node_name_ + "::" + __func__;
+  ROS_DEBUG_NAMED(node_name_, "%s received a request to start '%s': '%s', '%s'", prefix.c_str(),
+                  req.sensor_type.c_str(), req.package_name.c_str(), req.executable.c_str());
 
   // Create an empty message that will be filled out by "findSensor" function
   temoto_2::LoadProcess load_process_msg;
 
   // Find the suitable sensor
-  auto pkg_ptr = findSensor(load_process_msg.request, res, req.sensor_type, req.package_name, req.executable);
+  auto pkg_ptr =
+      findSensor(load_process_msg.request, res, req.sensor_type, req.package_name, req.executable);
   if (pkg_ptr)
   {
-    ROS_INFO("[SensorManager::start_sensor_cb] Found a suitable sensor. Calling to LoadProcess "
-             "server: '%s', '%s', '%s'",
-             load_process_msg.request.action.c_str(), load_process_msg.request.package_name.c_str(),
-             load_process_msg.request.executable.c_str());
+    ROS_INFO_NAMED(node_name_, "SensorManager found a suitable sensor: '%s', '%s', '%s'",
+                   load_process_msg.request.action.c_str(),
+                   load_process_msg.request.package_name.c_str(),
+                   load_process_msg.request.executable.c_str());
     if (resource_manager_.call<temoto_2::LoadProcess>(process_manager::srv_name::MANAGER,
                                                       process_manager::srv_name::SERVER,
                                                       load_process_msg))
     {
-      ROS_INFO("[SensorManager::start_sensor_cb] Call to server on ProcessManager was sucessful.");
+      ROS_DEBUG_NAMED(node_name_, "%s Call to ProcessManager was sucessful.", prefix.c_str());
     }
     else
     {
-      ROS_ERROR("[SensorManager::start_sensor_cb] Failed to call server on ProcessManager ...");
+      ROS_ERROR_NAMED(node_name_, "%s Failed to call to ProcessManager.", prefix.c_str());
       return;
     }
     res.rmp.code = load_process_msg.response.rmp.code;
@@ -123,8 +122,8 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
     // Increase or decrease reliability depending on the return code
     (res.rmp.code == 0) ? pkg_ptr->adjustReliability(1.0) : pkg_ptr->adjustReliability(0.0);
 
-    ROS_INFO("[SensorManager::start_sensor_cb] LoadProcess server responded: '%s'",
-             res.rmp.message.c_str());
+    ROS_DEBUG_NAMED(node_name_, "%s LoadProcess server responded: '%s'", prefix.c_str(),
+                    res.rmp.message.c_str());
     allocated_sensors_.emplace(res.rmp.resource_id, pkg_ptr);
   }
   else
@@ -133,24 +132,26 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
     res.executable = "";
     res.topic = "";
     res.rmp.code = 1;
-    res.rmp.message = "Suitable sensor was not found. Aborting the request";
-    ROS_ERROR("[SensorManager::start_sensor_cb] %s", res.rmp.message.c_str());
+    res.rmp.message = "SensorManager did not find a suitable sensor.";
+    ROS_ERROR_NAMED(node_name_, "%s %s", prefix.c_str(), res.rmp.message.c_str());
   }
 }
 
 void SensorManager::stopSensorCb(temoto_2::LoadSensor::Request& req,
                                  temoto_2::LoadSensor::Response& res)
 {
-  ROS_INFO("[SensorManager::stop_sensor_cb] received a request to stop sensor with id '%ld'",
-           res.rmp.resource_id);
+  std::string prefix = node_name_ + "::" + __func__;
+  ROS_DEBUG_NAMED(node_name_, "%s received a request to stop sensor with id '%ld'", prefix.c_str(),
+                  res.rmp.resource_id);
   allocated_sensors_.erase(res.rmp.resource_id);
   return;
 }
 
 PackageInfoPtr SensorManager::findSensor(temoto_2::LoadProcess::Request& ret,
-                               temoto_2::LoadSensor::Response& retstartSensor, std::string type,
-                               std::string name, std::string executable)
+                                         temoto_2::LoadSensor::Response& retstartSensor,
+                                         std::string type, std::string name, std::string executable)
 {
+  std::string prefix = node_name_ + "::" + __func__;
   // Local list of devices that follow the requirements
   std::vector<PackageInfoPtr> candidates;
   std::vector<PackageInfoPtr> candidatesLocal;
@@ -170,11 +171,10 @@ PackageInfoPtr SensorManager::findSensor(temoto_2::LoadProcess::Request& ret,
     return NULL;
   }
 
-  std::sort(candidates.begin(), candidates.end(), [](PackageInfoPtr& pkg_ptr1, PackageInfoPtr& pkg_ptr2)
-      {
-return pkg_ptr1->getReliability() > pkg_ptr2->getReliability();
-      });
-
+  std::sort(candidates.begin(), candidates.end(),
+            [](PackageInfoPtr& pkg_ptr1, PackageInfoPtr& pkg_ptr2) {
+              return pkg_ptr1->getReliability() > pkg_ptr2->getReliability();
+            });
 
   // Check if a name was specified
   if (name != "")
@@ -184,8 +184,9 @@ return pkg_ptr1->getReliability() > pkg_ptr2->getReliability();
     {
       if (entry->getName() == name)
       {
-        if(entry->getLaunchables().size()!=0)
-          ROS_INFO("SENSOR: %s reliability: %f", entry->getLaunchables().begin()->first.c_str(), entry->getReliability());
+        if (entry->getLaunchables().size() != 0)
+          ROS_DEBUG_NAMED(node_name_, "%s sensor: %s reliability: %f", prefix.c_str(),
+                          entry->getLaunchables().begin()->first.c_str(), entry->getReliability());
         candidatesLocal.push_back(entry);
       }
     }

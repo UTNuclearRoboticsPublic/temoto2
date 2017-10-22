@@ -32,6 +32,11 @@ public:
 
   RvizManager(std::string path_to_default_conf);
 
+  const std::string& getName() const
+  {
+    return class_name_;
+  }
+
 private:
   std::map<long, temoto_id::ID> active_requests_;
 
@@ -47,7 +52,7 @@ private:
 
   ros::ServiceClient get_plugin_config_client_;
 
-  const std::string class_name_ = "RvizManager";
+  const std::string class_name_ = "rviz_manager";
 
   PluginInfoHandler plugin_info_handler_;
 

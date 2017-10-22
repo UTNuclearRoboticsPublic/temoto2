@@ -16,8 +16,14 @@ public:
 
     HumanContext();
 
+    const std::string& getName() const
+    {
+      return node_name_;
+    }
+
 private:
 
+    const std::string node_name_ = "sensor_manager";
     // Resource manager for handling servers and clients
 	rmp::ResourceManager<HumanContext> resource_manager_;
 

@@ -27,32 +27,32 @@ public:
     , load_spinner_(2,&load_cb_queue_)
 
   {
+    rmp_log_prefix_ = owner->getName() + "::RMP::";
+    std::string prefix = rmp_log_prefix_ + __func__;
     std::string rm_name = this->resource_manager_.getName();
     ros::AdvertiseServiceOptions load_service_opts =
         ros::AdvertiseServiceOptions::create<ServiceType>(
             rm_name + "/" + this->name_, boost::bind(&ResourceServer<ServiceType, Owner>::wrappedLoadCallback,this,_1,_2), ros::VoidPtr(), &this->load_cb_queue_);
     load_server_ = nh_.advertiseService(load_service_opts);
     load_spinner_.start();
-   // load_server_ =
-   //     nh_.advertiseService(rm_name + "/" + this->name_,
-    //                         &ResourceServer<ServiceType, Owner>::wrappedLoadCallback, this);
-    ROS_INFO("ResourceServer constructed, listening on %s",
-             this->load_server_.getService().c_str());
+    ROS_DEBUG_NAMED(log_name_, "%s ResourceServer constructed, listening on '%s'.",
+             prefix.c_str(), this->load_server_.getService().c_str());
   }
 
   ~ResourceServer()
   {
     load_spinner_.stop();
-    ROS_INFO("ResourceServer[%s] destroyed.", this->name_.c_str());
+    std::string prefix = rmp_log_prefix_ + __func__;
+    ROS_DEBUG_NAMED(log_name_, "%s ResourceServer destroyed.", prefix.c_str());
   }
 
   void registerInternalResource(std::string client_name, temoto_id::ID resource_id)
   {
-    ROS_INFO("[ResourceServer::registerInternalResource] [%s] id %d", this->name_.c_str(),
-             resource_id);
+    std::string prefix = rmp_log_prefix_ + __func__;
+    ROS_DEBUG_NAMED(log_name_, "%s Trying to register id %d.", prefix.c_str(), resource_id);
     if (!queries_.size())
     {
-      ROS_ERROR("registerInternalResource called, but queries_ is empty");
+      ROS_ERROR_NAMED(log_name_, "%s Failed because queries_ is empty.", prefix.c_str());
       return;
     }
     queries_.back().addInternalResource(client_name, resource_id);
@@ -60,19 +60,18 @@ public:
 
   bool wrappedLoadCallback(typename ServiceType::Request& req, typename ServiceType::Response& res)
   {
-    std::string prefix = "ResourceServer::wrappedLoadCallback() [" + this->name_ + "]:";
-    ROS_INFO("%s Got query. Will send status to: '%s'", prefix.c_str(),
-             req.rmp.status_topic.c_str());
+    std::string prefix = rmp_log_prefix_ + __func__;
+    ROS_DEBUG_NAMED(log_name_, "%s Got query with status_topic: '%s'.", prefix.c_str(), req.rmp.status_topic.c_str());
 
     if (!owner_)
     {
-      ROS_ERROR("%s ResourceServer Owner is NULL. Query aborted.", prefix.c_str());
+      ROS_ERROR_NAMED(log_name_, "%s ResourceServer Owner is NULL. Query aborted.", prefix.c_str());
       return true;
     }
 
     // generate new external id for the resource
     temoto_id::ID ext_resource_id = res_id_manager_.generateID();
-    ROS_INFO("%s Generated external id:%d", prefix.c_str(), ext_resource_id);
+    ROS_DEBUG_NAMED(log_name_, "%s Generated external id: '%d'.", prefix.c_str(), ext_resource_id);
 
     // lock the queries
     waitForLock(queries_mutex_);
@@ -89,7 +88,7 @@ public:
       // with this owner can send status messages later when necessary
       temoto_id::ID int_resource_id = this->resource_manager_.generateInternalID();
       res.rmp.resource_id = int_resource_id;
-      ROS_INFO("%s New query, internal id:%d", prefix.c_str(), int_resource_id);
+      ROS_DEBUG_NAMED(log_name_, "%s New query, internal id: '%d'.", prefix.c_str(), int_resource_id);
 
       // equal message not found from queries_, add new query
       queries_.emplace_back(req);
@@ -114,9 +113,8 @@ public:
       // restore active server to NULL in resource manager
       this->deactivateServer();
       active_server_mutex_.unlock();
-      
-      ROS_INFO("%s Resumed from owners callback",
-               prefix.c_str());
+
+      ROS_DEBUG_NAMED(log_name_, "%s Resumed from owners callback", prefix.c_str());
       // verify that our query is still on the list
       auto q_it = std::find_if(queries_.begin(), queries_.end(),
           [&](const ResourceQuery<ServiceType>& q) -> bool {return q.internalResourceExists(int_resource_id);});
@@ -129,7 +127,7 @@ public:
       {
         res.rmp.code = status_codes::FAILED;
         res.rmp.message += " Could not create resource.";
-        ROS_ERROR("%s Query got missing during owners callback, oh well...", prefix.c_str());
+        ROS_ERROR_NAMED(log_name_, "%s Query got missing during owners callback, oh well...", prefix.c_str());
       }
       
     }
@@ -137,14 +135,13 @@ public:
     {
       // found equal request, simply reqister this in the query
       // and respond with unique resoure_id.
-      ROS_INFO("%s Existing query, linking to the found query.", prefix.c_str());
+      ROS_DEBUG_NAMED(log_name_, "%s Existing query, linking to the found query.", prefix.c_str());
       queries_.back().addExternalResource(ext_resource_id, req.rmp.status_topic);
     }
 
     //release the queries lock
     queries_mutex_.unlock();
 
-    ROS_INFO("%s Returning true.", prefix.c_str());
     return true;
   }
 
@@ -156,28 +153,23 @@ public:
   void unloadResource(temoto_2::UnloadResource::Request& req,
                       temoto_2::UnloadResource::Response& res)
   {
-    std::string prefix = "[ResourceServer::unloadResource] [" + this->name_ + "]:";
-    ROS_INFO_STREAM(prefix);
+    std::string prefix = rmp_log_prefix_ + __func__;
     // find first query that contains resource that should be unloaded
     const temoto_id::ID resource_id = req.resource_id;
     waitForLock(queries_mutex_);
     const auto found_query_it =
         std::find_if(queries_.begin(), queries_.end(),
                      [resource_id](const ResourceQuery<ServiceType>& query) -> bool {
-                     ROS_INFO_STREAM(query.getMsg().request);
-                     ROS_INFO_STREAM(query.getMsg().response);
-                     ROS_INFO("%d", query.externalResourceExists(resource_id));
                        return query.externalResourceExists(resource_id);
                      });
     if (found_query_it != queries_.end())
     {
-      ROS_INFO("%s Query with ext id %d was found", prefix.c_str(), resource_id);
-      ROS_INFO("%s internal resource count: %lu",prefix.c_str(), 
-               found_query_it->getInternalResources().size());
+      ROS_DEBUG_NAMED(log_name_, "%s Query with ext id %d was found", prefix.c_str(), resource_id);
+      ROS_DEBUG_NAMED(log_name_, "%s internal resource count: %lu", prefix.c_str(),
+                      found_query_it->getInternalResources().size());
+
       // Query found, try to remove client from it.
       size_t resources_left = found_query_it->removeExternalResource(req.resource_id);
-      ROS_INFO("%s internal clients remaining %lu", prefix.c_str(),
-               resources_left);
       if (resources_left <= 0)
       {
         // last resource removed, execute owner's unload callback and remove the query from our list
@@ -188,8 +180,6 @@ public:
         /// TODO: Do or do not something with the response part?
 
         // Send unload command to all internal clients...
-        ROS_INFO("%s internal clients %lu", prefix.c_str(),
-                 found_query_it->getInternalResources().size());
         for (auto& map_el : found_query_it->getInternalResources())
         {
           //
@@ -224,8 +214,6 @@ public:
   std::vector<std::pair<temoto_id::ID, std::string>>
   getExternalResources(temoto_id::ID internal_resource_id)
   {
-    std::string prefix = "[ResourceServer::getExternalResources] [" + this->name_ + "]:";
-
     waitForLock(queries_mutex_);
 
     std::vector<std::pair<temoto_id::ID, std::string>> ext_resources;
@@ -245,16 +233,18 @@ public:
 
   void waitForLock(std::mutex& m)
   {
-    std::string prefix = "[ResourceServer::waitForLock] [" + this->name_ + "]:";
+    std::string prefix = rmp_log_prefix_ + __func__;
     while (!m.try_lock())
     {
-      ROS_WARN("%s Waiting for lock()", prefix.c_str());
+      ROS_DEBUG_NAMED(log_name_, "%s Waiting for lock()", prefix.c_str());
       ros::Duration(0.01).sleep();  // sleep for few ms
     }
-    ROS_INFO("%s Obtained lock()", prefix.c_str());
+    //ROS_DEBUG_NAMED(log_name_, "%s Obtained lock()", prefix.c_str());
   }
 
 private:
+  std::string rmp_log_prefix_;
+  const std::string log_name_ = "rmp";
   Owner* owner_;
   LoadCbFuncType load_callback_;
   UnloadCbFuncType unload_callback_;

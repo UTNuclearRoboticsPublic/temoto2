@@ -28,12 +28,17 @@ public:
      */
     ~SensorManager();
 
-private:
+    const std::string& getName() const
+    {
+      return node_name_;
+    }
 
+  private:
+    const std::string node_name_ = "sensor_manager";
     ros::NodeHandle nh_;
     ros::ServiceServer list_devices_server_;
-	rmp::ResourceManager<SensorManager> resource_manager_;
-  std::map<temoto_id::ID, PackageInfoPtr> allocated_sensors_;
+    rmp::ResourceManager<SensorManager> resource_manager_;
+    std::map<temoto_id::ID, PackageInfoPtr> allocated_sensors_;
 
     /**
      * @brief Callback to a service that lists all available packages that

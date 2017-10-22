@@ -3,30 +3,17 @@
 
 //#include <sstream>
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
+  ros::init(argc, argv, "process_manager");
 
-    ros::init(argc, argv, "process_manager");
+  // Create instance of process manager
+  process_manager::ProcessManager pm;
 
-    // Create instance of process manager
-	process_manager::ProcessManager nm;
-
-	// set up ROS timer to update the process_manager
-    ros::NodeHandle nh;
-    ros::Timer timer = nh.createTimer(ros::Duration(1), &process_manager::ProcessManager::update, &nm);
-  //  ros::Rate loop_rate(1);
-
-    ROS_INFO("[process_manager_node/main] Process Manager Node is good to go");
-
- // ros::AsyncSpinner spinner(4); // Use 4 threads
- // spinner.start();
- // ros::waitForShutdown();
-ros::spin();
-  //   while (ros::ok())
-  //   {
-  //       ros::spinOnce();
-  //       loop_rate.sleep();
-  //   }
-
-    return 0;
+  // set up ROS timer to update the process_manager
+  ros::NodeHandle nh;
+  ros::Timer timer =
+      nh.createTimer(ros::Duration(1), &process_manager::ProcessManager::update, &pm);
+  ros::spin();
+  return 0;
 }

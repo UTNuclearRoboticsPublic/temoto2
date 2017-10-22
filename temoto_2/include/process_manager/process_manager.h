@@ -6,6 +6,7 @@
 #include "process_manager/process_manager_services.h"
 #include "rmp/resource_manager.h"
 #include <stdio.h> //pid_t TODO: check where pid_t actually is
+#include <mutex>
 
 namespace process_manager
 {
@@ -23,18 +24,24 @@ namespace process_manager
 
 			void update(const ros::TimerEvent& e);
 
+      const std::string& getName() const
+      {
+        return node_name_;
+      }
 
-
-		private:
+    private:
 
 
 			const std::string node_name_ = "process_manager";
-			const std::string class_name_ = "ProcessManager";
-			const std::vector<std::string> validActions = {"rosrun", "roslaunch"};
+			const std::vector<std::string> valid_actions = {"rosrun", "roslaunch"};
 
 			std::vector<temoto_2::LoadProcess> loading_processes_;
-			std::map<pid_t, temoto_id::ID> running_processes_;
-			std::map<pid_t, temoto_id::ID> unloading_processes_;
+      std::map<pid_t, temoto_2::LoadProcess> running_processes_;
+      std::vector<pid_t> unloading_processes_;
+
+      std::mutex loading_mutex_;
+      std::mutex unloading_mutex_;
+      std::mutex running_mutex_;
 
 			ros::NodeHandle nh_;
 

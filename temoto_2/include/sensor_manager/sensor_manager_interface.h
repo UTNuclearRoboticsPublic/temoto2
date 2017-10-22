@@ -25,7 +25,7 @@ public:
     std::string startSensor( std::string sensor_type )
     {
         // Name of the method, used for making debugging a bit simpler
-        std::string prefix = formatMessage("", this->class_name_, __func__);
+        std::string prefix = formatMessage("", this->node_name_, __func__);
 
         try
         {
@@ -47,7 +47,7 @@ public:
     std::string startSensor( std::string sensor_type, std::string package_name, std::string ros_program_name )
     {
         // Name of the method, used for making debugging a bit simpler
-        std::string prefix = formatMessage("", this->class_name_, __func__);
+        std::string prefix = formatMessage("", this->node_name_, __func__);
 
         // Fill out the "StartSensorRequest" request
         temoto_2::LoadSensor srv_msg;
@@ -94,7 +94,7 @@ public:
     void stopSensor( std::string sensor_type, std::string package_name, std::string ros_program_name )
     {
         // Name of the method, used for making debugging a bit simpler
-        std::string prefix = formatMessage("", this->class_name_, __func__);
+        std::string prefix = formatMessage("", this->node_name_, __func__);
 
 		// Find all instances where request part matches of what was given and unload each resource
 		temoto_2::LoadSensor::Request req;
@@ -131,7 +131,7 @@ public:
 
     void statusInfoCb (temoto_2::ResourceStatus& srv)
     {
-        std::string prefix = formatMessage("", this->class_name_, __func__);
+        std::string prefix = formatMessage("", this->node_name_, __func__);
         ROS_WARN("%s status info reached here", prefix.c_str());
         ROS_INFO_STREAM(srv.request);
       // if any resource should fail, just unload it and try again
@@ -178,13 +178,13 @@ public:
 
     ~SensorManagerInterface()
     {
-		// Name of the method, used for making debugging a bit simpler
-		// std::string prefix = formatMessage("", this->class_name_, __func__);
     }
+
+    const std::string& getName() const {return node_name_;}
 
 private:
 
-    const std::string class_name_ = "SensorManagerInterface";
+    const std::string node_name_ = "sensor_manager_interface";
     error::ErrorHandler error_handler_;
     std::vector <temoto_2::LoadSensor> allocated_sensors_;
 	rmp::ResourceManager<SensorManagerInterface> resource_manager_;
