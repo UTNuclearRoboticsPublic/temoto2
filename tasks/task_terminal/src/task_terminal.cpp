@@ -53,7 +53,7 @@ public:
 
         // Name of the method, used for making debugging a bit simpler
         const std::string method_name_ = "startTask";
-        std::string prefix = formatMessage("", this->class_name_, method_name_);
+        std::string prefix = common::generateLogPrefix("", this->class_name_, method_name_);
 
         // Build a gesture specifier
         // TODO: This shoud be done via speech specifier helper class

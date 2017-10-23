@@ -3,7 +3,6 @@
 
 #include <string>
 
-
 namespace common
 {
 /**
@@ -12,25 +11,25 @@ namespace common
  * @param method_name
  * @return
  */
-inline std::string formatMessage(std::string subsys_name, std::string class_name,
-                                 std::string method_name)
+inline std::string generateLogPrefix(std::string subsys_name, std::string class_name,
+                                     std::string method_name)
 {
-  if (subsys_name == "")
-    return ("[" + class_name + "::" + method_name + "]");
-
-  else if (class_name == "")
-    return ("[" + subsys_name + "/" + method_name + "]");
-
-  else
-    return ("[" + subsys_name + "/" + class_name + "::" + method_name + "]");
+  std::string prefix = "[";
+  if (subsys_name.size())
+  {
+    prefix += subsys_name + "/";
+  }
+  if (class_name.size())
+  {
+    prefix += class_name;
+    if (method_name.size())
+    {
+      prefix += "::";
+    }
+  }
+  prefix += method_name + "]";
+  return prefix;
 }
-}
-
-// TODO: Remove this hack
-inline std::string formatMessage(std::string subsys_name, std::string class_name,
-                                 std::string method_name)
-{
-  return common::formatMessage(subsys_name, class_name, method_name);
 }
 
 #endif

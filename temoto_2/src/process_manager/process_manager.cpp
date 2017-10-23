@@ -33,7 +33,7 @@ ProcessManager::~ProcessManager()
 // Timer callback where running proceses are checked if they are operational
 void ProcessManager::update(const ros::TimerEvent&)
 {
-  std::string prefix = node_name_ + "::" + __func__;
+  std::string prefix = common::generateLogPrefix(node_name_, "", __func__);
 
   // execute each process in loading_processes vector
   running_mutex_.lock();
@@ -130,8 +130,7 @@ void ProcessManager::update(const ros::TimerEvent&)
 void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
                             temoto_2::LoadProcess::Response& res)
 {
-  // prefix for debugging and info
-  std::string prefix = node_name_ + "::" + __func__;
+  std::string prefix = common::generateLogPrefix(node_name_, "", __func__);
 
   // Get the service parameters
   const std::string& action = req.action;
@@ -164,7 +163,7 @@ void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
 void ProcessManager::unloadCb(temoto_2::LoadProcess::Request& req,
                               temoto_2::LoadProcess::Response& res)
 {
-  std::string prefix = node_name_ + "::" + __func__;
+  std::string prefix = common::generateLogPrefix(node_name_, "", __func__);
   ROS_DEBUG_NAMED(node_name_,"%s Unload resource requested ...", prefix.c_str());
 
   // Lookup the requested process by its resource id.

@@ -40,7 +40,7 @@ RvizManager::RvizManager() : resource_manager_(srv_name::MANAGER, this)
 void RvizManager::runRviz()
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = formatMessage("", this->class_name_, __func__);
+  std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
   // Create the message and fill out the request part
   temoto_2::LoadProcess msg;
@@ -85,7 +85,7 @@ void RvizManager::runRviz()
 bool RvizManager::loadPluginRequest(rviz_plugin_manager::PluginLoad& load_plugin_srv)
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = formatMessage("", this->class_name_, __func__);
+  std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
   // Send the plugin request
   if (load_plugin_client_.call(load_plugin_srv))
@@ -121,7 +121,7 @@ bool RvizManager::loadPluginRequest(rviz_plugin_manager::PluginLoad& load_plugin
 bool RvizManager::unloadPluginRequest(rviz_plugin_manager::PluginUnload& unload_plugin_srv)
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = formatMessage("", this->class_name_, __func__);
+  std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
   // Send the plugin request
   if (unload_plugin_client_.call(unload_plugin_srv))
@@ -158,7 +158,7 @@ bool RvizManager::getPluginConfigRequest(
     rviz_plugin_manager::PluginGetConfig& get_plugin_config_srv)
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = formatMessage("", this->class_name_, __func__);
+  std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
   // Send the plugin request
   if (get_plugin_config_client_.call(get_plugin_config_srv))
@@ -195,7 +195,7 @@ bool RvizManager::setPluginConfigRequest(
     rviz_plugin_manager::PluginSetConfig& set_plugin_config_srv)
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = formatMessage("", this->class_name_, __func__);
+  std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
   // Send the plugin request
   if (set_plugin_config_client_.call(set_plugin_config_srv))
@@ -232,7 +232,7 @@ void RvizManager::LoadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
                                    temoto_2::LoadRvizPlugin::Response& res)
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = formatMessage("", this->class_name_, __func__);
+  std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
   ROS_INFO("%s Received a new %s request", prefix.c_str(), srv_name::SERVER.c_str());
   ROS_INFO_STREAM(req);
@@ -319,7 +319,7 @@ void RvizManager::unloadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
                                      temoto_2::LoadRvizPlugin::Response& res)
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = formatMessage("", this->class_name_, __func__);
+  std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
   ROS_INFO("%s Received an 'unload' request to ID: '%ld'.", prefix.c_str(), res.rmp.resource_id);
 

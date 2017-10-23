@@ -42,7 +42,7 @@ public:
     TemotoCore( std::string name ) : task_handler_( name )
     {
         // Name of the method, used for making debugging a bit simpler
-        std::string prefix = formatMessage("", this->class_name_, __func__);
+        std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
         ROS_INFO("[TemotoCore::TemotoCore]: Construncting the core ...");
 
@@ -144,7 +144,7 @@ private:
 int main(int argc, char **argv)
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage("", "Core", __func__);
+    std::string prefix = common::generateLogPrefix("", "Core", __func__);
 
     std::cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * " << std::endl;
     std::cout << "*                                                     * " << std::endl;

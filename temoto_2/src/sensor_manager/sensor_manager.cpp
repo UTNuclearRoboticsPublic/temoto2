@@ -42,7 +42,7 @@ SensorManager::~SensorManager()
 
 void SensorManager::statusCb(temoto_2::ResourceStatus& srv)
 {
-  std::string prefix = node_name_ + "::" + __func__;
+  std::string prefix = common::generateLogPrefix(node_name_, "", __func__);
   ROS_DEBUG_NAMED(node_name_, "%s Status received.", prefix.c_str());
   // adjust package reliability when someone reported that it has failed.
   if (srv.request.status_code == rmp::status_codes::FAILED)
@@ -89,7 +89,7 @@ bool SensorManager::listDevicesCb(temoto_2::ListDevices::Request& req,
 void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
                                   temoto_2::LoadSensor::Response& res)
 {
-  std::string prefix = node_name_ + "::" + __func__;
+  std::string prefix = common::generateLogPrefix(node_name_, "", __func__);
   ROS_DEBUG_NAMED(node_name_, "%s received a request to start '%s': '%s', '%s'", prefix.c_str(),
                   req.sensor_type.c_str(), req.package_name.c_str(), req.executable.c_str());
 
@@ -140,7 +140,7 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
 void SensorManager::stopSensorCb(temoto_2::LoadSensor::Request& req,
                                  temoto_2::LoadSensor::Response& res)
 {
-  std::string prefix = node_name_ + "::" + __func__;
+  std::string prefix = common::generateLogPrefix(node_name_, "", __func__);
   ROS_DEBUG_NAMED(node_name_, "%s received a request to stop sensor with id '%ld'", prefix.c_str(),
                   res.rmp.resource_id);
   allocated_sensors_.erase(res.rmp.resource_id);
@@ -151,7 +151,7 @@ PackageInfoPtr SensorManager::findSensor(temoto_2::LoadProcess::Request& ret,
                                          temoto_2::LoadSensor::Response& retstartSensor,
                                          std::string type, std::string name, std::string executable)
 {
-  std::string prefix = node_name_ + "::" + __func__;
+  std::string prefix = common::generateLogPrefix(node_name_, "", __func__);
   // Local list of devices that follow the requirements
   std::vector<PackageInfoPtr> candidates;
   std::vector<PackageInfoPtr> candidatesLocal;

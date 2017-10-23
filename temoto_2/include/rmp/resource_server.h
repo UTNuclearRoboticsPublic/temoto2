@@ -2,8 +2,9 @@
 #define RESOURCE_SERVER_H
 #include "ros/ros.h"
 #include "common/temoto_id.h"
+#include "common/tools.h"
 #include "rmp/base_resource_server.h"
-#include "rmp/resource_query.h"
+#include "rmp/server_query.h"
 #include "ros/callback_queue.h"
 #include <mutex>
 
@@ -24,31 +25,32 @@ public:
     , load_callback_(load_cb)
     , unload_callback_(unload_cb)
     , owner_(owner)
-    , load_spinner_(2,&load_cb_queue_)
+    , load_spinner_(2, &load_cb_queue_)
 
   {
-    rmp_log_prefix_ = owner->getName() + "::RMP::";
-    std::string prefix = rmp_log_prefix_ + __func__;
+    std::string prefix = common::generateLogPrefix(owner->getName(), log_name_, "");
     std::string rm_name = this->resource_manager_.getName();
     ros::AdvertiseServiceOptions load_service_opts =
         ros::AdvertiseServiceOptions::create<ServiceType>(
-            rm_name + "/" + this->name_, boost::bind(&ResourceServer<ServiceType, Owner>::wrappedLoadCallback,this,_1,_2), ros::VoidPtr(), &this->load_cb_queue_);
+            rm_name + "/" + this->name_,
+            boost::bind(&ResourceServer<ServiceType, Owner>::wrappedLoadCallback, this, _1, _2),
+            ros::VoidPtr(), &this->load_cb_queue_);
     load_server_ = nh_.advertiseService(load_service_opts);
     load_spinner_.start();
-    ROS_DEBUG_NAMED(log_name_, "%s ResourceServer constructed, listening on '%s'.",
-             prefix.c_str(), this->load_server_.getService().c_str());
+    ROS_DEBUG_NAMED(log_name_, "%s ResourceServer constructed, listening on '%s'.", prefix.c_str(),
+                    this->load_server_.getService().c_str());
   }
 
   ~ResourceServer()
   {
     load_spinner_.stop();
-    std::string prefix = rmp_log_prefix_ + __func__;
+    std::string prefix = common::generateLogPrefix(owner_->getName(), log_name_, "");
     ROS_DEBUG_NAMED(log_name_, "%s ResourceServer destroyed.", prefix.c_str());
   }
 
   void registerInternalResource(std::string client_name, temoto_id::ID resource_id)
   {
-    std::string prefix = rmp_log_prefix_ + __func__;
+    std::string prefix = common::generateLogPrefix(owner_->getName(), log_name_, "");
     ROS_DEBUG_NAMED(log_name_, "%s Trying to register id %d.", prefix.c_str(), resource_id);
     if (!queries_.size())
     {
@@ -60,8 +62,9 @@ public:
 
   bool wrappedLoadCallback(typename ServiceType::Request& req, typename ServiceType::Response& res)
   {
-    std::string prefix = rmp_log_prefix_ + __func__;
-    ROS_DEBUG_NAMED(log_name_, "%s Got query with status_topic: '%s'.", prefix.c_str(), req.rmp.status_topic.c_str());
+    std::string prefix = common::generateLogPrefix(owner_->getName(), log_name_, "");
+    ROS_DEBUG_NAMED(log_name_, "%s Got query with status_topic: '%s'.", prefix.c_str(),
+                    req.rmp.status_topic.c_str());
 
     if (!owner_)
     {
@@ -78,7 +81,7 @@ public:
 
     // New or existing query? Check it out with this hi-tec lambda function :)
     auto found_query = std::find_if(queries_.begin(), queries_.end(),
-                                    [&req](const ResourceQuery<ServiceType>& query) -> bool {
+                                    [&req](const ServerQuery<ServiceType, Owner>& query) -> bool {
                                       return query.getMsg().request == req;
                                     });
 
@@ -88,10 +91,11 @@ public:
       // with this owner can send status messages later when necessary
       temoto_id::ID int_resource_id = this->resource_manager_.generateInternalID();
       res.rmp.resource_id = int_resource_id;
-      ROS_DEBUG_NAMED(log_name_, "%s New query, internal id: '%d'.", prefix.c_str(), int_resource_id);
+      ROS_DEBUG_NAMED(log_name_, "%s New query, internal id: '%d'.", prefix.c_str(),
+                      int_resource_id);
 
       // equal message not found from queries_, add new query
-      queries_.emplace_back(req);
+      queries_.emplace_back(req, owner_);
       queries_.back().addExternalResource(ext_resource_id, req.rmp.status_topic);
 
       // register owner as a nonamed client
@@ -117,8 +121,10 @@ public:
       ROS_DEBUG_NAMED(log_name_, "%s Resumed from owners callback", prefix.c_str());
       // verify that our query is still on the list
       auto q_it = std::find_if(queries_.begin(), queries_.end(),
-          [&](const ResourceQuery<ServiceType>& q) -> bool {return q.internalResourceExists(int_resource_id);});
-      if(q_it != queries_.end())
+                               [&](const ServerQuery<ServiceType, Owner>& q) -> bool {
+                                 return q.internalResourceExists(int_resource_id);
+                               });
+      if (q_it != queries_.end())
       {
         // update the query with the response message filled in the callback
         q_it->setMsgResponse(res);
@@ -127,9 +133,9 @@ public:
       {
         res.rmp.code = status_codes::FAILED;
         res.rmp.message += " Could not create resource.";
-        ROS_ERROR_NAMED(log_name_, "%s Query got missing during owners callback, oh well...", prefix.c_str());
+        ROS_ERROR_NAMED(log_name_, "%s Query got missing during owners callback, oh well...",
+                        prefix.c_str());
       }
-      
     }
     else
     {
@@ -139,7 +145,7 @@ public:
       queries_.back().addExternalResource(ext_resource_id, req.rmp.status_topic);
     }
 
-    //release the queries lock
+    // release the queries lock
     queries_mutex_.unlock();
 
     return true;
@@ -153,13 +159,13 @@ public:
   void unloadResource(temoto_2::UnloadResource::Request& req,
                       temoto_2::UnloadResource::Response& res)
   {
-    std::string prefix = rmp_log_prefix_ + __func__;
+    std::string prefix = common::generateLogPrefix(owner_->getName(), log_name_, "");
     // find first query that contains resource that should be unloaded
     const temoto_id::ID resource_id = req.resource_id;
     waitForLock(queries_mutex_);
     const auto found_query_it =
         std::find_if(queries_.begin(), queries_.end(),
-                     [resource_id](const ResourceQuery<ServiceType>& query) -> bool {
+                     [resource_id](const ServerQuery<ServiceType, Owner>& query) -> bool {
                        return query.externalResourceExists(resource_id);
                      });
     if (found_query_it != queries_.end())
@@ -185,9 +191,9 @@ public:
           //
           if (map_el.first == "")
           {
-            // do not unload owner's resources automatically. 
+            // do not unload owner's resources automatically.
             // resources that were loaded outside of load callback are not RMP responsibility
-            continue;  
+            continue;
           }
           for (auto& set_el : map_el.second)
           {
@@ -204,10 +210,10 @@ public:
 
   bool internalResourceExists(temoto_id::ID resource_id) const
   {
-    auto found_q =
-        find_if(queries_.begin(), queries_.end(), [&](const ResourceQuery<ServiceType>& q) -> bool {
-          return q.internalResourceExists(resource_id);
-        });
+    auto found_q = find_if(queries_.begin(), queries_.end(),
+                           [&](const ServerQuery<ServiceType, Owner>& q) -> bool {
+                             return q.internalResourceExists(resource_id);
+                           });
     return found_q != queries_.end();
   }
 
@@ -233,17 +239,16 @@ public:
 
   void waitForLock(std::mutex& m)
   {
-    std::string prefix = rmp_log_prefix_ + __func__;
+    std::string prefix = common::generateLogPrefix(owner_->getName(), log_name_, "");
     while (!m.try_lock())
     {
       ROS_DEBUG_NAMED(log_name_, "%s Waiting for lock()", prefix.c_str());
       ros::Duration(0.01).sleep();  // sleep for few ms
     }
-    //ROS_DEBUG_NAMED(log_name_, "%s Obtained lock()", prefix.c_str());
+    // ROS_DEBUG_NAMED(log_name_, "%s Obtained lock()", prefix.c_str());
   }
 
 private:
-  std::string rmp_log_prefix_;
   const std::string log_name_ = "rmp";
   Owner* owner_;
   LoadCbFuncType load_callback_;
@@ -255,7 +260,7 @@ private:
   ros::AsyncSpinner load_spinner_;
 
   temoto_id::IDManager res_id_manager_;
-  std::vector<ResourceQuery<ServiceType>> queries_;
+  std::vector<ServerQuery<ServiceType, Owner>> queries_;
 
   // mutexes
   std::mutex queries_mutex_;

@@ -27,7 +27,7 @@ public:
     void getGestures (std::vector <temoto_2::GestureSpecifier> gesture_specifiers, void(T::*callback)(human_msgs::Hands), T* obj)
     {
         // Name of the method, used for making debugging a bit simpler
-        std::string prefix = formatMessage("", this->class_name_, __func__);
+        std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
         // Contact the "Context Manager", pass the gesture specifier and if successful, get
         // the name of the topic
@@ -71,7 +71,7 @@ public:
     void getSpeech(std::vector <temoto_2::SpeechSpecifier> speech_specifiers, void(T::*callback)(std_msgs::String), T* obj)
     {
         // Name of the method, used for making debugging a bit simpler
-        std::string prefix = formatMessage("", this->class_name_, __func__);
+        std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
         // Contact the "Context Manager", pass the speech specifier and if successful, get
         // the name of the topic
@@ -116,7 +116,7 @@ public:
     bool stopAllocatedServices()
     {
         // Name of the method, used for making debugging a bit simpler
-        std::string prefix = formatMessage("", this->class_name_, __func__);
+        std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
 		try
 		{

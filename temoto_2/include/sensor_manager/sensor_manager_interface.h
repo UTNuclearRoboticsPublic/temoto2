@@ -25,7 +25,7 @@ public:
     std::string startSensor( std::string sensor_type )
     {
         // Name of the method, used for making debugging a bit simpler
-        std::string prefix = formatMessage("", this->node_name_, __func__);
+        std::string prefix = common::generateLogPrefix(node_name_, "", __func__);
 
         try
         {
@@ -47,7 +47,7 @@ public:
     std::string startSensor( std::string sensor_type, std::string package_name, std::string ros_program_name )
     {
         // Name of the method, used for making debugging a bit simpler
-        std::string prefix = formatMessage("", this->node_name_, __func__);
+        std::string prefix = common::generateLogPrefix(node_name_, "", __func__);
 
         // Fill out the "StartSensorRequest" request
         temoto_2::LoadSensor srv_msg;
@@ -94,7 +94,7 @@ public:
     void stopSensor( std::string sensor_type, std::string package_name, std::string ros_program_name )
     {
         // Name of the method, used for making debugging a bit simpler
-        std::string prefix = formatMessage("", this->node_name_, __func__);
+        std::string prefix = common::generateLogPrefix(node_name_, "", __func__);
 
 		// Find all instances where request part matches of what was given and unload each resource
 		temoto_2::LoadSensor::Request req;
@@ -131,22 +131,22 @@ public:
 
     void statusInfoCb (temoto_2::ResourceStatus& srv)
     {
-        std::string prefix = formatMessage("", this->node_name_, __func__);
-        ROS_WARN("%s status info reached here", prefix.c_str());
-        ROS_INFO_STREAM(srv.request);
+        std::string prefix = common::generateLogPrefix(node_name_, "", __func__);
+        ROS_DEBUG_NAMED(log_name_, "%s status info was received", prefix.c_str());
+        ROS_DEBUG_STREAM_NAMED(log_name_, srv.request);
       // if any resource should fail, just unload it and try again
       // there is a chance that sensor manager gives us better sensor this time
       if (srv.request.status_code == rmp::status_codes::FAILED)
       {
-        ROS_WARN("Sensor manager interface detected sensor failure. Unloading and trying again");
+        ROS_WARN_NAMED(log_name_, "Sensor manager interface detected a sensor failure. Unloading and trying again");
         auto sens_it = std::find_if(allocated_sensors_.begin(), allocated_sensors_.end(),
             [&](const temoto_2::LoadSensor& sens) -> bool {return sens.response.rmp.resource_id == srv.request.resource_id;}
             );
         if(sens_it != allocated_sensors_.end())
         {
-          ROS_WARN("SMI is Unloading");
+          ROS_DEBUG_NAMED(log_name_, "Unloading");
           resource_manager_.unloadClientResource(sens_it->response.rmp.resource_id);
-          ROS_WARN("SMI is asking the same sensor again");
+          ROS_DEBUG_NAMED(log_name_, "Asking the same sensor again");
           if (!resource_manager_.template call<temoto_2::LoadSensor>(
                   sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, *sens_it))
           {
@@ -185,6 +185,7 @@ public:
 private:
 
     const std::string node_name_ = "sensor_manager_interface";
+    const std::string log_name_ = "interfaces";
     error::ErrorHandler error_handler_;
     std::vector <temoto_2::LoadSensor> allocated_sensors_;
 	rmp::ResourceManager<SensorManagerInterface> resource_manager_;

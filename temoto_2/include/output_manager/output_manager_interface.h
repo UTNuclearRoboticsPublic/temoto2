@@ -31,7 +31,7 @@ public:
   void showInRviz(std::string display_type, std::string topic = "", std::string display_config = "")
   {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage("", this->class_name_, __func__);
+    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
     temoto_2::LoadRvizPlugin load_srv;
     load_srv.request.type = display_type;
@@ -66,7 +66,7 @@ public:
   void hideInRviz(std::string display_type, std::string topic = "", std::string display_config = "")
   {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage("", this->class_name_, __func__);
+    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
     temoto_2::LoadRvizPlugin::Request req;
     req.type = display_type;
@@ -109,7 +109,7 @@ public:
   std::string displayConfigFromFile(std::string config_path)
   {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage("", this->class_name_, __func__);
+    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
     // Create filestream object and configure exceptions
     std::ifstream config_file;
@@ -139,10 +139,13 @@ public:
   ~OutputManagerInterface()
   {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage("", this->class_name_, __func__);
+    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
   }
 
-
+  const std::string& getName() const
+  {
+    return class_name_;
+  }
 
 private:
   TemotoID::ID id_ = TemotoID::UNASSIGNED_ID;
