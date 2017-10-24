@@ -6,9 +6,11 @@
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+#include "common/tools.h"
+
 #include "TTP/task_manager.h"
 #include "TTP/task_descriptor_processor.h"
-#include "common/tools.h"
+#include "TTP/task_container.h"
 #include "TTP/TTP_errors.h"
 
 #include <algorithm>
@@ -551,28 +553,21 @@ void TaskManager::loadAndInitializeTaskTree(TaskTreeNode& node)
     TaskDescriptor& node_task_descriptor = node.getTaskDescriptor();
 
     // If its the root node, then just skip it
-    if (node_task_descriptor.getAction() == "ROOT")
+    if (node_task_descriptor.getAction() != "ROOT")
     {
-        for (auto& child : node.getChildren())
+        try
         {
-            loadAndInitializeTaskTree(child);
+            // Load the task
+            loadTask(node_task_descriptor);
+
+            // Initialize the task
+            instantiateTask(node);
         }
-
-        return;
-    }
-
-    try
-    {
-        // Load the task
-        loadTask(node_task_descriptor);
-
-        // Initialize the task
-        instantiateTask(node_task_descriptor);
-    }
-    catch(error::ErrorStackUtil& e)
-    {
-        e.forward(prefix);
-        throw e;
+        catch(error::ErrorStackUtil& e)
+        {
+            e.forward(prefix);
+            throw e;
+        }
     }
 
     // Initialize the child tasks
@@ -604,12 +599,12 @@ void TaskManager::loadTask(TaskDescriptor& task_descriptor)
     try
     {
         // Start loading a task library
-        ROS_INFO("Loading class from path: %s", path_to_lib.c_str());
+        ROS_DEBUG("Loading class from path: %s", path_to_lib.c_str());
         class_loader_->loadLibrary(path_to_lib);
         classes = class_loader_->getAvailableClassesForLibrary<Task>(path_to_lib);
 
         // Done loading
-        ROS_INFO( "%s Loaded %lu classes from %s", prefix.c_str(), classes.size(), path_to_lib.c_str() );
+        ROS_DEBUG( "%s Loaded %lu classes from %s", prefix.c_str(), classes.size(), path_to_lib.c_str() );
 
         // Add the name of the class
         task_descriptor.setTaskClassName(classes[0]);
@@ -632,10 +627,12 @@ void TaskManager::loadTask(TaskDescriptor& task_descriptor)
  *  INSTANTIATE TASK
  * * * * * * * * */
 
-void TaskManager::instantiateTask(TaskDescriptor& task_descriptor)
+void TaskManager::instantiateTask(TaskTreeNode& node)
 {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+
+    TaskDescriptor& task_descriptor = node.getTaskDescriptor();
 
     std::string task_class_name = task_descriptor.getTaskClassName();
 
@@ -675,9 +672,10 @@ void TaskManager::instantiateTask(TaskDescriptor& task_descriptor)
     // If the task was not found, create an instance of it
     try
     {
-        // TODO: DO NOT ACCESS PRIVATE MEMBERS DIRECLY ,E.G., UNFRIEND THE TASK MANAGER
-        ROS_INFO( "%s instatiating task: %s", prefix.c_str(), task_class_name.c_str());
-        task_descriptor.task_pointer_ = class_loader_->createInstance<Task>(task_class_name);
+        // TODO: DO NOT ACCESS PRIVATE MEMBERS DIRECLY ,ie., UNFRIEND THE TASK MANAGER .. or should I?
+        ROS_DEBUG( "%s instatiating task: %s", prefix.c_str(), task_class_name.c_str());
+        node.task_pointer_ = class_loader_->createInstance<Task>(task_class_name);
+        node.task_pointer_->task_package_name_ = task_descriptor.getTaskPackageName();
 
         return;
     }
@@ -693,14 +691,63 @@ void TaskManager::instantiateTask(TaskDescriptor& task_descriptor)
 }
 
 
+/* * * * * * * * *
+ *  MAKE FLOW GRAPH
+ * * * * * * * * */
+
+void TaskManager::makeFlowGraph(TaskTreeNode& node, tbb::flow::graph& flow_graph)
+{
+    TaskDescriptor& node_task_descriptor = node.getTaskDescriptor();
+
+    // If its the root node, then create the start node
+    if (node_task_descriptor.getAction() == "ROOT")
+    {
+        node.root_fgn_ = std::make_unique<tbb::flow::broadcast_node<Subjects>>(flow_graph);
+    }
+
+    // Create a continue node
+    else
+    {
+        node.task_fgn_ = std::make_unique< tbb::flow::function_node<Subjects, Subjects> >
+                (flow_graph
+                 , tbb::flow::serial
+                 , TaskContainer(node.task_pointer_, node_task_descriptor.getInterfaces()[0]));
+    }
+
+    // Do the same with child nodes
+    for (auto& child : node.getChildren())
+    {
+        makeFlowGraph(child, flow_graph);
+    }
+}
 
 
+/* * * * * * * * *
+ *  CONNECT FLOW GRAPH
+ * * * * * * * * */
 
-
-
-
-
-
+void TaskManager::connectFlowGraph(TaskTreeNode& node)
+{
+    // If its the root node, then create the start edge
+    if (node.getTaskDescriptor().getAction() == "ROOT")
+    {
+        // Connect parent flow graph node with child flow graph nodes
+        for (auto& child : node.getChildren())
+        {
+            tbb::flow::make_edge(*node.root_fgn_, *child.task_fgn_);
+            connectFlowGraph(child);
+        }
+    }
+    else
+    {
+        // Connect parent flow graph node with child flow graph nodes
+        for (auto& child : node.getChildren())
+        {
+            tbb::flow::make_edge(*node.task_fgn_, *child.task_fgn_);
+            connectFlowGraph(child);
+        }
+    }
+}
 
 
 

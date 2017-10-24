@@ -11,6 +11,10 @@
 namespace TTP
 {
 
+// Forward declare the Subject class and create a Subjects typedef
+class Subject;
+typedef std::vector<Subject> Subjects;
+
 /**
  * @brief The Data struct
  */

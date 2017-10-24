@@ -19,7 +19,7 @@ public:
      */
     TaskContainer(boost::shared_ptr<Task> task_pointer, TaskInterface task_interface);
 
-    std::vector<Subject> operator()(std::vector<Subject> input_subjects);
+    Subjects operator()(Subjects input_subjects);
 
 private:
 

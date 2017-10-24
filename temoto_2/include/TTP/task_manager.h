@@ -16,6 +16,9 @@
 #include "temoto_2/indexTasks.h"
 #include "temoto_2/StopTaskMsg.h"
 
+#include <cstdio>
+#include "tbb/flow_graph.h"
+
 namespace TTP
 {
 
@@ -75,6 +78,10 @@ public:
 
     void loadAndInitializeTaskTree(TaskTreeNode& node);
 
+    void makeFlowGraph(TaskTreeNode& node, tbb::flow::graph& flow_graph);
+
+    void connectFlowGraph(TaskTreeNode& node);
+
 //    /**
 //     * @brief executeTask
 //     * @param task_info
@@ -95,7 +102,7 @@ public:
      * @param task
      * @return
      */
-    void instantiateTask(TaskDescriptor& task_descriptor);
+    void instantiateTask(TaskTreeNode& node);
 
 //    /**
 //     * @brief startTask

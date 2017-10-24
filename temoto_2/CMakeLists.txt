@@ -159,11 +159,13 @@ add_executable(sentence_parser src/tools/sentence_parser.cpp
                                src/TTP/task_descriptor.cpp
                                src/TTP/task_tree_node.cpp
                                src/TTP/task_tree.cpp
+                               src/TTP/task_container.cpp
                                src/base_error/base_error.cpp)
 add_dependencies(sentence_parser ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(sentence_parser 
                       ${catkin_LIBRARIES}
-                      ${TinyXML_LIBRARIES} 
+                      ${TinyXML_LIBRARIES}
+                      ${TBB_LIBRARIES}
                       meta-classify meta-sequence-analyzers meta-parser-analyzers)
 
 #link_directories(/tmp/usr/local/lib/)

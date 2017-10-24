@@ -8,7 +8,7 @@ TaskContainer::TaskContainer(boost::shared_ptr<Task> task_pointer,TaskInterface 
     : task_pointer_(task_pointer), task_interface_(task_interface)
 {}
 
-std::vector<Subject> operator()(std::vector<Subject> input_subjects)
+Subjects TaskContainer::operator()(Subjects input_subjects)
 {
     // Create a copy of input subjects
     std::vector<Subject> input_subjects_c = input_subjects;

@@ -29,7 +29,7 @@ TaskTreeNode::TaskTreeNode( TaskDescriptor task_descriptor ) : task_descriptor_(
 
 void TaskTreeNode::addChildNode( TaskTreeNode child )
 {
-    child_nodes_.push_back(child);
+    child_nodes_.push_back(std::move(child));
 }
 
 

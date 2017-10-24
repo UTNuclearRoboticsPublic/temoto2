@@ -48,12 +48,6 @@ public:
     }
 
     /**
-     * @brief Receive a short description of the task
-     * @return
-     */
-    std::string getDescription();
-
-    /**
      * @brief getStatus
      * @return
      */
@@ -86,6 +80,8 @@ protected:
 
 private:
 
+    std::string task_package_name_;
+
     /**
      * @brief task_n_
      */
@@ -113,6 +109,7 @@ private:
     {
         return task_id_;
     }
+
 };
 }// END of TTP namespace
 #endif

@@ -6,6 +6,10 @@
 
 #include "base_error/base_error.h"
 
+// TBB test
+#include <cstdio>
+#include "tbb/flow_graph.h"
+
 //using namespace TTP;
 
 int main(int argc, char **argv)
@@ -74,6 +78,17 @@ int main(int argc, char **argv)
 
             // Load and initialize the tasks
             task_manager.loadAndInitializeTaskTree(tt.getRootNode());
+
+            // Create a tbb flow graph
+            std::cout << "\n TBB business \n";
+            tbb::flow::graph flow_graph;
+            task_manager.makeFlowGraph(tt.getRootNode(), flow_graph);
+            task_manager.connectFlowGraph(tt.getRootNode());
+
+            // Start the flow graph
+            TTP::Subjects dummy_subjects;
+            tt.getRootNode().root_fgn_->try_put(dummy_subjects);
+            flow_graph.wait_for_all();
         }
         catch (error::ErrorStackUtil& e)
         {

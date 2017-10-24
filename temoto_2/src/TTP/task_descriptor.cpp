@@ -100,6 +100,11 @@ void TaskDescriptor::setTaskClassName(std::string task_class_name)
     task_class_name_ = task_class_name;
 }
 
+const std::string& TaskDescriptor::getTaskPackageName() const
+{
+    return task_package_name_;
+}
+
 
 std::ostream& operator<<( std::ostream& stream, const TaskDescriptor& td)
 {

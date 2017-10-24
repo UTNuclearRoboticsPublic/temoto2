@@ -10,7 +10,7 @@ namespace TTP
  */
 TaskTree::TaskTree( TaskTreeNode root_node )
 {
-    this->root_node_ = root_node;
+    this->root_node_ = std::move(root_node);
 }
 
 std::ostream& operator<<( std::ostream& stream, const TaskTree& tt)
@@ -70,7 +70,7 @@ TaskTree TaskTreeBuilder::build( std::vector<TaskDescriptor>& input_task_descs )
             {
                 // Create a node, add it as a child of previous node
                 TaskTreeNode node(task_desc);
-                previous_node->addChildNode(node);
+                previous_node->addChildNode(std::move(node));
                 active_parent_node = previous_node->lastChild();
                 previous_node = active_parent_node;
 
@@ -79,7 +79,7 @@ TaskTree TaskTreeBuilder::build( std::vector<TaskDescriptor>& input_task_descs )
             {
                 // Add this node as a child of the active_node
                 TaskTreeNode node(task_desc);
-                active_parent_node->addChildNode(node);
+                active_parent_node->addChildNode(std::move(node));
                 previous_node = active_parent_node->lastChild();
             }
         }

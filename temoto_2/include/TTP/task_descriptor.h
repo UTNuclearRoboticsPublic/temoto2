@@ -2,9 +2,6 @@
 #define TASK_DESCRIPTOR_H
 
 #include "TTP/io_descriptor.h"
-//#include "TTP/base_task/task.h"
-#include <boost/shared_ptr.hpp>
-
 
 namespace TTP
 {
@@ -12,7 +9,6 @@ namespace TTP
 class TaskDescriptorProcessor;
 class TaskTreeBuilder;
 class TaskManager;
-class Task;
 
 typedef std::string Action;
 
@@ -70,6 +66,9 @@ public:
     void setTaskClassName(std::string task_class_name);
 
 
+    const std::string& getTaskPackageName() const;
+
+
     bool empty() const;
 
 private:
@@ -86,7 +85,6 @@ private:
 
     std::vector<Subject> incomplete_subjects_;
 
-    boost::shared_ptr<Task> task_pointer_;
 };
 }
 

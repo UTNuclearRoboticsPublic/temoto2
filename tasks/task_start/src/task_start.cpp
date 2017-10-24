@@ -33,6 +33,12 @@ public:
     bool startTask(TTP::TaskInterface task_interface)
     {
         std::cout << "Started the start task, returning\n";
+        std::vector<TTP::Subject> input_subjects = task_interface.input_subjects_;
+        for(auto& i_sub : input_subjects)
+        {
+            std::cout << i_sub;
+        }
+
         return true;
     }
 
