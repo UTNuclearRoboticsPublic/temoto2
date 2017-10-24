@@ -6,6 +6,7 @@
 #include "boost/filesystem.hpp"
 #include <exception>
 
+#include "base_error/base_error.h"
 #include "common/temoto_id.h"
 #include "TTP/task_descriptor.h"
 #include "TTP/task_tree.h"
@@ -70,7 +71,9 @@ public:
      */
     std::vector <TaskDescriptor>& getIndexedTasks();
 
-    void connectTasks(TaskTreeNode& node, std::vector<Subject> parent_subjects, unsigned int depth = 0);
+    void connectTaskTree(TaskTreeNode& node, std::vector<Subject> parent_subjects, unsigned int depth = 0);
+
+    void loadAndInitializeTaskTree(TaskTreeNode& node);
 
 //    /**
 //     * @brief executeTask
@@ -80,19 +83,19 @@ public:
 //     */
 //    bool executeTask(TaskDescriptor task_info, std::vector<boost::any> arguments);
 
-//    /**
-//     * @brief loadTask
-//     * @param task
-//     * @return
-//     */
-//    void loadTask(RunningTask& task);
+    /**
+     * @brief loadTask
+     * @param task
+     * @return
+     */
+    void loadTask(TaskDescriptor& task_descriptor);
 
-//    /**
-//     * @brief instantiateTask
-//     * @param task
-//     * @return
-//     */
-//    void instantiateTask(RunningTask& task);
+    /**
+     * @brief instantiateTask
+     * @param task
+     * @return
+     */
+    void instantiateTask(TaskDescriptor& task_descriptor);
 
 //    /**
 //     * @brief startTask

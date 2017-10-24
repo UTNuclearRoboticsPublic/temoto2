@@ -28,6 +28,7 @@ public:
     void printTaskDescriptors(TaskTreeNode& node);
 
 private:
+
     TaskTreeNode root_node_;
 };
 

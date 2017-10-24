@@ -2,10 +2,17 @@
 #define TASK_DESCRIPTOR_H
 
 #include "TTP/io_descriptor.h"
-//#include "TTP/base_task/base_task.h"
+//#include "TTP/base_task/task.h"
+#include <boost/shared_ptr.hpp>
+
 
 namespace TTP
 {
+
+class TaskDescriptorProcessor;
+class TaskTreeBuilder;
+class TaskManager;
+class Task;
 
 typedef std::string Action;
 
@@ -15,10 +22,6 @@ struct TaskInterface
     std::vector<Subject> input_subjects_;
     std::vector<Subject> output_subjects_;
 };
-
-class TaskDescriptorProcessor;
-class TaskTreeBuilder;
-class TaskManager;
 
 /**
  * @brief This class contains all the information needed for finding, loading
@@ -56,9 +59,21 @@ public:
 
     std::vector<Subject>& getIncompleteSubjects();
 
-    bool empty();
+
+    const std::string& getLibPath() const;
+
+    void setLibPath(std::string task_lib_path);
+
+
+    const std::string& getTaskClassName() const;
+
+    void setTaskClassName(std::string task_class_name);
+
+
+    bool empty() const;
 
 private:
+
     std::vector<TaskInterface> task_interfaces_;
 
     Action action_;
@@ -71,7 +86,7 @@ private:
 
     std::vector<Subject> incomplete_subjects_;
 
-    //boost::shared_ptr<Task> task_pointer_;
+    boost::shared_ptr<Task> task_pointer_;
 };
 }
 

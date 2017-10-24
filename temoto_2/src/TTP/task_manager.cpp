@@ -230,7 +230,7 @@ unsigned int findNonstrictMatch(const std::vector<Subject>& complete_subjects,
  *  CONNECT TASKS
  * * * * * * * * */
 
-void TaskManager::connectTasks(TaskTreeNode& node, std::vector<Subject> parent_subjects, unsigned int depth)
+void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> parent_subjects, unsigned int depth)
 {
     /*
      *
@@ -247,7 +247,7 @@ void TaskManager::connectTasks(TaskTreeNode& node, std::vector<Subject> parent_s
     {
         for (auto& child : node.getChildren())
         {
-            connectTasks(child, parent_subjects, depth + 1);
+            connectTaskTree(child, parent_subjects, depth + 1);
         }
 
         return;
@@ -375,6 +375,7 @@ void TaskManager::connectTasks(TaskTreeNode& node, std::vector<Subject> parent_s
         for (auto& task_descriptor : tasks_indexed_)
         {
             std::cout << "[" << node_action << "]" << " looking at '" << task_descriptor.getAction() << "'\n";
+            std::cout << "-------------------\n";
 
             // Look for the task with the same action type
             if (task_descriptor.getAction() != node_action)
@@ -428,7 +429,8 @@ void TaskManager::connectTasks(TaskTreeNode& node, std::vector<Subject> parent_s
                           });
 
                 // DEBUG - print out the scores
-                for (auto& inf : candidate_interfaces){std::cout << "SCORES " << inf.score_ << ",";} std::cout<<"\n";
+                std::cout << "SCORES ";
+                for (auto& inf : candidate_interfaces){std::cout << inf.score_ << ",";} std::cout<<"\n";
 
                 candidate_tasks.emplace_back(task_descriptor, candidate_interfaces[0]);
             }
@@ -448,6 +450,7 @@ void TaskManager::connectTasks(TaskTreeNode& node, std::vector<Subject> parent_s
         for (auto& task_descriptor : tasks_indexed_)
         {
             std::cout << "[" << node_action << "]" << " looking at '" << task_descriptor.getAction() << "'\n";
+            std::cout << "-------------------\n";
 
             // Look for the task with the same action type
             if (task_descriptor.getAction() != node_action)
@@ -462,7 +465,7 @@ void TaskManager::connectTasks(TaskTreeNode& node, std::vector<Subject> parent_s
             for (auto& interface : task_descriptor.getInterfaces())
             {
                 // ... look for STRICT input subjects match
-                if (interface.input_subjects_ != node_subjects) // DEFINE DAT OPERATOR
+                if (interface.input_subjects_ != node_subjects)
                 {
                     continue;
                 }
@@ -486,7 +489,8 @@ void TaskManager::connectTasks(TaskTreeNode& node, std::vector<Subject> parent_s
                           });
 
                 // DEBUG - print out the scores
-                for (auto& inf : candidate_interfaces){std::cout << "SCORES " << inf.score_ << ",";} std::cout<<"\n";
+                std::cout << "SCORES ";
+                for (auto& inf : candidate_interfaces){std::cout << inf.score_ << ",";} std::cout<<"\n";
 
                 candidate_tasks.emplace_back(task_descriptor, candidate_interfaces[0]);
             }
@@ -530,9 +534,177 @@ void TaskManager::connectTasks(TaskTreeNode& node, std::vector<Subject> parent_s
      */
     for (auto& child : node.getChildren())
     {
-        connectTasks(child, node_interface.output_subjects_, depth + 1);
+        connectTaskTree(child, node_interface.output_subjects_, depth + 1);
     }
 }
+
+/* * * * * * * * *
+ *  LOAD AND INITIALIZE TASK TREE
+ * * * * * * * * */
+
+void TaskManager::loadAndInitializeTaskTree(TaskTreeNode& node)
+{
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = formatMessage("", class_name_, __func__);
+
+    // Task descriptor of the node
+    TaskDescriptor& node_task_descriptor = node.getTaskDescriptor();
+
+    // If its the root node, then just skip it
+    if (node_task_descriptor.getAction() == "ROOT")
+    {
+        for (auto& child : node.getChildren())
+        {
+            loadAndInitializeTaskTree(child);
+        }
+
+        return;
+    }
+
+    try
+    {
+        // Load the task
+        loadTask(node_task_descriptor);
+
+        // Initialize the task
+        instantiateTask(node_task_descriptor);
+    }
+    catch(error::ErrorStackUtil& e)
+    {
+        e.forward(prefix);
+        throw e;
+    }
+
+    // Initialize the child tasks
+    for (auto& child : node.getChildren())
+    {
+        loadAndInitializeTaskTree(child);
+    }
+}
+
+
+/* * * * * * * * *
+ *  LOAD TASK
+ * * * * * * * * */
+
+void TaskManager::loadTask(TaskDescriptor& task_descriptor)
+{
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+
+    /*
+     * Create an empty vector for storing the class names (currently a task
+     * could have multiple tasks inside it. but it sounds TROUBLESOME
+     */
+    std::vector<std::string> classes;
+
+    // Get the "path" to its lib file
+    std::string path_to_lib =  task_descriptor.getLibPath();
+
+    try
+    {
+        // Start loading a task library
+        ROS_INFO("Loading class from path: %s", path_to_lib.c_str());
+        class_loader_->loadLibrary(path_to_lib);
+        classes = class_loader_->getAvailableClassesForLibrary<Task>(path_to_lib);
+
+        // Done loading
+        ROS_INFO( "%s Loaded %lu classes from %s", prefix.c_str(), classes.size(), path_to_lib.c_str() );
+
+        // Add the name of the class
+        task_descriptor.setTaskClassName(classes[0]);
+    }
+
+    // Rethrow the exception
+    catch(class_loader::ClassLoaderException& e)
+    {
+        // Rethrow the exception
+        throw error::ErrorStackUtil( TTPErr::CLASS_LOADER_FAIL,
+                                     error::Subsystem::CORE,
+                                     error::Urgency::HIGH,
+                                     prefix + e.what(),
+                                     ros::Time::now() );
+    }
+}
+
+
+/* * * * * * * * *
+ *  INSTANTIATE TASK
+ * * * * * * * * */
+
+void TaskManager::instantiateTask(TaskDescriptor& task_descriptor)
+{
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+
+    std::string task_class_name = task_descriptor.getTaskClassName();
+
+    // First check that the task has a "class name"
+    if (task_class_name.empty())
+    {
+        throw error::ErrorStackUtil( TTPErr::NAMELESS_TASK_CLASS,
+                                     error::Subsystem::CORE,
+                                     error::Urgency::HIGH,
+                                     prefix + "Task missing a class name",
+                                     ros::Time::now() );
+    }
+
+    // Check if there is a class with this name
+    bool task_class_found = false;
+    std::vector<std::string> loaded_classes = class_loader_->getAvailableClasses<Task>();
+
+    for (std::string loaded_class : loaded_classes)
+    {
+        if (loaded_class == task_class_name)
+        {
+            task_class_found = true;
+            break;
+        }
+    }
+
+    // If the task was not found, throw an error
+    if (!task_class_found)
+    {
+        throw error::ErrorStackUtil( TTPErr::NO_TASK_CLASS,
+                                     error::Subsystem::CORE,
+                                     error::Urgency::HIGH,
+                                     prefix + "Could not find a task class within loaded classes",
+                                     ros::Time::now() );
+    }
+
+    // If the task was not found, create an instance of it
+    try
+    {
+        // TODO: DO NOT ACCESS PRIVATE MEMBERS DIRECLY ,E.G., UNFRIEND THE TASK MANAGER
+        ROS_INFO( "%s instatiating task: %s", prefix.c_str(), task_class_name.c_str());
+        task_descriptor.task_pointer_ = class_loader_->createInstance<Task>(task_class_name);
+
+        return;
+    }
+    catch(class_loader::ClassLoaderException& e)
+    {
+        // Rethrow the exception
+        throw error::ErrorStackUtil( TTPErr::CLASS_LOADER_FAIL,
+                                     error::Subsystem::CORE,
+                                     error::Urgency::HIGH,
+                                     prefix + e.what(),
+                                     ros::Time::now() );
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // OLD STUFF
@@ -576,49 +748,7 @@ void TaskManager::connectTasks(TaskTreeNode& node, std::vector<Subject> parent_s
 //}
 
 
-/* * * * * * * * *
- *  LOAD TASK
- * * * * * * * * */
 
-//void TaskManager::loadTask(RunningTask& task)
-//{
-//    // Name of the method, used for making debugging a bit simpler
-//    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
-
-//    /*
-//     * Create an empty vector for storing the class names (currently a task
-//     * could have multiple tasks inside it. but it sounds TROUBLESOME
-//     */
-//    std::vector<std::string> classes;
-
-//    // Get the "path" to its lib file
-//    std::string path_to_lib =  task.task_info_.getLibPath();
-
-//    try
-//    {
-//        // Start loading a task library
-//        ROS_INFO("Loading class from path: %s", path_to_lib.c_str());
-//        class_loader_->loadLibrary(path_to_lib);
-//        classes = class_loader_->getAvailableClassesForLibrary<Task>(path_to_lib);
-
-//        // Done loading
-//        ROS_DEBUG( "%s Loaded %lu classes from %s", prefix.c_str(), classes.size(), path_to_lib.c_str() );
-
-//        // Add the name of the class
-//        task.task_info_.class_name_ = classes[0];
-//    }
-
-//    // Rethrow the exception
-//    catch(class_loader::ClassLoaderException& e)
-//    {
-//        // Rethrow the exception
-//        throw error::ErrorStackUtil( TTPErr::CLASS_LOADER_FAIL,
-//                                     error::Subsystem::CORE,
-//                                     error::Urgency::HIGH,
-//                                     prefix + e.what(),
-//                                     ros::Time::now() );
-//    }
-//}
 
 
 ///* * * * * * * * *
@@ -646,69 +776,7 @@ void TaskManager::connectTasks(TaskTreeNode& node, std::vector<Subject> parent_s
 //    }
 //}
 
-///* * * * * * * * *
-// *  INSTANTIATE TASK
-// * * * * * * * * */
 
-//void TaskManager::instantiateTask(RunningTask& task)
-//{
-//    // Name of the method, used for making debugging a bit simpler
-//    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
-
-//    std::string task_class_name = task.task_info_.getClassName();
-
-//    // First check that the task has a "class name"
-//    if (task_class_name.empty())
-//    {
-//        throw error::ErrorStackUtil( TTPErr::NAMELESS_TASK_CLASS,
-//                                     error::Subsystem::CORE,
-//                                     error::Urgency::HIGH,
-//                                     prefix + "Task missing a class name",
-//                                     ros::Time::now() );
-//    }
-
-//    // Check if there is a class with this name
-//    bool task_class_found = false;
-//    std::vector<std::string> loaded_classes = class_loader_->getAvailableClasses<Task>();
-
-//    for (std::string loaded_class : loaded_classes)
-//    {
-//        if (loaded_class == task_class_name)
-//        {
-//            task_class_found = true;
-//            break;
-//        }
-//    }
-
-//    // If the task was found, create an instance of it
-//    if (task_class_found)
-//    {
-//        try
-//        {
-//            ROS_DEBUG( "%s instatiating task: %s", prefix.c_str(), task_class_name.c_str());
-//            task.task_pointer_ = class_loader_->createInstance<Task>(task_class_name);
-
-//            return;
-//        }
-//        catch(class_loader::ClassLoaderException& e)
-//        {
-//            // Rethrow the exception
-//            throw error::ErrorStackUtil( TTPErr::CLASS_LOADER_FAIL,
-//                                         error::Subsystem::CORE,
-//                                         error::Urgency::HIGH,
-//                                         prefix + e.what(),
-//                                         ros::Time::now() );
-//        }
-//    }
-//    else
-//    {
-//        throw error::ErrorStackUtil( TTPErr::NO_TASK_CLASS,
-//                                     error::Subsystem::CORE,
-//                                     error::Urgency::HIGH,
-//                                     prefix + "Could not find a task class within loaded classes",
-//                                     ros::Time::now() );
-//    }
-//}
 
 
 ///* * * * * * * * *

@@ -1,9 +1,33 @@
 <?xml version="1.0" ?>
 
 <task action="start" >
- 
+
   <!--Interface block-->
   <interface id="0">
+    
+    <!--Input block-->
+    <in>    
+      <what>
+        <arg pos_tag="NN" word=""/>
+      </what>
+    </in>
+    
+    <!--Output block-->
+    <out>
+      <where>
+        <arg pos_tag="PP" word=""/>
+        
+        <data>
+          <field datatype="pointer"/>
+        </data>
+      </where> 
+    </out>
+
+  </interface>
+
+
+  <!--Interface block-->
+  <interface id="1">
     
     <!--Input block-->
     <in>    
@@ -20,6 +44,13 @@
           <field datatype="topic"/>
         </data>
       </what> 
+
+      <numeric>
+        <arg pos_tag="PP" word=""/>
+        <data>
+          <field datatype="number"/>
+        </data>
+      </numeric> 
     </out>
 
   </interface>

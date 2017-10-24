@@ -8,32 +8,28 @@
 #define TASK_H
 
 #include <string>
+#include "TTP/task_descriptor.h"
 #include <boost/any.hpp>
 #include "base_error/base_error.h"
 #include "common/temoto_id.h"
 #include "temoto_2/StopTaskMsg.h"
 #include "ros/ros.h"
 
+namespace TTP
+{
+
 class Task
 {
-friend class TaskHandler;
+friend class TaskManager;
 
 public:
 
     /**
-     * @brief Start the task
-     * @return
-     */
-    virtual bool startTask(){};
-
-    /**
      * @brief startTask
-     * @param subtaskNr Number of the subtask to be executed
-     * @param arguments arguments Start the task by passing in arguments. boost::any is used as a
-     * generic way ( imo better than void*) for not caring about the argument types
+     * @param task_interface
      * @return
      */
-    virtual bool startTask( int subtaskNr, std::vector<boost::any> arguments ) = 0;
+    virtual bool startTask(TaskInterface task_interface) = 0;
 
     /**
      * @brief pauseTask
@@ -66,13 +62,11 @@ public:
 		return "healthy";
 	}
 
-
     /**
      * @brief getSolution
-     * @param subtaskNr
      * @return
      */
-    virtual std::vector<boost::any> getSolution( int subtaskNr) = 0;
+    virtual std::vector<Subject> getSolution() = 0;
 
     /**
      * @brief ~Task Implemented virtual constructor. If it would not be implemented,
@@ -103,28 +97,6 @@ private:
     TemotoID::ID task_id_ = TemotoID::UNASSIGNED_ID;
 
     /**
-     * @brief startTaskAutojoin
-     * @param subtaskNr
-     * @param arguments
-     */
-    void startTaskAutostop( int subtaskNr, std::vector<boost::any> arguments )
-    {
-        // Start the task
-        startTask( subtaskNr, arguments );
-
-        // After the task has finished, let the Task Handler know that the task is finished
-        ros::Publisher stop_task_pub = task_nodehandle_.advertise<temoto_2::StopTaskMsg>("temoto/stop_task", 10);
-
-        // Wait for the publisher to come up
-        while( stop_task_pub == nullptr){}
-
-        // Send the stop message
-        temoto_2::StopTaskMsg stop_task_msg;
-        stop_task_msg.task_id = static_cast<int>(task_id_);
-        stop_task_pub.publish( stop_task_msg );
-    }
-
-    /**
      * @brief setID
      * @param task_id
      */
@@ -142,4 +114,5 @@ private:
         return task_id_;
     }
 };
+}// END of TTP namespace
 #endif

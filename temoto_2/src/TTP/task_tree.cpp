@@ -114,11 +114,33 @@ bool TaskTreeBuilder::checkIfDependent(TaskDescriptor& task_descriptor)
                 subject.markIncomplete();
                 task_descriptor.addIncompleteSubject(subject);
 
-                // Clean
-                // subject.words_.clear();
+                isDependent = true;
+            }
+            else
+            {
+                subject.markComplete();
+            }
+        }
+
+        // Look for "where" types
+        else if (subject.type_ == "where")
+        {
+            if (subject.words_[0] == "there")
+            {
+                /*
+                 * Mark this "where" phrase as incomplete. This indicates that
+                 * this phase has to be filled with additional information during
+                 * runtime. Also create a copy of this subject into node's
+                 * "incomplete_subjects" set
+                 */
+                subject.markIncomplete();
+                task_descriptor.addIncompleteSubject(subject);
 
                 isDependent = true;
-                break;
+            }
+            else
+            {
+                subject.markComplete();
             }
         }
 

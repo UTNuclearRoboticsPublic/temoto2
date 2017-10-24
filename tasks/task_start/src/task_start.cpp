@@ -6,7 +6,7 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // Things that have to be included
-#include "base_task/task.h"                 				 // The base task
+#include "TTP/base_task/task.h"                 				 // The base task
 #include <class_loader/class_loader.h>                                   // Class loader includes
 
 // Task specific includes
@@ -15,7 +15,7 @@
 #include "context_manager/human_context/human_context_interface.h"
 
 // First implementaton
-class TaskStart: public Task
+class TaskStart: public TTP::Task
 {
 public:
 
@@ -29,15 +29,10 @@ public:
         ROS_INFO("TaskStart constructed");
     }
 
-    // startTask without arguments
-    bool startTask()
-    {
-        return true;
-    }
-
     // startTask with arguments
-    bool startTask(int subtaskNr, std::vector<boost::any> arguments )
+    bool startTask(TTP::TaskInterface task_interface)
     {
+        std::cout << "Started the start task, returning\n";
         return true;
     }
 
@@ -47,12 +42,12 @@ public:
         return str;
     }
 
-    std::vector<boost::any> getSolution( int subtaskNr )
+    std::vector<TTP::Subject> getSolution()
     {
         // Construct an empty vector
-        std::vector<boost::any> solutionVector;
+        std::vector<TTP::Subject> return_subjects;
 
-        return solutionVector;
+        return return_subjects;
     }
 
     /* * * * * * * * * * * * * * * * * * * * * * * * *
@@ -61,13 +56,13 @@ public:
 
     ~TaskStart()
     {
-        ROS_INFO("[TaskStart::~TaskStart]TaskStart destructed");
+        ROS_INFO("TaskStart destructed");
     }
 
 private:
 
     // Human context interface object
-    HumanContextInterface <TaskStart> hci_;
+    // HumanContextInterface <TaskStart> hci_;
 
     /**
      * @brief class_name_
@@ -82,4 +77,4 @@ private:
 };
 
 // Dont forget that part, otherwise this class would not be loadable
-CLASS_LOADER_REGISTER_CLASS(TaskStart, Task);
+CLASS_LOADER_REGISTER_CLASS(TaskStart, TTP::Task);

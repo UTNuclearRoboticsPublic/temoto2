@@ -49,7 +49,7 @@ int main(int argc, char **argv)
     }
 
     TTP::MetaLP language_processor("/home/robert/repos_sdks/meta/models/");
-
+    TTP::TaskTree tt;
     std::string line;
 
     while (ros::ok())
@@ -60,17 +60,20 @@ int main(int argc, char **argv)
         try
         {
             // Process the text and receive a task tree
-            TTP::TaskTree tt = language_processor.processText(std::move(line));
+            tt = language_processor.processText(std::move(line));
 
             // Print out the task tree
             std::cout << "Task Tree: " << tt;
 
             // Find connecting tasks
             std::vector<TTP::Subject> empty_subs; // stupid hack
-            task_manager.connectTasks(tt.getRootNode(), empty_subs);
+            task_manager.connectTaskTree(tt.getRootNode(), empty_subs);
 
             // Print task tree task descriptors
             tt.printTaskDescriptors(tt.getRootNode());
+
+            // Load and initialize the tasks
+            task_manager.loadAndInitializeTaskTree(tt.getRootNode());
         }
         catch (error::ErrorStackUtil& e)
         {

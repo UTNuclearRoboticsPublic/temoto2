@@ -56,7 +56,7 @@ std::vector<TaskInterface>& TaskDescriptor::getInterfaces()
     return task_interfaces_;
 }
 
-bool TaskDescriptor::empty()
+bool TaskDescriptor::empty() const
 {
     return task_interfaces_.empty();
 }
@@ -65,6 +65,41 @@ std::vector<Subject>& TaskDescriptor::getIncompleteSubjects()
 {
     return incomplete_subjects_;
 }
+
+const std::string& TaskDescriptor::getLibPath() const
+{
+    return task_lib_path_;
+}
+
+void TaskDescriptor::setLibPath(std::string task_lib_path)
+{
+    // If the string is empty then throw error
+    if (task_lib_path.empty())
+    {
+        // TODO: THROW TEMOTO ERROR
+        throw;
+    }
+
+    task_lib_path_ = task_lib_path;
+}
+
+const std::string& TaskDescriptor::getTaskClassName() const
+{
+    return task_class_name_;
+}
+
+void TaskDescriptor::setTaskClassName(std::string task_class_name)
+{
+    // If the string is empty then throw error
+    if (task_class_name.empty())
+    {
+        // TODO: THROW TEMOTO ERROR
+        throw;
+    }
+
+    task_class_name_ = task_class_name;
+}
+
 
 std::ostream& operator<<( std::ostream& stream, const TaskDescriptor& td)
 {

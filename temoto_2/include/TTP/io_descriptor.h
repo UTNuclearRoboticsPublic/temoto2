@@ -35,7 +35,8 @@ const std::vector<std::string> valid_datatypes = {"topic",
 
 // Valid subjects
 const std::vector<std::string> valid_subjects = {"what",
-                                                 "where"};
+                                                 "where",
+                                                 "numeric"};
 
 /**
  * @brief The Subject struct
@@ -47,7 +48,7 @@ public:
     std::string pos_tag_;
     std::vector<std::string> words_;
     std::vector<Data> data_;
-    bool is_complete_ = true;
+    bool is_complete_ = false;
 
     Subject() = default;
 

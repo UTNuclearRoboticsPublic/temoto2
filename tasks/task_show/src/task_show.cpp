@@ -9,8 +9,8 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // Things that have to be included
-#include "base_task/task.h"                 				 // The base task
-#include <class_loader/class_loader.h>                                   // Class loader includes
+#include "TTP/base_task/task.h"                 				 // The base task
+#include <class_loader/class_loader.h>                   // Class loader includes
 
 // Task specific includes
 #include "ros/ros.h"
@@ -18,7 +18,7 @@
 #include "context_manager/human_context/human_context_interface.h"
 
 // First implementaton
-class TaskShow: public Task
+class TaskShow: public TTP::Task
 {
 public:
 
@@ -32,15 +32,17 @@ public:
         ROS_INFO("TaskShow constructed");
     }
 
-    // startTask without arguments
-    bool startTask()
-    {
-        return true;
-    }
-
     // startTask with arguments
-    bool startTask(int subtaskNr, std::vector<boost::any> arguments )
+    bool startTask(TTP::TaskInterface task_interface)
     {
+        std::cout << "Started the start task, returning\n";
+        unsigned int intrface_id = task_interface.id_;
+        std::vector<TTP::Subject> input_subjects = task_interface.input_subjects_;
+        for(auto& i_sub : input_subjects)
+        {
+            std::cout << i_sub << std::endl;
+        }
+        
         return true;
     }
 
@@ -50,12 +52,12 @@ public:
         return str;
     }
 
-    std::vector<boost::any> getSolution( int subtaskNr )
+    std::vector<TTP::Subject> getSolution()
     {
         // Construct an empty vector
-        std::vector<boost::any> solutionVector;
+        std::vector<TTP::Subject> return_subjects;
 
-        return solutionVector;
+        return return_subjects;
     }
 
     /* * * * * * * * * * * * * * * * * * * * * * * * *
@@ -64,13 +66,13 @@ public:
 
     ~TaskShow()
     {
-        ROS_INFO("[TaskShow::~TaskShow]TaskShow destructed");
+        ROS_INFO("TaskShow destructed");
     }
 
 private:
 
     // Human context interface object
-    HumanContextInterface <TaskShow> hci_;
+    // HumanContextInterface <TaskShow> hci_;
 
     /**
      * @brief class_name_
@@ -85,4 +87,4 @@ private:
 };
 
 // Dont forget that part, otherwise this class would not be loadable
-CLASS_LOADER_REGISTER_CLASS(TaskShow, Task);
+CLASS_LOADER_REGISTER_CLASS(TaskShow, TTP::Task);
