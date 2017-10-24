@@ -4,6 +4,7 @@
 #include "core/common.h"
 
 #include "base_task/task_errors.h"
+#include "base_task/task.h"
 #include "common/temoto_id.h"
 #include "common/console_colors.h"
 
@@ -16,144 +17,136 @@
 
 //#include <boost/function.hpp>
 
-template <class T> class HumanContextInterface
+template <class Owner>
+class HumanContextInterface
 {
 public:
+  HumanContextInterface(Task* task)
+    : name_("output_manager_interface/" + task->getIDString()), resource_manager_(name_, this)
+  {
+    log_name_ = "interfaces";
+    log_subsys_ = name_;
+    log_class_= "";
+  }
 
-    HumanContextInterface() : resource_manager_("human_context_interface", this)
+  void getGestures(std::vector<temoto_2::GestureSpecifier> gesture_specifiers,
+                   void (Owner::*callback)(human_msgs::Hands), Owner* owner)
+  {
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+
+    // Contact the "Context Manager", pass the gesture specifier and if successful, get
+    // the name of the topic
+    temoto_2::LoadGesture srv_msg;
+    srv_msg.request.gesture_specifiers = gesture_specifiers;
+
+    // Call the server
+    try
     {
+      resource_manager_.template call<temoto_2::LoadGesture>(
+          human_context::srv_name::MANAGER, human_context::srv_name::GESTURE_SERVER, srv_msg);
+    }
+    catch (...)
+    {
+      throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK,
+                                  error::Urgency::MEDIUM, prefix + " Failed to call service",
+                                  ros::Time::now());
     }
 
-    void getGestures (std::vector <temoto_2::GestureSpecifier> gesture_specifiers, void(T::*callback)(human_msgs::Hands), T* obj)
+    // Check if the request was satisfied
+    // TODO: in future, catch code==0 exeption from RMP and rethrow from here
+    if (srv_msg.response.rmp.code != 0)
     {
-        // Name of the method, used for making debugging a bit simpler
-        std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
-
-        // Contact the "Context Manager", pass the gesture specifier and if successful, get
-        // the name of the topic
-        temoto_2::LoadGesture srv_msg;
-        srv_msg.request.gesture_specifiers = gesture_specifiers;
-
-        // Call the server
-		try
-		{
-        resource_manager_.template call<temoto_2::LoadGesture>(
-				human_context::srv_name::MANAGER,
-				human_context::srv_name::GESTURE_SERVER,
-				srv_msg);
-		}
-		catch(...)
-        {
-            throw error::ErrorStackUtil( taskErr::SERVICE_REQ_FAIL,
-                                         error::Subsystem::TASK,
-                                         error::Urgency::MEDIUM,
-                                         prefix + " Failed to call service",
-                                         ros::Time::now());
-        }
-
-        // Check if the request was satisfied
-		// TODO: in future, catch code==0 exeption from RMP and rethrow from here
-        if (srv_msg.response.rmp.code != 0)
-        {
-            throw error::ErrorStackUtil( taskErr::SERVICE_REQ_FAIL,
-                                         error::Subsystem::TASK,
-                                         error::Urgency::MEDIUM,
-                                         prefix + " Service request failed: " + srv_msg.response.rmp.message,
-                                         ros::Time::now());
-        }
-
-        // Subscribe to the topic that was provided by the "Context Manager"
-        ROS_INFO("[HumanContextInterface::getGestures] subscribing to topic'%s'", srv_msg.response.topic.c_str());
-        gesture_subscriber_ = nh_.subscribe(srv_msg.response.topic, 1000, callback, obj);
+      throw error::ErrorStackUtil(
+          taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK, error::Urgency::MEDIUM,
+          prefix + " Service request failed: " + srv_msg.response.rmp.message, ros::Time::now());
     }
 
+    // Subscribe to the topic that was provided by the "Context Manager"
+    ROS_INFO("[HumanContextInterface::getGestures] subscribing to topic'%s'",
+             srv_msg.response.topic.c_str());
+    gesture_subscriber_ = nh_.subscribe(srv_msg.response.topic, 1000, callback, owner);
+  }
 
-    void getSpeech(std::vector <temoto_2::SpeechSpecifier> speech_specifiers, void(T::*callback)(std_msgs::String), T* obj)
+  void getSpeech(std::vector<temoto_2::SpeechSpecifier> speech_specifiers,
+                 void (Owner::*callback)(std_msgs::String), Owner* owner)
+  {
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+
+    // Contact the "Context Manager", pass the speech specifier and if successful, get
+    // the name of the topic
+
+    temoto_2::LoadSpeech srv_msg;
+    srv_msg.request.speech_specifiers = speech_specifiers;
+
+    // Call the server
+    try
     {
-        // Name of the method, used for making debugging a bit simpler
-        std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
-
-        // Contact the "Context Manager", pass the speech specifier and if successful, get
-        // the name of the topic
-
-        temoto_2::LoadSpeech srv_msg;
-        srv_msg.request.speech_specifiers = speech_specifiers;
-
-        // Call the server
-		try
-		{
-            ROS_INFO("getting speech");
-        resource_manager_.template call<temoto_2::LoadSpeech>(
-				human_context::srv_name::MANAGER,
-				human_context::srv_name::SPEECH_SERVER,
-				srv_msg);
-		}
-		catch(...)
-        {
-            throw error::ErrorStackUtil( taskErr::SERVICE_REQ_FAIL,
-                                         error::Subsystem::TASK,
-                                         error::Urgency::MEDIUM,
-                                         prefix + " Failed to call service",
-                                         ros::Time::now());
-        }
-
-        // Check if the request was satisfied
-		// TODO: in future, catch code==0 exeption from RMP and rethrow from here
-        if (srv_msg.response.rmp.code != 0)
-        {
-            throw error::ErrorStackUtil( taskErr::SERVICE_REQ_FAIL,
-                                         error::Subsystem::TASK,
-                                         error::Urgency::MEDIUM,
-                                         prefix + " Service request failed: " + srv_msg.response.rmp.message,
-                                         ros::Time::now());
-        }
-
-        // Subscribe to the topic that was provided by the "Context Manager"
-        ROS_INFO("[HumanContextInterface::getSpeech] subscribing to topic'%s'", srv_msg.response.topic.c_str());
-        speech_subscriber_ = nh_.subscribe(srv_msg.response.topic, 1000, callback, obj);
+      ROS_INFO("getting speech");
+      resource_manager_.template call<temoto_2::LoadSpeech>(
+          human_context::srv_name::MANAGER, human_context::srv_name::SPEECH_SERVER, srv_msg);
+    }
+    catch (...)
+    {
+      throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK,
+                                  error::Urgency::MEDIUM, prefix + " Failed to call service",
+                                  ros::Time::now());
     }
 
-    bool stopAllocatedServices()
+    // Check if the request was satisfied
+    // TODO: in future, catch code==0 exeption from RMP and rethrow from here
+    if (srv_msg.response.rmp.code != 0)
     {
-        // Name of the method, used for making debugging a bit simpler
-        std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
-
-		try
-		{
-			// remove all connections, which were created via call() function
-			resource_manager_.unloadClients();
-		}
-		catch(...)
-		{
-            throw error::ErrorStackUtil( taskErr::SERVICE_REQ_FAIL,
-                                         error::Subsystem::CORE,
-                                         error::Urgency::HIGH,
-                                         prefix + " Failed to unload resources",
-                                         ros::Time::now());
-		}
+      throw error::ErrorStackUtil(
+          taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK, error::Urgency::MEDIUM,
+          prefix + " Service request failed: " + srv_msg.response.rmp.message, ros::Time::now());
     }
 
-    ~HumanContextInterface()
-    {
-        // Let the context manager know, that task is finished and topics are unsubscribed
-        stopAllocatedServices();
-    }
+    // Subscribe to the topic that was provided by the "Context Manager"
+    ROS_INFO("[HumanContextInterface::getSpeech] subscribing to topic'%s'",
+             srv_msg.response.topic.c_str());
+    speech_subscriber_ = nh_.subscribe(srv_msg.response.topic, 1000, callback, owner);
+  }
 
-    const std::string& getName() const
+  bool stopAllocatedServices()
+  {
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+
+    try
     {
-      return class_name_;
+      // remove all connections, which were created via call() function
+      resource_manager_.unloadClients();
     }
+    catch (...)
+    {
+      throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL, error::Subsystem::CORE,
+                                  error::Urgency::HIGH, prefix + " Failed to unload resources",
+                                  ros::Time::now());
+    }
+  }
+
+  ~HumanContextInterface()
+  {
+    // Let the context manager know, that task is finished and topics are unsubscribed
+    stopAllocatedServices();
+  }
+
+  const std::string& getName() const
+  {
+    return name_;
+  }
 
 private:
+  rmp::ResourceManager<HumanContextInterface> resource_manager_;
 
-	rmp::ResourceManager<HumanContextInterface> resource_manager_;
+  std::string name_;
+  std::string log_name_, log_class_, log_subsys_;
 
-    const std::string class_name_ = "human_context_interface";
-
-    ros::NodeHandle nh_;
-    ros::Subscriber gesture_subscriber_;
-    ros::Subscriber speech_subscriber_;
-
+  ros::NodeHandle nh_;
+  ros::Subscriber gesture_subscriber_;
+  ros::Subscriber speech_subscriber_;
 };
 
 #endif

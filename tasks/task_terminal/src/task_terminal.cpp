@@ -26,10 +26,12 @@ public:
      * Inherited methods that have to be implemented /START
      * * * * * * * * * * * * * * * * * * * * * * * * */
 
-    TaskTerminal()
+    TaskTerminal() : hci_(this)
     {
-        // Do something here if needed
-        ROS_INFO("TaskTerminal constructed");
+      class_name_ = "TaskTerminal";
+
+      // Do something here if needed
+      TASK_DEBUG("TaskTerminal constructed");
     }
 
     // TODO: this signature is here for compatibility purposes.
@@ -111,7 +113,7 @@ private:
     /**
      * @brief class_name_
      */
-    std::string class_name_ = "TaskTerminal";
+    std::string class_name_;
 
     // Human context interface object
     HumanContextInterface <TaskTerminal> hci_;

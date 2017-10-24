@@ -28,7 +28,7 @@ public:
      * Inherited methods that have to be implemented /START
      * * * * * * * * * * * * * * * * * * * * * * * * */
 
-TaskTemoto()
+TaskTemoto() : hci_(this), omi_(this), smi_(this)
 {
     // Do something here if needed
     ROS_INFO("TaskTemoto constructed");

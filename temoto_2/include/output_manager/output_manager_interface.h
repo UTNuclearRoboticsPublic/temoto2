@@ -2,6 +2,7 @@
 
 #include "common/temoto_id.h"
 #include "base_task/task_errors.h"
+#include "base_task/task.h"
 #include "output_manager/output_manager_errors.h"
 #include "output_manager/rviz_manager/rviz_manager_services.h"
 #include "rmp/resource_manager.h"
@@ -18,8 +19,12 @@ public:
   /**
    * @brief OutputManagerInterface
    */
-  OutputManagerInterface() : resource_manager_("output_manager_interface", this)
+  OutputManagerInterface(Task* task)
+    : name_("output_manager_interface/" + task->getIDString()), resource_manager_(name_, this)
   {
+    log_name_ = "interfaces";
+    log_subsys_ = name_;
+    log_class_ = "";
   }
 
   /**
@@ -31,7 +36,8 @@ public:
   void showInRviz(std::string display_type, std::string topic = "", std::string display_config = "")
   {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+    
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
     temoto_2::LoadRvizPlugin load_srv;
     load_srv.request.type = display_type;
@@ -66,7 +72,7 @@ public:
   void hideInRviz(std::string display_type, std::string topic = "", std::string display_config = "")
   {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
     temoto_2::LoadRvizPlugin::Request req;
     req.type = display_type;
@@ -109,7 +115,7 @@ public:
   std::string displayConfigFromFile(std::string config_path)
   {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
     // Create filestream object and configure exceptions
     std::ifstream config_file;
@@ -139,18 +145,21 @@ public:
   ~OutputManagerInterface()
   {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   }
 
   const std::string& getName() const
   {
-    return class_name_;
+    return log_class_;
   }
 
 private:
+
+  std::string name_;
+
   TemotoID::ID id_ = TemotoID::UNASSIGNED_ID;
 
-  const std::string class_name_ = "OutputManagerInterface";
+  std::string log_name_, log_class_, log_subsys_;
 
   rmp::ResourceManager<OutputManagerInterface> resource_manager_;
 

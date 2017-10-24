@@ -14,6 +14,17 @@
 #include "temoto_2/StopTaskMsg.h"
 #include "ros/ros.h"
 
+// basic log management, everything put under temoto_2.tasks for easier level control
+#define TASK_CONSOLE_PREFIX ROSCONSOLE_ROOT_LOGGER_NAME ".temoto_2.tasks." ROSCONSOLE_PACKAGE_NAME
+#define TASK_DEBUG(...) ROS_LOG(::ros::console::levels::Debug, TASK_CONSOLE_PREFIX, __VA_ARGS__)
+#define TASK_INFO(...) ROS_LOG(::ros::console::levels::Info, TASK_CONSOLE_PREFIX, __VA_ARGS__)
+#define TASK_WARN(...) ROS_LOG(::ros::console::levels::Warn, TASK_CONSOLE_PREFIX, __VA_ARGS__)
+#define TASK_ERROR(...) ROS_LOG(::ros::console::levels::Error, TASK_CONSOLE_PREFIX, __VA_ARGS__)
+#define TASK_DEBUG_STREAM(...) ROS_LOG_STREAM(::ros::console::levels::Debug, TASK_CONSOLE_PREFIX, __VA_ARGS__)
+#define TASK_INFO_STREAM(...) ROS_LOG_STREAM(::ros::console::levels::Info, TASK_CONSOLE_PREFIX, __VA_ARGS__)
+#define TASK_WARN_STREAM(...) ROS_LOG_STREAM(::ros::console::levels::Warn, TASK_CONSOLE_PREFIX, __VA_ARGS__)
+#define TASK_ERROR_STREAM(...) ROS_LOG_STREAM(::ros::console::levels::Error, TASK_CONSOLE_PREFIX, __VA_ARGS__)
+
 class Task
 {
 friend class TaskHandler;
@@ -85,8 +96,28 @@ public:
      */
     error::ErrorHandler error_handler_;
 
-protected:
+    /**
+     * @brief getID
+     * @return
+     */
+    const TemotoID::ID getID() const
+    {
+        return task_id_;
+    }
 
+    /**
+     * @brief getIDString
+     * @return
+     */
+    const std::string getIDString() const
+    {
+      std::stringstream ss;
+      ss << getID();
+        return ss.str();
+    }
+
+
+protected:
     std::string description;
     bool stop_task_ = false;
 
@@ -133,13 +164,5 @@ private:
         task_id_ = task_id;
     }
 
-    /**
-     * @brief getID
-     * @return
-     */
-    TemotoID::ID getID()
-    {
-        return task_id_;
-    }
 };
 #endif

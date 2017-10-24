@@ -4,6 +4,7 @@
 #include "rmp/resource_server.h"
 #include "rmp/resource_client.h"
 #include "rmp/resource_manager_services.h"
+#include "rmp/log_macros.h"
 #include "ros/callback_queue.h"
 #include <string>
 #include <memory>  // dynamic_pointer_cast
@@ -26,7 +27,6 @@ public:
     , status_spinner_(2, &status_cb_queue_)
     , unload_spinner_(2, &unload_cb_queue_)
   {
-    log_name_ = "rmp";
     log_class = "rmp/Manager";
     log_subsys_ = owner->getName();
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class, "");
@@ -50,7 +50,7 @@ public:
     // start separate threaded spinners for our callback queues
     status_spinner_.start();
     unload_spinner_.start();
-    ROS_DEBUG_NAMED(log_name_, "%s Resource manager started.", prefix.c_str());
+    RMP_DEBUG("%s Resource manager started.", prefix.c_str());
   }
 
   ~ResourceManager()
@@ -123,7 +123,7 @@ public:
                      [&](const BaseClientPtr& c) -> bool { return c->getName() == client_name; });
     if (client_it == clients_.end())
     {
-      ROS_DEBUG_NAMED(log_name_, "%s Creating new resource client.", prefix.c_str());
+      RMP_DEBUG("%s Creating new resource client.", prefix.c_str());
 
       client_ptr = std::make_shared<ClientType>(resource_manager_name, server_name, owner_, *this);
       // Push to clients and convert to BaseResourceClient type
@@ -136,7 +136,7 @@ public:
       if (!client_ptr)
       {
         // cast failed
-        ROS_ERROR_NAMED(log_name_, "%s Dynamic Cast failed, someone is misusing RMP",
+        RMP_ERROR("%s Dynamic Cast failed, someone is misusing RMP",
                         prefix.c_str());
         return false;
       }
@@ -160,7 +160,7 @@ public:
     // register the client in server
     if (ret && active_server_)  // @TODO: go from bool ret to try-catch
     {
-      ROS_DEBUG_NAMED(log_name_, "%s called from servers callback, registering internal client",
+      RMP_DEBUG("%s called from servers callback, registering internal client",
                       prefix.c_str());
       active_server_->registerInternalResource(client_ptr->getName(), msg.response.rmp.resource_id);
     }
@@ -174,7 +174,7 @@ public:
                       temoto_2::UnloadResource::Response& res)
   {
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class, __func__);
-    ROS_DEBUG_NAMED(log_name_, "%s Unload request to server: '%s', ext id: %ld", prefix.c_str(),
+    RMP_DEBUG("%s Unload request to server: '%s', ext id: %ld", prefix.c_str(),
                     req.server_name.c_str(), req.resource_id);
     // Find server with requested name
     waitForLock(servers_mutex_);
@@ -183,7 +183,7 @@ public:
       if (server->getName() == req.server_name)
       {
         server->unloadResource(req, res);
-        ROS_DEBUG_NAMED(log_name_, "%s Resource %ld unloaded", prefix.c_str(), req.resource_id);
+        RMP_DEBUG("%s Resource %ld unloaded", prefix.c_str(), req.resource_id);
         break;
       }
     }
@@ -196,7 +196,7 @@ public:
   {
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class, __func__);
     waitForLock(clients_mutex_);
-    ROS_DEBUG_NAMED(log_name_, "%s number of clients:%lu", prefix.c_str(), clients_.size());
+    RMP_DEBUG("%s number of clients:%lu", prefix.c_str(), clients_.size());
     for (auto client : clients_)
     {
       std::map<temoto_id::ID, std::string> internal_resources = client->getInternalResources();
@@ -212,7 +212,7 @@ public:
   {
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class, __func__);
     waitForLock(clients_mutex_);
-    ROS_INFO("%s id:%d", prefix.c_str(), resource_id);
+    RMP_INFO("%s id:%d", prefix.c_str(), resource_id);
     // Go through clients and search for given client by name
     auto client_it =
         std::find_if(clients_.begin(), clients_.end(),
@@ -232,7 +232,7 @@ public:
     }
     else
     {
-      ROS_WARN_NAMED(log_name_, "%s Internal id '%d' not found. Already removed?", name_.c_str(),
+      RMP_WARN("%s Internal id '%d' not found. Already removed?", name_.c_str(),
                      resource_id);
     }
     clients_mutex_.unlock();
@@ -273,23 +273,23 @@ public:
     {
       ros::ServiceClient service_client =
           nh_.serviceClient<temoto_2::ResourceStatus>(info.status_topic);
-      ROS_DEBUG_NAMED(log_name_, "%s Sending ResourceStatus to %s", prefix.c_str(),
+      RMP_DEBUG("%s Sending ResourceStatus to %s", prefix.c_str(),
                       info.status_topic.c_str());
       if (service_client.call(info.srv))
       {
-        ROS_DEBUG_NAMED(log_name_, "%s ResourceStatus sucessfully sent to %s", prefix.c_str(),
+        RMP_DEBUG("%s ResourceStatus sucessfully sent to %s", prefix.c_str(),
                         info.status_topic.c_str());
       }
       else
       {
-        ROS_ERROR_NAMED(log_name_, "%s Failed to send ResourceStatus to %s", prefix.c_str(),
+        RMP_ERROR("%s Failed to send ResourceStatus to %s", prefix.c_str(),
                         info.status_topic.c_str());
       }
     }
 
     if (infos.empty())
     {
-      ROS_ERROR_NAMED(log_name_, "%s Internal resource id was not found from any queries.",
+      RMP_ERROR("%s Internal resource id was not found from any queries.",
                       prefix.c_str());
     }
   }
@@ -298,8 +298,8 @@ public:
                       temoto_2::ResourceStatus::Response& res)
   {
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class, __func__);
-    ROS_DEBUG_NAMED(log_name_, "%s Got status request: ", prefix.c_str());
-    ROS_INFO_STREAM_NAMED(log_name_, req);
+    RMP_DEBUG("%s Got status request: ", prefix.c_str());
+    ROS_INFO_STREAM(req);
 
     // based on incoming external id, find the assigned internal ids
     // and for each internal id, find the external ids and do forwarding
@@ -316,7 +316,7 @@ public:
       // Go through clients and locate the one from
       // which the request arrived
       std::string client_name = req.manager_name + "/" + req.server_name;
-      ROS_DEBUG_NAMED(log_name_, "%s got info that resource has failed, looking for %s",
+      RMP_DEBUG("%s got info that resource has failed, looking for %s",
                       prefix.c_str(), client_name.c_str());
 
       waitForLock(clients_mutex_);
@@ -341,7 +341,7 @@ public:
       }
       else
       {
-        ROS_ERROR_NAMED(log_name_, "%s Could not find client that has failed.", prefix.c_str());
+        RMP_ERROR("%s Could not find client that has failed.", prefix.c_str());
       }
       clients_mutex_.unlock();
 
@@ -418,10 +418,10 @@ private:
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class, __func__);
     while (!m.try_lock())
     {
-      ROS_DEBUG_NAMED(log_name_, "%s Waiting for lock()", prefix.c_str());
+      RMP_DEBUG("%s Waiting for lock()", prefix.c_str());
       ros::Duration(0.01).sleep();  // sleep for few ms
     }
-    // ROS_DEBUG_NAMED(log_name_, "%s Obtained lock()", prefix.c_str());
+    // RMP_DEBUG("%s Obtained lock()", prefix.c_str());
   }
 
   std::vector<std::shared_ptr<BaseResourceServer<Owner>>> servers_;
@@ -448,7 +448,7 @@ private:
   std::mutex active_server_mutex_;
 
   // log prefixes
-  std::string log_name_, log_subsys_, log_class;
+  std::string log_subsys_, log_class;
 };
 
 }  // namespace rmp
