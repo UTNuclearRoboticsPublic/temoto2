@@ -11,6 +11,7 @@
 #include "core/task_handler/task_info.h"
 #include "core/core_errors.h"
 #include "common/tools.h"
+#include "common/temoto_log_macros.h"
 #include "ros/ros.h"
 
 #endif

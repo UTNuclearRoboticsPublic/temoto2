@@ -6,6 +6,7 @@
 #include <map>
 #include <utility>
 #include "common/temoto_id.h"
+#include "rmp/log_macros.h"
 
 namespace rmp
 {
@@ -20,19 +21,22 @@ public:
   // special constructor for resource client
   ClientQuery(const ServiceMsgType& msg, Owner* owner) : msg_(msg), owner_(owner)
   {
+    log_class_ = "rmp/ClientQuery";
+    log_subsys_ = owner_->getName();
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
   }
 
   void addInternalResource(temoto_id::ID resource_id, std::string& server_name)
   {
-    std::string prefix = common::generateLogPrefix(owner_->getName(), log_class, "");
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
     // try to insert to map
-    ROS_DEBUG_NAMED(log_name_, "%s id:%d, server_name:'%s'", prefix.c_str(), resource_id,
+    RMP_DEBUG("%s id:%d, server_name:'%s'", prefix.c_str(), resource_id,
                     server_name.c_str());
     auto ret = internal_resources_.emplace(resource_id, server_name);
 
     if (!ret.second)
     {
-      ROS_ERROR_NAMED(log_name_, "%s Not allowed to add internal resources with "
+      RMP_ERROR("%s Not allowed to add internal resources with "
                 "identical ids.", prefix.c_str());
     }
   }
@@ -40,11 +44,11 @@ public:
   // remove the internal resource from this query and return how many are still connected
   size_t removeInternalResource(temoto_id::ID resource_id)
   {
-    std::string prefix = common::generateLogPrefix(owner_->getName(), log_class, "");
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
     auto it = internal_resources_.find(resource_id);
     if (it == internal_resources_.end())
     {
-      ROS_ERROR_NAMED(log_name_, "%s Resource_id not found!", prefix.c_str());
+      RMP_ERROR("%s Resource_id not found!", prefix.c_str());
     }
     std::string caller_name = it->second;
 
@@ -78,13 +82,13 @@ public:
 
   void debug()
   {
-    std::string prefix = common::generateLogPrefix(owner_->getName(), log_class, "");
-    ROS_DEBUG_STREAM_NAMED(log_name_, prefix << "    Query req:" << std::endl << msg_.request);
-    ROS_DEBUG_STREAM_NAMED(log_name_, prefix << "    Query res:" << std::endl << msg_.response);
-    ROS_DEBUG_STREAM_NAMED(log_name_, prefix << "    Internal resources:");
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
+    RMP_DEBUG_STREAM(prefix << "    Query req:" << std::endl << msg_.request);
+    RMP_DEBUG_STREAM(prefix << "    Query res:" << std::endl << msg_.response);
+    RMP_DEBUG_STREAM(prefix << "    Internal resources:");
     for (auto& r : internal_resources_)
     {
-      ROS_DEBUG_NAMED(log_name_, "%s      id:%d server_name:'%s'",prefix.c_str(), r.first, r.second.c_str());
+      RMP_DEBUG("%s      id:%d server_name:'%s'",prefix.c_str(), r.first, r.second.c_str());
     }
   }
 
@@ -97,8 +101,7 @@ private:
   // internal resource ids and their callers name
   std::map<temoto_id::ID, std::string> internal_resources_;
 
-  std::string log_name_ = "rmp";
-  std::string log_class = "rmp::ClientQuery";
+  std::string log_class_, log_subsys_;
   std::string rmp_log_prefix_;
   Owner* owner_;
 

@@ -7,6 +7,7 @@
 #include <set>
 #include <utility>
 #include "common/temoto_id.h"
+#include "rmp/log_macros.h"
 
 namespace rmp
 {
@@ -21,8 +22,9 @@ public:
   // special constructor for resource server
   ServerQuery(const typename ServiceMsgType::Request& req, Owner* owner) : owner_(owner)
   {
+    log_class_ = "rmp/ServerQuery";
+    log_subsys_ = owner_->getName();
     msg_.request = req;  // response part is set after executing owners callback
-    rmp_log_prefix_ = owner->getName() + "::RMP::ServerQuery";
   }
 
   void addExternalResource(temoto_id::ID external_resource_id, const std::string& status_topic)
@@ -56,7 +58,7 @@ public:
 
   void addInternalResource(std::string client_name, temoto_id::ID resource_id)
   {
-    std::string prefix = rmp_log_prefix_ + __func__;
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
     // try to insert to map
     std::set<temoto_id::ID> s;
     s.insert(resource_id);
@@ -69,8 +71,8 @@ public:
 
       if (ins_ret.second == false)
       {
-        ROS_ERROR_NAMED(log_name_, "An extreme badness has happened. Somebody tried to bind same "
-                                   "resource twice to a resource_server.");
+        RMP_ERROR("%s An extreme badness has happened. Somebody tried to bind same "
+                                   "resource twice to a resource_server.", prefix.c_str());
       }
     }
   }
@@ -96,8 +98,7 @@ public:
   }
 
 private:
-  std::string rmp_log_prefix_;
-  std::string log_name_ = "rmp";
+  std::string log_class_, log_subsys_;
 
   Owner* owner_;
 

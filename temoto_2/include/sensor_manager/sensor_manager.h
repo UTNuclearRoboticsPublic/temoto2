@@ -30,11 +30,11 @@ public:
 
     const std::string& getName() const
     {
-      return node_name_;
+      return log_subsys_;
     }
 
   private:
-    const std::string node_name_ = "sensor_manager";
+    std::string log_class_, log_subsys_, log_group_;
     ros::NodeHandle nh_;
     ros::ServiceServer list_devices_server_;
     rmp::ResourceManager<SensorManager> resource_manager_;

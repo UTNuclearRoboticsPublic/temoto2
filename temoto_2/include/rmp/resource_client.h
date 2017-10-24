@@ -24,7 +24,7 @@ public:
     , ext_server_name_(ext_server_name)
     , owner_(owner)
   {
-    log_class_ = "rmp/Manager";
+    log_class_ = "rmp/Client";
     log_subsys_ = owner_->getName();
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
     // Set client name according to the server, where it is connecting to.
