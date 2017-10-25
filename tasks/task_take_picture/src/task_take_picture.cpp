@@ -28,10 +28,10 @@ public:
      * Inherited methods that have to be implemented /START
      * * * * * * * * * * * * * * * * * * * * * * * * */
 
-    TaskTakePicture() : omi_(this), smi_(this)
+    TaskTakePicture()
     {
         // Do something here if needed
-        ROS_INFO("TaskTakePicture constructed");
+        TASK_INFO("TaskTakePicture constructed");
     }
 
     // startTask without arguments
@@ -79,6 +79,10 @@ public:
 
 		try 
 		{
+      // initialize interfaces
+      smi_.initialize(this);
+      omi_.initialize(this);
+
 			// Start the camera with our custom launch file
 			std::string camera_topic = smi_.startSensor("camera");
 			std::cout << prefix << "Got camera on topic '" << camera_topic << "'" << std::endl; 
@@ -121,12 +125,12 @@ public:
 	// Callback for processing gestures
 	void speech_callback(std_msgs::String msg)
 	{
-		//ROS_INFO("Speech callback got: %s", msg.data.c_str());
+		//TASK_INFO("Speech callback got: %s", msg.data.c_str());
 	}
 
 	~TaskTakePicture()
 	{
-		ROS_INFO("[TaskTakePicture::~TaskTakePicture]TaskTakePicture destructed");
+		TASK_INFO("[TaskTakePicture::~TaskTakePicture]TaskTakePicture destructed");
 	}
 
 private:

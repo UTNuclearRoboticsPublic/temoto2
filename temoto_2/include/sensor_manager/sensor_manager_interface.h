@@ -5,6 +5,10 @@
 #include "base_task/task_errors.h"
 #include "sensor_manager/sensor_manager_services.h"
 #include "rmp/resource_manager.h"
+#include "common/interface_errors.h"
+#include <memory> //unique_ptr
+
+
 
 class SensorManagerInterface
 {
@@ -12,14 +16,21 @@ public:
   /**
    * @brief SensorManagerInterface
    */
-  SensorManagerInterface(Task* task)
-    : name_("sensor_manager_interface/" + task->getIDString()), resource_manager_(name_, this)
+  SensorManagerInterface()
   {
-    log_name_ = "interfaces";
-    log_subsys_ = name_;
-    log_class_= "";
-    resource_manager_.registerStatusCb(&SensorManagerInterface::statusInfoCb);
   }
+
+  void initialize(Task* task)
+  {
+    log_class_= "";
+    log_subsys_ = "sensor_manager_interface";
+    log_group_ = "interfaces." + task->getPackageName();
+
+    name_ = task->getName() + "/sensor_manager_interface";
+    resource_manager_ = std::make_shared<rmp::ResourceManager<SensorManagerInterface>>(name_, this);
+    resource_manager_->registerStatusCb(&SensorManagerInterface::statusInfoCb);
+  }
+
 
   /**
    * @brief startSensor
@@ -27,8 +38,8 @@ public:
    */
   std::string startSensor(std::string sensor_type)
   {
-    // Name of the method, used for making debugging a bit simpler
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    validateInterface(prefix);
 
     try
     {
@@ -52,6 +63,7 @@ public:
   {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    validateInterface(prefix);
 
     // Fill out the "StartSensorRequest" request
     temoto_2::LoadSensor srv_msg;
@@ -60,7 +72,7 @@ public:
     srv_msg.request.executable = ros_program_name;
 
     // Call the server
-    if (!resource_manager_.template call<temoto_2::LoadSensor>(
+    if (!resource_manager_->template call<temoto_2::LoadSensor>(
             sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, srv_msg))
     {
       throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK,
@@ -93,6 +105,7 @@ public:
   {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    validateInterface(prefix);
 
     // Find all instances where request part matches of what was given and unload each resource
     temoto_2::LoadSensor::Request req;
@@ -111,7 +124,7 @@ public:
       if (found_sensor_it != allocated_sensors_.end())
       {
         // do the unloading
-        resource_manager_.unloadClientResource(found_sensor_it->response.rmp.resource_id);
+        resource_manager_->unloadClientResource(found_sensor_it->response.rmp.resource_id);
         cur_sensor_it = found_sensor_it;
       }
       else if (cur_sensor_it == allocated_sensors_.begin())
@@ -126,13 +139,15 @@ public:
   void statusInfoCb(temoto_2::ResourceStatus& srv)
   {
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-    ROS_DEBUG_NAMED(log_name_, "%s status info was received", prefix.c_str());
-    ROS_DEBUG_STREAM_NAMED(log_name_, srv.request);
+    validateInterface(prefix);
+
+    TEMOTO_DEBUG("%s status info was received", prefix.c_str());
+    TEMOTO_DEBUG_STREAM(srv.request);
     // if any resource should fail, just unload it and try again
     // there is a chance that sensor manager gives us better sensor this time
     if (srv.request.status_code == rmp::status_codes::FAILED)
     {
-      ROS_WARN_NAMED(log_name_, "Sensor manager interface detected a sensor failure. Unloading and "
+      TEMOTO_WARN("Sensor manager interface detected a sensor failure. Unloading and "
                                 "trying again");
       auto sens_it = std::find_if(allocated_sensors_.begin(), allocated_sensors_.end(),
                                   [&](const temoto_2::LoadSensor& sens) -> bool {
@@ -140,10 +155,10 @@ public:
                                   });
       if (sens_it != allocated_sensors_.end())
       {
-        ROS_DEBUG_NAMED(log_name_, "Unloading");
-        resource_manager_.unloadClientResource(sens_it->response.rmp.resource_id);
-        ROS_DEBUG_NAMED(log_name_, "Asking the same sensor again");
-        if (!resource_manager_.template call<temoto_2::LoadSensor>(
+        TEMOTO_DEBUG("Unloading");
+        resource_manager_->unloadClientResource(sens_it->response.rmp.resource_id);
+        TEMOTO_DEBUG("Asking the same sensor again");
+        if (!resource_manager_->template call<temoto_2::LoadSensor>(
                 sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, *sens_it))
         {
           throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK,
@@ -182,10 +197,25 @@ public:
 
 private:
   std::string name_;
-  std::string log_name_, log_class_, log_subsys_;
+  std::string log_class_, log_subsys_, log_group_;
   error::ErrorHandler error_handler_;
   std::vector<temoto_2::LoadSensor> allocated_sensors_;
-  rmp::ResourceManager<SensorManagerInterface> resource_manager_;
+  std::shared_ptr<rmp::ResourceManager<SensorManagerInterface>> resource_manager_;
+
+  /**
+   * @brief validateInterface()
+   * @param sensor_type
+   */
+  void validateInterface(std::string& log_prefix)
+  {
+    if(!resource_manager_)
+    {
+      TEMOTO_ERROR("%s Interface is not initalized.", log_prefix.c_str());
+      throw error::ErrorStackUtil(
+          interface_error::NOT_INITIALIZED, error::Subsystem::TASK, error::Urgency::MEDIUM,
+          log_prefix + " Interface is not initialized.", ros::Time::now());
+    }
+  }
 };
 
 #endif

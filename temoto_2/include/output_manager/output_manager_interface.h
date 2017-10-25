@@ -20,11 +20,11 @@ public:
    * @brief OutputManagerInterface
    */
   OutputManagerInterface(Task* task)
-    : name_("output_manager_interface/" + task->getIDString()), resource_manager_(name_, this)
+    : name_(task->getName() + "/output_manager_interface"), resource_manager_(name_, this)
   {
-    log_name_ = "interfaces";
-    log_subsys_ = name_;
     log_class_ = "";
+    log_subsys_ = "output_manager_interface";
+    log_group_ = "interfaces." + task->getPackageName();
   }
 
   /**
@@ -157,9 +157,9 @@ private:
 
   std::string name_;
 
-  TemotoID::ID id_ = TemotoID::UNASSIGNED_ID;
+  std::string log_class_, log_subsys_, log_group_;
 
-  std::string log_name_, log_class_, log_subsys_;
+  TemotoID::ID id_ = TemotoID::UNASSIGNED_ID;
 
   rmp::ResourceManager<OutputManagerInterface> resource_manager_;
 

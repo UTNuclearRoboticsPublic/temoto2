@@ -22,11 +22,11 @@ class HumanContextInterface
 {
 public:
   HumanContextInterface(Task* task)
-    : name_("output_manager_interface/" + task->getIDString()), resource_manager_(name_, this)
+    : name_(task->getName() + "/human_context_interface"), resource_manager_(name_, this)
   {
-    log_name_ = "interfaces";
-    log_subsys_ = name_;
     log_class_= "";
+    log_subsys_ = "human_context_interface";
+    log_group_ = "interfaces." + task->getPackageName();
   }
 
   void getGestures(std::vector<temoto_2::GestureSpecifier> gesture_specifiers,
@@ -135,14 +135,14 @@ public:
 
   const std::string& getName() const
   {
-    return name_;
+    return log_subsys_;
   }
 
 private:
   rmp::ResourceManager<HumanContextInterface> resource_manager_;
 
-  std::string name_;
-  std::string log_name_, log_class_, log_subsys_;
+  std::string name_; 
+  std::string log_class_, log_subsys_, log_group_;
 
   ros::NodeHandle nh_;
   ros::Subscriber gesture_subscriber_;

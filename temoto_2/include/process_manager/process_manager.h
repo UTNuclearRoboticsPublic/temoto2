@@ -26,14 +26,14 @@ namespace process_manager
 
       const std::string& getName() const
       {
-        return node_name_;
+        return log_subsys_;
       }
 
     private:
 
 
-			const std::string node_name_ = "process_manager";
-			const std::vector<std::string> valid_actions = {"rosrun", "roslaunch"};
+      std::string log_class_, log_subsys_, log_group_;
+      const std::vector<std::string> valid_actions = {"rosrun", "roslaunch"};
 
 			std::vector<temoto_2::LoadProcess> loading_processes_;
       std::map<pid_t, temoto_2::LoadProcess> running_processes_;

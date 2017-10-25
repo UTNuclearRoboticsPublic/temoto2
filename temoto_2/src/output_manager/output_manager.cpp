@@ -14,10 +14,6 @@ int main(int argc, char **argv)
     rviz_manager::RvizManager rviz_manager;
 
     ros::Rate loop_rate(10);
-
-    ROS_INFO("[output_manager/main] Output Manager is good to go");
-
-
     ros::spin();
     return 0;
 }

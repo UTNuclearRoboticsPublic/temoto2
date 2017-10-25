@@ -34,27 +34,10 @@ public:
 
   const std::string& getName() const
   {
-    return class_name_;
+    return log_subsys_;
   }
 
 private:
-  std::map<long, temoto_id::ID> active_requests_;
-
-  rmp::ResourceManager<RvizManager> resource_manager_;
-
-  ros::NodeHandle nh_;
-
-  ros::ServiceClient load_plugin_client_;
-
-  ros::ServiceClient unload_plugin_client_;
-
-  ros::ServiceClient set_plugin_config_client_;
-
-  ros::ServiceClient get_plugin_config_client_;
-
-  const std::string class_name_ = "rviz_manager";
-
-  PluginInfoHandler plugin_info_handler_;
 
   void runRviz();
 
@@ -73,6 +56,24 @@ private:
                           temoto_2::LoadRvizPlugin::Response& res);
 
   PluginInfo findPlugin(std::string plugin_type);
+
+  std::map<long, temoto_id::ID> active_requests_;
+
+  rmp::ResourceManager<RvizManager> resource_manager_;
+
+  ros::NodeHandle nh_;
+
+  ros::ServiceClient load_plugin_client_;
+
+  ros::ServiceClient unload_plugin_client_;
+
+  ros::ServiceClient set_plugin_config_client_;
+
+  ros::ServiceClient get_plugin_config_client_;
+
+  PluginInfoHandler plugin_info_handler_;
+
+  std::string log_class_, log_subsys_, log_group_;
 };
 
 }  // namespace rviz_manager

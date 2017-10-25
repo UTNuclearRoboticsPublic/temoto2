@@ -4,6 +4,10 @@ namespace rviz_manager
 {
 RvizManager::RvizManager() : resource_manager_(srv_name::MANAGER, this)
 {
+
+  log_class_ = "";
+  log_subsys_ = "rviz_manager";
+  log_group_ = "rviz_manager";
   // Set up server for loading rviz plugins
   resource_manager_.addServer<temoto_2::LoadRvizPlugin>(rviz_manager::srv_name::SERVER,
                                                         &RvizManager::LoadRvizPluginCb,
@@ -40,7 +44,7 @@ RvizManager::RvizManager() : resource_manager_(srv_name::MANAGER, this)
 void RvizManager::runRviz()
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
   // Create the message and fill out the request part
   temoto_2::LoadProcess msg;
@@ -48,7 +52,7 @@ void RvizManager::runRviz()
   msg.request.package_name = "rviz_plugin_manager";
   msg.request.executable = "rviz_plugin_manager.launch";
 
-  ROS_INFO("%s Requesting to launch rviz ...", prefix.c_str());
+  TEMOTO_INFO("%s Requesting to launch rviz ...", prefix.c_str());
 
   try
   {
@@ -65,7 +69,7 @@ void RvizManager::runRviz()
 
   if (msg.response.rmp.code == 0)
   {
-    ROS_INFO("%s Rviz launched succesfully: %s", prefix.c_str(), msg.response.rmp.message.c_str());
+    TEMOTO_INFO("%s Rviz launched succesfully: %s", prefix.c_str(), msg.response.rmp.message.c_str());
 
     // Give some time for the rviz_plugin_manager to setup
     ros::Duration(3).sleep();  // TODO: THIS THING SEEMS SO WRONG HERE
@@ -85,14 +89,14 @@ void RvizManager::runRviz()
 bool RvizManager::loadPluginRequest(rviz_plugin_manager::PluginLoad& load_plugin_srv)
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
   // Send the plugin request
   if (load_plugin_client_.call(load_plugin_srv))
   {
     if (load_plugin_srv.response.code == 0)
     {
-      ROS_INFO("%s Request successful: %s", prefix.c_str(),
+      TEMOTO_INFO("%s Request successful: %s", prefix.c_str(),
                load_plugin_srv.response.message.c_str());
       return true;
     }
@@ -121,14 +125,14 @@ bool RvizManager::loadPluginRequest(rviz_plugin_manager::PluginLoad& load_plugin
 bool RvizManager::unloadPluginRequest(rviz_plugin_manager::PluginUnload& unload_plugin_srv)
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
   // Send the plugin request
   if (unload_plugin_client_.call(unload_plugin_srv))
   {
     if (unload_plugin_srv.response.code == 0)
     {
-      ROS_INFO("%s Request successful: %s", prefix.c_str(),
+      TEMOTO_INFO("%s Request successful: %s", prefix.c_str(),
                unload_plugin_srv.response.message.c_str());
       return true;
     }
@@ -158,14 +162,14 @@ bool RvizManager::getPluginConfigRequest(
     rviz_plugin_manager::PluginGetConfig& get_plugin_config_srv)
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
   // Send the plugin request
   if (get_plugin_config_client_.call(get_plugin_config_srv))
   {
     if (get_plugin_config_srv.response.code == 0)
     {
-      ROS_INFO("%s Request successful: %s", prefix.c_str(),
+      TEMOTO_INFO("%s Request successful: %s", prefix.c_str(),
                get_plugin_config_srv.response.message.c_str());
       return true;
     }
@@ -195,14 +199,14 @@ bool RvizManager::setPluginConfigRequest(
     rviz_plugin_manager::PluginSetConfig& set_plugin_config_srv)
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
   // Send the plugin request
   if (set_plugin_config_client_.call(set_plugin_config_srv))
   {
     if (set_plugin_config_srv.response.code == 0)
     {
-      ROS_INFO("%s Request successful: %s", prefix.c_str(),
+      TEMOTO_INFO("%s Request successful: %s", prefix.c_str(),
                set_plugin_config_srv.response.message.c_str());
       return true;
     }
@@ -232,10 +236,10 @@ void RvizManager::LoadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
                                    temoto_2::LoadRvizPlugin::Response& res)
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
-  ROS_INFO("%s Received a new %s request", prefix.c_str(), srv_name::SERVER.c_str());
-  ROS_INFO_STREAM(req);
+  TEMOTO_INFO("%s Received a new %s request", prefix.c_str(), srv_name::SERVER.c_str());
+  TEMOTO_INFO_STREAM(req);
 
   try
   {
@@ -312,16 +316,16 @@ void RvizManager::LoadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
 }
 
 /* * * * * * * * * * * * * * * * *
- *  stopAllocatedServices
+ *  unloadRvizPluginCb
  * * * * * * * * * * * * * * * * */
 
 void RvizManager::unloadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
                                      temoto_2::LoadRvizPlugin::Response& res)
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
-  ROS_INFO("%s Received an 'unload' request to ID: '%ld'.", prefix.c_str(), res.rmp.resource_id);
+  TEMOTO_INFO("%s Received an 'unload' request to ID: '%ld'.", prefix.c_str(), res.rmp.resource_id);
 
   // Default the response code to 0
   res.rmp.code = 0;

@@ -21,9 +21,13 @@ namespace process_manager
 {
 ProcessManager::ProcessManager() : resource_manager_(srv_name::MANAGER, this)
 {
+  log_class_ = "";
+  log_subsys_ = "process_manager";
+  log_group_ = "process_manager";
+
   resource_manager_.addServer<temoto_2::LoadProcess>(srv_name::SERVER, &ProcessManager::loadCb,
                                                      &ProcessManager::unloadCb);
-  ROS_INFO_STREAM(node_name_ << " is good to go.");
+  TEMOTO_INFO("Process manager is ready.");
 }
 
 ProcessManager::~ProcessManager()
@@ -33,7 +37,7 @@ ProcessManager::~ProcessManager()
 // Timer callback where running proceses are checked if they are operational
 void ProcessManager::update(const ros::TimerEvent&)
 {
-  std::string prefix = common::generateLogPrefix(node_name_, "", __func__);
+  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
   // execute each process in loading_processes vector
   running_mutex_.lock();
@@ -45,7 +49,7 @@ void ProcessManager::update(const ros::TimerEvent&)
     const std::string& executable = srv.request.executable;
 
     // Fork the parent process
-    ROS_DEBUG_NAMED(node_name_,"%s Forking the process.", prefix.c_str());
+    TEMOTO_DEBUG("%s Forking the process.", prefix.c_str());
     pid_t pid = fork();
 
     // Child process
@@ -58,7 +62,7 @@ void ProcessManager::update(const ros::TimerEvent&)
     }
 
     // Only parent gets here
-    ROS_DEBUG_NAMED(node_name_,"%s Child %d forked.", prefix.c_str(), pid);
+    TEMOTO_DEBUG("%s Child %d forked.", prefix.c_str(), pid);
     running_processes_.insert({ pid, srv });
   }
   loading_processes_.clear();
@@ -73,10 +77,10 @@ void ProcessManager::update(const ros::TimerEvent&)
     if (proc_it != running_processes_.end())
     {
       // Kill the process
-      ROS_DEBUG_NAMED(node_name_,"%s Sending kill(SIGTERM) to %d)", prefix.c_str(), pid);
+      TEMOTO_DEBUG("%s Sending kill(SIGTERM) to %d)", prefix.c_str(), pid);
 
       int ret = kill(pid, SIGTERM);
-      ROS_DEBUG_NAMED(node_name_,"%s kill(SIGTERM) returned: %d)", prefix.c_str(), ret);
+      TEMOTO_DEBUG("%s kill(SIGTERM) returned: %d)", prefix.c_str(), ret);
       // TODO: Check the returned value
 
       // Remove the process from the map
@@ -84,7 +88,7 @@ void ProcessManager::update(const ros::TimerEvent&)
     }
     else
     {
-      ROS_ERROR_NAMED(node_name_,"%s Unable to unload reource with pid: %d. Resource is not running.",
+      TEMOTO_ERROR("%s Unable to unload reource with pid: %d. Resource is not running.",
                 prefix.c_str(), pid);
     }
   }
@@ -100,7 +104,7 @@ void ProcessManager::update(const ros::TimerEvent&)
     // If the child process has stopped running,
     if (kill_response != 0)
     {
-      ROS_ERROR_NAMED(node_name_,"%s Process %d ('%s' '%s' '%s') has stopped. Removing and reporting.",
+      TEMOTO_ERROR("%s Process %d ('%s' '%s' '%s') has stopped. Removing and reporting.",
                 prefix.c_str(), proc_it->first, proc_it->second.request.action.c_str(),
                 proc_it->second.request.package_name.c_str(), proc_it->second.request.executable.c_str());
 
@@ -130,7 +134,7 @@ void ProcessManager::update(const ros::TimerEvent&)
 void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
                             temoto_2::LoadProcess::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(node_name_, "", __func__);
+  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
   // Get the service parameters
   const std::string& action = req.action;
@@ -140,11 +144,11 @@ void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
   // Validate the action command.
   if (std::find(valid_actions.begin(), valid_actions.end(), action) == valid_actions.end())
   {
-    ROS_ERROR_NAMED(node_name_,"%s Action '%s' is not supported.", prefix.c_str(), action.c_str());
+    TEMOTO_ERROR("%s Action '%s' is not supported.", prefix.c_str(), action.c_str());
     return;  // TODO THROW EXCEPTION
   }
 
-  ROS_DEBUG_NAMED(node_name_,"%s adding '%s' '%s' '%s' to loading queue.", prefix.c_str(), action.c_str(),
+  TEMOTO_DEBUG("%s adding '%s' '%s' '%s' to loading queue.", prefix.c_str(), action.c_str(),
             package_name.c_str(), executable.c_str());
 
   temoto_2::LoadProcess srv;
@@ -163,8 +167,8 @@ void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
 void ProcessManager::unloadCb(temoto_2::LoadProcess::Request& req,
                               temoto_2::LoadProcess::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(node_name_, "", __func__);
-  ROS_DEBUG_NAMED(node_name_,"%s Unload resource requested ...", prefix.c_str());
+  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  TEMOTO_DEBUG("%s Unload resource requested ...", prefix.c_str());
 
   // Lookup the requested process by its resource id.
   running_mutex_.lock();
@@ -180,7 +184,7 @@ void ProcessManager::unloadCb(temoto_2::LoadProcess::Request& req,
   }
   else
   {
-    ROS_ERROR_NAMED(node_name_,"%s Unable to unload reource with pid: %ld. Resource is not running.", prefix.c_str(),
+    TEMOTO_ERROR("%s Unable to unload reource with pid: %ld. Resource is not running.", prefix.c_str(),
               res.rmp.resource_id);
     // Fill response
     res.rmp.code = rmp::status_codes::FAILED;

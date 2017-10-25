@@ -24,11 +24,12 @@ public:
     : owner_(owner)
     , name_(name)
     , status_callback_(NULL)
-    , status_spinner_(2, &status_cb_queue_)
-    , unload_spinner_(2, &unload_cb_queue_)
+    , status_spinner_(1, &status_cb_queue_)
+    , unload_spinner_(1, &unload_cb_queue_)
   {
     log_class = "rmp/Manager";
-    log_subsys_ = owner->getName();
+    log_subsys_ = name;
+    RMP_ERROR("Setting log_subsys to owner_>getName(): %s", log_subsys_.c_str());
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class, "");
 
     // set up status callback with separately threaded queue
@@ -50,7 +51,7 @@ public:
     // start separate threaded spinners for our callback queues
     status_spinner_.start();
     unload_spinner_.start();
-    RMP_DEBUG("%s Resource manager started.", prefix.c_str());
+//    RMP_DEBUG("%s Resource manager started.", prefix.c_str());
   }
 
   ~ResourceManager()
@@ -123,7 +124,7 @@ public:
                      [&](const BaseClientPtr& c) -> bool { return c->getName() == client_name; });
     if (client_it == clients_.end())
     {
-      RMP_DEBUG("%s Creating new resource client.", prefix.c_str());
+      RMP_DEBUG("%s Creating new resource client. %s", prefix.c_str(), log_subsys_.c_str());
 
       client_ptr = std::make_shared<ClientType>(resource_manager_name, server_name, owner_, *this);
       // Push to clients and convert to BaseResourceClient type
@@ -232,7 +233,7 @@ public:
     }
     else
     {
-      RMP_WARN("%s Internal id '%d' not found. Already removed?", name_.c_str(),
+      RMP_WARN("%s Internal id '%d' not found. Already removed?", prefix.c_str(),
                      resource_id);
     }
     clients_mutex_.unlock();
@@ -315,7 +316,7 @@ public:
 
       // Go through clients and locate the one from
       // which the request arrived
-      std::string client_name = req.manager_name + "/" + req.server_name;
+      std::string client_name = '/'+req.manager_name + "/" + req.server_name;
       RMP_DEBUG("%s got info that resource has failed, looking for %s",
                       prefix.c_str(), client_name.c_str());
 
