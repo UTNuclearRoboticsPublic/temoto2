@@ -26,7 +26,7 @@ public:
      * Inherited methods that have to be implemented /START
      * * * * * * * * * * * * * * * * * * * * * * * * */
 
-    TaskTerminal() : hci_(this)
+    TaskTerminal() 
     {
       class_name_ = "TaskTerminal";
 
@@ -56,10 +56,12 @@ public:
         // Name of the method, used for making debugging a bit simpler
         const std::string method_name_ = "startTask";
         std::string prefix = common::generateLogPrefix("", this->class_name_, method_name_);
+        // Initialize interface
+        hci_.initialize(this);
 
         // Build a gesture specifier
         // TODO: This shoud be done via speech specifier helper class
-        std::vector <temoto_2::SpeechSpecifier> speech_specifiers;
+        std::vector<temoto_2::SpeechSpecifier> speech_specifiers;
         temoto_2::SpeechSpecifier speech_specifier;
         speech_specifier.dev = "device";
         speech_specifier.type = "text";

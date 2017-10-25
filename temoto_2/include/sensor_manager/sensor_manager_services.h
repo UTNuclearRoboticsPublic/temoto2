@@ -10,7 +10,7 @@ namespace sensor_manager
 {
 	namespace srv_name
 	{
-		const std::string MANAGER = "/temoto_2/sensor_manager";
+		const std::string MANAGER = "sensor_manager";
 		const std::string SERVER = "start_sensor";
 	}
 }

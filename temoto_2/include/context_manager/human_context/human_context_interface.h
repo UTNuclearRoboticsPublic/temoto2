@@ -7,6 +7,7 @@
 #include "base_task/task.h"
 #include "common/temoto_id.h"
 #include "common/console_colors.h"
+#include "common/interface_errors.h"
 
 #include "std_msgs/Float32.h"
 #include "human_msgs/Hands.h"
@@ -21,12 +22,17 @@ template <class Owner>
 class HumanContextInterface
 {
 public:
-  HumanContextInterface(Task* task)
-    : name_(task->getName() + "/human_context_interface"), resource_manager_(name_, this)
+  HumanContextInterface()
+  {
+  }
+
+  void initialize(Task* task)
   {
     log_class_= "";
     log_subsys_ = "human_context_interface";
     log_group_ = "interfaces." + task->getPackageName();
+    name_ = task->getName() + "/human_context_interface";
+    resource_manager_ = std::unique_ptr<rmp::ResourceManager<HumanContextInterface>>(new rmp::ResourceManager<HumanContextInterface>(name_, this));
   }
 
   void getGestures(std::vector<temoto_2::GestureSpecifier> gesture_specifiers,
@@ -34,6 +40,7 @@ public:
   {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    validateInterface(prefix);
 
     // Contact the "Context Manager", pass the gesture specifier and if successful, get
     // the name of the topic
@@ -43,7 +50,7 @@ public:
     // Call the server
     try
     {
-      resource_manager_.template call<temoto_2::LoadGesture>(
+      resource_manager_->template call<temoto_2::LoadGesture>(
           human_context::srv_name::MANAGER, human_context::srv_name::GESTURE_SERVER, srv_msg);
     }
     catch (...)
@@ -73,6 +80,7 @@ public:
   {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    validateInterface(prefix);
 
     // Contact the "Context Manager", pass the speech specifier and if successful, get
     // the name of the topic
@@ -84,7 +92,7 @@ public:
     try
     {
       ROS_INFO("getting speech");
-      resource_manager_.template call<temoto_2::LoadSpeech>(
+      resource_manager_->template call<temoto_2::LoadSpeech>(
           human_context::srv_name::MANAGER, human_context::srv_name::SPEECH_SERVER, srv_msg);
     }
     catch (...)
@@ -113,11 +121,12 @@ public:
   {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    validateInterface(prefix);
 
     try
     {
       // remove all connections, which were created via call() function
-      resource_manager_.unloadClients();
+      resource_manager_->unloadClients();
     }
     catch (...)
     {
@@ -139,7 +148,7 @@ public:
   }
 
 private:
-  rmp::ResourceManager<HumanContextInterface> resource_manager_;
+  std::unique_ptr<rmp::ResourceManager<HumanContextInterface>> resource_manager_;
 
   std::string name_; 
   std::string log_class_, log_subsys_, log_group_;
@@ -147,6 +156,21 @@ private:
   ros::NodeHandle nh_;
   ros::Subscriber gesture_subscriber_;
   ros::Subscriber speech_subscriber_;
+
+  /**
+   * @brief validateInterface()
+   * @param sensor_type
+   */
+  void validateInterface(std::string& log_prefix)
+  {
+    if(!resource_manager_)
+    {
+      TEMOTO_ERROR("%s Interface is not initalized.", log_prefix.c_str());
+      throw error::ErrorStackUtil(
+          interface_error::NOT_INITIALIZED, error::Subsystem::TASK, error::Urgency::MEDIUM,
+          log_prefix + " Interface is not initialized.", ros::Time::now());
+    }
+  }
 };
 
 #endif

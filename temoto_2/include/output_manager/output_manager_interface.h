@@ -1,6 +1,7 @@
 #include "core/common.h"
 
 #include "common/temoto_id.h"
+#include "common/interface_errors.h"
 #include "base_task/task_errors.h"
 #include "base_task/task.h"
 #include "output_manager/output_manager_errors.h"
@@ -9,6 +10,7 @@
 #include "temoto_2/LoadRvizPlugin.h"
 #include <sstream>
 #include <fstream>
+#include <memory>
 
 /**
  * @brief The OutputManagerInterface class
@@ -19,12 +21,23 @@ public:
   /**
    * @brief OutputManagerInterface
    */
-  OutputManagerInterface(Task* task)
-    : name_(task->getName() + "/output_manager_interface"), resource_manager_(name_, this)
+  OutputManagerInterface()
+  {
+  }
+
+  /**
+   * @brief initialize
+   */
+  void initialize(Task* task)
   {
     log_class_ = "";
     log_subsys_ = "output_manager_interface";
     log_group_ = "interfaces." + task->getPackageName();
+
+    name_ = task->getName() + "/output_manager_interface";
+    resource_manager_ = std::unique_ptr<rmp::ResourceManager<OutputManagerInterface>>(
+        new rmp::ResourceManager<OutputManagerInterface>(name_, this));
+    //    resource_manager_->registerStatusCb(&OutputManagerInterface::statusInfoCb);
   }
 
   /**
@@ -36,8 +49,8 @@ public:
   void showInRviz(std::string display_type, std::string topic = "", std::string display_config = "")
   {
     // Name of the method, used for making debugging a bit simpler
-    
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    validateInterface(prefix);
 
     temoto_2::LoadRvizPlugin load_srv;
     load_srv.request.type = display_type;
@@ -45,7 +58,7 @@ public:
     load_srv.request.config = display_config;
 
     // Call the server
-    if (!resource_manager_.template call<temoto_2::LoadRvizPlugin>(
+    if (!resource_manager_->template call<temoto_2::LoadRvizPlugin>(
             rviz_manager::srv_name::MANAGER, rviz_manager::srv_name::SERVER, load_srv))
     {
       throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK,
@@ -73,39 +86,35 @@ public:
   {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    validateInterface(prefix);
 
     temoto_2::LoadRvizPlugin::Request req;
     req.type = display_type;
     req.topic = topic;
     req.config = display_config;
 
-		auto cur_plugin_it = plugins_.begin();
-		while (cur_plugin_it != plugins_.end())
-		{
-			// The == operator used in the lambda function is defined in
-			// rviz manager services header
-			auto found_plugin_it = std::find_if(cur_plugin_it, plugins_.end(),
-					[&](const temoto_2::LoadRvizPlugin& srv_msg) -> 
-					bool {return srv_msg.request == req;}
-					);
-			if (found_plugin_it != plugins_.end())
-			{
-				// do the unloading
-				resource_manager_.unloadClientResource(found_plugin_it->response.rmp.resource_id);
-				cur_plugin_it = found_plugin_it;
-			}
-			else if(cur_plugin_it == plugins_.begin())
-			{
-				throw error::ErrorStackUtil( taskErr::RESOURCE_UNLOAD_FAIL,
-						error::Subsystem::TASK,
-						error::Urgency::MEDIUM,
-						prefix + " Unable to unload resource that is not loaded.",
-						ros::Time::now());
-			}
-		}
-
+    auto cur_plugin_it = plugins_.begin();
+    while (cur_plugin_it != plugins_.end())
+    {
+      // The == operator used in the lambda function is defined in
+      // rviz manager services header
+      auto found_plugin_it = std::find_if(
+          cur_plugin_it, plugins_.end(),
+          [&](const temoto_2::LoadRvizPlugin& srv_msg) -> bool { return srv_msg.request == req; });
+      if (found_plugin_it != plugins_.end())
+      {
+        // do the unloading
+        resource_manager_->unloadClientResource(found_plugin_it->response.rmp.resource_id);
+        cur_plugin_it = found_plugin_it;
+      }
+      else if (cur_plugin_it == plugins_.begin())
+      {
+        throw error::ErrorStackUtil(
+            taskErr::RESOURCE_UNLOAD_FAIL, error::Subsystem::TASK, error::Urgency::MEDIUM,
+            prefix + " Unable to unload resource that is not loaded.", ros::Time::now());
+      }
+    }
   }
-
 
   /**
    * @brief displayConfigFromFile
@@ -116,6 +125,7 @@ public:
   {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    validateInterface(prefix);
 
     // Create filestream object and configure exceptions
     std::ifstream config_file;
@@ -142,6 +152,58 @@ public:
     }
   }
 
+  //  void statusInfoCb(temoto_2::ResourceStatus& srv)
+  //  {
+  //    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  //    validateInterface(prefix);
+  //
+  //    TEMOTO_DEBUG("%s status info was received", prefix.c_str());
+  //    TEMOTO_DEBUG_STREAM(srv.request);
+  //    // if any resource should fail, just unload it and try again
+  //    // there is a chance that sensor manager gives us better sensor this time
+  //    if (srv.request.status_code == rmp::status_codes::FAILED)
+  //    {
+  //      TEMOTO_WARN("Output manager interface detected a sensor failure. Unloading and "
+  //                                "trying again");
+  //      auto sens_it = std::find_if(allocated_sensors_.begin(), allocated_sensors_.end(),
+  //                                  [&](const temoto_2::LoadSensor& sens) -> bool {
+  //                                    return sens.response.rmp.resource_id ==
+  //                                    srv.request.resource_id;
+  //                                  });
+  //      if (sens_it != allocated_sensors_.end())
+  //      {
+  //        TEMOTO_DEBUG("Unloading");
+  //        resource_manager_->unloadClientResource(sens_it->response.rmp.resource_id);
+  //        TEMOTO_DEBUG("Asking the same sensor again");
+  //        if (!resource_manager_->template call<temoto_2::LoadSensor>(
+  //                sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, *sens_it))
+  //        {
+  //          throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK,
+  //                                      error::Urgency::MEDIUM, prefix + " Failed to call
+  //                                      service",
+  //                                      ros::Time::now());
+  //        }
+  //
+  //        // If the request was fulfilled, then add the srv to the list of allocated sensors
+  //        if (sens_it->response.rmp.code == 0)
+  //        {
+  //          // @TODO: send somehow topic to whoever is using this thing
+  //          // or do topic remapping
+  //        }
+  //        else
+  //        {
+  //          throw error::ErrorStackUtil(
+  //              taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK, error::Urgency::MEDIUM,
+  //              prefix + " Unsuccessful call to sensor manager: " + sens_it->response.rmp.message,
+  //              ros::Time::now());
+  //        }
+  //      }
+  //      else
+  //      {
+  //      }
+  //    }
+  //  }
+
   ~OutputManagerInterface()
   {
     // Name of the method, used for making debugging a bit simpler
@@ -154,16 +216,30 @@ public:
   }
 
 private:
-
   std::string name_;
 
   std::string log_class_, log_subsys_, log_group_;
 
   TemotoID::ID id_ = TemotoID::UNASSIGNED_ID;
 
-  rmp::ResourceManager<OutputManagerInterface> resource_manager_;
+  std::unique_ptr<rmp::ResourceManager<OutputManagerInterface>> resource_manager_;
 
   std::vector<temoto_2::LoadRvizPlugin> plugins_;
 
   error::ErrorHandler error_handler_;
+
+  /**
+   * @brief validateInterface()
+   * @param sensor_type
+   */
+  void validateInterface(std::string& log_prefix)
+  {
+    if (!resource_manager_)
+    {
+      TEMOTO_ERROR("%s Interface is not initalized.", log_prefix.c_str());
+      throw error::ErrorStackUtil(interface_error::NOT_INITIALIZED, error::Subsystem::TASK,
+                                  error::Urgency::MEDIUM,
+                                  log_prefix + " Interface is not initialized.", ros::Time::now());
+    }
+  }
 };

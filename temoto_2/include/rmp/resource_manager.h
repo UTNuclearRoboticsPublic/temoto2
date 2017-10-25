@@ -33,16 +33,18 @@ public:
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class, "");
 
     // set up status callback with separately threaded queue
+    std::string status_srv_name = srv_name::PREFIX + "/" + name_ + "/status";
     ros::AdvertiseServiceOptions status_service_opts =
         ros::AdvertiseServiceOptions::create<temoto_2::ResourceStatus>(
-            name_ + "/status", boost::bind(&ResourceManager<Owner>::statusCallback, this, _1, _2),
+            status_srv_name, boost::bind(&ResourceManager<Owner>::statusCallback, this, _1, _2),
             ros::VoidPtr(), &this->status_cb_queue_);
     status_server_ = nh_.advertiseService(status_service_opts);
 
     // set up unload callback with separately threaded queue
+    std::string unload_srv_name = srv_name::PREFIX + "/" + name_ + "/unload";
     ros::AdvertiseServiceOptions unload_service_opts =
         ros::AdvertiseServiceOptions::create<temoto_2::UnloadResource>(
-            name_ + "/unload", boost::bind(&ResourceManager<Owner>::unloadCallback, this, _1, _2),
+            unload_srv_name, boost::bind(&ResourceManager<Owner>::unloadCallback, this, _1, _2),
             ros::VoidPtr(), &this->unload_cb_queue_);
     unload_server_ = nh_.advertiseService(unload_service_opts);
 
@@ -316,7 +318,7 @@ public:
 
       // Go through clients and locate the one from
       // which the request arrived
-      std::string client_name = '/'+req.manager_name + "/" + req.server_name;
+      std::string client_name = req.manager_name + "/" + req.server_name;
       RMP_DEBUG("%s got info that resource has failed, looking for %s",
                       prefix.c_str(), client_name.c_str());
 

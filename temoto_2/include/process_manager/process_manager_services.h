@@ -9,7 +9,7 @@ namespace process_manager
 {
 	namespace srv_name
 	{
-		const std::string MANAGER = "/temoto_2/process_manager";
+		const std::string MANAGER = "process_manager";
 		const std::string SERVER = "load_process";
 	}
 }

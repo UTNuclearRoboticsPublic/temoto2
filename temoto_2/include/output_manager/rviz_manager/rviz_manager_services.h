@@ -9,7 +9,7 @@ namespace rviz_manager
 {
 	namespace srv_name
 	{
-		const std::string MANAGER = "/temoto_2/rviz_manager";
+		const std::string MANAGER = "rviz_manager";
 		const std::string SERVER = "load_rviz_plugin";
 	}
 }

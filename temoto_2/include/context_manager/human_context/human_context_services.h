@@ -10,7 +10,7 @@ namespace human_context
 {
 	namespace srv_name
 	{
-		const std::string MANAGER = "/temoto_2/human_context";
+		const std::string MANAGER = "human_context";
 		const std::string GESTURE_SERVER = "load_gesture";
 		const std::string SPEECH_SERVER = "load_speech";
 	}

@@ -6,12 +6,16 @@
 
 namespace rmp
 {
-    enum status_codes : int
-    {
-        OK = 0,
-        FAILED,
-    };
+enum status_codes : int
+{
+  OK = 0,
+  FAILED,
+};
+
+namespace srv_name
+{
+const std::string PREFIX = "/temoto_2";
+}
 }
 
 #endif
-

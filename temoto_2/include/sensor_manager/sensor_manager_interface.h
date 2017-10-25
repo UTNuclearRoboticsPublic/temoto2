@@ -27,7 +27,7 @@ public:
     log_group_ = "interfaces." + task->getPackageName();
 
     name_ = task->getName() + "/sensor_manager_interface";
-    resource_manager_ = std::make_shared<rmp::ResourceManager<SensorManagerInterface>>(name_, this);
+    resource_manager_ = std::unique_ptr<rmp::ResourceManager<SensorManagerInterface>>(new rmp::ResourceManager<SensorManagerInterface>(name_, this));
     resource_manager_->registerStatusCb(&SensorManagerInterface::statusInfoCb);
   }
 
@@ -200,7 +200,7 @@ private:
   std::string log_class_, log_subsys_, log_group_;
   error::ErrorHandler error_handler_;
   std::vector<temoto_2::LoadSensor> allocated_sensors_;
-  std::shared_ptr<rmp::ResourceManager<SensorManagerInterface>> resource_manager_;
+  std::unique_ptr<rmp::ResourceManager<SensorManagerInterface>> resource_manager_;
 
   /**
    * @brief validateInterface()
