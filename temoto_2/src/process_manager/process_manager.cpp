@@ -40,8 +40,8 @@ void ProcessManager::update(const ros::TimerEvent&)
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
   // execute each process in loading_processes vector
-  running_mutex_.lock();
-  loading_mutex_.lock();
+  waitForLock(running_mutex_);
+  waitForLock(loading_mutex_);
   for (auto& srv : loading_processes_)
   {
     const std::string& action = srv.request.action;
@@ -69,7 +69,7 @@ void ProcessManager::update(const ros::TimerEvent&)
   loading_mutex_.unlock();
 
   // unload each process in unload_processes vector
-  unloading_mutex_.lock();
+  waitForLock(unloading_mutex_);
   for (auto pid : unloading_processes_)
   {
     // consistency check, ensure that pid is still in running_processes
@@ -88,14 +88,15 @@ void ProcessManager::update(const ros::TimerEvent&)
     }
     else
     {
-      TEMOTO_ERROR("%s Unable to unload reource with pid: %d. Resource is not running.",
+      TEMOTO_DEBUG("%s Unable to normally unload reource with pid: %d. Resource not running any more.",
                 prefix.c_str(), pid);
     }
   }
   unloading_processes_.clear();
-  unloading_mutex_.unlock();
 
   // Check the status of all running processes
+  // cache all to statuses before actual sending, so we can release the running_mutex.
+  std::vector<temoto_2::ResourceStatus> statuses_to_send; 
   auto proc_it = running_processes_.begin();
   while (proc_it != running_processes_.end())
   {
@@ -104,7 +105,7 @@ void ProcessManager::update(const ros::TimerEvent&)
     // If the child process has stopped running,
     if (kill_response != 0)
     {
-      TEMOTO_ERROR("%s Process %d ('%s' '%s' '%s') has stopped. Removing and reporting.",
+      TEMOTO_ERROR("%s Process %d ('%s' '%s' '%s') has stopped.",
                 prefix.c_str(), proc_it->first, proc_it->second.request.action.c_str(),
                 proc_it->second.request.package_name.c_str(), proc_it->second.request.executable.c_str());
 
@@ -115,13 +116,14 @@ void ProcessManager::update(const ros::TimerEvent&)
       std::stringstream ss;
       ss << "The process with pid = ";
       ss << proc_it->first;
-      ss << " was stopped.";
+      ss << " has stopped.";
       srv.request.message = ss.str();
 
-      resource_manager_.sendStatus(srv);
-
-      // remove stopped process from the map
-      running_processes_.erase(proc_it++);
+      // store statuses to send
+      statuses_to_send.push_back(srv);
+      
+      // Remove the process from the map
+      proc_it = running_processes_.erase(proc_it);
     }
     else
     {
@@ -129,6 +131,15 @@ void ProcessManager::update(const ros::TimerEvent&)
     }
   }
   running_mutex_.unlock();
+  unloading_mutex_.unlock();
+
+  for (auto& srv : statuses_to_send)
+  {
+    resource_manager_.sendStatus(srv);
+
+    // TODO: Normally unload command should come from upper chain, howerver, when sending status us unsucessful, we should unload the resource manually?
+   // running_processes_.erase(proc_it++);
+  }
 }
 
 void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
@@ -171,8 +182,7 @@ void ProcessManager::unloadCb(temoto_2::LoadProcess::Request& req,
   TEMOTO_DEBUG("%s Unload resource requested ...", prefix.c_str());
 
   // Lookup the requested process by its resource id.
-  running_mutex_.lock();
-  unloading_mutex_.lock();
+  waitForLock(running_mutex_);
   auto proc_it =
       std::find_if(running_processes_.begin(), running_processes_.end(),
                    [&](const std::pair< pid_t, temoto_2::LoadProcess>& p) -> bool { return p.second.request == req; });
@@ -191,6 +201,18 @@ void ProcessManager::unloadCb(temoto_2::LoadProcess::Request& req,
     res.rmp.message = "Resource is not running. Unable to unload.";
   }
   running_mutex_.unlock();
+
   unloading_mutex_.unlock();
 }
+
+  void ProcessManager::waitForLock(std::mutex& m)
+  {
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    while (!m.try_lock())
+    {
+      RMP_DEBUG("%s Waiting for lock()", prefix.c_str());
+      ros::Duration(0.1).sleep();  // sleep for few ms
+    }
+    // RMP_DEBUG("%s Obtained lock()", prefix.c_str());
+  }
 }  // namespace process_manager

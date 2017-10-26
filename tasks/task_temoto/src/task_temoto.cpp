@@ -28,10 +28,10 @@ public:
      * Inherited methods that have to be implemented /START
      * * * * * * * * * * * * * * * * * * * * * * * * */
 
-TaskTemoto() : hci_(this), omi_(this), smi_(this)
+TaskTemoto()
 {
     // Do something here if needed
-    ROS_INFO("TaskTemoto constructed");
+   // ROS_INFO("TaskTemoto constructed");
 }
 /*
  * startTask without arguments
@@ -39,7 +39,7 @@ TaskTemoto() : hci_(this), omi_(this), smi_(this)
 bool startTask()
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage("", this->class_name_, __func__);
+    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
     // Build a speech specifier
     // TODO: This shoud be done via speech specifier helper class
@@ -50,6 +50,10 @@ bool startTask()
     speechSpecifier.type = "text";
     speechSpecifiers.push_back(speechSpecifier);
     */
+
+    hci_.initialize(this);
+    omi_.initialize(this);
+    smi_.initialize(this);
 
     // Build a gesture specifier
     // TODO: This shoud be done via speech specifier helper class
@@ -160,13 +164,13 @@ std::vector<boost::any> getSolution( int subtaskNr )
 // Callback for processing speech
 void speechCallback(std_msgs::String msg)
 {
-    ROS_INFO("Speech callback got: %s", msg.data.c_str());
+    TASK_INFO("Speech callback got: %s", msg.data.c_str());
 }
 
 // Callback for processing gestures
 void gestureCallback( human_msgs::Hands gesture )
 { 
-    ROS_INFO("wadup");
+    TASK_INFO("wadup");
 
     std::cout << __FUNCTION__ << std::endl;
 
@@ -216,13 +220,13 @@ void gestureCallback( human_msgs::Hands gesture )
     }
     else
     {
-        ROS_ERROR("Excepition ERROR kutsuge 112 cobra");
+        TASK_ERROR("Excepition ERROR kutsuge 112 cobra");
     }
 }
 
 ~TaskTemoto()
 {
-    ROS_INFO("[TaskTemoto::~TaskTemoto]TaskTemoto destructed");
+    TASK_INFO("[TaskTemoto::~TaskTemoto]TaskTemoto destructed");
 }
 
 private:

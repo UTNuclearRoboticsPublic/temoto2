@@ -140,6 +140,8 @@ public:
   {
     // Let the context manager know, that task is finished and topics are unsubscribed
     stopAllocatedServices();
+    gesture_subscriber_.shutdown();
+    speech_subscriber_.shutdown();
   }
 
   const std::string& getName() const

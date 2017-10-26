@@ -4,7 +4,6 @@ namespace rviz_manager
 {
 RvizManager::RvizManager() : resource_manager_(srv_name::MANAGER, this)
 {
-
   log_class_ = "";
   log_subsys_ = "rviz_manager";
   log_group_ = "rviz_manager";
@@ -69,10 +68,27 @@ void RvizManager::runRviz()
 
   if (msg.response.rmp.code == 0)
   {
-    TEMOTO_INFO("%s Rviz launched succesfully: %s", prefix.c_str(), msg.response.rmp.message.c_str());
+    TEMOTO_INFO("%s Rviz launched succesfully: %s", prefix.c_str(),
+                msg.response.rmp.message.c_str());
 
-    // Give some time for the rviz_plugin_manager to setup
-    ros::Duration(3).sleep();  // TODO: THIS THING SEEMS SO WRONG HERE
+    // Wait until rviz_plugin_manager clients become active or throw an error on timeout
+    ros::Time timeout = ros::Time::now() + ros::Duration(10);
+    while ((!load_plugin_client_.exists() || !unload_plugin_client_.exists() ||
+           !set_plugin_config_client_.exists() || !get_plugin_config_client_.exists()) && 
+           ros::Time::now() < timeout)
+    {
+      ros::Duration diff = timeout - ros::Time::now();
+      TEMOTO_DEBUG("%s Waiting for rviz to start (timeout in %.1f sec).", prefix.c_str(), diff.toSec());
+      ros::Duration(1).sleep();
+    }
+
+    if (ros::Time::now() >= timeout)
+    {
+      throw error::ErrorStackUtil(outputManagerErr::RVIZ_OPEN_FAIL,
+                                  error::Subsystem::OUTPUT_MANAGER, error::Urgency::MEDIUM,
+                                  prefix + " Failed to launch rviz plugin manager: Timeout reached.",
+                                  ros::Time::now());
+    }
   }
   else
   {
@@ -97,7 +113,7 @@ bool RvizManager::loadPluginRequest(rviz_plugin_manager::PluginLoad& load_plugin
     if (load_plugin_srv.response.code == 0)
     {
       TEMOTO_INFO("%s Request successful: %s", prefix.c_str(),
-               load_plugin_srv.response.message.c_str());
+                  load_plugin_srv.response.message.c_str());
       return true;
     }
     else
@@ -133,7 +149,7 @@ bool RvizManager::unloadPluginRequest(rviz_plugin_manager::PluginUnload& unload_
     if (unload_plugin_srv.response.code == 0)
     {
       TEMOTO_INFO("%s Request successful: %s", prefix.c_str(),
-               unload_plugin_srv.response.message.c_str());
+                  unload_plugin_srv.response.message.c_str());
       return true;
     }
     else
@@ -170,7 +186,7 @@ bool RvizManager::getPluginConfigRequest(
     if (get_plugin_config_srv.response.code == 0)
     {
       TEMOTO_INFO("%s Request successful: %s", prefix.c_str(),
-               get_plugin_config_srv.response.message.c_str());
+                  get_plugin_config_srv.response.message.c_str());
       return true;
     }
     else
@@ -207,7 +223,7 @@ bool RvizManager::setPluginConfigRequest(
     if (set_plugin_config_srv.response.code == 0)
     {
       TEMOTO_INFO("%s Request successful: %s", prefix.c_str(),
-               set_plugin_config_srv.response.message.c_str());
+                  set_plugin_config_srv.response.message.c_str());
       return true;
     }
     else

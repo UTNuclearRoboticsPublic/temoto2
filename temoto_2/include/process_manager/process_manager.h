@@ -55,8 +55,8 @@ namespace process_manager
 
 			// Holds clients toi connect and send info to other (Sensor, Context, etc.) managers
 			//ros::ServiceClient resource_status_client_;
-
-	};
+      void waitForLock(std::mutex& m);
+  };
 }
 
 #endif

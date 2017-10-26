@@ -27,10 +27,10 @@ public:
     , status_spinner_(1, &status_cb_queue_)
     , unload_spinner_(1, &unload_cb_queue_)
   {
-    log_class = "rmp/Manager";
+    log_class_ = "rmp/Manager";
     log_subsys_ = name;
-    RMP_ERROR("Setting log_subsys to owner_>getName(): %s", log_subsys_.c_str());
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class, "");
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
+    RMP_DEBUG("%s Resource manager is starting.", prefix.c_str());
 
     // set up status callback with separately threaded queue
     std::string status_srv_name = srv_name::PREFIX + "/" + name_ + "/status";
@@ -109,7 +109,7 @@ public:
   template <class ServiceType>
   bool call(std::string resource_manager_name, std::string server_name, ServiceType& msg)
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class, "");
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
     using ClientType = ResourceClient<ServiceType, Owner>;
     using ClientPtr = std::shared_ptr<ClientType>;
     using BaseClientType = BaseResourceClient<Owner>;
@@ -176,7 +176,7 @@ public:
   bool unloadCallback(temoto_2::UnloadResource::Request& req,
                       temoto_2::UnloadResource::Response& res)
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class, __func__);
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
     RMP_DEBUG("%s Unload request to server: '%s', ext id: %ld", prefix.c_str(),
                     req.server_name.c_str(), req.resource_id);
     // Find server with requested name
@@ -197,7 +197,7 @@ public:
 
   void unloadClients()
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class, __func__);
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
     waitForLock(clients_mutex_);
     RMP_DEBUG("%s number of clients:%lu", prefix.c_str(), clients_.size());
     for (auto client : clients_)
@@ -213,9 +213,9 @@ public:
   // Wrapper for unloading resource clients
   void unloadClientResource(temoto_id::ID resource_id)
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class, __func__);
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
     waitForLock(clients_mutex_);
-    RMP_INFO("%s id:%d", prefix.c_str(), resource_id);
+    RMP_DEBUG("%s id:%d", prefix.c_str(), resource_id);
     // Go through clients and search for given client by name
     auto client_it =
         std::find_if(clients_.begin(), clients_.end(),
@@ -224,6 +224,7 @@ public:
                      });
     if (client_it != clients_.end())
     {
+      RMP_DEBUG("%s id:%d found, executing client.unload()", prefix.c_str(), resource_id);
       // found the client, unload resource
       (*client_it)->unloadResource(resource_id);
 
@@ -244,7 +245,7 @@ public:
   // This method sends error/info message to any client connected to this resource.
   void sendStatus(temoto_2::ResourceStatus& srv)
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class, __func__);
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
     struct ResourceInfo
     {
       std::string status_topic;
@@ -300,7 +301,7 @@ public:
   bool statusCallback(temoto_2::ResourceStatus::Request& req,
                       temoto_2::ResourceStatus::Response& res)
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class, __func__);
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
     RMP_DEBUG("%s Got status request: ", prefix.c_str());
     ROS_INFO_STREAM(req);
 
@@ -418,7 +419,7 @@ private:
 
   void waitForLock(std::mutex& m)
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class, __func__);
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
     while (!m.try_lock())
     {
       RMP_DEBUG("%s Waiting for lock()", prefix.c_str());
@@ -451,7 +452,7 @@ private:
   std::mutex active_server_mutex_;
 
   // log prefixes
-  std::string log_subsys_, log_class;
+  std::string log_subsys_, log_class_;
 };
 
 }  // namespace rmp

@@ -2,7 +2,7 @@
  *
  *  TODO: * Fix the bug: when "terminal" task is closed, ros
  *          tries to desperately reconnect with the internal service:
- *          "Retrying connection to [ajamasinII:58905] for topic [/human_chatter]"
+ *          "Retrying connection to [ajamasinII:58905] for topic [/temoto_2/human_chatter]"
  *          This is visible when the debug logger level is enabled.
  *
  *
@@ -47,7 +47,7 @@ public:
         ROS_INFO("[TemotoCore::TemotoCore]: Construncting the core ...");
 
         // Subscribers
-        chatter_subscriber_ = n_.subscribe("human_chatter", 1000, &TemotoCore::humanChatterCallback, this);
+        chatter_subscriber_ = n_.subscribe("/temoto_2/human_chatter", 1000, &TemotoCore::humanChatterCallback, this);
 
         try
         {
@@ -158,7 +158,7 @@ int main(int argc, char **argv)
     ros::NodeHandle n;
 
     // Publisher for publishing messages to core itself
-    ros::Publisher chatter_publisher = n.advertise<std_msgs::String>("human_chatter", 1000);
+    ros::Publisher chatter_publisher = n.advertise<std_msgs::String>("temoto_2/human_chatter", 1000);
 
     /**
      * @brief error_handler_

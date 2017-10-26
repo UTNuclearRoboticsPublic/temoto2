@@ -15,7 +15,7 @@ int main(int argc, char **argv)
     ros::NodeHandle n;
 
     // Publisher
-    ros::Publisher chatter_pub = n.advertise<std_msgs::String>("human_chatter", 1000);
+    ros::Publisher chatter_pub = n.advertise<std_msgs::String>("/terminal_text", 1000);
 
     // Subscribe to error messages
     ros::Subscriber error_subscriber = n.subscribe( "temoto_error_messages", 100, displayErrorMessages);

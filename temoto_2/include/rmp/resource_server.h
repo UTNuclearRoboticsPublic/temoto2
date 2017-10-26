@@ -131,6 +131,11 @@ public:
       {
         // update the query with the response message filled in the callback
         q_it->setMsgResponse(res);
+
+        // prepare the response for the client
+        res.rmp.resource_id = ext_resource_id;
+        res.rmp.code = status_codes::OK;
+        res.rmp.message = "New resource sucessfully loaded.";
       }
       else
       {
@@ -142,9 +147,13 @@ public:
     else
     {
       // found equal request, simply reqister this in the query
-      // and respond with unique resoure_id.
+      // and respond with previous data and a unique resoure_id.
       RMP_DEBUG("%s Existing query, linking to the found query.", prefix.c_str());
       queries_.back().addExternalResource(ext_resource_id, req.rmp.status_topic);
+      res = found_query->getMsg().response;
+      res.rmp.resource_id = ext_resource_id;
+      res.rmp.code = status_codes::OK;
+      res.rmp.message = "Sucessfully sharing existing resource.";
     }
 
     // release the queries lock

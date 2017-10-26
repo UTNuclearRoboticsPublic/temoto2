@@ -17,6 +17,9 @@
 #include "std_msgs/String.h"
 #include "context_manager/human_context/human_context_interface.h"
 
+// experimental testing in speech callback
+#include <boost/algorithm/string.hpp>
+
 // First implementaton
 class TaskTerminal: public Task
 {
@@ -54,23 +57,26 @@ public:
         }
 
         // Name of the method, used for making debugging a bit simpler
-        const std::string method_name_ = "startTask";
-        std::string prefix = common::generateLogPrefix("", this->class_name_, method_name_);
-        // Initialize interface
-        hci_.initialize(this);
-
-        // Build a gesture specifier
-        // TODO: This shoud be done via speech specifier helper class
-        std::vector<temoto_2::SpeechSpecifier> speech_specifiers;
-        temoto_2::SpeechSpecifier speech_specifier;
-        speech_specifier.dev = "device";
-        speech_specifier.type = "text";
-        speech_specifiers.push_back(speech_specifier);
-
-        // Subscribe to gesture topic
+        std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+        
         try
         {
-            hci_.getSpeech(speech_specifiers, &TaskTerminal::speech_callback, this);
+          // Initialize human context interface
+          hci_.initialize(this);
+
+          // Advertise the topic where core listens for commands
+          core_pub_ = nh_.advertise<std_msgs::String>("/temoto_2/human_chatter", 1);
+
+          // Build a speech specifier
+          // TODO: This shoud be done via speech specifier helper class
+          std::vector<temoto_2::SpeechSpecifier> speech_specifiers;
+          temoto_2::SpeechSpecifier speech_specifier;
+          speech_specifier.dev = "device";
+          speech_specifier.type = "text";
+          speech_specifiers.push_back(speech_specifier);
+
+          // Get speech and register callback
+          hci_.getSpeech(speech_specifiers, &TaskTerminal::speech_callback, this);
         }
 
         catch( error::ErrorStackUtil& e )
@@ -84,7 +90,7 @@ public:
 
     std::string getStatus()
     {
-        std::string str = "healthy";
+        std::string str = "healthy, maybe :)";
         return str;
     }
 
@@ -102,12 +108,35 @@ public:
     // Callback for processing speech
     void speech_callback(std_msgs::String msg)
     {
-        //ROS_INFO("Speech callback got: %s", msg.data.c_str());
+      std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+      TASK_DEBUG("%s Speech callback got: %s", prefix.c_str(), msg.data.c_str());
+
+      std_msgs::String core_msg;
+
+      // Some hardcoded testing
+      if (msg.data == "take picture" || msg.data == "start camera" || msg.data == "show picture")
+      {
+        core_msg.data = "take_picture";
+      }
+      else if (msg.data == "stop take picture" || msg.data == "close camera" || msg.data == "close picture" || msg.data == "hide picture")
+      {
+        core_msg.data = "stop take_picture";
+      }
+      else
+      {
+        core_msg.data = msg.data;
+      }
+
+      if(core_pub_)
+      {
+        core_pub_.publish(core_msg);
+      }
     }
 
     ~TaskTerminal()
     {
-        ROS_INFO("[TaskTerminal::~TaskTerminal]TaskTerminal destructed");
+      core_pub_.shutdown();
+      ROS_INFO("[TaskTerminal::~TaskTerminal]TaskTerminal destructed");
     }
 
 private:
@@ -119,6 +148,8 @@ private:
 
     // Human context interface object
     HumanContextInterface <TaskTerminal> hci_;
+    ros::Publisher core_pub_;
+    ros::NodeHandle nh_;
 
 };
 
