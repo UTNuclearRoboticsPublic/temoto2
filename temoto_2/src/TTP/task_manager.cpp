@@ -281,7 +281,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
      */
     if (!node_task_descriptor.getIncompleteSubjects().empty())
     {
-        std::cout << "[" << node_action << "] depends on parent node, retrieving missing information ...\n";
+        //std::cout << "[" << node_action << "] depends on parent node, retrieving missing information ...\n";
         /*
          * Check the node subjects and get the missing information from
          * the parent, making a ALMOST (will get additional information
@@ -307,7 +307,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
                     n_sub = p_sub;
                 }
             }
-            std::cout << "[" << node_action << "] got:\n" << n_sub;
+            //std::cout << "[" << node_action << "] got:\n" << n_sub;
         }
     }
 
@@ -325,7 +325,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
         }
     }
 
-    std::cout << "[" << node_action << "] has " << incomplete_subjects.size() << " incomplete subjects and these are:\n";
+    //std::cout << "[" << node_action << "] has " << incomplete_subjects.size() << " incomplete subjects and these are:\n";
     for (auto& i_s : incomplete_subjects){std::cout << i_s;}
 
     /*
@@ -355,8 +355,8 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
             }
         }
 
-        std::cout << "[" << node_action << "]" << " after eliminating duplicates we have:\n";
-        for (auto& i_s : incomplete_subjects){std::cout << i_s;}
+        //std::cout << "[" << node_action << "]" << " after eliminating duplicates we have:\n";
+        //for (auto& i_s : incomplete_subjects){std::cout << i_s;}
 
         /*
          * Clean the incomlete subjects. This means that all pronouns are removed
@@ -366,23 +366,23 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
             incomplete_subject.words_.clear();
         }
 
-        std::cout << "[" << node_action << "]" << " after cleaning the incomplete subs we have:\n";
-        for (auto& i_s : incomplete_subjects){std::cout << i_s;}
+        //std::cout << "[" << node_action << "]" << " after cleaning the incomplete subs we have:\n";
+        //for (auto& i_s : incomplete_subjects){std::cout << i_s;}
 
-        std::cout << "[" << node_action << "]" << " looking for a suitable task\n";
+        //std::cout << "[" << node_action << "]" << " looking for a suitable task\n";
         /*
          * Find task that matches own i-subjects + that has a matching
          * o-subjects with dependent children incomplete i-subjects
          */
         for (auto& task_descriptor : tasks_indexed_)
         {
-            std::cout << "[" << node_action << "]" << " looking at '" << task_descriptor.getAction() << "'\n";
-            std::cout << "-------------------\n";
+           // std::cout << "[" << node_action << "]" << " looking at '" << task_descriptor.getAction() << "'\n";
+           // std::cout << "-------------------\n";
 
             // Look for the task with the same action type
             if (task_descriptor.getAction() != node_action)
             {
-                std::cout << "[" << node_action << "]" << " action does not match\n";
+                //std::cout << "[" << node_action << "]" << " action does not match\n";
                 continue;
             }
 
@@ -394,10 +394,10 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
                 // ... look for STRICT i-subjects match
                 if (interface.input_subjects_ != node_subjects)
                 {
-                    std::cout << "[" << node_action << "]" << " input subjects do not match\n";
-                    std::cout << "[" << node_action << "]" << " and we are talking about:\n";
-                    std::cout << interface.input_subjects_ << "and\n";
-                    std::cout << node_subjects << "\n";
+                    //std::cout << "[" << node_action << "]" << " input subjects do not match\n";
+                    //std::cout << "[" << node_action << "]" << " and we are talking about:\n";
+                    //std::cout << interface.input_subjects_ << "and\n";
+                    //std::cout << node_subjects << "\n";
 
                     continue;
                 }
@@ -406,7 +406,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
                 unsigned int match_score = findNonstrictMatch(interface.output_subjects_, incomplete_subjects);
                 if (match_score == 0)
                 {
-                    std::cout << "[" << node_action << "]" << " dependent children do not have a match\n";
+                    //std::cout << "[" << node_action << "]" << " dependent children do not have a match\n";
                     continue;
                 }
 
@@ -420,7 +420,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
              */
             if (!candidate_interfaces.empty())
             {
-                std::cout << "[" << node_action << "]" << " IS A SUITABLE CANDIDATE\n";
+                //std::cout << "[" << node_action << "]" << " IS A SUITABLE CANDIDATE\n";
 
                 // Sort the candidates with decreasing score and pick the first candidate
                 std::sort(candidate_interfaces.begin(),
@@ -431,8 +431,8 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
                           });
 
                 // DEBUG - print out the scores
-                std::cout << "SCORES ";
-                for (auto& inf : candidate_interfaces){std::cout << inf.score_ << ",";} std::cout<<"\n";
+                //std::cout << "SCORES ";
+                //for (auto& inf : candidate_interfaces){std::cout << inf.score_ << ",";} std::cout<<"\n";
 
                 candidate_tasks.emplace_back(task_descriptor, candidate_interfaces[0]);
             }
@@ -447,17 +447,17 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
         /*
          * Find task that matches own i-subjects
          */
-        std::cout << "[" << node_action << "]" << " looking for a suitable task\n";
+        //std::cout << "[" << node_action << "]" << " looking for a suitable task\n";
 
         for (auto& task_descriptor : tasks_indexed_)
         {
-            std::cout << "[" << node_action << "]" << " looking at '" << task_descriptor.getAction() << "'\n";
-            std::cout << "-------------------\n";
+            //std::cout << "[" << node_action << "]" << " looking at '" << task_descriptor.getAction() << "'\n";
+            //std::cout << "-------------------\n";
 
             // Look for the task with the same action type
             if (task_descriptor.getAction() != node_action)
             {
-                std::cout << "[" << node_action << "]" << " action does not match\n";
+                //std::cout << "[" << node_action << "]" << " action does not match\n";
                 continue;
             }
 
@@ -491,8 +491,8 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
                           });
 
                 // DEBUG - print out the scores
-                std::cout << "SCORES ";
-                for (auto& inf : candidate_interfaces){std::cout << inf.score_ << ",";} std::cout<<"\n";
+                //std::cout << "SCORES ";
+                //for (auto& inf : candidate_interfaces){std::cout << inf.score_ << ",";} std::cout<<"\n";
 
                 candidate_tasks.emplace_back(task_descriptor, candidate_interfaces[0]);
             }

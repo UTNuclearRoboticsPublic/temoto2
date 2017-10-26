@@ -124,7 +124,20 @@ add_executable(node_manager src/node_manager/node_manager.cpp )
 add_dependencies(node_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(node_manager ${catkin_LIBRARIES} )
 
-
+#add_library(ttp src/TTP/language_processors/meta/meta_lp.cpp
+#                src/TTP/language_processors/meta/branch_finder.cpp
+#                src/TTP/task_manager.cpp
+#                src/TTP/task_descriptor_processor.cpp
+#                src/TTP/io_descriptor.cpp
+#                src/TTP/task_descriptor.cpp
+#                src/TTP/task_tree_node.cpp
+#                src/TTP/task_tree.cpp
+#                src/TTP/task_container.cpp)
+#add_dependencies(ttp ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+#target_link_libraries(ttp ${catkin_LIBRARIES}
+#                          ${TinyXML_LIBRARIES}
+#                          ${TBB_LIBRARIES}
+#                          meta-classify meta-sequence-analyzers meta-parser-analyzers )
 
 # # # # # # # # # # # #   TESTING TOOLS   # # # # # # # # # # # # # # #
 

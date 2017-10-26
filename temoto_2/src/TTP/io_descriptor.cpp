@@ -20,6 +20,24 @@ void Subject::markComplete()
     is_complete_ = true;
 }
 
+// Get subjects by type
+Subject getSubjectByType(const std::string& type, Subjects& subjects)
+{
+    for (auto sub_it = subjects.begin(); sub_it != subjects.end(); ++sub_it)
+    {
+        if(sub_it->type_ == type)
+        {
+            Subject ret_subject = *sub_it;
+            subjects.erase(sub_it);
+
+            return std::move(ret_subject);
+        }
+    }
+    // TODO: throw temoto error
+    throw;
+}
+
+// Subjects comparison operator
 bool operator==(const std::vector<Subject>& subs_1, const std::vector<Subject>& subs_2)
 {
     // create a copy of subs_2
@@ -34,25 +52,25 @@ bool operator==(const std::vector<Subject>& subs_1, const std::vector<Subject>& 
             // Check for type match
             if (sub_1.type_ != subs_2_c[i].type_)
             {
-                std::cout << "    subject types do not match\n";
+                //std::cout << "    subject types do not match\n";
                 continue;
             }
 
             // Check data size
             if (sub_1.data_.size() != subs_2_c[i].data_.size())
             {
-                std::cout << "    data size does not match\n";
+                //std::cout << "    data size does not match\n";
                 continue;
             }
 
             // Check data
             if (sub_1.data_ != subs_2_c[i].data_)
             {
-                std::cout << "    data does not match\n";
+                //std::cout << "    data does not match\n";
                 continue;
             }
 
-            std::cout << "    we got a winner\n";
+            //std::cout << "    we got a winner\n";
             subject_match = true;
             subs_2_c.erase(subs_2_c.begin() + i);
             break;
@@ -68,7 +86,6 @@ bool operator==(const std::vector<Subject>& subs_1, const std::vector<Subject>& 
 // Subjects streaming operator
 std::ostream& operator<<( std::ostream& stream, const std::vector<Subject>& subjects)
 {
-
     // Print out the whats
     if (!subjects.empty())
     {

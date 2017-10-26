@@ -73,6 +73,10 @@ public:
      */
     error::ErrorHandler error_handler_;
 
+    std::vector<TTP::Subject> input_subjects;
+
+    std::vector<TTP::Subject> output_subjects;
+
 protected:
 
     std::string description;

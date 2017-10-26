@@ -40,11 +40,11 @@ int main(int argc, char **argv)
         std::vector <TTP::TaskDescriptor>& tds = task_manager.getIndexedTasks();
 
         // Print out the tasks
-        std::cout << "Found " << tds.size() << " tasks. Printing ...\n";
-        for (auto& td : tds)
-        {
-            std::cout << td << std::endl;
-        }
+//        std::cout << "Found " << tds.size() << " tasks. Printing ...\n";
+//        for (auto& td : tds)
+//        {
+//            std::cout << td << std::endl;
+//        }
     }
     catch (error::ErrorStackUtil& e)
     {
@@ -80,12 +80,17 @@ int main(int argc, char **argv)
             task_manager.loadAndInitializeTaskTree(tt.getRootNode());
 
             // Create a tbb flow graph
-            std::cout << "\n TBB business \n";
+            std::cout << "\nTBB business \n";
             tbb::flow::graph flow_graph;
+
+            std::cout << "  * making the flow graph \n";
             task_manager.makeFlowGraph(tt.getRootNode(), flow_graph);
+
+            std::cout << "  * connecting the flow graph \n";
             task_manager.connectFlowGraph(tt.getRootNode());
 
             // Start the flow graph
+            std::cout << "  * starting the flow graph \n";
             TTP::Subjects dummy_subjects;
             tt.getRootNode().root_fgn_->try_put(dummy_subjects);
             flow_graph.wait_for_all();

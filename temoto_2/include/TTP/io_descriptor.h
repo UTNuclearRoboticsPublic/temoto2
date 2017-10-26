@@ -15,6 +15,8 @@ namespace TTP
 class Subject;
 typedef std::vector<Subject> Subjects;
 
+Subject getSubjectByType(const std::string& type, Subjects& subjects);
+
 /**
  * @brief The Data struct
  */
@@ -22,6 +24,10 @@ struct Data
 {
     std::string type = "";
     boost::any value;
+
+    Data(){}
+
+    Data(std::string type_in, boost::any value_in) : type(type_in), value(value_in){}
 };
 
 std::ostream& operator<<( std::ostream& stream, const Data& data);

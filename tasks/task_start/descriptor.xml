@@ -18,7 +18,7 @@
         <arg pos_tag="PP" word=""/>
         
         <data>
-          <field datatype="pointer"/>
+          <field datatype="number"/>
         </data>
       </where> 
     </out>

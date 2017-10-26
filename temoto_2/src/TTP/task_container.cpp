@@ -25,7 +25,6 @@ Subjects TaskContainer::operator()(Subjects input_subjects)
         }
 
         // go through the input subjects
-        for (unsigned int i=0; i<input_subjects_c.size(); i++)
         for (auto i_sub_it = input_subjects_c.begin(); i_sub_it != input_subjects_c.end(); ++i_sub_it)
         {
             // Check type
@@ -48,6 +47,7 @@ Subjects TaskContainer::operator()(Subjects input_subjects)
     }
 
     // Start the task
+    std::cout << "starting a task ...\n";
     task_pointer_->startTask(task_interface_);
 
     // Return the solution
