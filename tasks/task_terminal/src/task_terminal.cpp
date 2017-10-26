@@ -29,7 +29,7 @@ public:
      * Inherited methods that have to be implemented /START
      * * * * * * * * * * * * * * * * * * * * * * * * */
 
-    TaskTerminal() 
+    TaskTerminal() : hci_(this)
     {
       class_name_ = "TaskTerminal";
 
@@ -62,7 +62,7 @@ public:
         try
         {
           // Initialize human context interface
-          hci_.initialize(this);
+          hci_.initialize();
 
           // Advertise the topic where core listens for commands
           core_pub_ = nh_.advertise<std_msgs::String>("/temoto_2/human_chatter", 1);
@@ -72,7 +72,7 @@ public:
           std::vector<temoto_2::SpeechSpecifier> speech_specifiers;
           temoto_2::SpeechSpecifier speech_specifier;
           speech_specifier.dev = "device";
-          speech_specifier.type = "text";
+          speech_specifier.type = "speech";
           speech_specifiers.push_back(speech_specifier);
 
           // Get speech and register callback

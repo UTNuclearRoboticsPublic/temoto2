@@ -16,28 +16,43 @@
 #include "rmp/resource_manager.h"
 #include <vector>
 
-//#include <boost/function.hpp>
 
-template <class Owner>
+template <class OwnerTask>
 class HumanContextInterface
 {
 public:
-  HumanContextInterface()
+
+  typedef void (OwnerTask::*GestureCallbackType)(human_msgs::Hands);
+  typedef void (OwnerTask::*SpeechCallbackType)(std_msgs::String);
+
+
+  HumanContextInterface(Task* task) : task_(task)
   {
   }
 
-  void initialize(Task* task)
+  void initialize()
   {
     log_class_= "";
     log_subsys_ = "human_context_interface";
-    log_group_ = "interfaces." + task->getPackageName();
-    name_ = task->getName() + "/human_context_interface";
+    log_group_ = "interfaces." + task_->getPackageName();
+    name_ = task_->getName() + "/human_context_interface";
+
+    // create resource manager
     resource_manager_ = std::unique_ptr<rmp::ResourceManager<HumanContextInterface>>(new rmp::ResourceManager<HumanContextInterface>(name_, this));
+
+    // ensure that resource_manager was created
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    validateInterface(prefix);
+
+    // register status callback function
+    resource_manager_->registerStatusCb(&HumanContextInterface::statusInfoCb);
   }
 
-  void getGestures(std::vector<temoto_2::GestureSpecifier> gesture_specifiers,
-                   void (Owner::*callback)(human_msgs::Hands), Owner* owner)
+  void getGesture(std::vector<temoto_2::GestureSpecifier> gesture_specifiers, GestureCallbackType callback, OwnerTask* obj)
   {
+    task_gesture_cb_ = callback;
+    task_gesture_obj_ = obj;
+
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
     validateInterface(prefix);
@@ -52,6 +67,7 @@ public:
     {
       resource_manager_->template call<temoto_2::LoadGesture>(
           human_context::srv_name::MANAGER, human_context::srv_name::GESTURE_SERVER, srv_msg);
+      allocated_gestures_.push_back(srv_msg);
     }
     catch (...)
     {
@@ -70,14 +86,15 @@ public:
     }
 
     // Subscribe to the topic that was provided by the "Context Manager"
-    ROS_INFO("[HumanContextInterface::getGestures] subscribing to topic'%s'",
-             srv_msg.response.topic.c_str());
-    gesture_subscriber_ = nh_.subscribe(srv_msg.response.topic, 1000, callback, owner);
+    TEMOTO_INFO("%s subscribing to topic'%s'", prefix.c_str(), srv_msg.response.topic.c_str());
+    gesture_subscriber_ = nh_.subscribe(srv_msg.response.topic, 1000, task_speech_cb_, task_speech_obj_);
   }
 
-  void getSpeech(std::vector<temoto_2::SpeechSpecifier> speech_specifiers,
-                 void (Owner::*callback)(std_msgs::String), Owner* owner)
+  void getSpeech(std::vector<temoto_2::SpeechSpecifier> speech_specifiers, SpeechCallbackType callback, OwnerTask* obj)
   {
+    task_speech_cb_ = callback;
+    task_speech_obj_ = obj;
+
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
     validateInterface(prefix);
@@ -91,9 +108,9 @@ public:
     // Call the server
     try
     {
-      ROS_INFO("getting speech");
       resource_manager_->template call<temoto_2::LoadSpeech>(
           human_context::srv_name::MANAGER, human_context::srv_name::SPEECH_SERVER, srv_msg);
+      allocated_speeches_.push_back(srv_msg);
     }
     catch (...)
     {
@@ -112,9 +129,8 @@ public:
     }
 
     // Subscribe to the topic that was provided by the "Context Manager"
-    ROS_INFO("[HumanContextInterface::getSpeech] subscribing to topic'%s'",
-             srv_msg.response.topic.c_str());
-    speech_subscriber_ = nh_.subscribe(srv_msg.response.topic, 1000, callback, owner);
+    TEMOTO_DEBUG("%s subscribing to topic'%s'", prefix.c_str(), srv_msg.response.topic.c_str());
+    speech_subscriber_ = nh_.subscribe(srv_msg.response.topic, 1000, task_speech_cb_, task_speech_obj_);
   }
 
   bool stopAllocatedServices()
@@ -127,6 +143,8 @@ public:
     {
       // remove all connections, which were created via call() function
       resource_manager_->unloadClients();
+      allocated_gestures_.clear();
+      allocated_speeches_.clear();
     }
     catch (...)
     {
@@ -135,6 +153,100 @@ public:
                                   ros::Time::now());
     }
   }
+
+
+
+void statusInfoCb(temoto_2::ResourceStatus& srv)
+  {
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    validateInterface(prefix);
+
+    TEMOTO_DEBUG("%s status info was received", prefix.c_str());
+    TEMOTO_DEBUG_STREAM(srv.request);
+    // if any resource should fail, just unload it and try again
+    // there is a chance that sensor manager gives us better sensor this time
+    if (srv.request.status_code == rmp::status_codes::FAILED)
+    {
+      TEMOTO_WARN("Human context interface detected a sensor failure. Unloading and "
+                                "trying again");
+      auto gest_it = std::find_if(allocated_gestures_.begin(), allocated_gestures_.end(),
+                                  [&](const temoto_2::LoadGesture& sens) -> bool {
+                                    return sens.response.rmp.resource_id == srv.request.resource_id;
+                                  });
+
+      auto speech_it = std::find_if(allocated_speeches_.begin(), allocated_speeches_.end(),
+                                  [&](const temoto_2::LoadSpeech& sens) -> bool {
+                                    return sens.response.rmp.resource_id == srv.request.resource_id;
+                                  });
+      if (speech_it != allocated_speeches_.end())
+      {
+        TEMOTO_DEBUG("Unloading speech");
+        resource_manager_->unloadClientResource(speech_it->response.rmp.resource_id);
+        TEMOTO_DEBUG("Asking the same speech again");
+        if (!resource_manager_->template call<temoto_2::LoadSpeech>(
+                human_context::srv_name::MANAGER, human_context::srv_name::SPEECH_SERVER, *speech_it))
+        {
+          throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK,
+                                      error::Urgency::MEDIUM, prefix + " Failed to call service",
+                                      ros::Time::now());
+        }
+
+        if (speech_it->response.rmp.code == 0)
+        {
+          // Replace subscriber
+          TEMOTO_DEBUG("Replacing subscriber new topic'%s'",
+                   speech_it->response.topic.c_str());
+          gesture_subscriber_.shutdown();
+          gesture_subscriber_ = nh_.subscribe(speech_it->response.topic, 1000, task_speech_cb_, task_speech_obj_);
+        }
+        else
+        {
+          throw error::ErrorStackUtil(
+              taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK, error::Urgency::MEDIUM,
+              prefix + " Unsuccessful call to context manager: " + speech_it->response.rmp.message,
+              ros::Time::now());
+        }
+      }
+
+
+      if (gest_it != allocated_gestures_.end())
+      {
+        TEMOTO_DEBUG("Unloading gesture");
+        resource_manager_->unloadClientResource(gest_it->response.rmp.resource_id);
+        TEMOTO_DEBUG("Asking the same gesture again");
+        if (!resource_manager_->template call<temoto_2::LoadGesture>(
+                human_context::srv_name::MANAGER, human_context::srv_name::GESTURE_SERVER, *gest_it))
+        {
+          throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK,
+                                      error::Urgency::MEDIUM, prefix + " Failed to call service",
+                                      ros::Time::now());
+        }
+
+        if (gest_it->response.rmp.code == 0)
+        {
+          // Replace subscriber
+          TEMOTO_DEBUG("Replacing subscriber new topic'%s'",
+                   speech_it->response.topic.c_str());
+          gesture_subscriber_.shutdown();
+          gesture_subscriber_ = nh_.subscribe(speech_it->response.topic, 1000, task_gesture_cb_, task_gesture_obj_);
+        }
+        else
+        {
+          throw error::ErrorStackUtil(
+              taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK, error::Urgency::MEDIUM,
+              prefix + " Unsuccessful call to context manager: " + gest_it->response.rmp.message,
+              ros::Time::now());
+        }
+      }
+
+      if (gest_it != allocated_gestures_.end() && speech_it != allocated_speeches_.end())
+      {
+        TEMOTO_ERROR("%s Got resource_id that is not registered in this interface.", prefix.c_str());
+      }
+    }
+  }
+
+
 
   ~HumanContextInterface()
   {
@@ -150,14 +262,27 @@ public:
   }
 
 private:
+
+  GestureCallbackType task_gesture_cb_;
+  SpeechCallbackType task_speech_cb_;
+
+  //TODO: Currently task is able to give callback functions which are only bind to itself.
+  // arbitrary objects should be allowed in future.
+  OwnerTask* task_speech_obj_;
+  OwnerTask* task_gesture_obj_;
+  
   std::unique_ptr<rmp::ResourceManager<HumanContextInterface>> resource_manager_;
 
   std::string name_; 
   std::string log_class_, log_subsys_, log_group_;
+  Task* task_;
 
   ros::NodeHandle nh_;
   ros::Subscriber gesture_subscriber_;
   ros::Subscriber speech_subscriber_;
+
+  std::vector<temoto_2::LoadGesture> allocated_gestures_;
+  std::vector<temoto_2::LoadSpeech> allocated_speeches_;
 
   /**
    * @brief validateInterface()

@@ -31,15 +31,14 @@ int main(int argc, char** argv)
 //  sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("pocket_sphinx", "speech"));
  // sm.pkg_infos_.back()->addLaunchable({ "camera0.launch", "/usb_cam/image_raw" });
  
-  // Google's speech to text sensor
-  sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("google_speech_to_text", "text"));
-  sm.pkg_infos_.back()->addLaunchable({ "en-US.launch", "/stt/spoken_text" });
-
-
   
   // set up terminal as backup input if the above should fail
-  sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("temoto_2", "text"));
+  sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("temoto_2", "speech"));
   sm.pkg_infos_.back()->addLaunchable({ "test_2.launch", "/terminal_text" });
+
+  // Google's speech to text sensor
+  sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("google_speech_to_text", "speech"));
+  sm.pkg_infos_.back()->addLaunchable({ "en-US.launch", "/stt/spoken_text" });
 
   //use single threaded spinner for global callback queue
    ros::spin();

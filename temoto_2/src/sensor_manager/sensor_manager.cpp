@@ -104,10 +104,12 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
       findSensor(load_process_msg.request, res, req.sensor_type, req.package_name, req.executable);
   if (pkg_ptr)
   {
-    TEMOTO_INFO("SensorManager found a suitable sensor: '%s', '%s', '%s'",
+    TEMOTO_INFO("SensorManager found a suitable sensor: '%s', '%s', '%s', reliability %.3f",
                    load_process_msg.request.action.c_str(),
                    load_process_msg.request.package_name.c_str(),
-                   load_process_msg.request.executable.c_str());
+                   load_process_msg.request.executable.c_str(),
+                   pkg_ptr->getReliability()
+                   );
     if (resource_manager_.call<temoto_2::LoadProcess>(process_manager::srv_name::MANAGER,
                                                       process_manager::srv_name::SERVER,
                                                       load_process_msg))

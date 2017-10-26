@@ -89,6 +89,7 @@ void RvizManager::runRviz()
                                   prefix + " Failed to launch rviz plugin manager: Timeout reached.",
                                   ros::Time::now());
     }
+    TEMOTO_DEBUG("%s All rviz_plugin_manager services connected.", prefix.c_str());
   }
   else
   {

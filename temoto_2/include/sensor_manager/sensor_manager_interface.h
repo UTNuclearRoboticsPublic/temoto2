@@ -158,6 +158,8 @@ public:
         TEMOTO_DEBUG("Unloading");
         resource_manager_->unloadClientResource(sens_it->response.rmp.resource_id);
         TEMOTO_DEBUG("Asking the same sensor again");
+
+        // this call automatically updates the response in allocated sensors vec
         if (!resource_manager_->template call<temoto_2::LoadSensor>(
                 sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, *sens_it))
         {
@@ -166,7 +168,6 @@ public:
                                       ros::Time::now());
         }
 
-        // If the request was fulfilled, then add the srv to the list of allocated sensors
         if (sens_it->response.rmp.code == 0)
         {
           // @TODO: send somehow topic to whoever is using this thing
