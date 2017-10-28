@@ -4,6 +4,11 @@
 
 #include <sstream>
 
+/*
+ * A node that starts all context managers
+ */
+
+
 int main(int argc, char **argv)
 {
 

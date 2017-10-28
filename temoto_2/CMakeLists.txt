@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   genmsg
   rospy
   std_msgs
+  geometry_msgs
   class_loader
   cmake_modules
 	message_generation
@@ -42,7 +43,7 @@ add_service_files(
     # Process Manager
     process_manager/LoadProcess.srv
 
-	# Sensor Manager
+	  # Sensor Manager
     sensor_manager/ListDevices.srv
     sensor_manager/LoadSensor.srv
 
@@ -57,18 +58,24 @@ add_service_files(
     # Output Manager
     output_manager/rviz_manager/LoadRvizPlugin.srv
 
+    # Robot Manager
+    robot_manager/RobotLoad.srv
+    robot_manager/RobotPlan.srv
+    robot_manager/RobotExecute.srv
+
 	stopAllocatedServices.srv
 )
 
 generate_messages(
   DEPENDENCIES
   std_msgs
+  geometry_msgs
 )
 
 catkin_package(
   INCLUDE_DIRS include
   # LIBRARIES temoto_2
-  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime human_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs message_runtime human_msgs
   DEPENDS TinyXML
 )
 
@@ -87,7 +94,7 @@ include_directories(
 # # # # # # # # # # # #
 # CONTEXT MANAGER
 # # # # # # # # # # # #
-add_executable(context_manager src/context_manager/context_manager.cpp
+add_executable(context_manager src/context_manager/context_manager_node.cpp
 				src/context_manager/human_context/human_context.cpp)
 
 add_dependencies(context_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
@@ -138,6 +145,13 @@ add_executable(process_manager src/process_manager/process_manager.cpp
 add_dependencies(process_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(process_manager ${catkin_LIBRARIES} )
 
+# # # # # # # # # # # #
+# ROBOT MANAGER
+# # # # # # # # # # # #
+add_executable(robot_manager src/robot_manager/robot_manager.cpp
+	src/robot_manager/robot_manager_node.cpp src/package_info/package_info.cpp)
+add_dependencies(robot_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(robot_manager ${catkin_LIBRARIES} )
 
 
 # # # # # # # # # # # #   TESTING TOOLS   # # # # # # # # # # # # # # #
