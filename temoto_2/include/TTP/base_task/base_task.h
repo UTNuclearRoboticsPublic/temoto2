@@ -4,8 +4,8 @@
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef TASK_H
-#define TASK_H
+#ifndef BASE_TASK_H
+#define BASE_TASK_H
 
 #include <string>
 #include "TTP/task_descriptor.h"
@@ -18,7 +18,7 @@
 namespace TTP
 {
 
-class Task
+class BaseTask
 {
 friend class TaskManager;
 
@@ -66,7 +66,7 @@ public:
      * @brief ~Task Implemented virtual constructor. If it would not be implemented,
      * a magical undefined .so reference error will appear if the task is destructed
      */
-    virtual ~Task(){};
+    virtual ~BaseTask(){};
 
     /**
      * @brief error_handler_

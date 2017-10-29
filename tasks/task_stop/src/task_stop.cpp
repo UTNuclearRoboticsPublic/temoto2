@@ -9,7 +9,7 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // Things that have to be included
-#include "TTP/base_task/task.h"                 				 // The base task
+#include "TTP/base_task/base_task.h"                 				 // The base task
 #include <class_loader/class_loader.h>                   // Class loader includes
 
 // Task specific includes
@@ -18,7 +18,7 @@
 #include "temoto_2/StopTask.h"
 
 // First implementaton
-class TaskStop: public TTP::Task
+class TaskStop: public TTP::BaseTask
 {
 public:
 
@@ -192,4 +192,4 @@ ros::ServiceClient stop_task_client_;
 };
 
 // Dont forget that part, otherwise this class would not be loadable
-CLASS_LOADER_REGISTER_CLASS(TaskStop, TTP::Task);
+CLASS_LOADER_REGISTER_CLASS(TaskStop, TTP::BaseTask);

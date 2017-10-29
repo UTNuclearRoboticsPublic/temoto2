@@ -9,7 +9,7 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // Things that have to be included
-#include "TTP/base_task/task.h"                 				 // The base task
+#include "TTP/base_task/base_task.h"                 				 // The base task
 #include <class_loader/class_loader.h>                   // Class loader includes
 
 // Task specific includes
@@ -18,7 +18,7 @@
 #include "context_manager/human_context/human_context_interface.h"
 
 // First implementaton
-class TaskShow: public TTP::Task
+class TaskShow: public TTP::BaseTask
 {
 public:
 
@@ -130,4 +130,4 @@ bool print_ = true;
 };
 
 // Dont forget that part, otherwise this class would not be loadable
-CLASS_LOADER_REGISTER_CLASS(TaskShow, TTP::Task);
+CLASS_LOADER_REGISTER_CLASS(TaskShow, TTP::BaseTask);

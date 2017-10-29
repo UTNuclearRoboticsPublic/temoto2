@@ -206,7 +206,7 @@ std::string TaskDescriptorProcessor::getTaskName()
 TaskDescriptor TaskDescriptorProcessor::getTaskDescriptor()
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage("", class_name_, __func__);
+    std::string prefix = common::generateLogPrefix("", class_name_, __func__);
 
     // TaskDescriptorProcessor is a friend of TaskDescriptor
     TaskDescriptor task_descriptor;
@@ -236,7 +236,7 @@ TaskDescriptor TaskDescriptorProcessor::getTaskDescriptor()
 std::vector<TaskInterface> TaskDescriptorProcessor::getInterfaces()
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage("", class_name_, __func__);
+    std::string prefix = common::generateLogPrefix("", class_name_, __func__);
 
     std::vector<TaskInterface> task_interfaces;
 
@@ -278,7 +278,7 @@ std::vector<TaskInterface> TaskDescriptorProcessor::getInterfaces()
 TaskInterface TaskDescriptorProcessor::getInterface(TiXmlElement* interface_element)
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage("", class_name_, __func__);
+    std::string prefix = common::generateLogPrefix("", class_name_, __func__);
 
     TaskInterface task_interface;
 
@@ -331,7 +331,7 @@ TaskInterface TaskDescriptorProcessor::getInterface(TiXmlElement* interface_elem
 std::vector<Subject> TaskDescriptorProcessor::getIOSubjects(std::string direction, TiXmlElement* interface_element)
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage("", class_name_, __func__);
+    std::string prefix = common::generateLogPrefix("", class_name_, __func__);
 
     std::vector<Subject> io_subjects;
 
@@ -392,7 +392,7 @@ std::vector<Subject> TaskDescriptorProcessor::getIOSubjects(std::string directio
 Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage("", class_name_, __func__);
+    std::string prefix = common::generateLogPrefix("", class_name_, __func__);
 
     Subject subject;
 
@@ -479,7 +479,7 @@ Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
 std::vector<Data> TaskDescriptorProcessor::getData(TiXmlElement* data_element)
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage("", class_name_, __func__);
+    std::string prefix = common::generateLogPrefix("", class_name_, __func__);
 
     std::vector<Data> datas;
 

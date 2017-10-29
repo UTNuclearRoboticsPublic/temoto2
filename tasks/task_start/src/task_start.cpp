@@ -6,7 +6,7 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // Things that have to be included
-#include "TTP/base_task/task.h"                 				 // The base task
+#include "TTP/base_task/base_task.h"                 				 // The base task
 #include <class_loader/class_loader.h>                                   // Class loader includes
 
 // Task specific includes
@@ -15,7 +15,7 @@
 #include "context_manager/human_context/human_context_interface.h"
 
 // First implementaton
-class TaskStart: public TTP::Task
+class TaskStart: public TTP::BaseTask
 {
 public:
 
@@ -165,4 +165,4 @@ private:
 };
 
 // Dont forget that part, otherwise this class would not be loadable
-CLASS_LOADER_REGISTER_CLASS(TaskStart, TTP::Task);
+CLASS_LOADER_REGISTER_CLASS(TaskStart, TTP::BaseTask);

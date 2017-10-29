@@ -15,7 +15,7 @@ namespace TTP
 MetaLP::MetaLP(std::string language_models_dir)
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage("", class_name_, __func__);
+    std::string prefix = common::generateLogPrefix("", class_name_, __func__);
 
     // load POS-tagging model
     std::cout << prefix << " Loading tagging model ... " << std::flush;
@@ -31,7 +31,7 @@ MetaLP::MetaLP(std::string language_models_dir)
 TaskTree MetaLP::processText(std::string input_text)
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage("", class_name_, __func__);
+    std::string prefix = common::generateLogPrefix("", class_name_, __func__);
 
     // If the input string is empty then cause panic
     if (input_text.empty())

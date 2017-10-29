@@ -29,6 +29,7 @@
 #define TASK_ERROR_STREAM(...)                                                                     \
   ROS_LOG_STREAM(::ros::console::levels::Error, TASK_CONSOLE_PREFIX, __VA_ARGS__)
 
+
 class Task
 {
   friend class TaskHandler;

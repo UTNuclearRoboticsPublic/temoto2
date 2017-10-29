@@ -12,7 +12,7 @@ namespace TTP
 class TaskManager;
 
 // Forward declaration of base task
-class Task;
+class BaseTask;
 
 /**
  * @brief The TaskTreeNode class
@@ -52,7 +52,7 @@ private:
 
     TaskDescriptor task_descriptor_;
 
-    boost::shared_ptr<Task> task_pointer_;
+    boost::shared_ptr<BaseTask> task_pointer_;
 
     // TODO: This is a hack and it should not exist. But currently this is necessary
     // because flow graph internally updates the task descriptors and the updated

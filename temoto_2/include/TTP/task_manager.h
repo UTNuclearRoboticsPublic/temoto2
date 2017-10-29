@@ -10,7 +10,7 @@
 #include "common/temoto_id.h"
 #include "TTP/task_descriptor.h"
 #include "TTP/task_tree.h"
-#include "TTP/base_task/task.h"
+#include "TTP/base_task/base_task.h"
 
 #include "temoto_2/StopTask.h"
 #include "temoto_2/indexTasks.h"
@@ -133,7 +133,7 @@ private:
 
     const std::string description_file_ = "descriptor.xml";
 
-    std::vector<std::pair<boost::shared_ptr<TaskDescriptor>, boost::shared_ptr<Task>>> asynchronous_tasks_;
+    std::vector<std::pair<boost::shared_ptr<TaskDescriptor>, boost::shared_ptr<BaseTask>>> asynchronous_tasks_;
 
     /**
      * @brief n_

@@ -28,7 +28,7 @@ public:
      * Inherited methods that have to be implemented /START
      * * * * * * * * * * * * * * * * * * * * * * * * */
 
-TaskTemoto()
+TaskTemoto() : hci_(this)
 {
     // Do something here if needed
    // ROS_INFO("TaskTemoto constructed");
@@ -51,7 +51,7 @@ bool startTask()
     speechSpecifiers.push_back(speechSpecifier);
     */
 
-    hci_.initialize(this);
+    hci_.initialize();
     omi_.initialize(this);
     smi_.initialize(this);
 

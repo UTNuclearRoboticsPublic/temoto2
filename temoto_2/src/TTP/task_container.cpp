@@ -4,7 +4,7 @@ namespace TTP
 {
 
 // Constructor
-TaskContainer::TaskContainer(boost::shared_ptr<Task> task_pointer, boost::shared_ptr<TaskDescriptor> task_descriptor)
+TaskContainer::TaskContainer(boost::shared_ptr<BaseTask> task_pointer, boost::shared_ptr<TaskDescriptor> task_descriptor)
     : task_pointer_(task_pointer), task_descriptor_(task_descriptor)
 {}
 

@@ -94,7 +94,7 @@ std::vector <TaskDescriptor> TaskManager::findTaskFilesys(std::string task_to_fi
                                                           int search_depth)
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage("", this->class_name_, __func__);
+    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
     boost::filesystem::path current_dir (base_path);
     boost::filesystem::directory_iterator end_itr;
@@ -171,7 +171,7 @@ std::vector <TaskDescriptor> TaskManager::findTaskFilesys(std::string task_to_fi
 void TaskManager::indexTasks (boost::filesystem::directory_entry base_path, int search_depth)
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
 
     try
     {
@@ -247,7 +247,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
      */
 
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage("", class_name_, __func__);
+    std::string prefix = common::generateLogPrefix("", class_name_, __func__);
 
     // If its the root node (depth = 0), then dont look for a task
     if (depth == 0)
@@ -563,7 +563,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
 void TaskManager::loadAndInitializeTaskTree(TaskTreeNode& node)
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage("", class_name_, __func__);
+    std::string prefix = common::generateLogPrefix("", class_name_, __func__);
 
     // Task descriptor of the node
     TaskDescriptor& node_task_descriptor = node.getTaskDescriptor();
@@ -601,7 +601,7 @@ void TaskManager::loadAndInitializeTaskTree(TaskTreeNode& node)
 void TaskManager::loadTask(TaskDescriptor& task_descriptor)
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
 
     /*
      * Create an empty vector for storing the class names (currently a task
@@ -617,7 +617,7 @@ void TaskManager::loadTask(TaskDescriptor& task_descriptor)
         // Start loading a task library
         ROS_DEBUG("Loading class from path: %s", path_to_lib.c_str());
         class_loader_->loadLibrary(path_to_lib);
-        classes = class_loader_->getAvailableClassesForLibrary<Task>(path_to_lib);
+        classes = class_loader_->getAvailableClassesForLibrary<BaseTask>(path_to_lib);
 
         // Done loading
         ROS_DEBUG( "%s Loaded %lu classes from %s", prefix.c_str(), classes.size(), path_to_lib.c_str() );
@@ -646,7 +646,7 @@ void TaskManager::loadTask(TaskDescriptor& task_descriptor)
 void TaskManager::instantiateTask(TaskTreeNode& node)
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
 
     TaskDescriptor& task_descriptor = node.getTaskDescriptor();
 
@@ -664,7 +664,7 @@ void TaskManager::instantiateTask(TaskTreeNode& node)
 
     // Check if there is a class with this name
     bool task_class_found = false;
-    std::vector<std::string> loaded_classes = class_loader_->getAvailableClasses<Task>();
+    std::vector<std::string> loaded_classes = class_loader_->getAvailableClasses<BaseTask>();
 
     for (std::string loaded_class : loaded_classes)
     {
@@ -690,7 +690,7 @@ void TaskManager::instantiateTask(TaskTreeNode& node)
     {
         // TODO: DO NOT ACCESS PRIVATE MEMBERS DIRECLY ,ie., UNFRIEND THE TASK MANAGER .. or should I?
         ROS_DEBUG( "%s instatiating task: %s", prefix.c_str(), task_class_name.c_str());
-        node.task_pointer_ = class_loader_->createInstance<Task>(task_class_name);
+        node.task_pointer_ = class_loader_->createInstance<BaseTask>(task_class_name);
         node.task_pointer_->task_package_name_ = task_descriptor.getTaskPackageName();
 
         // TODO: This is a hack and it should not exist. But currently this is necessary
@@ -787,7 +787,7 @@ bool TaskManager::stopTaskCallback( temoto_2::StopTask::Request& req,
                                     temoto_2::StopTask::Response& res)
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
 
     ROS_INFO( "%s Received a request to stop task. Action = '%s'; what = '%s'"
                , prefix.c_str(), req.action.c_str(), req.what.c_str());
@@ -821,7 +821,7 @@ bool TaskManager::stopTaskCallback( temoto_2::StopTask::Request& req,
 void TaskManager::stopTask(std::string action, std::string what)
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
 
     bool task_stopped = false;
 
@@ -958,7 +958,7 @@ void TaskManager::stopTask(std::string action, std::string what)
 //                                      temoto_2::indexTasks::Response& res)
 //{
 //    // Name of the method, used for making debugging a bit simpler
-//    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+//    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
 
 //    ROS_DEBUG( "%s Received a request to index tasks at '%s'", prefix.c_str(), req.directory.c_str());
 //    try
@@ -993,7 +993,7 @@ void TaskManager::stopTask(std::string action, std::string what)
 //void TaskManager::unloadTaskLib(std::string path_to_lib)
 //{
 //    // Name of the method, used for making debugging a bit simpler
-//    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+//    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
 
 //    try
 //    {
@@ -1023,7 +1023,7 @@ void TaskManager::stopTask(std::string action, std::string what)
 //void TaskManager::startTask(RunningTask& task, std::vector<boost::any> arguments)
 //{
 //    // Name of the method, used for making debugging a bit simpler
-//    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+//    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
 
 //    try
 //    {
@@ -1050,7 +1050,7 @@ void TaskManager::stopTask(std::string action, std::string what)
 //bool TaskManager::executeTask(TaskDescriptor task_info, std::vector<boost::any> arguments)
 //{
 //    // Name of the method, used for making debugging a bit simpler
-//    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+//    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
 
 //    bool start_attempted = false;
 
@@ -1117,7 +1117,7 @@ void TaskManager::stopTask(std::string action, std::string what)
 //void TaskManager::stopTaskByID( TemotoID::ID task_id )
 //{
 //    // Name of the method, used for making debugging a bit simpler
-//    std::string prefix = formatMessage( system_prefix_, this->class_name_, __func__);
+//    std::string prefix = common::generateLogPrefix( system_prefix_, this->class_name_, __func__);
 
 //    try
 //    {
@@ -1178,7 +1178,7 @@ void TaskManager::stopTask(std::string action, std::string what)
 //void TaskManager::stopTaskByName( std::string task_name )
 //{
 //    // Name of the method, used for making debugging a bit simpler
-//    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+//    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
 
 //    try
 //    {
@@ -1242,7 +1242,7 @@ void TaskManager::stopTask(std::string action, std::string what)
 //void TaskManager::stopTaskMsgCallback( temoto_2::StopTaskMsg msg )
 //{
 //    // Name of the method, used for making debugging a bit simpler
-//    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+//    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
 
 //    ROS_DEBUG( "%s Received a request to stop a task (TID = %ld)", prefix.c_str(), msg.task_id);
 //    try

@@ -16,7 +16,6 @@
 #include "rmp/resource_manager.h"
 #include <vector>
 
-
 template <class OwnerTask>
 class HumanContextInterface
 {
