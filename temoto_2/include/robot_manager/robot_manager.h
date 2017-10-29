@@ -7,6 +7,7 @@
 #include "process_manager/process_manager_services.h"
 #include "rmp/resource_manager.h"
 #include "package_info/package_info.h"
+#include <moveit/move_group_interface/move_group_interface.h>
 #include <vector>
 
 namespace robot_manager
@@ -51,6 +52,8 @@ public:
    */
 //  bool setTargetCb(temoto_2::RobotSetTarget::Request& req, temoto_2::RobotSetTarget::Response& res);
 //
+  bool getRvizConfigCb(temoto_2::RobotGetRvizConfig::Request& req, temoto_2::RobotGetRvizConfig::Response& res);
+
   const std::string& getName() const
   {
     return log_subsys_;
@@ -72,6 +75,7 @@ private:
   ros::ServiceServer server_load_;
   ros::ServiceServer server_plan_;
   ros::ServiceServer server_exec_;
+  ros::ServiceServer server_get_rviz_cfg_;
 //  ros::ServiceServer server_set_target_;
 
   // store active 

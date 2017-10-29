@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+
+<task name="robot" >
+
+  <in>
+    <arg argtype="void" value=""/>
+  </in>
+  
+  <in>
+    <arg argtype="string" value="plan,execute"/>
+  </in>
+
+  <out>
+    <arg argtype="void" value=""/>
+  </out>
+
+</task>

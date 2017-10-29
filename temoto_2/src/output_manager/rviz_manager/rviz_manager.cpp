@@ -33,8 +33,8 @@ RvizManager::RvizManager() : resource_manager_(srv_name::MANAGER, this)
   plugin_info_handler_.plugins_.emplace_back("marker", "rviz/Marker");
   plugin_info_handler_.plugins_.emplace_back("camera", "rviz_textured_sphere/SphereDisplay",
                                              "Temoto camera");
-  plugin_info_handler_.plugins_.emplace_back("image", "rviz/Image", "Temoto Image", "sensor_msgs/"
-                                                                                    "Image");
+  plugin_info_handler_.plugins_.emplace_back("image", "rviz/Image", "Temoto Image", "sensor_msgs/Image");
+  plugin_info_handler_.plugins_.emplace_back("robot", "moveit_rviz_plugin/MotionPlanning", "Moveit Motion Planning", "");
 }
 
 /* * * * * * * * * * * * * * * * *
@@ -302,6 +302,7 @@ void RvizManager::LoadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
       // In presence of config, send it to rviz_plugin_manager
       if (req.config != "")
       {
+        //ros::Duration(10).sleep();
         rviz_plugin_manager::PluginSetConfig set_plugin_config_srv;
         set_plugin_config_srv.request.plugin_uid = load_plugin_srv.response.plugin_uid;
         set_plugin_config_srv.request.config = req.config;

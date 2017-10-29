@@ -1,5 +1,8 @@
 #include "robot_manager/robot_manager.h"
 #include "process_manager/process_manager_services.h"
+//#include "rviz/QMap.h"
+//#include "rviz/yaml_config_reader.h"
+//#include "rviz/config.h"
 
 namespace robot_manager
 {
@@ -15,8 +18,10 @@ RobotManager::RobotManager() : resource_manager_(srv_name::MANAGER, this)
   server_load_ = nh_.advertiseService(robot_manager::srv_name::SERVER_LOAD, &RobotManager::loadCb, this);
   server_plan_ = nh_.advertiseService(robot_manager::srv_name::SERVER_PLAN, &RobotManager::planCb, this);
   server_exec_ = nh_.advertiseService(robot_manager::srv_name::SERVER_EXECUTE, &RobotManager::execCb, this);
+  server_exec_ = nh_.advertiseService(robot_manager::srv_name::SERVER_GET_RVIZ_CONFIG, &RobotManager::getRvizConfigCb, this);
 //  server_set_target_ = nh_.advertiseServer<temoto_2::RobotSetTarget>(robot_manager::srv_name::SERVER_SET_TARGET, &RobotManager::setTargetCb, this);
 
+  
   TEMOTO_INFO("Robot manager is ready.");
 }
 
@@ -87,6 +92,34 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req,
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   TEMOTO_DEBUG("%s PLANNING...", prefix.c_str());
+
+  moveit::planning_interface::MoveGroupInterface move_group_interface_ =
+      moveit::planning_interface::MoveGroupInterface("manipulator");
+
+  geometry_msgs::Pose target_pose1;
+  target_pose1.orientation.w = 1.0;
+  target_pose1.position.x = 0.28;
+  target_pose1.position.y = -0.7;
+  target_pose1.position.z = 1.0;
+ // move_group_interface_.setPoseTarget(target_pose1);
+  move_group_interface_.setPlannerId("RRTConnectkConfigDefault");
+  move_group_interface_.setRandomTarget();
+  // Now, we call the planner to compute the plan and visualize it.
+  // Note that we are just planning, not asking move_group
+  // to actually move the robot.
+  ROS_INFO("[move_robot/main] Planning frame: %s", move_group_interface_.getPlanningFrame().c_str());
+  ROS_INFO("[move_robot/main] End effector link: %s", move_group_interface_.getEndEffectorLink().c_str());
+  ROS_INFO("[move_robot/main] End effector: %s", move_group_interface_.getEndEffector().c_str());
+  ROS_INFO("[move_robot/main] Goal position tolerance is: %.6f", move_group_interface_.getGoalPositionTolerance());
+  ROS_INFO("[move_robot/main] Goal orientation tolerance is: %.6f", move_group_interface_.getGoalOrientationTolerance());
+  ROS_INFO("[move_robot/main] Goal joint tolerance is: %.6f", move_group_interface_.getGoalJointTolerance());
+
+  moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+
+  bool success = move_group_interface_.plan(my_plan);
+
+  TEMOTO_DEBUG("Visualizing plan 1 (pose goal) %s", success ? "" : "FAILED");
+
   return true;
 }
 
@@ -95,6 +128,19 @@ bool RobotManager::execCb(temoto_2::RobotExecute::Request& req,
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   TEMOTO_INFO("%s EXECUTING...", prefix.c_str());
+  return true;
+}
+
+bool RobotManager::getRvizConfigCb(temoto_2::RobotGetRvizConfig::Request& req,
+                                temoto_2::RobotGetRvizConfig::Response& res)
+{
+  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  TEMOTO_INFO("%s GETTING CONFIG...", prefix.c_str());
+
+  std::string  rviz_conf = "{Planning Request: {Planning Group: manipulator}}";
+
+  res.config = rviz_conf;
+  res.code = 0;
   return true;
 }
 

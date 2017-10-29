@@ -9,4 +9,6 @@
 
   <node name="output_manager" pkg="temoto_2" type="output_manager" output="screen" />
 
+  <node name="robot_manager" pkg="temoto_2" type="robot_manager" output="screen" />
+
 </launch>

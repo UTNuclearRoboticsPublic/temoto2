@@ -14,10 +14,13 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
 	message_generation
   rviz_plugin_manager
+  moveit_ros_planning_interface
+
 )
 
 find_package(TinyXML REQUIRED)
 find_package(TBB REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 # THE FOLLOWING FILES CANNOT BE PLACED UNDER SUBDIRS!
 add_message_files(FILES 
@@ -62,6 +65,7 @@ add_service_files(
     robot_manager/RobotLoad.srv
     robot_manager/RobotPlan.srv
     robot_manager/RobotExecute.srv
+    robot_manager/RobotGetRvizConfig.srv
 
 	stopAllocatedServices.srv
 )
@@ -76,10 +80,12 @@ catkin_package(
   INCLUDE_DIRS include
   # LIBRARIES temoto_2
   CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs message_runtime human_msgs
-  DEPENDS TinyXML
+  DEPENDS 
+    TinyXML
+    EIGEN3
 )
 
-include_directories(SYSTEM ${Boost_INCLUDE_DIR})
+include_directories(SYSTEM ${Boost_INCLUDE_DIR} ${EIGEN_INCLUDE_DIRS})
 
 include_directories(
   include/
