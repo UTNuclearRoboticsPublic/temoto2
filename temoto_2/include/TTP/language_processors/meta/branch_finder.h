@@ -45,6 +45,10 @@ class branch_finder : public const_visitor<void>
 
     // String that contains info about who/what was addressed
     std::string addressable_ = "";
+
+    // TODO: THIS IS A HACK FOR MAKING STOPPING TASKS POSSIBLE
+    unsigned int verb_count_ = 0;
+    bool next_verb_is_stopped_ = false;
 };
 
 

@@ -4,8 +4,8 @@ namespace TTP
 {
 
 // Constructor
-TaskContainer::TaskContainer(boost::shared_ptr<Task> task_pointer,TaskInterface task_interface)
-    : task_pointer_(task_pointer), task_interface_(task_interface)
+TaskContainer::TaskContainer(boost::shared_ptr<Task> task_pointer, boost::shared_ptr<TaskDescriptor> task_descriptor)
+    : task_pointer_(task_pointer), task_descriptor_(task_descriptor)
 {}
 
 Subjects TaskContainer::operator()(Subjects input_subjects)
@@ -17,7 +17,7 @@ Subjects TaskContainer::operator()(Subjects input_subjects)
      * Check for incomplete local subjects. Get the missing information for the
      * incomplete subjects from input subjects
      */
-    for (auto& l_sub : task_interface_.input_subjects_)
+    for (auto& l_sub : task_descriptor_->getFirstInputSubjects())
     {
         if (l_sub.is_complete_)
         {
@@ -48,7 +48,7 @@ Subjects TaskContainer::operator()(Subjects input_subjects)
 
     // Start the task
     std::cout << "starting a task ...\n";
-    task_pointer_->startTask(task_interface_);
+    task_pointer_->startTask(task_descriptor_->getFirstInterface());
 
     // Return the solution
     return task_pointer_->getSolution();

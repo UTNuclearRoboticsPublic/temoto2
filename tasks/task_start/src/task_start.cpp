@@ -56,7 +56,7 @@ bool startTask(TTP::TaskInterface task_interface)
  */
 void startInterface_0()
 {
-    // v AUTO-GENERATED, DO NOT MODIFY v
+    // < AUTO-GENERATED, DO NOT MODIFY >
 
     // Extracting input subjects
     TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
@@ -66,30 +66,26 @@ void startInterface_0()
     std::string  where_0_word_out;
     float        where_0_data_0_out;
 
-    // ^ AUTO-GENERATED, DO NOT MODIFY ^
+    // </ AUTO-GENERATED, DO NOT MODIFY >
 
-// < USER CODE ---------------------------------------------------------
+// --------------------------------< USER CODE >-------------------------------
 
     std::cout << "  TaskStart got: " << what_0_word_in << std::endl;
     where_0_word_out = what_0_word_in + "land";
     where_0_data_0_out = 12.345;
 
-// > USER CODE ---------------------------------------------------------
+// --------------------------------</ USER CODE >-------------------------------
 
-    // v AUTO-GENERATED, DO NOT MODIFY v
-    try
-    {
-        TTP::Subject where_0_out("where", where_0_word_out);
-        where_0_out.markComplete();
+    // < AUTO-GENERATED, DO NOT MODIFY >
 
-        where_0_out.data_.emplace_back("number", boost::any_cast<float>(where_0_data_0_out));
-        output_subjects.push_back(where_0_out);
-    }
-    catch(...)
-    {
-        std::cout << "BOOOOOOOOOM\n";
-    }
-    // ^ AUTO-GENERATED, DO NOT MODIFY ^
+    TTP::Subject where_0_out("where", where_0_word_out);
+    where_0_out.markComplete();
+
+    where_0_out.data_.emplace_back("number", boost::any_cast<float>(where_0_data_0_out));
+    output_subjects.push_back(where_0_out);
+
+    // </ AUTO-GENERATED, DO NOT MODIFY >
+
 }
 
 /*
@@ -97,7 +93,7 @@ void startInterface_0()
  */
 void startInterface_1()
 {
-    // < AUTO-GENERATED, DO NOT MODIFY
+    // < AUTO-GENERATED, DO NOT MODIFY >
 
     // Extracting input subjects
     TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
@@ -110,9 +106,9 @@ void startInterface_1()
     std::string  numeric_0_word_out;
     float        numeric_0_data_0_out;
 
-    // > AUTO-GENERATED, DO NOT MODIFY
+    // </ AUTO-GENERATED, DO NOT MODIFY >
 
-// < USER CODE ---------------------------------------------------------
+// -------------------------------< USER CODE >-------------------------------
 
     std::cout << "  TaskStart got: " << what_0_word_in << std::endl;
 
@@ -122,9 +118,9 @@ void startInterface_1()
     numeric_0_word_out = "ISO";
     numeric_0_data_0_out = 1500;
 
-// > USER CODE ---------------------------------------------------------
+// -------------------------------</ USER CODE >-------------------------------
 
-    // < AUTO-GENERATED, DO NOT MODIFY
+    // < AUTO-GENERATED, DO NOT MODIFY >
 
     TTP::Subject what_0_out("what", what_0_word_out);
     what_0_out.markComplete();
@@ -136,7 +132,7 @@ void startInterface_1()
     numeric_0_out.data_.emplace_back("number", boost::any_cast<float>(numeric_0_data_0_out));
     output_subjects.push_back(numeric_0_out);
 
-    // > AUTO-GENERATED, DO NOT MODIFY
+    // </ AUTO-GENERATED, DO NOT MODIFY >
 }
 
 std::string getStatus()

@@ -17,14 +17,6 @@ find_package(TinyXML REQUIRED)
 find_package(TBB REQUIRED)
 find_package(MeTA REQUIRED)
 
-#message(appi appi APPI)
-#message(-----------------------)
-
-#get_cmake_property(_variableNames VARIABLES)
-#foreach (_variableName ${_variableNames})
-#    message(STATUS "${_variableName}=${${_variableName}}")
-#endforeach()
-
 add_message_files(FILES 
 	speechSpecifier.msg
 	gestureSpecifier.msg
@@ -40,7 +32,8 @@ add_service_files(
 	startSensorRequest.srv
 	stopSensorRequest.srv
 	stopAllocatedServices.srv
-	task_handler/stopTask.srv
+	task_handler/stopTask.srv # OLD
+  TTP/task_manager/StopTask.srv
 	task_handler/indexTasks.srv
 	context_manager/human_context/getGestures.srv
   context_manager/human_context/getSpeech.srv

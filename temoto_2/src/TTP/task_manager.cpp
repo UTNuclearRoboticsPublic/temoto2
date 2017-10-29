@@ -1,8 +1,11 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *
- *          MASSIVE TODO: * CATCH ALL EXEPTIONS AND RETHROW AS
- *                          TEMOTO ERROR !!!
- *                        * Start using ros cpp naming conventions
+ *     MASSIVE TODO: * CATCH ALL EXEPTIONS AND RETHROW AS
+ *                     TEMOTO ERROR !!!
+ *                   * Start using ros cpp naming conventions
+ *                   * Reformat the commented debug messages into
+ *                     temoto debug log messages
+ *
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -47,7 +50,7 @@ TaskManager::TaskManager (std::string system_prefix)
     class_loader_ = new class_loader::MultiLibraryClassLoader(false);
 
     // Start the servers
-    //stop_task_server_ = n_.advertiseService (system_prefix_ + "/stop_task", &TaskManager::stopTaskCallback, this);
+    stop_task_server_ = n_.advertiseService (system_prefix_ + "/stop_task", &TaskManager::stopTaskCallback, this);
     //index_tasks_server_ = n_.advertiseService (system_prefix_ + "/index_tasks", &TaskManager::indexTasksCallback, this);
 
     // Start subscribers
@@ -215,6 +218,8 @@ unsigned int findNonstrictMatch(const std::vector<Subject>& complete_subjects,
             }
 
             subject_match = true;
+
+            // The more data the complete subject has, the bigger the score
             score += complete_subjects_c[i].data_.size();
             complete_subjects_c.erase(complete_subjects_c.begin() + i);
             break;
@@ -304,6 +309,12 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
                 // of the parent subjects into the current incomplete subject
                 if (n_sub.type_ == p_sub.type_)
                 {
+                    /*
+                     * TODO: This may create complications at some point, since if parent contains
+                     * too much information, e.g., parent has data but the intended child
+                     * does not need that, it will get the data regardless. Now if the child
+                     * does not have such input interface, its doomed.
+                     */
                     n_sub = p_sub;
                 }
             }
@@ -326,7 +337,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
     }
 
     //std::cout << "[" << node_action << "] has " << incomplete_subjects.size() << " incomplete subjects and these are:\n";
-    for (auto& i_s : incomplete_subjects){std::cout << i_s;}
+    //for (auto& i_s : incomplete_subjects){std::cout << i_s;}
 
     /*
      * If there were any incomplete subjects then ...
@@ -376,8 +387,8 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
          */
         for (auto& task_descriptor : tasks_indexed_)
         {
-           // std::cout << "[" << node_action << "]" << " looking at '" << task_descriptor.getAction() << "'\n";
-           // std::cout << "-------------------\n";
+            //std::cout << "[" << node_action << "]" << " looking at '" << task_descriptor.getAction() << "'\n";
+            //std::cout << "-------------------\n";
 
             // Look for the task with the same action type
             if (task_descriptor.getAction() != node_action)
@@ -394,10 +405,10 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
                 // ... look for STRICT i-subjects match
                 if (interface.input_subjects_ != node_subjects)
                 {
-                    //std::cout << "[" << node_action << "]" << " input subjects do not match\n";
-                    //std::cout << "[" << node_action << "]" << " and we are talking about:\n";
-                    //std::cout << interface.input_subjects_ << "and\n";
-                    //std::cout << node_subjects << "\n";
+//                    std::cout << "[" << node_action << "]" << " input subjects do not match\n";
+//                    std::cout << "[" << node_action << "]" << " and we are talking about:\n";
+//                    std::cout << interface.input_subjects_ << "and\n";
+//                    std::cout << node_subjects << "\n";
 
                     continue;
                 }
@@ -469,6 +480,10 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
                 // ... look for STRICT input subjects match
                 if (interface.input_subjects_ != node_subjects)
                 {
+//                    std::cout << "[" << node_action << "]" << " input subjects do not match\n";
+//                    std::cout << "[" << node_action << "]" << " and we are talking about:\n";
+//                    std::cout << interface.input_subjects_ << "and\n";
+//                    std::cout << node_subjects << "\n";
                     continue;
                 }
 
@@ -527,6 +542,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
      * Get a bunch of information out of the prime candidate task
      */
     node_interface.id_ = cand_task.ci_.inf_.id_;
+    node_interface.type_ = cand_task.ci_.inf_.type_;
     node_interface.output_subjects_ = cand_task.ci_.inf_.output_subjects_;
     node_task_descriptor.task_package_name_ = cand_task.td_.task_package_name_;
     node_task_descriptor.task_lib_path_ = cand_task.td_.task_lib_path_;
@@ -677,6 +693,18 @@ void TaskManager::instantiateTask(TaskTreeNode& node)
         node.task_pointer_ = class_loader_->createInstance<Task>(task_class_name);
         node.task_pointer_->task_package_name_ = task_descriptor.getTaskPackageName();
 
+        // TODO: This is a hack and it should not exist. But currently this is necessary
+        // because flow graph internally updates the task descriptors and the updated
+        // task descriptors are needed for stopping the tasks correctly
+        node.task_descriptor_ptr_ = boost::make_shared<TaskDescriptor>(task_descriptor);
+
+        // Check if it is a synchronous or asynchronous task
+        if (task_descriptor.getFirstInterface().type_ == "asynchronous")
+        {
+            std::cout << "This is an async task, making a copy of the shared ptr\n";
+            asynchronous_tasks_.push_back( {node.task_descriptor_ptr_, node.task_pointer_} );
+        }
+
         return;
     }
     catch(class_loader::ClassLoaderException& e)
@@ -697,7 +725,8 @@ void TaskManager::instantiateTask(TaskTreeNode& node)
 
 void TaskManager::makeFlowGraph(TaskTreeNode& node, tbb::flow::graph& flow_graph)
 {
-    TaskDescriptor& node_task_descriptor = node.getTaskDescriptor();
+    TaskDescriptor node_task_descriptor = node.getTaskDescriptor();
+    boost::shared_ptr<TaskDescriptor> node_task_descriptor_ptr = node.task_descriptor_ptr_;
 
     // If its the root node, then create the start node
     if (node_task_descriptor.getAction() == "ROOT")
@@ -711,7 +740,7 @@ void TaskManager::makeFlowGraph(TaskTreeNode& node, tbb::flow::graph& flow_graph
         node.task_fgn_ = std::make_unique< tbb::flow::function_node<Subjects, Subjects> >
                 (flow_graph
                  , tbb::flow::serial
-                 , TaskContainer(node.task_pointer_, node_task_descriptor.getInterfaces()[0]));
+                 , TaskContainer(node.task_pointer_, node_task_descriptor_ptr));
     }
 
     // Do the same with child nodes
@@ -748,6 +777,165 @@ void TaskManager::connectFlowGraph(TaskTreeNode& node)
         }
     }
 }
+
+
+/* * * * * * * * *
+ *  STOP TASK SERVICE CALLBACK
+ * * * * * * * * */
+
+bool TaskManager::stopTaskCallback( temoto_2::StopTask::Request& req,
+                                    temoto_2::StopTask::Response& res)
+{
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+
+    ROS_INFO( "%s Received a request to stop task. Action = '%s'; what = '%s'"
+               , prefix.c_str(), req.action.c_str(), req.what.c_str());
+
+    try
+    {
+        stopTask(req.action, req.what);
+
+        res.code = 0;
+        res.message = "task stopped";
+    }
+
+    catch( error::ErrorStackUtil & e )
+    {
+        // Append the error to local ErrorStack
+        e.forward( prefix );
+        error_handler_.append(e);
+
+        res.code = 1;
+        res.message = "failed to stop the task";
+    }
+
+    return true;
+}
+
+
+/* * * * * * * * *
+ *  STOP TASK
+ * * * * * * * * */
+
+void TaskManager::stopTask(std::string action, std::string what)
+{
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
+
+    bool task_stopped = false;
+
+    std::cout << prefix << " No of asynchronous tasks: " << asynchronous_tasks_.size() << std::endl;
+
+    /*
+     * Stop by action and what
+     */
+    if( !action.empty() && !what.empty() )
+    {
+        //std::cout << prefix << "Stopping the task based on action and what\n";
+        // Look for the task
+        for (auto task_it = asynchronous_tasks_.begin();
+             task_it != asynchronous_tasks_.end();
+             ++task_it)
+        {
+            //std::cout << prefix << "loop start\n";
+            //std::cout << "looking at: " << task_it->first->getAction() << std::endl;
+            // Look for the action
+            if (task_it->first->getAction() != action)
+            {
+                continue;
+            }
+            //std::cout << prefix << "got action\n";
+            // Look for the what
+            Subjects subjects = task_it->first->getFirstInputSubjects(); // copy
+            Subject subject = getSubjectByType("what", subjects);
+            //std::cout << prefix << "got what with word size of:" << subject.words_.size() << std::endl;
+            if (subject.words_.empty() || subject.words_[0] != what)
+            {
+                continue;
+            }
+
+            //std::cout << prefix << "Fond the task, stopping it\n";
+            // Remove the task
+            asynchronous_tasks_.erase(task_it);
+            task_stopped = true;
+            break;
+        }
+    }
+
+    /*
+     * Stop by action
+     */
+    else if( !action.empty() )
+    {
+        std::cout << prefix << "Stopping the task based on action\n";
+        // Look for the task
+        for (auto task_it = asynchronous_tasks_.begin();
+             task_it != asynchronous_tasks_.end();
+             ++task_it)
+        {
+            // Look for the action
+            if (task_it->first->getAction() != action)
+            {
+                continue;
+            }
+
+            std::cout << prefix << "Fond the task, stopping it\n";
+            // Remove the task
+            asynchronous_tasks_.erase(task_it);
+            task_stopped = true;
+            break;
+        }
+    }
+
+    /*
+     * Stop by what
+     * In this case everything that corresponds to what is closed
+     * ex: "start THE CAMERA and show IT (the camera) in rviz" - both tasks are closed
+     */
+    else if( !what.empty() )
+    {
+        std::cout << prefix << "Stopping the task based on what\n";
+        // Look for the task
+        for (auto task_it = asynchronous_tasks_.begin();
+             task_it != asynchronous_tasks_.end(); /* empty */)
+        {
+            // Look for the what
+            Subjects subjects = task_it->first->getFirstInputSubjects(); // copy
+            Subject subject = getSubjectByType("what", subjects);
+            if (subject.words_.empty() || subject.words_[0] != what)
+            {
+                task_it++;
+                continue;
+            }
+
+            std::cout << prefix << "Fond the task, stopping it\n";
+            // Remove the task
+            asynchronous_tasks_.erase(task_it);
+            task_stopped = true;
+        }
+    }
+
+    if (!task_stopped)
+    {
+        // If nothing was specified, then throw error
+        throw error::ErrorStackUtil( TTPErr::UNSPECIFIED_TASK,
+                                     error::Subsystem::CORE,
+                                     error::Urgency::MEDIUM,
+                                     prefix + "Task 'action' and 'what' unspecified.",
+                                     ros::Time::now() );
+    }
+}
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1043,78 +1231,9 @@ void TaskManager::connectFlowGraph(TaskTreeNode& node)
 //}
 
 
-///* * * * * * * * *
-// *  STOP TASK
-// * * * * * * * * */
 
-//void TaskManager::stopTask( std::string task_name, TemotoID::ID task_id)
-//{
-//    // Name of the method, used for making debugging a bit simpler
-//    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
 
-//    try
-//    {
-//        // If task_id is specified, then stop the task by ID
-//        if( task_id != TemotoID::UNASSIGNED_ID )
-//        {
-//            stopTaskByID( task_id );
-//            return;
-//        }
 
-//        // If ID was not specified, but name was, then stop the task by name
-//        else if( task_name != "" )
-//        {
-//            stopTaskByName( task_name );
-//            return;
-//        }
-//    }
-//    catch( error::ErrorStackUtil & e )
-//    {
-//        // Rethrow the exception
-//        e.forward( prefix );
-//        throw e;
-//    }
-
-//    // If nothing was specified, then throw error
-//    throw error::ErrorStackUtil( TTPErr::UNSPECIFIED_TASK,
-//                                 error::Subsystem::CORE,
-//                                 error::Urgency::MEDIUM,
-//                                 prefix + "Task name and task ID unspecified.",
-//                                 ros::Time::now() );
-//}
-
-///* * * * * * * * *
-// *  STOP TASK SERVICE CALLBACK
-// * * * * * * * * */
-
-//bool TaskManager::stopTaskCallback( temoto_2::stopTask::Request& req,
-//                                    temoto_2::stopTask::Response& res)
-//{
-//    // Name of the method, used for making debugging a bit simpler
-//    std::string prefix = formatMessage(system_prefix_, this->class_name_, __func__);
-
-//    ROS_DEBUG( "%s Received a request to stop task '%s'", prefix.c_str(), req.name.c_str());
-
-//    try
-//    {
-//        stopTask(req.name, req.task_id);
-
-//        res.code = 0;
-//        res.message = "task stopped";
-//    }
-
-//    catch( error::ErrorStackUtil & e )
-//    {
-//        // Append the error to local ErrorStack
-//        e.forward( prefix );
-//        error_handler_.append(e);
-
-//        res.code = 1;
-//        res.message = "failed to stop the task";
-//    }
-
-//    return true;
-//}
 
 ///* * * * * * * * *
 // *  stopTaskMsgCallback

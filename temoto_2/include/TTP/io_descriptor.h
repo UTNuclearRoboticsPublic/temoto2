@@ -46,7 +46,8 @@ const std::vector<std::string> valid_datatypes = {"topic",
 // Valid subjects
 const std::vector<std::string> valid_subjects = {"what",
                                                  "where",
-                                                 "numeric"};
+                                                 "numeric",
+                                                 "action"};
 
 /**
  * @brief The Subject struct

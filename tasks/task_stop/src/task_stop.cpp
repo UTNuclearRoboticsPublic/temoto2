@@ -15,10 +15,10 @@
 // Task specific includes
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-#include "context_manager/human_context/human_context_interface.h"
+#include "temoto_2/StopTask.h"
 
 // First implementaton
-class TaskShow: public TTP::Task
+class TaskStop: public TTP::Task
 {
 public:
 
@@ -26,10 +26,11 @@ public:
  * Inherited methods that have to be implemented /START
  * * * * * * * * * * * * * * * * * * * * * * * * */
 
-TaskShow()
+TaskStop()
 {
     // Do something here if needed
-    ROS_INFO("TaskShow constructed");
+    stop_task_client_ = n_.serviceClient<temoto_2::StopTask>("core/stop_task");
+    ROS_INFO("TaskStop constructed");
 }
 
 // startTask with arguments
@@ -43,6 +44,11 @@ bool startTask(TTP::TaskInterface task_interface)
     // Interface 0
     case 0:
         startInterface_0();
+    break;
+
+    // Interface 0
+    case 1:
+        startInterface_1();
     break;
     }
 
@@ -58,24 +64,37 @@ void startInterface_0()
     // < AUTO-GENERATED, DO NOT MODIFY >
 
     // Extracting input subjects
+    TTP::Subject action_0_in = TTP::getSubjectByType("action", input_subjects);
+    std::string  action_0_word_in = action_0_in.words_[0];
+
     TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
     std::string  what_0_word_in = what_0_in.words_[0];
-    std::string  what_0_data_0_in = boost::any_cast<std::string>(what_0_in.data_[0].value);
-
-    TTP::Subject where_0_in = TTP::getSubjectByType("where", input_subjects);
-    std::string  where_0_word_in = where_0_in.words_[0];
 
     // Creating output variables
     std::string  what_0_word_out;
-    std::string  what_0_data_0_out;
 
     // </ AUTO-GENERATED, DO NOT MODIFY >
 
 // --------------------------------< USER CODE >-------------------------------
 
-    std::cout << "  TaskShow: Showing '" << what_0_word_in << "' in '" << where_0_word_in  <<  "' @ '" << what_0_data_0_in << "' topic\n";
+    std::cout << "  TaskStop: Stopping '" << action_0_word_in << "' with arg '" << what_0_word_in << "'\n";
     what_0_word_out = what_0_word_in;
-    what_0_data_0_out = what_0_data_0_in;
+
+    temoto_2::StopTask stop_task_srv;
+    stop_task_srv.request.action = action_0_word_in;
+    stop_task_srv.request.what = what_0_word_in;
+
+    // Call the server
+    stop_task_client_.call(stop_task_srv);
+
+    ROS_INFO("[TaskStop::startTask] '/core/stop_task' service respinded: %s", stop_task_srv.response.message.c_str());
+
+    // Check the result
+    if (stop_task_srv.response.code == 0)
+    {
+        //bla
+    }
+
 
 // --------------------------------</ USER CODE >-------------------------------
 
@@ -83,7 +102,52 @@ void startInterface_0()
 
     TTP::Subject what_0_out("what", what_0_word_out);
     what_0_out.markComplete();
-    what_0_out.data_.emplace_back("topic", boost::any_cast<std::string>(what_0_data_0_out));
+    output_subjects.push_back(what_0_out);
+
+    // </ AUTO-GENERATED, DO NOT MODIFY >
+}
+
+/*
+ * Interface 1 body
+ */
+void startInterface_1()
+{
+    // < AUTO-GENERATED, DO NOT MODIFY >
+
+    // Extracting input subjects
+    TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
+    std::string  what_0_word_in = what_0_in.words_[0];
+
+    // Creating output variables
+    std::string  what_0_word_out;
+
+    // </ AUTO-GENERATED, DO NOT MODIFY >
+
+// --------------------------------< USER CODE >-------------------------------
+
+    std::cout << "  TaskStop: Stopping '" << what_0_word_in << "'\n";
+    what_0_word_out = what_0_word_in;
+
+    temoto_2::StopTask stop_task_srv;
+    stop_task_srv.request.what = what_0_word_in;
+
+    // Call the server
+    stop_task_client_.call(stop_task_srv);
+
+    ROS_INFO("[TaskStop::startTask] '/core/stop_task' service respinded: %s", stop_task_srv.response.message.c_str());
+
+    // Check the result
+    if (stop_task_srv.response.code == 0)
+    {
+        //bla
+    }
+
+// --------------------------------</ USER CODE >-------------------------------
+
+    // < AUTO-GENERATED, DO NOT MODIFY >
+
+    TTP::Subject what_0_out("what", what_0_word_out);
+    what_0_out.markComplete();
     output_subjects.push_back(what_0_out);
 
     // </ AUTO-GENERATED, DO NOT MODIFY >
@@ -107,27 +171,25 @@ std::vector<TTP::Subject> getSolution()
  * Inherited methods that have to be implemented / END
  * * * * * * * * * * * * * * * * * * * * * * * * */
 
-~TaskShow()
+~TaskStop()
 {
-    std::cout << "TaskShow destructed" << std::endl;
+    std::cout << "TaskStop destructed" << std::endl;
 }
 
 private:
 
 // Human context interface object
-// HumanContextInterface <TaskShow> hci_;
+// HumanContextInterface <TaskStop> hci_;
 
 /**
  * @brief class_name_
  */
-std::string class_name_ = "TaskShow";
+std::string class_name_ = "TaskStop";
 
-int numberOfArguments = 1;
-std::string arg_0;
-
-bool print_ = true;
+ros::NodeHandle n_;
+ros::ServiceClient stop_task_client_;
 
 };
 
 // Dont forget that part, otherwise this class would not be loadable
-CLASS_LOADER_REGISTER_CLASS(TaskShow, TTP::Task);
+CLASS_LOADER_REGISTER_CLASS(TaskStop, TTP::Task);

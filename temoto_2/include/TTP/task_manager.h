@@ -12,7 +12,7 @@
 #include "TTP/task_tree.h"
 #include "TTP/base_task/task.h"
 
-#include "temoto_2/stopTask.h"
+#include "temoto_2/StopTask.h"
 #include "temoto_2/indexTasks.h"
 #include "temoto_2/StopTaskMsg.h"
 
@@ -112,13 +112,13 @@ public:
 //     */
 //    void startTask(RunningTask& task, std::vector<boost::any> arguments);
 
-//    /**
-//     * @brief stopTask
-//     * @param task_name
-//     * @param task_id
-//     * @return
-//     */
-//    void stopTask(std::string task_name = "", TemotoID::ID task_id = TemotoID::UNASSIGNED_ID);
+    /**
+     * @brief stopTask
+     * @param task_name
+     * @param task_id
+     * @return
+     */
+    void stopTask(std::string action = "", std::string what = "");
 
 //    /**
 //     * @brief unloadTaskLib
@@ -133,6 +133,8 @@ private:
 
     const std::string description_file_ = "descriptor.xml";
 
+    std::vector<std::pair<boost::shared_ptr<TaskDescriptor>, boost::shared_ptr<Task>>> asynchronous_tasks_;
+
     /**
      * @brief n_
      */
@@ -143,7 +145,7 @@ private:
      */
     TemotoID::IDManager id_manager_;
 
-    // ros::ServiceServer startTaskServer_;
+
     ros::ServiceServer stop_task_server_;
 
     /**
@@ -175,26 +177,15 @@ private:
      * @brief langProcessor_
      */
 
-//    /**
-//     * @brief stopTaskByID
-//     * @param task_id
-//     */
-//    void stopTaskByID( TemotoID::ID task_id );
 
-//    /**
-//     * @brief stopTaskByName
-//     * @param task_name
-//     */
-//    void stopTaskByName( std::string task_name );
-
-//    /**
-//     * @brief stopTaskCallback
-//     * @param req
-//     * @param res
-//     * @return
-//     */
-//    bool stopTaskCallback (temoto_2::stopTask::Request& req,
-//                           temoto_2::stopTask::Response& res);
+    /**
+     * @brief stopTaskCallback
+     * @param req
+     * @param res
+     * @return
+     */
+    bool stopTaskCallback (temoto_2::StopTask::Request& req,
+                           temoto_2::StopTask::Response& res);
 
 //    /**
 //     * @brief indexTasksCallback

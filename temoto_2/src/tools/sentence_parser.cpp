@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
 
     // Task manager object
-    TTP::TaskManager task_manager("Tester");
+    TTP::TaskManager task_manager("core");
 
     try
     {
@@ -37,9 +37,9 @@ int main(int argc, char **argv)
 
         std::cout << "done\n";
 
-        std::vector <TTP::TaskDescriptor>& tds = task_manager.getIndexedTasks();
+//        std::vector <TTP::TaskDescriptor>& tds = task_manager.getIndexedTasks();
 
-        // Print out the tasks
+//        // Print out the tasks
 //        std::cout << "Found " << tds.size() << " tasks. Printing ...\n";
 //        for (auto& td : tds)
 //        {
@@ -49,12 +49,16 @@ int main(int argc, char **argv)
     catch (error::ErrorStackUtil& e)
     {
         // Rethrow or do whatever
-        //std::cout << e.getStack();
+        std::cout << e.getStack();
     }
 
     TTP::MetaLP language_processor("/home/robert/repos_sdks/meta/models/");
     TTP::TaskTree tt;
     std::string line;
+
+    ros::AsyncSpinner spinner(1); // Use 4 threads
+    spinner.start();
+
 
     while (ros::ok())
     {
@@ -84,7 +88,7 @@ int main(int argc, char **argv)
             tbb::flow::graph flow_graph;
 
             std::cout << "  * making the flow graph \n";
-            task_manager.makeFlowGraph(tt.getRootNode(), flow_graph);
+            task_manager.makeFlowGraph(tt.getRootNode(), flow_graph); // TODO: better name would be populateFlowgraph
 
             std::cout << "  * connecting the flow graph \n";
             task_manager.connectFlowGraph(tt.getRootNode());
@@ -105,6 +109,8 @@ int main(int argc, char **argv)
 
         ros::Duration(0.5).sleep();
     }
+
+    ros::waitForShutdown();
 
     return 0;
 }

@@ -3,7 +3,7 @@
 <task action="demo" >
  
   <!--Interface block-->
-  <interface id="0">
+  <interface id="0" type="synchronous">
     
     <!--Input block-->
     <in>    

@@ -17,7 +17,7 @@ public:
      * @param pointer to the task
      * @param task_interface
      */
-    TaskContainer(boost::shared_ptr<Task> task_pointer, TaskInterface task_interface);
+    TaskContainer(boost::shared_ptr<Task> task_pointer, boost::shared_ptr<TaskDescriptor> task_descriptor);
 
     Subjects operator()(Subjects input_subjects);
 
@@ -25,7 +25,7 @@ private:
 
     boost::shared_ptr<Task> task_pointer_;
 
-    TaskInterface task_interface_;
+    boost::shared_ptr<TaskDescriptor> task_descriptor_;
 };
 }// END of TTP namespace
 

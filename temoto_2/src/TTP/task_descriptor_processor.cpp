@@ -296,6 +296,20 @@ TaskInterface TaskDescriptorProcessor::getInterface(TiXmlElement* interface_elem
 
     task_interface.id_ = atoi(id_attribute);
 
+    // Get the interface type
+    const char* type_attribute = interface_element->Attribute("type");
+    if (type_attribute == NULL)
+    {
+        error::ErrorStackUtil error_stack_util(TTPErr::DESC_NO_ATTR,
+                                               error::Subsystem::CORE,
+                                               error::Urgency::LOW,
+                                               prefix + "Missing type attribute in: " + desc_file_path_,
+                                               ros::Time::now() );
+        throw error_stack_util;
+    }
+
+    task_interface.type_ = std::string(type_attribute);
+
     try
     {
         task_interface.input_subjects_ = getIOSubjects("in", interface_element);

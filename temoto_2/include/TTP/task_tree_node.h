@@ -54,7 +54,10 @@ private:
 
     boost::shared_ptr<Task> task_pointer_;
 
-
+    // TODO: This is a hack and it should not exist. But currently this is necessary
+    // because flow graph internally updates the task descriptors and the updated
+    // task descriptors are needed for stopping the tasks correctly
+    boost::shared_ptr<TaskDescriptor> task_descriptor_ptr_;
 
     std::unique_ptr< tbb::flow::function_node<Subjects, Subjects> > task_fgn_;
 

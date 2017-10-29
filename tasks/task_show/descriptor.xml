@@ -3,7 +3,7 @@
 <task action="show" >
  
   <!--Interface block-->
-  <interface id="0">
+  <interface id="0" type="asynchronous">
     
     <!--Input block-->
     <in>    

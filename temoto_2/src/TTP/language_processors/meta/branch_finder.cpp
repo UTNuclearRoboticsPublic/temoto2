@@ -5,8 +5,9 @@
 
 #include "meta/parser/trees/internal_node.h"
 #include "meta/parser/trees/leaf_node.h"
-#include "core/language_processor/visitors/branch_finder.h"
+#include "TTP/language_processors/meta/branch_finder.h"
 #include "meta/parser/trees/visitors/leaf_node_finder.h"
+#include "meta/analyzers/filters/porter2_stemmer.h"
 #include "meta/util/shim.h"
 #include <iostream>
 #include <sstream>
@@ -68,6 +69,19 @@ std::string nodesAsString (parser::parse_tree& tree)
     // Put the leaves into the stringstream
     for(auto& leaf : leaves)
     {
+        // If the category of the leaf is "Determiner", then skip this word ("the", "a", "an")
+        if(leaf->category().id_ == "DT")
+        {
+            continue;
+        }
+
+        // If the category of the leaf is "subordinating conjunction", then skip this word ("in", "on")
+        // TODO: Actually this is relevant information but at the moment im not using it
+        if(leaf->category().id_ == "IN")
+        {
+            continue;
+        }
+
         ss << *leaf->word();
         if (&leaf != &leaves.back())
         {
@@ -97,8 +111,28 @@ void branch_finder::operator()(const internal_node& in)
     {
         parser::parse_tree tree( in.child(0)->clone() );
 
-        TTP::TaskDescriptor task_desc( nodesAsString(tree) );
-        task_descs_.push_back( task_desc );
+        // Stem the verb
+        std::string action = nodesAsString(tree);
+        analyzers::filters::porter2::stem(action);
+
+        verb_count_++;
+
+        if (next_verb_is_stopped_ == true)
+        {
+            task_descs_.back().getFirstInputSubjects().emplace_back("action", action);
+            next_verb_is_stopped_ = false;
+        }
+        else
+        {
+            if (action == "stop" && verb_count_ == 1)
+            {
+                next_verb_is_stopped_ = true;
+            }
+
+            // Create a task descriptor
+            TTP::TaskDescriptor task_desc( action );
+            task_descs_.push_back( task_desc );
+        }
     }
 
     // Check if noun phrase

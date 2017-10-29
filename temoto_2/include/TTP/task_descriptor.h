@@ -15,6 +15,7 @@ typedef std::string Action;
 struct TaskInterface
 {
     unsigned int id_;
+    std::string type_;
     std::vector<Subject> input_subjects_;
     std::vector<Subject> output_subjects_;
 };
@@ -52,6 +53,8 @@ public:
     std::vector<TaskInterface>& getInterfaces();
 
     std::vector<Subject>& getFirstInputSubjects();
+
+    TaskInterface& getFirstInterface();
 
     std::vector<Subject>& getIncompleteSubjects();
 
