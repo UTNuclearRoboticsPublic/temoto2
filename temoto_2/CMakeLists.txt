@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(temoto_2)
-SET (CMAKE_C_COMPILER "/usr/bin/clang-4.0")
-SET (CMAKE_CXX_COMPILER "/usr/bin/clang++-4.0")
-add_compile_options(-std=c++11 -Wno-deprecated-declarations)
+
+# SET (CMAKE_C_COMPILER "/usr/bin/clang-4.0")
+# SET (CMAKE_CXX_COMPILER "/usr/bin/clang++-4.0")
+# add_compile_options(-std=c++11 -Wno-deprecated-declarations)
+add_compile_options(-std=c++1y)
+
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -21,6 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(TinyXML REQUIRED)
 find_package(TBB REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(MeTA REQUIRED)
 
 # THE FOLLOWING FILES CANNOT BE PLACED UNDER SUBDIRS!
 add_message_files(FILES 
@@ -66,8 +70,12 @@ add_service_files(
     robot_manager/RobotPlan.srv
     robot_manager/RobotExecute.srv
     robot_manager/RobotGetRvizConfig.srv
+  
+    # Task manager
+	  task_handler/stopTask.srv # OLD
+    TTP/task_manager/StopTask.srv
+	  task_handler/indexTasks.srv
 
-	stopAllocatedServices.srv
 )
 
 generate_messages(
@@ -93,6 +101,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${TinyXML_INCLUDE_DIRS}
   ${TBB_INCLUDE_DIRS}
+  #${MeTA_INCLUDE_DIRS}
 )
 
 # # # # # # # # # # # #   TEMOTO SYSTEM NODES   # # # # # # # # # # # # # # #
@@ -151,14 +160,29 @@ add_executable(process_manager src/process_manager/process_manager.cpp
 add_dependencies(process_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(process_manager ${catkin_LIBRARIES} )
 
+
 # # # # # # # # # # # #
 # ROBOT MANAGER
 # # # # # # # # # # # #
 add_executable(robot_manager src/robot_manager/robot_manager.cpp
-	src/robot_manager/robot_manager_node.cpp src/package_info/package_info.cpp)
+	                           src/robot_manager/robot_manager_node.cpp src/package_info/package_info.cpp)
 add_dependencies(robot_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(robot_manager ${catkin_LIBRARIES} )
 
+#add_library(ttp src/TTP/language_processors/meta/meta_lp.cpp
+#                src/TTP/language_processors/meta/branch_finder.cpp
+#                src/TTP/task_manager.cpp
+#                src/TTP/task_descriptor_processor.cpp
+#                src/TTP/io_descriptor.cpp
+#                src/TTP/task_descriptor.cpp
+#                src/TTP/task_tree_node.cpp
+#                src/TTP/task_tree.cpp
+#                src/TTP/task_container.cpp)
+#add_dependencies(ttp ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+#target_link_libraries(ttp ${catkin_LIBRARIES}
+#                          ${TinyXML_LIBRARIES}
+#                          ${TBB_LIBRARIES}
+#                          meta-classify meta-sequence-analyzers meta-parser-analyzers )
 
 # # # # # # # # # # # #   TESTING TOOLS   # # # # # # # # # # # # # # #
 
@@ -179,6 +203,28 @@ target_link_libraries(dummy_sensor ${catkin_LIBRARIES} )
 add_executable(broken_node_1 src/tools/broken_node_1.cpp)
 add_dependencies(broken_node_1 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(broken_node_1 ${catkin_LIBRARIES} )
+
+add_executable(pos_tagger src/tools/pos_tagger.cpp)
+add_dependencies(pos_tagger ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(pos_tagger ${catkin_LIBRARIES} meta-classify meta-sequence-analyzers meta-parser-analyzers)
+
+add_executable(sentence_parser src/tools/sentence_parser.cpp
+                               src/TTP/language_processors/meta/meta_lp.cpp
+                               src/TTP/language_processors/meta/branch_finder.cpp
+                               src/TTP/task_manager.cpp
+                               src/TTP/task_descriptor_processor.cpp
+                               src/TTP/io_descriptor.cpp
+                               src/TTP/task_descriptor.cpp
+                               src/TTP/task_tree_node.cpp
+                               src/TTP/task_tree.cpp
+                               src/TTP/task_container.cpp
+                               src/base_error/base_error.cpp)
+add_dependencies(sentence_parser ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(sentence_parser 
+                      ${catkin_LIBRARIES}
+                      ${TinyXML_LIBRARIES}
+                      ${TBB_LIBRARIES}
+                      meta-classify meta-sequence-analyzers meta-parser-analyzers)
 
 #link_directories(/tmp/usr/local/lib/)
 #add_executable(blinker src/tools/blinker.cpp)

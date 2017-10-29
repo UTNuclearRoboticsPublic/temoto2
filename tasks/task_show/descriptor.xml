@@ -1,0 +1,38 @@
+<?xml version="1.0" ?>
+
+<task action="show" >
+ 
+  <!--Interface block-->
+  <interface id="0" type="asynchronous">
+    
+    <!--Input block-->
+    <in>    
+      <what>
+        <arg pos_tag="NN" word=""/>
+        
+        <data>
+          <field datatype="topic"/>
+        </data>
+      </what>
+      
+      <where>
+        <arg pos_tag="NN" word="RViz,rviz,r-viz"/>
+      </where>
+
+    </in>
+    
+    <!--Output block-->
+    <out>
+      <what>
+        <arg pos_tag="NN" word=""/>
+        
+        <data>
+          <field datatype="topic"/>
+        </data>
+      </what> 
+    </out>
+
+  </interface>
+
+
+</task>

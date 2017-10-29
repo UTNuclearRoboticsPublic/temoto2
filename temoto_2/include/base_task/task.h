@@ -127,6 +127,7 @@ public:
     return package_name_;
   }
 
+
 protected:
   std::string description;
   bool stop_task_ = false;

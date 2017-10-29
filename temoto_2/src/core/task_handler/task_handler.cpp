@@ -103,7 +103,7 @@ std::vector <TaskInfo> TaskHandler::findTaskFilesys( std::string task_to_find,
 
             // if its a file and matches the desc file name, process the file
             else if ( boost::filesystem::is_regular_file(*itr) &&
-                      ((*itr).path().filename().compare(description_file_) == 0) )
+                      ((*itr).path().filename() == description_file_) )
             {
                 //int res = processDesc (taskType, (*itr).path().string());
                 try
