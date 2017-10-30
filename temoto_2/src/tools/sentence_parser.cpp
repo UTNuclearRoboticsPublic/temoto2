@@ -1,4 +1,5 @@
 #include "ros/ros.h"
+#include "ros/package.h"
 
 #include "TTP/language_processors/meta/meta_lp.h"
 #include "TTP/task_descriptor_processor.h"
@@ -16,6 +17,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "sentence_parser");
     ros::NodeHandle nh;
+    std::string temoto_path = ros::package::getPath(ROS_PACKAGE_NAME);
 
     // Task manager object
     TTP::TaskManager task_manager("core");
@@ -30,8 +32,7 @@ int main(int argc, char **argv)
          */
         std::cout << "Indexing the tasks ... " << std::flush;
 
-        std::string home = boost::filesystem::path(getenv("HOME")).string();
-        boost::filesystem::directory_entry dir(home + "/catkin_ws/src/temoto2/tasks/");
+        boost::filesystem::directory_entry dir(temoto_path + "/../tasks/");
 
         task_manager.indexTasks(dir, 1);
 
@@ -52,7 +53,7 @@ int main(int argc, char **argv)
         std::cout << e.getStack();
     }
 
-    TTP::MetaLP language_processor("/home/robert/repos_sdks/meta/models/");
+    TTP::MetaLP language_processor(temoto_path + "/include/TTP/language_processors/meta/models/");
     TTP::TaskTree tt;
     std::string line;
 
