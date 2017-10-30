@@ -18,7 +18,7 @@ RobotManager::RobotManager() : resource_manager_(srv_name::MANAGER, this)
   server_load_ = nh_.advertiseService(robot_manager::srv_name::SERVER_LOAD, &RobotManager::loadCb, this);
   server_plan_ = nh_.advertiseService(robot_manager::srv_name::SERVER_PLAN, &RobotManager::planCb, this);
   server_exec_ = nh_.advertiseService(robot_manager::srv_name::SERVER_EXECUTE, &RobotManager::execCb, this);
-  server_exec_ = nh_.advertiseService(robot_manager::srv_name::SERVER_GET_RVIZ_CONFIG, &RobotManager::getRvizConfigCb, this);
+  server_get_rviz_cfg_ = nh_.advertiseService(robot_manager::srv_name::SERVER_GET_RVIZ_CONFIG, &RobotManager::getRvizConfigCb, this);
 //  server_set_target_ = nh_.advertiseServer<temoto_2::RobotSetTarget>(robot_manager::srv_name::SERVER_SET_TARGET, &RobotManager::setTargetCb, this);
 
   
@@ -61,6 +61,15 @@ bool RobotManager::loadCb(temoto_2::RobotLoad::Request& req,
             process_manager::srv_name::MANAGER, process_manager::srv_name::SERVER, load_proc_msg))
     {
       TEMOTO_DEBUG("%s Call to ProcessManager was sucessful.", prefix.c_str());
+      robots_.emplace(req.robot_name, moveit::planning_interface::MoveGroupInterface("manipulator"));
+      //robot.setPlannerId("RRTConnectkConfigDefault");
+      //robot.setNumPlanningAttempts(2);
+      //robot.setPlanningTime(3);
+
+      //// Playing around with tolerances
+      //robot.setGoalPositionTolerance(0.001);
+      //robot.setGoalOrientationTolerance(0.001);
+      //robot.setGoalJointTolerance(0.001);
     }
     else
     {
@@ -120,6 +129,7 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req,
 
   TEMOTO_DEBUG("Visualizing plan 1 (pose goal) %s", success ? "" : "FAILED");
 
+  TEMOTO_DEBUG("%s DONE PLANNING...", prefix.c_str());
   return true;
 }
 

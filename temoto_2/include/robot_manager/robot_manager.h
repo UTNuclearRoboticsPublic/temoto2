@@ -70,6 +70,7 @@ private:
 
   std::string log_class_, log_subsys_, log_group_;
 
+  std::map<std::string, moveit::planning_interface::MoveGroupInterface> robots_;
 
   ros::NodeHandle nh_;
   ros::ServiceServer server_load_;

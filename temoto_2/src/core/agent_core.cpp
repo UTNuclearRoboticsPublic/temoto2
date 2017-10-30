@@ -62,7 +62,7 @@ public:
             std::string home = boost::filesystem::path(getenv("HOME")).string();
             boost::filesystem::directory_entry dir(home + "/catkin_ws/src/temoto2/tasks/");
 
-            task_handler_.indexTasks(dir, 1);
+            task_handler_.indexTasks(dir, 5);
 
             /*
              * Create a Language Processor and initialize it by passing the list of indexed tasks.

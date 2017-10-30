@@ -11,6 +11,7 @@
 // Task specific includes
 #include "ros/ros.h"
 #include "std_msgs/String.h"
+#include "geometry_msgs/Pose.h"
 #include "output_manager/output_manager_interface.h"
 #include "robot_manager/robot_manager_interface.h"
 
@@ -41,25 +42,26 @@ public:
     std::string prefix = "TaskRobot::startTask()";
     std::cout << prefix << "Running task with " << arguments.size() << " arguments." << std::endl;
 
+    // initialize interfaces
+    omi_.initialize(this);
+    rmi_.initialize();
+    
     if (arguments.size() == 1 && boost::any_cast<std::string>(arguments[0]) == "plan")
     {
-      rmi_.plan();
+      TASK_DEBUG("%s STARTING PLANNING", prefix.c_str());
+      geometry_msgs::Pose pose;
+      rmi_.plan(pose);
+      TASK_DEBUG("%s FINISHED PLANNING", prefix.c_str());
     }
     else
     {
       try
       {
-        // initialize interfaces
-        omi_.initialize(this);
-        rmi_.initialize();
-
         // Load the ur5 robot
         rmi_.loadRobot("ur5");
         std::string rviz_conf = rmi_.getMoveitRvizConfig();
         omi_.showInRviz("robot", "", rviz_conf);
-
-        // Show the image in rviz
-        //	omi_.showInRviz("image", camera_topic);
+        while(true);
       }
       catch (error::ErrorStackUtil& e)
       {
