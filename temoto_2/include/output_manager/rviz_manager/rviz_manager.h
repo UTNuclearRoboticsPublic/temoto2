@@ -16,8 +16,6 @@
 #include "context_manager/human_context/human_context_services.h"
 #include "rmp/resource_manager.h"
 
-#include "temoto_2/stopAllocatedServices.h"
-
 namespace rviz_manager
 {
 class RvizManager
