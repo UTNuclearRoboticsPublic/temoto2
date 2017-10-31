@@ -39,7 +39,6 @@ TaskingCore::TaskingCore(std::string node_name)
          * messages and trys to find and execute tasks based on the text
          */
         human_chatter_subscriber_ = nh_.subscribe("/temoto_2/human_chatter", 1, &TaskingCore::humanChatterCb, this);
-
     }
     catch (error::ErrorStackUtil& e)
     {
@@ -69,13 +68,14 @@ void TaskingCore::humanChatterCb (std_msgs::String chat)
 
         // Execute the tree
         task_manager_.executeTaskTree (tt.getRootNode(), flow_graph);
-
     }
     catch (error::ErrorStackUtil& e)
     {
         // Rethrow or do whatever
         //std::cout << e.getStack();
     }
+
+    std::cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * \n\n";
 }
 
 }// END of TTP namespace

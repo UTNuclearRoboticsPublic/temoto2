@@ -3,8 +3,8 @@
 
 #include "core/common.h"
 
-#include "base_task/task_errors.h"
-#include "base_task/task.h"
+#include "TTP/base_task/task_errors.h"
+#include "TTP/base_task/base_task.h"
 #include "common/temoto_id.h"
 #include "common/console_colors.h"
 #include "common/interface_errors.h"
@@ -25,7 +25,7 @@ public:
   typedef void (OwnerTask::*SpeechCallbackType)(std_msgs::String);
 
 
-  HumanContextInterface(Task* task) : task_(task)
+  HumanContextInterface(TTP::BaseTask* task) : task_(task)
   {
   }
 
@@ -274,7 +274,7 @@ private:
 
   std::string name_; 
   std::string log_class_, log_subsys_, log_group_;
-  Task* task_;
+  TTP::BaseTask* task_;
 
   ros::NodeHandle nh_;
   ros::Subscriber gesture_subscriber_;

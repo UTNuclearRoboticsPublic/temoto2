@@ -2,13 +2,13 @@
  * @file branch_finder.cpp
  * @author Robert Valner
  */
-
+#include "TTP/language_processors/meta/branch_finder.h"
 #include "meta/parser/trees/internal_node.h"
 #include "meta/parser/trees/leaf_node.h"
-#include "TTP/language_processors/meta/branch_finder.h"
 #include "meta/parser/trees/visitors/leaf_node_finder.h"
 #include "meta/analyzers/filters/porter2_stemmer.h"
 #include "meta/util/shim.h"
+#include <boost/any.hpp>
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -70,7 +70,7 @@ std::string nodesAsString (parser::parse_tree& tree)
     for(auto& leaf : leaves)
     {
         // If the category of the leaf is "Determiner", then skip this word ("the", "a", "an")
-        if(leaf->category().id_ == "DT")
+        if (leaf->category().id_ == "DT")
         {
             continue;
         }
@@ -90,6 +90,61 @@ std::string nodesAsString (parser::parse_tree& tree)
     }
 
     return ss.str();
+}
+
+bool checkIfNumeric(parser::parse_tree& tree)
+{
+    // Visit the tree and get the leaf nodes
+    parser::leaf_node_finder lnf_;
+    tree.visit(lnf_);
+    std::vector<std::unique_ptr<parser::leaf_node>> leaves = lnf_.leaves();
+
+    std::stringstream ss;
+
+    // Put the leaves into the stringstream
+    for(auto& leaf : leaves)
+    {
+        if (leaf->category().id_ == "CD")
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+TTP::Subject parseToNumericSubject(parser::parse_tree& tree)
+{
+    // Visit the tree and get the leaf nodes
+    parser::leaf_node_finder lnf_;
+    tree.visit(lnf_);
+    std::vector<std::unique_ptr<parser::leaf_node>> leaves = lnf_.leaves();
+
+    std::stringstream ss;
+    TTP::Subject numeric_subject;
+    numeric_subject.type_ = "numeric";
+    TTP::Data data;
+
+    // Put the leaves into the stringstream
+    for(auto& leaf : leaves)
+    {
+        if (leaf->category().id_ == "CD")
+        {
+            float num_float = std::stof(*leaf->word());
+            data.value = boost::any_cast<float>(num_float);
+            data.type = "number";
+            continue;
+        }
+
+        ss << *leaf->word();
+        if (&leaf != &leaves.back())
+        {
+            ss << " ";
+        }
+    }
+
+    numeric_subject.words_.push_back(ss.str());
+    numeric_subject.data_.push_back(data);
+    return numeric_subject;
 }
 
 void branch_finder::operator()(const leaf_node& ln)
@@ -148,7 +203,16 @@ void branch_finder::operator()(const internal_node& in)
         }
         else
         {
-            task_descs_.back().getFirstInputSubjects().emplace_back("what", nodesAsString(tree));
+            // Check if it is a numeric type
+            if (checkIfNumeric(tree))
+            {
+                TTP::Subject numeric_subject = parseToNumericSubject(tree);
+                task_descs_.back().getFirstInputSubjects().emplace_back(numeric_subject);
+            }
+            else
+            {
+                task_descs_.back().getFirstInputSubjects().emplace_back("what", nodesAsString(tree));
+            }
         }
     }
 

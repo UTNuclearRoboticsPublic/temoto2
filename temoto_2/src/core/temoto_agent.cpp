@@ -30,10 +30,10 @@ int main(int argc, char **argv)
 
     // Publish a message to the tasking core
     std_msgs::String init_msg;
-    init_msg.data = "start the engine";
+    init_msg.data = "start the terminal";
     chatter_publisher.publish(init_msg);
 
-    std::cout << prefix << " Core is up and running\n";
+    std::cout << prefix << " Core is up and running\n\n";
 
     // Start the spinner and chill
     ros::AsyncSpinner spinner(0);

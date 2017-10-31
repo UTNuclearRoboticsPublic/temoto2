@@ -201,7 +201,7 @@ std::ostream& operator<<( std::ostream& stream, const Data& data)
 
             if (data.type == "number")
             {
-                stream << " : " << boost::any_cast<double>(data.value);
+                stream << " : " << boost::any_cast<float>(data.value);
             }
         }
         catch (boost::bad_any_cast& e)
