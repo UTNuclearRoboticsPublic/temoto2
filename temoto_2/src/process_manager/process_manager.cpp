@@ -57,7 +57,8 @@ void ProcessManager::update(const ros::TimerEvent&)
     {
       // Execute the requested process
       //  std::cout << "Child is executing a program ..." << std::endl;
-      execlp(action.c_str(), action.c_str(), package_name.c_str(), executable.c_str(), (char*)NULL);
+      std::string ros_cmd = action + " " + package_name+ " " + executable;
+      execlp("/bin/bash", "/bin/bash", "-c", ros_cmd.c_str() , (char*)NULL);
       return;
     }
 

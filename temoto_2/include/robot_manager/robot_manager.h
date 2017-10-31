@@ -9,6 +9,8 @@
 #include "package_info/package_info.h"
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <vector>
+#include <map>
+#include "robot_manager/robot.h"
 
 namespace robot_manager
 {
@@ -50,36 +52,35 @@ public:
    * @param LoadSpeech response message
    * @return
    */
-//  bool setTargetCb(temoto_2::RobotSetTarget::Request& req, temoto_2::RobotSetTarget::Response& res);
-//
-  bool getRvizConfigCb(temoto_2::RobotGetRvizConfig::Request& req, temoto_2::RobotGetRvizConfig::Response& res);
+  //  bool setTargetCb(temoto_2::RobotSetTarget::Request& req, temoto_2::RobotSetTarget::Response&
+  //  res);
+  //
+  bool getRvizConfigCb(temoto_2::RobotGetRvizConfig::Request& req,
+                       temoto_2::RobotGetRvizConfig::Response& res);
 
   const std::string& getName() const
   {
     return log_subsys_;
   }
 
-
-
-    std::vector <PackageInfoPtr> pkg_infos_;
-
+  std::vector<PackageInfoPtr> pkg_infos_;
 
 private:
-
-    PackageInfoPtr findRobot(temoto_2::LoadProcess::Request& req, const std::string& robot_name);
+  PackageInfoPtr findRobot(temoto_2::LoadProcess::Request& req, const std::string& robot_name);
+  
+  // Currently one robot at the time, add vec or map in future.
+  std::shared_ptr<Robot> active_robot_;
 
   std::string log_class_, log_subsys_, log_group_;
-
-  std::map<std::string, moveit::planning_interface::MoveGroupInterface> robots_;
 
   ros::NodeHandle nh_;
   ros::ServiceServer server_load_;
   ros::ServiceServer server_plan_;
   ros::ServiceServer server_exec_;
   ros::ServiceServer server_get_rviz_cfg_;
-//  ros::ServiceServer server_set_target_;
+  //  ros::ServiceServer server_set_target_;
 
-  // store active 
+  // store active
   temoto_id::ID active_robot_id_;
   temoto_2::RobotLoad active_load_msg_;
 
