@@ -113,13 +113,14 @@ void branch_finder::operator()(const internal_node& in)
 
         // Stem the verb
         std::string action = nodesAsString(tree);
-        analyzers::filters::porter2::stem(action);
+        std::string action_stemmed = action;
+        analyzers::filters::porter2::stem(action_stemmed);
 
         verb_count_++;
 
         if (next_verb_is_stopped_ == true)
         {
-            task_descs_.back().getFirstInputSubjects().emplace_back("action", action);
+            task_descs_.back().getFirstInputSubjects().emplace_back("action", action_stemmed);
             next_verb_is_stopped_ = false;
         }
         else
@@ -130,7 +131,7 @@ void branch_finder::operator()(const internal_node& in)
             }
 
             // Create a task descriptor
-            TTP::TaskDescriptor task_desc( action );
+            TTP::TaskDescriptor task_desc( action, action_stemmed );
             task_descs_.push_back( task_desc );
         }
     }

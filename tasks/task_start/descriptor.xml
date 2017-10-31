@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 
-<task action="start">
+<task action="start" alias="initiate">
 
   <!--Interface block-->
   <interface id="0" type="synchronous">
@@ -8,21 +8,10 @@
     <!--Input block-->
     <in>    
       <what>
-        <arg pos_tag="NN" word=""/>
+        <arg word="motor,engine,bird"/>
       </what>
     </in>
-    
-    <!--Output block-->
-    <out>
-      <where>
-        <arg pos_tag="PP" word=""/>
-        
-        <data>
-          <field datatype="number"/>
-        </data>
-      </where> 
-    </out>
-
+   
   </interface>
 
 
@@ -32,21 +21,21 @@
     <!--Input block-->
     <in>    
       <what>
-        <arg pos_tag="NN" word=""/>
+        <arg word="camera,robot"/>
       </what>
     </in>
     
     <!--Output block-->
     <out>
       <what>
-        <arg pos_tag="NN" word=""/>
+        <arg word=""/>
         <data>
           <field datatype="topic"/>
         </data>
       </what> 
 
       <numeric>
-        <arg pos_tag="PP" word=""/>
+        <arg word=""/>
         <data>
           <field datatype="number"/>
         </data>

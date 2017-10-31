@@ -13,7 +13,7 @@
 #include "TTP/base_task/base_task.h"
 
 #include "temoto_2/StopTask.h"
-#include "temoto_2/indexTasks.h"
+#include "temoto_2/IndexTasks.h"
 #include "temoto_2/StopTaskMsg.h"
 
 #include <cstdio>
@@ -82,13 +82,7 @@ public:
 
     void connectFlowGraph(TaskTreeNode& node);
 
-//    /**
-//     * @brief executeTask
-//     * @param task_info
-//     * @param arguments
-//     * @returns
-//     */
-//    bool executeTask(TaskDescriptor task_info, std::vector<boost::any> arguments);
+    void executeTaskTree (TaskTreeNode& root_node, tbb::flow::graph& flow_graph);
 
     /**
      * @brief loadTask
@@ -103,14 +97,6 @@ public:
      * @return
      */
     void instantiateTask(TaskTreeNode& node);
-
-//    /**
-//     * @brief startTask
-//     * @param task
-//     * @param arguments
-//     * @return
-//     */
-//    void startTask(RunningTask& task, std::vector<boost::any> arguments);
 
     /**
      * @brief stopTask
@@ -130,6 +116,8 @@ public:
 private:
 
     const std::string class_name_ = "TaskManager";
+
+    const std::string log_group_ = "temoto_core";
 
     const std::string description_file_ = "descriptor.xml";
 
@@ -187,14 +175,14 @@ private:
     bool stopTaskCallback (temoto_2::StopTask::Request& req,
                            temoto_2::StopTask::Response& res);
 
-//    /**
-//     * @brief indexTasksCallback
-//     * @param req
-//     * @param res
-//     * @return
-//     */
-//    bool indexTasksCallback (temoto_2::indexTasks::Request& req,
-//                             temoto_2::indexTasks::Response& res);
+    /**
+     * @brief indexTasksCallback
+     * @param req
+     * @param res
+     * @return
+     */
+    bool indexTasksCallback (temoto_2::IndexTasks::Request& req,
+                             temoto_2::IndexTasks::Response& res);
 
 //    void stopTaskMsgCallback( temoto_2::StopTaskMsg msg );
 

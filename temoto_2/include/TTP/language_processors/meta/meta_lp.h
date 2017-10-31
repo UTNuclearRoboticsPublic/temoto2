@@ -14,6 +14,9 @@ class MetaLP
 {
 public:
 
+    /// Default constructor
+    MetaLP() = default;
+
     /**
      * @brief Constructor
      * @param Base path to language model files

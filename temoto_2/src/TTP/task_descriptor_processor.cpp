@@ -1,6 +1,8 @@
 #include "TTP/task_descriptor_processor.h"
 #include "TTP/TTP_errors.h"
 #include "common/tools.h"
+#include "meta/analyzers/filters/porter2_stemmer.h"
+
 #include <string>
 #include <vector>
 #include <boost/any.hpp>
@@ -176,15 +178,15 @@ void TaskDescriptorProcessor::getRootElement()
 }
 
 /* * * * * * * * *
- *  GET TASK TYPE
+ *  GET TASK ACTION
  * * * * * * * * */
 
-std::string TaskDescriptorProcessor::getTaskName()
+Action TaskDescriptorProcessor::getTaskAction()
 {
     // Get the type of the task
-    const char * attr = root_element_->Attribute("action");
+    const char * action_attribute = root_element_->Attribute("action");
 
-    if (attr == NULL)
+    if (action_attribute == NULL)
     {      
         // Throw error
         error::ErrorStackUtil error_stack_util( TTPErr::DESC_NO_ATTR,
@@ -195,8 +197,55 @@ std::string TaskDescriptorProcessor::getTaskName()
         throw error_stack_util;
     }
 
-    std::string task_name(attr);
-    return task_name;
+    return std::move(std::string(action_attribute));
+}
+
+
+/* * * * * * * * *
+ *  STEM ACTION
+ * * * * * * * * */
+
+Action stemAction (const Action& non_stemmed)
+{
+    Action stemmed = non_stemmed;
+    meta::analyzers::filters::porter2::stem(stemmed);
+
+    return std::move(stemmed);
+}
+
+/* * * * * * * * *
+ *  STEM ACTIONS
+ * * * * * * * * */
+
+std::vector<Action> stemActions (const std::vector<Action>& actions)
+{
+    // TODO: Im more than sure that this can throw something, catch that something
+    std::vector<Action> stemmed_actions;
+    for (auto& action : actions)
+    {
+        stemmed_actions.push_back(stemAction(action));
+    }
+
+    return std::move(stemmed_actions);
+}
+
+
+/* * * * * * * * *
+ *  GET TASK ACTION ALIASES
+ * * * * * * * * */
+
+std::vector<Action> TaskDescriptorProcessor::getTaskActionAliases()
+{
+    // Get the type of the task
+    const char * alias_attribute = root_element_->Attribute("alias");
+
+    if (alias_attribute == NULL)
+    {
+        std::vector<Action> empty_vec;
+        return std::move(empty_vec);
+    }
+
+    return std::move(parseString(std::string(alias_attribute), ',')); // TODO: allow ', ' default expressions
 }
 
 /* * * * * * * * *
@@ -213,7 +262,13 @@ TaskDescriptor TaskDescriptorProcessor::getTaskDescriptor()
 
     try
     {
-        task_descriptor.action_ = getTaskName();
+        task_descriptor.action_ = getTaskAction();
+        task_descriptor.action_stemmed_ = stemAction(task_descriptor.action_);
+
+        task_descriptor.aliases_ = getTaskActionAliases();
+        task_descriptor.aliases_stemmed_ = stemActions(task_descriptor.aliases_);
+        task_descriptor.aliases_stemmed_.push_back(task_descriptor.action_stemmed_);
+
         task_descriptor.task_interfaces_ = getInterfaces();
         task_descriptor.task_package_name_ = getPackageName();
         task_descriptor.task_lib_path_ = base_path_ + "/lib/lib" + task_descriptor.task_package_name_ + ".so"; // TODO: check if this file even exists
@@ -312,7 +367,10 @@ TaskInterface TaskDescriptorProcessor::getInterface(TiXmlElement* interface_elem
 
     try
     {
+        //REQUIRED
         task_interface.input_subjects_ = getIOSubjects("in", interface_element);
+
+        //NOT REQUIRED
         task_interface.output_subjects_ = getIOSubjects("out", interface_element);
     }
     catch( error::ErrorStackUtil& e )
@@ -339,9 +397,15 @@ std::vector<Subject> TaskDescriptorProcessor::getIOSubjects(std::string directio
     {
         TiXmlElement* io_element = interface_element->FirstChildElement(direction);
 
-        // Check if this element is valid. REQUIRED
+        // Check if this element is valid.
         if (io_element == NULL)
         {
+            // OUTPUT DESCRIPTOR IS NOT REQUIRED
+            if (direction == "out")
+            {
+                return std::move(io_subjects);
+            }
+
             // Throw error
             error::ErrorStackUtil error_stack_util(TTPErr::DESC_NO_ATTR,
                                                    error::Subsystem::CORE,
@@ -431,12 +495,13 @@ Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
             throw error_stack_util;
         }
 
-        subject.words_ = std::move(parseString(std::string(word_attribute), ','));
+        subject.words_ = std::move(parseString(std::string(word_attribute), ',')); // TODO: allow ', ' default expressions
 
-        // Get the Part Of Speech Tag (pos_tag) attribute. REQUIRED
+        // Get the Part Of Speech Tag (pos_tag) attribute. NOT REQUIRED
         const char* pos_tag_attribute = arg_element->Attribute("pos_tag");
-        if ( pos_tag_attribute == NULL )
+        if ( pos_tag_attribute != NULL )
         {
+            /*
             // Throw error
             error::ErrorStackUtil error_stack_util(TTPErr::DESC_NO_ATTR,
                                                    error::Subsystem::CORE,
@@ -444,9 +509,10 @@ Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
                                                    prefix + "Missing 'pos_tag' attribute in: " + desc_file_path_,
                                                    ros::Time::now() );
             throw error_stack_util;
-        }
+            */
 
-        subject.pos_tag_ = std::string(pos_tag_attribute);
+            subject.pos_tag_ = std::string(pos_tag_attribute);
+        }
 
         /*
          * Get the data element. If it's missing, then that's ok. It means that there

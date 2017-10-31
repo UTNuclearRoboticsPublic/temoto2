@@ -14,6 +14,17 @@ TaskDescriptor::TaskDescriptor( Action action ) : action_(action)
     this->task_interfaces_.push_back( std::move( task_interface ) );
 }
 
+TaskDescriptor::TaskDescriptor( Action action, Action action_stemmed )
+    : action_(action)
+    , action_stemmed_(action_stemmed)
+{
+    // Create an interface
+    TaskInterface task_interface;
+
+    // Push it to the local task interfaces storage
+    this->task_interfaces_.push_back( std::move( task_interface ) );
+}
+
 TaskDescriptor::TaskDescriptor( Action action, std::vector<Subject>& input_subjects ) : action_(action)
 {
     // Create an interface
@@ -114,6 +125,21 @@ const std::string& TaskDescriptor::getTaskPackageName() const
 std::ostream& operator<<( std::ostream& stream, const TaskDescriptor& td)
 {
     stream << GREEN << "ACTION: " << td.getAction() << RESET << std::endl;
+
+    if (!td.aliases_.empty())
+    {
+        stream << GREEN << "ALIASES: ";
+        for (auto& alias : td.aliases_)
+        {
+            std::cout << alias;
+            if (&alias != &td.aliases_.back())
+            {
+                std::cout << ", ";
+            }
+        }
+        std::cout << RESET << std::endl;
+    }
+
     for (auto& task_interface : td.task_interfaces_)
     {
         stream << "INTERFACE " << task_interface.id_ << " (" << task_interface.type_ << "):" << std::endl;

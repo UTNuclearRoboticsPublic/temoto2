@@ -14,7 +14,6 @@
 
 // Task specific includes
 #include "ros/ros.h"
-#include "std_msgs/String.h"
 #include "temoto_2/StopTask.h"
 
 // First implementaton
@@ -29,11 +28,11 @@ public:
 TaskStop()
 {
     // Do something here if needed
-    stop_task_client_ = n_.serviceClient<temoto_2::StopTask>("core/stop_task");
+    stop_task_client_ = n_.serviceClient<temoto_2::StopTask>("temoto_core/stop_task");
     ROS_INFO("TaskStop constructed");
 }
 
-// startTask with arguments
+// startTask
 bool startTask(TTP::TaskInterface task_interface)
 {
 // * AUTO-GENERATED, DO NOT MODIFY *
@@ -46,7 +45,7 @@ bool startTask(TTP::TaskInterface task_interface)
         startInterface_0();
     break;
 
-    // Interface 0
+    // Interface 1
     case 1:
         startInterface_1();
     break;
@@ -90,9 +89,9 @@ void startInterface_0()
     ROS_INFO("[TaskStop::startTask] '/core/stop_task' service respinded: %s", stop_task_srv.response.message.c_str());
 
     // Check the result
-    if (stop_task_srv.response.code == 0)
+    if (stop_task_srv.response.code != 0)
     {
-        //bla
+        // TODO: do something
     }
 
 
@@ -161,10 +160,7 @@ std::string getStatus()
 
 std::vector<TTP::Subject> getSolution()
 {
-    // Construct an empty vector
-    std::vector<TTP::Subject> return_subjects;
-
-    return return_subjects;
+    return output_subjects;
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * *

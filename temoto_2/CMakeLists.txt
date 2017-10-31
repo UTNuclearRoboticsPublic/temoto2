@@ -72,9 +72,11 @@ add_service_files(
     robot_manager/RobotGetRvizConfig.srv
   
     # Task manager
-	  task_handler/stopTask.srv # OLD
+	  task_handler/stopTask.srv # Deprecated
+    task_handler/indexTasks.srv # Deprecated
     TTP/task_manager/StopTask.srv
-	  task_handler/indexTasks.srv
+    TTP/task_manager/IndexTasks.srv
+	  
 
 )
 
@@ -144,6 +146,7 @@ add_executable(agent_core src/core/agent_core.cpp
 			  src/core/task_handler/task_info.cpp
 			  src/base_error/base_error.cpp
 )
+
 add_dependencies(agent_core ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(agent_core
    ${catkin_LIBRARIES}
@@ -151,6 +154,32 @@ target_link_libraries(agent_core
    ${TinyXML_LIBRARIES}
    ${TBB_LIBRARIES} )
 add_dependencies(agent_core ${catkin_EXPORTED_TARGETS})
+
+
+# # # # # # # # # # # #
+# NEW CORE
+# # # # # # # # # # # #
+
+add_executable(temoto_agent src/core/temoto_agent.cpp
+                            src/TTP/tasking_core.cpp
+                            src/TTP/language_processors/meta/meta_lp.cpp
+                            src/TTP/language_processors/meta/branch_finder.cpp
+                            src/TTP/task_manager.cpp
+                            src/TTP/task_descriptor_processor.cpp
+                            src/TTP/io_descriptor.cpp
+                            src/TTP/task_descriptor.cpp
+                            src/TTP/task_tree_node.cpp
+                            src/TTP/task_tree.cpp
+                            src/TTP/task_container.cpp
+                            src/base_error/base_error.cpp)
+
+add_dependencies(temoto_agent ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(temoto_agent 
+                      ${catkin_LIBRARIES}
+                      ${TinyXML_LIBRARIES}
+                      ${TBB_LIBRARIES}
+                      meta-classify meta-sequence-analyzers meta-parser-analyzers)
+
 
 # # # # # # # # # # # #
 # PROCESS MANAGER

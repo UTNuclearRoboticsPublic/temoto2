@@ -10,12 +10,14 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "common/tools.h"
+#include "common/temoto_log_macros.h"
 
 #include "TTP/task_manager.h"
 #include "TTP/task_descriptor_processor.h"
 #include "TTP/task_container.h"
 #include "TTP/TTP_errors.h"
 
+#include <boost/filesystem/operations.hpp>
 #include <algorithm>
 
 namespace TTP
@@ -43,15 +45,12 @@ struct CandidateTask
 TaskManager::TaskManager (std::string system_prefix)
     : system_prefix_(system_prefix)
 {
-    // Initialize the vector of indexed tasks
-    //tasks_indexed_ = new std::vector <TaskDescriptor>(1);
-
     // Construct the classloader
     class_loader_ = new class_loader::MultiLibraryClassLoader(false);
 
     // Start the servers
     stop_task_server_ = n_.advertiseService (system_prefix_ + "/stop_task", &TaskManager::stopTaskCallback, this);
-    //index_tasks_server_ = n_.advertiseService (system_prefix_ + "/index_tasks", &TaskManager::indexTasksCallback, this);
+    index_tasks_server_ = n_.advertiseService (system_prefix_ + "/index_tasks", &TaskManager::indexTasksCallback, this);
 
     // Start subscribers
     //stop_task_subscriber_ = n_.subscribe("temoto/stop_task", 10, &TaskManager::stopTaskMsgCallback, this);
@@ -174,8 +173,9 @@ void TaskManager::indexTasks (boost::filesystem::directory_entry base_path, int 
     std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
 
     try
-    {
+    {   TEMOTO_DEBUG_STREAM(prefix << " Indexing the tasks");
         tasks_indexed_ = findTaskFilesys ("", base_path, search_depth);
+        TEMOTO_DEBUG_STREAM(prefix << " Found " << tasks_indexed_.size() << " tasks");
     }
     catch( error::ErrorStackUtil & e )
     {
@@ -196,11 +196,73 @@ std::vector <TaskDescriptor>& TaskManager::getIndexedTasks()
 }
 
 /* * * * * * * * *
+ *  EXECUTE TASK TREE
+ * * * * * * * * */
+
+void TaskManager::executeTaskTree (TaskTreeNode& root_node, tbb::flow::graph& flow_graph)
+{
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
+
+    try
+    {
+        // Find connecting tasks
+        TEMOTO_DEBUG_STREAM(prefix << " Connecting the task tree");
+        std::vector<TTP::Subject> empty_subs; // stupid hack
+        connectTaskTree(root_node, empty_subs);
+
+        // Print task tree task descriptors
+        //tt.printTaskDescriptors(root_node);
+
+        // Load and initialize the tasks
+        TEMOTO_DEBUG_STREAM(prefix << " Loadng and initializing the tree");
+        loadAndInitializeTaskTree(root_node);
+
+        // Create a tbb flow graph
+        //TEMOTO_DEBUG_STREAM(prefix << " Creating an empty flow graph object");
+        //tbb::flow::graph flow_graph;
+
+        // Build flow graph nodes
+        TEMOTO_DEBUG_STREAM(prefix << " Building flow graph nodes based on task tree nodes");
+        makeFlowGraph(root_node, flow_graph); // TODO: better name would be populateFlowgraph
+
+        // Connect flow graph nodes
+        TEMOTO_DEBUG_STREAM(prefix << " Connecting flow graph nodes");
+        connectFlowGraph(root_node);
+
+        // Start the flow graph
+        TEMOTO_DEBUG_STREAM(prefix << " Starting the flow graph");
+        TTP::Subjects dummy_subjects; // stupid hack
+        root_node.root_fgn_->try_put(dummy_subjects);
+        flow_graph.wait_for_all();
+
+        TEMOTO_DEBUG_STREAM(prefix << " Finished executing the flow graph");
+    }
+    catch( error::ErrorStackUtil & e )
+    {
+        // Rethrow the exception
+        e.forward( prefix );
+        throw e;
+    }
+    catch(...)
+    {
+        throw error::ErrorStackUtil( TTPErr::UNHANDLED,
+                                     error::Subsystem::CORE,
+                                     error::Urgency::HIGH,
+                                     prefix + "Received an unhandled exception",
+                                     ros::Time::now() );
+    }
+
+    return;
+}
+
+
+/* * * * * * * * *
  *  FIND NONSTRICT MATCH
  * * * * * * * * */
 
-unsigned int findNonstrictMatch(const std::vector<Subject>& complete_subjects,
-                                const std::vector<Subject>& incomplete_subjects)
+unsigned int findNonstrictMatch (const std::vector<Subject>& complete_subjects,
+                                 const std::vector<Subject>& incomplete_subjects)
 {
     // create a copy of complete subjects
     std::vector<Subject> complete_subjects_c = complete_subjects;
@@ -234,6 +296,86 @@ unsigned int findNonstrictMatch(const std::vector<Subject>& complete_subjects,
 
 
 /* * * * * * * * *
+ *  FIND WORD MATCH + STRICT MATCH
+ * * * * * * * * */
+
+unsigned int findWordMatch (Subjects& required_subjects , Subjects& node_subjects)
+{
+    // create a copy of subs_2
+    Subjects node_subjects_c = node_subjects;
+    unsigned int score = 0;
+
+    for (auto& r_sub : required_subjects)
+    {
+        bool subject_match = false;
+        for (auto n_sub = node_subjects_c.begin();
+             n_sub != node_subjects_c.end();
+             ++n_sub)
+        {
+            // Check for type match
+            if (r_sub.type_ != n_sub->type_)
+            {
+                //std::cout << "    subject types do not match\n";
+                continue;
+            }
+
+            // Check words
+            if (!r_sub.words_.empty())
+            {
+                // Go through the list of possible required words
+                bool word_match = false;
+                for (auto& r_word : r_sub.words_)
+                {
+                    if (r_word == n_sub->words_[0])
+                    {
+                        // Required word match is awarded with a higher score than 1
+                        score += 2;
+                        word_match = true;
+                        break;
+                    }
+                }
+
+                if (!word_match)
+                {
+                    continue;
+                }
+            }
+            else
+            {
+                // If the requied subject does not require any specific words
+                // then increase the score by one
+                score++;
+            }
+
+            // Check data size
+            if (r_sub.data_.size() != n_sub->data_.size())
+            {
+                //std::cout << "    data size does not match\n";
+                continue;
+            }
+
+            // Check data
+            if (r_sub.data_ != n_sub->data_)
+            {
+                //std::cout << "    data does not match\n";
+                continue;
+            }
+
+            //std::cout << "    we got a winner\n";
+            subject_match = true;
+            node_subjects_c.erase(n_sub);
+            break;
+        }
+        if (subject_match != true)
+        {
+            return false;
+        }
+    }
+    return score;
+}
+
+
+/* * * * * * * * *
  *  CONNECT TASKS
  * * * * * * * * */
 
@@ -247,7 +389,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
      */
 
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix("", class_name_, __func__);
+    std::string prefix = common::generateLogPrefix(system_prefix_, class_name_, __func__);
 
     // If its the root node (depth = 0), then dont look for a task
     if (depth == 0)
@@ -270,7 +412,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
 
     // Variables of the task tree node that are frequently used
     TaskDescriptor& node_task_descriptor = node.getTaskDescriptor();
-    const Action& node_action = node_task_descriptor.getAction();
+    const Action& node_action = node_task_descriptor.action_stemmed_;
     TaskInterface& node_interface = node_task_descriptor.getInterfaces()[0];
     std::vector<Subject>& node_subjects = node_interface.input_subjects_;
 
@@ -286,7 +428,10 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
      */
     if (!node_task_descriptor.getIncompleteSubjects().empty())
     {
-        //std::cout << "[" << node_action << "] depends on parent node, retrieving missing information ...\n";
+        // Debug
+        TEMOTO_DEBUG ("%s T'%s' depends on parent node, retrieving missing information ..."
+                      , prefix.c_str(), node_action);
+
         /*
          * Check the node subjects and get the missing information from
          * the parent, making a ALMOST (will get additional information
@@ -318,7 +463,9 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
                     n_sub = p_sub;
                 }
             }
-            //std::cout << "[" << node_action << "] got:\n" << n_sub;
+
+            // Debug
+            TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "' got: " << n_sub);
         }
     }
 
@@ -336,8 +483,10 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
         }
     }
 
-    //std::cout << "[" << node_action << "] has " << incomplete_subjects.size() << " incomplete subjects and these are:\n";
-    //for (auto& i_s : incomplete_subjects){std::cout << i_s;}
+    // Debug
+    TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "' has " << incomplete_subjects.size()
+                         << " incomplete subjects from children");
+    //for (auto& i_s : ){std::cout << i_s;}
 
     /*
      * If there were any incomplete subjects then ...
@@ -366,7 +515,9 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
             }
         }
 
-        //std::cout << "[" << node_action << "]" << " after eliminating duplicates we have:\n";
+        // Debug
+        TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': after eliminating duplicates we have "
+                             << incomplete_subjects);
         //for (auto& i_s : incomplete_subjects){std::cout << i_s;}
 
         /*
@@ -377,24 +528,40 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
             incomplete_subject.words_.clear();
         }
 
-        //std::cout << "[" << node_action << "]" << " after cleaning the incomplete subs we have:\n";
-        //for (auto& i_s : incomplete_subjects){std::cout << i_s;}
+        // Debug
+        TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': looking for a suitable task");
 
-        //std::cout << "[" << node_action << "]" << " looking for a suitable task\n";
         /*
          * Find task that matches own i-subjects + that has a matching
          * o-subjects with dependent children incomplete i-subjects
          */
         for (auto& task_descriptor : tasks_indexed_)
         {
-            //std::cout << "[" << node_action << "]" << " looking at '" << task_descriptor.getAction() << "'\n";
-            //std::cout << "-------------------\n";
+            // Debug
+            TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': looking at - " << task_descriptor.getAction());
 
             // Look for the task with the same action type
-            if (task_descriptor.getAction() != node_action)
+            if (task_descriptor.action_stemmed_ != node_action)
             {
-                //std::cout << "[" << node_action << "]" << " action does not match\n";
-                continue;
+                // Check the aliases, if any
+                bool alias_found = false;
+                for (auto& alias : task_descriptor.aliases_stemmed_)
+                {
+                    if (alias == node_action)
+                    {
+                        // Debug
+                        TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': found action based on it's alias");
+                        alias_found = true;
+                        break;
+                    }
+                }
+
+                if (!alias_found)
+                {
+                    // Debug
+                    TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': action does not match");
+                    continue;
+                }
             }
 
             std::vector<CandidateInterface> candidate_interfaces;
@@ -402,27 +569,29 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
             // Loop over the interfaces and ...
             for (auto& interface : task_descriptor.getInterfaces())
             {
-                // ... look for STRICT i-subjects match
-                if (interface.input_subjects_ != node_subjects)
+                // ... look for a word match + STRICT i-subjects match
+                unsigned int word_match_score = findWordMatch (interface.input_subjects_, node_subjects);
+                if (word_match_score == 0)
                 {
-//                    std::cout << "[" << node_action << "]" << " input subjects do not match\n";
-//                    std::cout << "[" << node_action << "]" << " and we are talking about:\n";
-//                    std::cout << interface.input_subjects_ << "and\n";
-//                    std::cout << node_subjects << "\n";
-
+                    // Debug
+                    TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': input subjects do not match. "
+                                         << " and we are talking about: " << interface.input_subjects_
+                                         << " and " << node_subjects);
                     continue;
                 }
 
                 // ... look for NONSTRICT o-subjects match
-                unsigned int match_score = findNonstrictMatch(interface.output_subjects_, incomplete_subjects);
-                if (match_score == 0)
+                unsigned int output_match_score = findNonstrictMatch (interface.output_subjects_, incomplete_subjects);
+                if (output_match_score == 0)
                 {
-                    //std::cout << "[" << node_action << "]" << " dependent children do not have a match\n";
+                    // Debug
+                    TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action
+                                         << "': output subjects do not match with dep childern");
                     continue;
                 }
 
                 // And we have a candidate
-                candidate_interfaces.emplace_back(interface, match_score);
+                candidate_interfaces.emplace_back(interface, word_match_score + output_match_score);
             }
 
             /*
@@ -431,7 +600,8 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
              */
             if (!candidate_interfaces.empty())
             {
-                //std::cout << "[" << node_action << "]" << " IS A SUITABLE CANDIDATE\n";
+                // Debug
+                TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': IS A SUITABLE CANDIDATE");
 
                 // Sort the candidates with decreasing score and pick the first candidate
                 std::sort(candidate_interfaces.begin(),
@@ -458,18 +628,37 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
         /*
          * Find task that matches own i-subjects
          */
-        //std::cout << "[" << node_action << "]" << " looking for a suitable task\n";
+
+        // Debug
+        TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': looking for a suitable task");
 
         for (auto& task_descriptor : tasks_indexed_)
         {
-            //std::cout << "[" << node_action << "]" << " looking at '" << task_descriptor.getAction() << "'\n";
-            //std::cout << "-------------------\n";
+            // Debug
+            TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': looking at - " << task_descriptor.getAction());
 
             // Look for the task with the same action type
-            if (task_descriptor.getAction() != node_action)
+            if (task_descriptor.action_stemmed_ != node_action)
             {
-                //std::cout << "[" << node_action << "]" << " action does not match\n";
-                continue;
+                // Check the aliases, if any
+                bool alias_found = false;
+                for (auto& alias : task_descriptor.aliases_stemmed_)
+                {
+                    if (alias == node_action)
+                    {
+                        // Debug
+                        TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': found action based on it's alias");
+                        alias_found = true;
+                        break;
+                    }
+                }
+
+                if (!alias_found)
+                {
+                    // Debug
+                    TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': action does not match");
+                    continue;
+                }
             }
 
             std::vector<CandidateInterface> candidate_interfaces;
@@ -477,18 +666,23 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
             // Loop over the interfaces and ...
             for (auto& interface : task_descriptor.getInterfaces())
             {
-                // ... look for STRICT input subjects match
-                if (interface.input_subjects_ != node_subjects)
+                // ... look for a word match + STRICT i-subjects match
+
+                unsigned int word_match_score = findWordMatch (interface.input_subjects_, node_subjects);
+                if (word_match_score == 0)
                 {
-//                    std::cout << "[" << node_action << "]" << " input subjects do not match\n";
-//                    std::cout << "[" << node_action << "]" << " and we are talking about:\n";
-//                    std::cout << interface.input_subjects_ << "and\n";
-//                    std::cout << node_subjects << "\n";
+                    // Debug
+                    TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': input subjects do not match. "
+                                         << " and we are talking about: " << interface.input_subjects_
+                                         << " and " << node_subjects);
                     continue;
                 }
 
+                // Debug
+                TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "' strict/word match score: " << word_match_score);
+
                 // And we have a candidate
-                candidate_interfaces.emplace_back(interface, 0);
+                candidate_interfaces.emplace_back(interface, word_match_score);
             }
 
             /*
@@ -523,7 +717,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
         error::ErrorStackUtil error_stack_util(TTPErr::NLP_NO_TASK,
                                                error::Subsystem::CORE,
                                                error::Urgency::MEDIUM,
-                                               prefix + "Couldn't find a suitable task for action: " + node_action,
+                                               prefix + " Couldn't find a suitable task for action: " + node_action,
                                                ros::Time::now() );
         throw error_stack_util;
     }
@@ -545,6 +739,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
     node_interface.type_ = cand_task.ci_.inf_.type_;
     node_interface.output_subjects_ = cand_task.ci_.inf_.output_subjects_;
     node_task_descriptor.task_package_name_ = cand_task.td_.task_package_name_;
+    node_task_descriptor.aliases_stemmed_ = cand_task.td_.aliases_stemmed_;
     node_task_descriptor.task_lib_path_ = cand_task.td_.task_lib_path_;
 
     /*
@@ -563,7 +758,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
 void TaskManager::loadAndInitializeTaskTree(TaskTreeNode& node)
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix("", class_name_, __func__);
+    std::string prefix = common::generateLogPrefix(system_prefix_, class_name_, __func__);
 
     // Task descriptor of the node
     TaskDescriptor& node_task_descriptor = node.getTaskDescriptor();
@@ -574,9 +769,15 @@ void TaskManager::loadAndInitializeTaskTree(TaskTreeNode& node)
         try
         {
             // Load the task
+
+            //Debug
+            TEMOTO_DEBUG_STREAM(prefix << " Loading task '" << node_task_descriptor.getAction() << "'");
             loadTask(node_task_descriptor);
 
             // Initialize the task
+
+            //Debug
+            TEMOTO_DEBUG_STREAM(prefix << " Instatiating the task '" << node_task_descriptor.getAction() << "'");
             instantiateTask(node);
         }
         catch(error::ErrorStackUtil& e)
@@ -614,13 +815,26 @@ void TaskManager::loadTask(TaskDescriptor& task_descriptor)
 
     try
     {
-        // Start loading a task library
-        ROS_DEBUG("Loading class from path: %s", path_to_lib.c_str());
-        class_loader_->loadLibrary(path_to_lib);
-        classes = class_loader_->getAvailableClassesForLibrary<BaseTask>(path_to_lib);
+        // Make the path canonical, otherwise class loader will die
+        boost::filesystem::path path(path_to_lib);
+        std::string canonical_path = boost::filesystem::canonical(path).string();
+
+        TEMOTO_DEBUG("%s Loading class from path: %s",prefix.c_str(), canonical_path.c_str());
+
+        class_loader_->loadLibrary(canonical_path);
+        classes = class_loader_->getAvailableClassesForLibrary<BaseTask>(canonical_path);
 
         // Done loading
-        ROS_DEBUG( "%s Loaded %lu classes from %s", prefix.c_str(), classes.size(), path_to_lib.c_str() );
+        TEMOTO_DEBUG( "%s Loaded %lu classes from %s", prefix.c_str(), classes.size(), canonical_path.c_str() );
+
+        if (classes.empty())
+        {
+            throw error::ErrorStackUtil( TTPErr::CLASS_LOADER_FAIL,
+                                         error::Subsystem::CORE,
+                                         error::Urgency::HIGH,
+                                         prefix + " Could not load the class fom path: " + canonical_path,
+                                         ros::Time::now() );
+        }
 
         // Add the name of the class
         task_descriptor.setTaskClassName(classes[0]);
@@ -789,7 +1003,8 @@ bool TaskManager::stopTaskCallback( temoto_2::StopTask::Request& req,
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
 
-    ROS_INFO( "%s Received a request to stop task. Action = '%s'; what = '%s'"
+    // Debug
+    TEMOTO_DEBUG( "%s Received a request to stop task. Action = '%s'; what = '%s'"
                , prefix.c_str(), req.action.c_str(), req.what.c_str());
 
     try
@@ -825,37 +1040,51 @@ void TaskManager::stopTask(std::string action, std::string what)
 
     bool task_stopped = false;
 
-    std::cout << prefix << " No of asynchronous tasks: " << asynchronous_tasks_.size() << std::endl;
+    // Debug
+    TEMOTO_DEBUG_STREAM (prefix << " No of asynchronous tasks: " << asynchronous_tasks_.size());
 
     /*
      * Stop by action and what
      */
     if( !action.empty() && !what.empty() )
     {
-        //std::cout << prefix << "Stopping the task based on action and what\n";
+        // Debug
+        TEMOTO_DEBUG_STREAM (prefix << "Stopping the task based on 'action'' and 'what'");
+
         // Look for the task
         for (auto task_it = asynchronous_tasks_.begin();
              task_it != asynchronous_tasks_.end();
              ++task_it)
         {
-            //std::cout << prefix << "loop start\n";
-            //std::cout << "looking at: " << task_it->first->getAction() << std::endl;
             // Look for the action
-            if (task_it->first->getAction() != action)
+            bool action_found = false;
+            for (auto& alias : task_it->first->aliases_stemmed_)
+            {
+                if (alias == action)
+                {
+                    action_found = true;
+                    break;
+                }
+            }
+
+            // If the action was not found then continue
+            if (!action_found)
             {
                 continue;
             }
-            //std::cout << prefix << "got action\n";
+
             // Look for the what
             Subjects subjects = task_it->first->getFirstInputSubjects(); // copy
             Subject subject = getSubjectByType("what", subjects);
-            //std::cout << prefix << "got what with word size of:" << subject.words_.size() << std::endl;
+
             if (subject.words_.empty() || subject.words_[0] != what)
             {
                 continue;
             }
 
-            //std::cout << prefix << "Fond the task, stopping it\n";
+            // Debug
+            TEMOTO_DEBUG_STREAM (prefix << " Found the task, stopping it");
+
             // Remove the task
             asynchronous_tasks_.erase(task_it);
             task_stopped = true;
@@ -868,19 +1097,34 @@ void TaskManager::stopTask(std::string action, std::string what)
      */
     else if( !action.empty() )
     {
-        std::cout << prefix << "Stopping the task based on action\n";
+        // Debug
+        TEMOTO_DEBUG_STREAM (prefix << "Stopping the task based on 'action'");
+
         // Look for the task
         for (auto task_it = asynchronous_tasks_.begin();
              task_it != asynchronous_tasks_.end();
              ++task_it)
         {
             // Look for the action
-            if (task_it->first->getAction() != action)
+            bool action_found = false;
+            for (auto& alias : task_it->first->aliases_stemmed_)
+            {
+                if (alias == action)
+                {
+                    action_found = true;
+                    break;
+                }
+            }
+
+            // If the action was not found then continue
+            if (!action_found)
             {
                 continue;
             }
 
-            std::cout << prefix << "Fond the task, stopping it\n";
+            // Debug
+            TEMOTO_DEBUG_STREAM (prefix << " Found the task, stopping it");
+
             // Remove the task
             asynchronous_tasks_.erase(task_it);
             task_stopped = true;
@@ -895,21 +1139,27 @@ void TaskManager::stopTask(std::string action, std::string what)
      */
     else if( !what.empty() )
     {
-        std::cout << prefix << "Stopping the task based on what\n";
+        // Debug
+        TEMOTO_DEBUG_STREAM (prefix << "Stopping the task based on 'what'");
+
         // Look for the task
         for (auto task_it = asynchronous_tasks_.begin();
-             task_it != asynchronous_tasks_.end(); /* empty */)
+             task_it != asynchronous_tasks_.end();
+             /* empty */)
         {
             // Look for the what
             Subjects subjects = task_it->first->getFirstInputSubjects(); // copy
             Subject subject = getSubjectByType("what", subjects);
+
             if (subject.words_.empty() || subject.words_[0] != what)
             {
                 task_it++;
                 continue;
             }
 
-            std::cout << prefix << "Fond the task, stopping it\n";
+            // Debug
+            TEMOTO_DEBUG_STREAM (prefix << " Found task '" << task_it->first->getAction() << "'. Stopping it");
+
             // Remove the task
             asynchronous_tasks_.erase(task_it);
             task_stopped = true;
@@ -922,13 +1172,43 @@ void TaskManager::stopTask(std::string action, std::string what)
         throw error::ErrorStackUtil( TTPErr::UNSPECIFIED_TASK,
                                      error::Subsystem::CORE,
                                      error::Urgency::MEDIUM,
-                                     prefix + "Task 'action' and 'what' unspecified.",
+                                     prefix + " Task 'action' and 'what' unspecified.",
                                      ros::Time::now() );
     }
 }
 
 
+/* * * * * * * * *
+ *  INDEX TASKS SERVICE CALLBACK
+ * * * * * * * * */
 
+bool TaskManager::indexTasksCallback( temoto_2::IndexTasks::Request& req,
+                                      temoto_2::IndexTasks::Response& res)
+{
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
+
+    TEMOTO_DEBUG( "%s Received a request to index tasks at '%s'", prefix.c_str(), req.directory.c_str());
+    try
+    {
+        boost::filesystem::directory_entry dir(req.directory);
+        indexTasks(dir, 1);
+        res.code = 0;
+        res.message = "Browsed and indexed the tasks successfully";
+
+        return true;
+    }
+    catch( error::ErrorStackUtil & e )
+    {
+        // Append the error to local ErrorStack
+        e.forward( prefix );
+        error_handler_.append(e);
+
+        res.code = 1;
+        res.message = "Failed to index the tasks";
+        return true;
+    }
+}
 
 
 
@@ -950,37 +1230,7 @@ void TaskManager::stopTask(std::string action, std::string what)
 
 
 
-/* * * * * * * * *
- *  INDEX TASKS SERVICE CALLBACK
- * * * * * * * * */
 
-//bool TaskManager::indexTasksCallback( temoto_2::indexTasks::Request& req,
-//                                      temoto_2::indexTasks::Response& res)
-//{
-//    // Name of the method, used for making debugging a bit simpler
-//    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
-
-//    ROS_DEBUG( "%s Received a request to index tasks at '%s'", prefix.c_str(), req.directory.c_str());
-//    try
-//    {
-//        boost::filesystem::directory_entry dir(req.directory);
-//        indexTasks(dir, 1);
-//        res.code = 0;
-//        res.message = "Browsed and indexed the tasks successfully";
-
-//        return true;
-//    }
-//    catch( error::ErrorStackUtil & e )
-//    {
-//        // Append the error to local ErrorStack
-//        e.forward( prefix );
-//        error_handler_.append(e);
-
-//        res.code = 1;
-//        res.message = "Failed to index the tasks";
-//        return true;
-//    }
-//}
 
 
 

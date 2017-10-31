@@ -14,7 +14,7 @@ public:
 
     TaskDescriptorProcessor( std::string path );
 
-    std::string getTaskName();
+    Action getTaskAction();
 
     TaskDescriptor getTaskDescriptor();
 
@@ -55,6 +55,8 @@ private:
     Subject getSubject(TiXmlElement* subject_element);
 
     std::vector<Data> getData(TiXmlElement* data_element);
+
+    std::vector<Action> getTaskActionAliases();
 
 
 

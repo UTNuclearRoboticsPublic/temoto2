@@ -36,6 +36,8 @@ public:
 
     TaskDescriptor( Action action );
 
+    TaskDescriptor( Action action, Action action_stemmed );
+
     TaskDescriptor( Action action, std::vector<Subject>& input_subjects );
 
     TaskDescriptor( Action action, TaskInterface& task_interface );
@@ -79,6 +81,12 @@ private:
     std::vector<TaskInterface> task_interfaces_;
 
     Action action_;
+
+    Action action_stemmed_;
+
+    std::vector<Action> aliases_;
+
+    std::vector<Action> aliases_stemmed_;
 
     std::string task_class_name_;
 
