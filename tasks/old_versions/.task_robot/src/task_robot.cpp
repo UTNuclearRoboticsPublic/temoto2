@@ -60,6 +60,11 @@ public:
       rmi_.execute();
       TASK_DEBUG("%s FINISHED EXECUTING", prefix.c_str());
     }
+    else if (arguments.size() == 1 && boost::any_cast<std::string>(arguments[0]) == "target")
+    {
+      TASK_DEBUG("%s SET TARGET TO 'hand'.", prefix.c_str());
+      rmi_.setTarget("hand");
+    }
     else
     {
       try

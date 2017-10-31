@@ -1,0 +1,6 @@
+string target_type
+
+---
+
+int64 code
+string message

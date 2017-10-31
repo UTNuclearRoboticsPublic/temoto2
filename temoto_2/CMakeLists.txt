@@ -69,6 +69,7 @@ add_service_files(
     robot_manager/RobotLoad.srv
     robot_manager/RobotPlan.srv
     robot_manager/RobotExecute.srv
+    robot_manager/RobotSetTarget.srv
     robot_manager/RobotGetRvizConfig.srv
   
     # Task manager

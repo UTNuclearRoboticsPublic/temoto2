@@ -12,6 +12,7 @@
 #include <map>
 #include "robot_manager/robot.h"
 
+
 namespace robot_manager
 {
 class RobotManager
@@ -52,9 +53,9 @@ public:
    * @param LoadSpeech response message
    * @return
    */
-  //  bool setTargetCb(temoto_2::RobotSetTarget::Request& req, temoto_2::RobotSetTarget::Response&
-  //  res);
-  //
+    bool setTargetCb(temoto_2::RobotSetTarget::Request& req, temoto_2::RobotSetTarget::Response&
+    res);
+  
   bool getRvizConfigCb(temoto_2::RobotGetRvizConfig::Request& req,
                        temoto_2::RobotGetRvizConfig::Response& res);
 
@@ -67,7 +68,7 @@ public:
 
 private:
   PackageInfoPtr findRobot(temoto_2::LoadProcess::Request& req, const std::string& robot_name);
-  
+
   // Currently one robot at the time, add vec or map in future.
   std::shared_ptr<Robot> active_robot_;
   geometry_msgs::Pose default_target_pose_;
@@ -79,7 +80,9 @@ private:
   ros::ServiceServer server_plan_;
   ros::ServiceServer server_exec_;
   ros::ServiceServer server_get_rviz_cfg_;
-  //  ros::ServiceServer server_set_target_;
+  ros::ServiceServer server_set_target_;
+
+  ros::Subscriber target_pose_sub_;
 
   // store active
   temoto_id::ID active_robot_id_;

@@ -7,7 +7,7 @@
   </in>
   
   <in>
-    <arg argtype="string" value="plan,execute"/>
+    <arg argtype="string" value="plan,execute,target"/>
   </in>
 
   <out>

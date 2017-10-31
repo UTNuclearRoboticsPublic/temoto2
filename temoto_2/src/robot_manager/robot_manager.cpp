@@ -1,5 +1,7 @@
 #include "robot_manager/robot_manager.h"
 #include "process_manager/process_manager_services.h"
+#include "context_manager/human_context/human_context_services.h"
+//#include "temoto_2/LoadGesture.h"
 //#include "rviz/QMap.h"
 //#include "rviz/yaml_config_reader.h"
 //#include "rviz/config.h"
@@ -23,9 +25,8 @@ RobotManager::RobotManager() : resource_manager_(srv_name::MANAGER, this)
       nh_.advertiseService(robot_manager::srv_name::SERVER_EXECUTE, &RobotManager::execCb, this);
   server_get_rviz_cfg_ = nh_.advertiseService(robot_manager::srv_name::SERVER_GET_RVIZ_CONFIG,
                                               &RobotManager::getRvizConfigCb, this);
-  //  server_set_target_ =
-  //  nh_.advertiseServer<temoto_2::RobotSetTarget>(robot_manager::srv_name::SERVER_SET_TARGET,
-  //  &RobotManager::setTargetCb, this);
+  server_set_target_ = nh_.advertiseService(robot_manager::srv_name::SERVER_SET_TARGET,
+                                            &RobotManager::setTargetCb, this);
 
   TEMOTO_INFO("Robot manager is ready.");
 }
@@ -157,12 +158,38 @@ bool RobotManager::getRvizConfigCb(temoto_2::RobotGetRvizConfig::Request& req,
   return true;
 }
 
-// bool RobotManager::setTargetCb(temoto_2::LoadSpeech::Request& req,
-//                                  temoto_2::LoadSpeech::Response& res)
-//{
-//  std::string prefix = "[RobotManager::unloadSpeechCb]:";
-//  TEMOTO_INFO("%s Speech unloaded.", prefix.c_str());
-//}
+bool RobotManager::setTargetCb(temoto_2::RobotSetTarget::Request& req,
+                               temoto_2::RobotSetTarget::Response& res)
+{
+  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  TEMOTO_INFO("%s Looking for target of type '%s'", prefix.c_str(), req.target_type.c_str());
+
+
+  // Only "hand" type is experimentally implemented
+  if (req.target_type == "hand")
+  {
+    std::vector<temoto_2::GestureSpecifier> gesture_specifiers;
+    temoto_2::GestureSpecifier gesture_specifier;
+    gesture_specifier.dev = "device";
+    gesture_specifier.type = "hand";
+//    gesture_specifiers.push_back(gesture_specifier);
+
+    temoto_2::LoadGesture srv_msg;
+    srv_msg.request.gesture_specifiers.push_back(gesture_specifier);
+    if (resource_manager_.call<temoto_2::LoadGesture>(
+            human_context::srv_name::MANAGER, human_context::srv_name::GESTURE_SERVER, srv_msg))
+    {
+      TEMOTO_DEBUG("%s Call to ContextManager was sucessful.", prefix.c_str());
+
+    }
+    else
+    {
+      TEMOTO_ERROR("%s Failed to call ContextManager.", prefix.c_str());
+      return true;
+    }
+  }
+return true;
+}
 
 PackageInfoPtr RobotManager::findRobot(temoto_2::LoadProcess::Request& req,
                                        const std::string& robot_name)

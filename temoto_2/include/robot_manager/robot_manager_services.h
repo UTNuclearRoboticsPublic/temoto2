@@ -1,10 +1,11 @@
-#ifndef HUMAN_CONTEXT_SERVICES_H
-#define HUMAN_CONTEXT_SERVICES_H
+#ifndef ROBOT_MANAGER_SERVICES_H
+#define ROBOT_MANAGER_SERVICES_H
 
 #include <string>
 #include "temoto_2/RobotLoad.h"
 #include "temoto_2/RobotPlan.h"
 #include "temoto_2/RobotExecute.h"
+#include "temoto_2/RobotSetTarget.h"
 #include "temoto_2/RobotGetRvizConfig.h"
 
 namespace robot_manager
