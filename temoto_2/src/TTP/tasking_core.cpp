@@ -29,6 +29,15 @@ TaskingCore::TaskingCore(std::string node_name)
         task_manager_.indexTasks(dir, 1);
         std::cout << "done\n";
 
+        std::vector <TTP::TaskDescriptor>& tds = task_manager_.getIndexedTasks();
+
+        // Print out the tasks
+        std::cout << "Found " << tds.size() << " tasks. Printing ...\n";
+        for (auto& td : tds)
+        {
+            std::cout << td << std::endl;
+        }
+
         /*
          * Initialize the language processor by giving it the path to language model files
          */

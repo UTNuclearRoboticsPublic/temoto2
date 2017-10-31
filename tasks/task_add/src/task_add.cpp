@@ -2,113 +2,113 @@
  *
  *	Sample Task class that utilizes the Temoto 2.0 architecture.
  *
- *	TASK DESCRIPTION:
- *		* Demonstrate dynamic subscription
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // Things that have to be included
-#include "base_task/task.h"                 // The base task
-#include <class_loader/class_loader.h>               // Class loader includes
+#include "TTP/base_task/base_task.h"                 				 // The base task
+#include <class_loader/class_loader.h>                                   // Class loader includes
 
 // Task specific includes
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 
 // First implementaton
-class Add_task: public Task
+class TaskAdd: public TTP::BaseTask
 {
 public:
 
-    /* * * * * * * * * * * * * * * * * * * * * * * * *
-     * Inherited methods that have to be implemented /START
-     * * * * * * * * * * * * * * * * * * * * * * * * */
+/* * * * * * * * * * * * * * * * * * * * * * * * *
+ * Inherited methods that have to be implemented /START
+ * * * * * * * * * * * * * * * * * * * * * * * * */
 
-    Add_task()
+TaskAdd()
+{
+    // Do something here if needed
+    ROS_INFO("TaskAdd constructed");
+}
+
+// startTask with arguments
+bool startTask(TTP::TaskInterface task_interface)
+{
+// * AUTO-GENERATED, DO NOT MODIFY *
+    input_subjects = task_interface.input_subjects_;
+    switch(task_interface.id_)
     {
-        // Do something here if needed
-        ROS_DEBUG("Add_task constructed");
+        // Interface 0
+        case 0:
+            startInterface_0();
+        break;
     }
 
-    // startTask without arguments
-    bool startTask()
-    {
-        return true;
-    }
+    return true;
+// * AUTO-GENERATED, DO NOT MODIFY *
+}
 
-    // startTask with arguments
-    bool startTask(int subtaskNr, std::vector<boost::any> arguments )
-    {
-        // Check if arguments vector contains expected amount of arguments
-        if (arguments.size() != numberOfArguments)
-        {
-            std::cerr << "[Add_task/startTask]: Wrong number of arguments. Expected: "
-                      << numberOfArguments  << " but got: " << arguments.size() << '\n';
+/*
+ * Interface 0 body
+ */
+void startInterface_0()
+{
+    // < AUTO-GENERATED, DO NOT MODIFY >
 
-            return false;
-        }
+    // Extracting input subjects
+    TTP::Subject numeric_0_in = TTP::getSubjectByType("numeric", input_subjects);
+    std::string  numeric_0_word_in = numeric_0_in.words_[0];
+    float        numeric_0_data_0_in = boost::any_cast<float>(numeric_0_in.data_[0].value);
 
-        // If it does, try to cast the arguments
-        try
-        {
-            arg0 = boost::any_cast<int>(arguments[0]);
-            arg1 = boost::any_cast<int>(arguments[1]);
+    TTP::Subject numeric_1_in = TTP::getSubjectByType("numeric", input_subjects);
+    std::string  numeric_1_word_in = numeric_1_in.words_[0];
+    float        numeric_1_data_0_in = boost::any_cast<float>(numeric_1_in.data_[0].value);
 
-            // THE HOLY TASK ITSELF
-            result = arg0 + arg1;
-            std::cout << arg0 << " + " << arg1 << " = " << result << std::endl;
+    std::string  numeric_0_word_out;
+    float        numeric_0_data_0_out;
 
-            return true;
-        }
-        catch (boost::bad_any_cast &e)
-        {
-            std::cerr << "[Add_task/startTask]: " << e.what() << '\n';
-            return false;
-        }
-    }
+    // </ AUTO-GENERATED, DO NOT MODIFY >
 
-    bool stopTask()
-    {
-        return true;
-    }
+// -------------------------------< USER CODE >-------------------------------
 
-    std::string getStatus()
-    {
-        std::string str = "healthy";
-        return str;
-    }
+    numeric_0_data_0_out = numeric_0_data_0_in + numeric_1_data_0_in;
+    numeric_0_word_out = numeric_0_word_in;
 
-    std::vector<boost::any> getSolution( int subtaskNr )
-    {
-        // Construct an empty vector
-        std::vector<boost::any> solutionVector;
+    ROS_INFO("TaskAdd: %f %s + %f %s = %f %s", numeric_0_data_0_in, numeric_0_word_in.c_str()
+                                             , numeric_1_data_0_in, numeric_1_word_in.c_str()
+                                             , numeric_0_data_0_out, numeric_0_word_out.c_str());
 
-        // Check the subtask number
-        if ( subtaskNr == 0)
-        {
-            boost::any retArg0 = result;
-            solutionVector.push_back(retArg0);
-        }
+// -------------------------------</ USER CODE >-------------------------------
 
-        return solutionVector;
-    }
+    // < AUTO-GENERATED, DO NOT MODIFY >
 
-    /* * * * * * * * * * * * * * * * * * * * * * * * *
-     * Inherited methods that have to be implemented / END
-     * * * * * * * * * * * * * * * * * * * * * * * * */
+    TTP::Subject numeric_0_out("numeric", numeric_0_word_out);
+    numeric_0_out.markComplete();
+    numeric_0_out.data_.emplace_back("number", boost::any_cast<float>(numeric_0_data_0_out));
+    output_subjects.push_back(numeric_0_out);
 
-    ~Add_task()
-    {
-        ROS_DEBUG("[Add_task] Add_task destructed");
-    }
+    // </ AUTO-GENERATED, DO NOT MODIFY >
+}
 
-private:
-    int numberOfArguments = 2;
+std::string getStatus()
+{
+    std::string str = "healthy";
+    return str;
+}
 
-    int arg0;
-    int arg1;
-    int result;
+std::vector<TTP::Subject> getSolution()
+{
+    return output_subjects;
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * *
+ * Inherited methods that have to be implemented / END
+ * * * * * * * * * * * * * * * * * * * * * * * * */
+
+~TaskAdd()
+{
+    ROS_INFO("TaskAdd destructed");
+}
+
+
 };
 
 // Dont forget that part, otherwise this class would not be loadable
-CLASS_LOADER_REGISTER_CLASS(Add_task, Task);
+CLASS_LOADER_REGISTER_CLASS(TaskAdd, TTP::BaseTask);

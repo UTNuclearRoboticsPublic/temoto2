@@ -25,7 +25,7 @@ public:
 
 TaskIndex()
 {
-    index_tasks_client_ = n_.serviceClient<temoto_2::IndexTasks>("temoto_core/index_tasks");
+    index_tasks_client_ = n_.serviceClient<temoto_2::IndexTasks>("temoto_agent/index_tasks");
     ROS_INFO("TaskIndex constructed");
 }
 
