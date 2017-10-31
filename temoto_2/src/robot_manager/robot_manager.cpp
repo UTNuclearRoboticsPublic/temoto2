@@ -67,7 +67,14 @@ bool RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
             process_manager::srv_name::MANAGER, process_manager::srv_name::SERVER, load_proc_msg))
     {
       TEMOTO_DEBUG("%s Call to ProcessManager was sucessful.", prefix.c_str());
-      ros::Duration(5).sleep(); ///< Wait for the moveit launch file to be loaded.
+//      ros::Duration(5).sleep(); ///< Wait for the moveit launch file to be loaded.
+      // wait for robot_description to become available on parameter server...
+      while (!nh_.hasParam("robot_description"))
+      {
+        TEMOTO_DEBUG("%s Waiting for robot_description ...", prefix.c_str());
+        ros::Duration(0.2).sleep();
+      }
+      ros::Duration(0.5).sleep(); // In case there is anythin else to load
       active_robot_ = std::make_shared<Robot>(req.robot_name);
       active_robot_->setId(load_proc_msg.response.rmp.resource_id);
     }
@@ -102,8 +109,15 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
   TEMOTO_DEBUG("%s PLANNING...", prefix.c_str());
   if(active_robot_)
   {
-   // active_robot_->plan("manipulator");
-    TEMOTO_DEBUG("%s DONE PLANNING... %d", prefix.c_str(), active_robot_->getId());
+    if (req.use_default_target)
+    {
+      active_robot_->plan("manipulator", default_target_pose_);
+    }
+    else
+    {
+      active_robot_->plan("manipulator", req.target_pose);
+    }
+    TEMOTO_DEBUG("%s DONE PLANNING...", prefix.c_str()); 
   }
   else
   {
@@ -118,6 +132,15 @@ bool RobotManager::execCb(temoto_2::RobotExecute::Request& req,
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   TEMOTO_INFO("%s EXECUTING...", prefix.c_str());
+  if(active_robot_)
+  {
+    active_robot_->execute("manipulator");
+    TEMOTO_DEBUG("%s DONE EXECUTING...", prefix.c_str());
+  }
+  else
+  {
+    TEMOTO_ERROR("%s Unable to execute, because the robot is not loaded.", prefix.c_str());
+  }
   return true;
 }
 

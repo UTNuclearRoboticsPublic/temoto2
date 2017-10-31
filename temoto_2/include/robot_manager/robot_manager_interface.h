@@ -101,17 +101,6 @@ public:
     TEMOTO_DEBUG("%s", prefix.c_str());
 
     temoto_2::RobotExecute msg;
-    msg.request.use_default_target = true;
-    client_exec_.call(msg);
-  }
-
-  void execute(const geometry_msgs::Pose& pose)
-  {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-    TEMOTO_DEBUG("%s", prefix.c_str());
-
-    temoto_2::RobotExecute msg;
-    msg.request.use_default_target = false;
     client_exec_.call(msg);
   }
 

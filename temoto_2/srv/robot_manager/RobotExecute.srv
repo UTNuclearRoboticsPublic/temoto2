@@ -1,5 +1,3 @@
-bool use_default_target
-geometry_msgs/Pose goal
 
 ---
 

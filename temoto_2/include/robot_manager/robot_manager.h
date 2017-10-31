@@ -70,6 +70,7 @@ private:
   
   // Currently one robot at the time, add vec or map in future.
   std::shared_ptr<Robot> active_robot_;
+  geometry_msgs::Pose default_target_pose_;
 
   std::string log_class_, log_subsys_, log_group_;
 

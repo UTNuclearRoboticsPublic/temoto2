@@ -49,9 +49,16 @@ public:
     if (arguments.size() == 1 && boost::any_cast<std::string>(arguments[0]) == "plan")
     {
       TASK_DEBUG("%s STARTING PLANNING", prefix.c_str());
-      geometry_msgs::Pose pose;
-      rmi_.plan(pose);
+      geometry_msgs::Pose target_pose;
+      rmi_.plan(target_pose);
       TASK_DEBUG("%s FINISHED PLANNING", prefix.c_str());
+    }
+    else if (arguments.size() == 1 && boost::any_cast<std::string>(arguments[0]) == "execute")
+    {
+      TASK_DEBUG("%s STARTING EXECUTING", prefix.c_str());
+      geometry_msgs::Pose pose;
+      rmi_.execute();
+      TASK_DEBUG("%s FINISHED EXECUTING", prefix.c_str());
     }
     else
     {
@@ -61,7 +68,10 @@ public:
         rmi_.loadRobot("ur5");
         std::string rviz_conf = rmi_.getMoveitRvizConfig();
         omi_.showInRviz("robot", "", rviz_conf);
-        while(true);
+
+        // DO NOT EXIT THIS FUNCTION
+        ros::waitForShutdown();
+
       }
       catch (error::ErrorStackUtil& e)
       {

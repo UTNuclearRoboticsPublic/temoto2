@@ -14,7 +14,10 @@ public:
   Robot(const std::string& robot_name);
   void addPlanningGroup(const std::string& planning_group_name);
   void removePlanningGroup(const std::string& planning_group_name);
-  void plan(const std::string& planning_group_name);
+  void plan(const std::string& planning_group_name, geometry_msgs::Pose& target_pose);
+
+  void execute(const std::string& planning_group_name);
+
   inline const std::string& getName() const
   {
     return robot_name_;
@@ -31,11 +34,14 @@ public:
   }
 
 private:
+  bool is_plan_valid_;
+  moveit::planning_interface::MoveGroupInterface::Plan last_plan;
   std::string log_class_, log_subsys_, log_group_;
   std::string robot_name_;
   temoto_id::ID robot_id_;  ///< Resource_id of the launchfile process that was started for this
-                           ///robot
-  std::map<std::string, moveit::planning_interface::MoveGroupInterface> planning_groups_;
+                            /// robot
+  std::map<std::string, std::unique_ptr<moveit::planning_interface::MoveGroupInterface>>
+      planning_groups_;
 };
 }
 

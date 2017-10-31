@@ -17,7 +17,9 @@ int main(int argc, char** argv)
   rm.pkg_infos_.back()->addLaunchable({ "ur3.launch", "" });
 
   //use single threaded spinner for global callback queue
-   ros::spin();
+   ros::AsyncSpinner spinner(4);
+   spinner.start();
+   ros::waitForShutdown();
 
   return 0;
 }
