@@ -227,9 +227,9 @@ void statusInfoCb(temoto_2::ResourceStatus& srv)
         {
           // Replace subscriber
           TEMOTO_DEBUG("Replacing subscriber new topic'%s'",
-                   speech_it->response.topic.c_str());
+                   gest_it->response.topic.c_str());
           gesture_subscriber_.shutdown();
-          gesture_subscriber_ = nh_.subscribe(speech_it->response.topic, 1000, task_gesture_cb_, task_gesture_obj_);
+          gesture_subscriber_ = nh_.subscribe(gest_it->response.topic, 1000, task_gesture_cb_, task_gesture_obj_);
         }
         else
         {

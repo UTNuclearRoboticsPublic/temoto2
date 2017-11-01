@@ -34,6 +34,9 @@ TaskStart() : hci_(this)
 // startTask with arguments
 bool startTask(TTP::TaskInterface task_interface)
 {
+    // TODO: This is a hack for Veiko
+    task_alias = task_interface.alias_;
+
     // < AUTO-GENERATED, DO NOT MODIFY >
     input_subjects = task_interface.input_subjects_;
     switch(task_interface.id_)
@@ -95,6 +98,7 @@ void startInterface_0()
 // --------------------------------< USER CODE >-------------------------------
 
     std::cout << "  TaskStart got: " << what_0_word_in << std::endl;
+    std::cout << "  TaskStart was called with alias: " << task_alias << std::endl;
 
     where_0_word_out = what_0_word_in + "land";
     where_0_data_0_out = 12.345;
@@ -255,12 +259,12 @@ void gestureCallback( leap_motion_controller::Set gesture )
 
     // Set the scale of the marker -- 1x1x1 here means 1m on a side
     marker.scale.x = 0.3;
-    marker.scale.y = 0.2;
+    marker.scale.y = 0.1;
     marker.scale.z = 0.2;
 
     // Set the color -- be sure to set alpha to something non-zero!
-    marker.color.r = 0.0f;
-    marker.color.g = 1.0f;
+    marker.color.r = 1.0f;
+    marker.color.g = 0.0f;
     marker.color.b = 0.0f;
     marker.color.a = 1.0;
 
@@ -298,6 +302,8 @@ HumanContextInterface <TaskStart> hci_;
 ros::Publisher marker_pub_;
 
 std::string class_name_ = "TaskStart";
+
+std::string task_alias;
 
 };
 

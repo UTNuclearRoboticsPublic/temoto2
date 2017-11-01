@@ -9,12 +9,12 @@ int main(int argc, char** argv)
   // Create a SensorManager object
   SensorManager sm;
 
+  sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("leap_motion_controller", "hand"));
+  sm.pkg_infos_.back()->addRunnable({ "leap_motion", "/leap_motion_output" });
+
   // Add a dummy sensor entry (For testing)
   sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("temoto_tests", "hand"));
   sm.pkg_infos_.back()->addLaunchable({ "hand_tracker_0.launch", "/leap_motion_output" });
-
-  sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("leap_motion_controller", "hand"));
-  sm.pkg_infos_.back()->addRunnable({ "leap_motion", "/leap_motion_output" });
 
   //sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("temoto_2", "hand"));
   //sm.pkg_infos_.back()->addRunnable({ "dummy_sensor", "/dummy_sensor_data" });

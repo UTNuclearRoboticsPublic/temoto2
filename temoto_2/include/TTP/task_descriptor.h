@@ -16,6 +16,7 @@ struct TaskInterface
 {
     unsigned int id_;
     std::string type_;
+    std::string alias_;
     std::vector<Subject> input_subjects_;
     std::vector<Subject> output_subjects_;
 };

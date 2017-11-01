@@ -43,14 +43,14 @@
     <!--Input block-->
     <in>    
       <what>
-        <arg word="hand"/>
+        <arg word="hand,hand tracker"/>
       </what>
     </in>
     
     <!--Output block-->
     <out>
       <what>
-        <arg word="hand"/>
+        <arg word="hand,hand tracker"/>
         <data>
           <field datatype="topic"/>
         </data>

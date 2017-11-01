@@ -742,6 +742,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
      */
     node_interface.id_ = cand_task.ci_.inf_.id_;
     node_interface.type_ = cand_task.ci_.inf_.type_;
+    node_interface.alias_ = node_action; // TODO: This is a hack for Veiko
     node_interface.output_subjects_ = cand_task.ci_.inf_.output_subjects_;
     node_task_descriptor.task_package_name_ = cand_task.td_.task_package_name_;
     node_task_descriptor.aliases_stemmed_ = cand_task.td_.aliases_stemmed_;
