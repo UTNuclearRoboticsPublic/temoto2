@@ -180,11 +180,15 @@ bool RobotManager::setTargetCb(temoto_2::RobotSetTarget::Request& req,
             human_context::srv_name::MANAGER, human_context::srv_name::GESTURE_SERVER, srv_msg))
     {
       TEMOTO_DEBUG("%s Call to ContextManager was sucessful.", prefix.c_str());
+      res.code = 0;
+      res.message = "Robot manager got a 'hand' topic from human_context.";
 
     }
     else
     {
       TEMOTO_ERROR("%s Failed to call ContextManager.", prefix.c_str());
+      res.code = 1;
+      res.message = "Failed to call ContextManager.";
       return true;
     }
   }
