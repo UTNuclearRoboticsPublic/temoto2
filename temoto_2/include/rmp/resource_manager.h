@@ -246,6 +246,8 @@ public:
   void sendStatus(temoto_2::ResourceStatus& srv)
   {
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+
+    // For storing service and status topic temporarily.
     struct ResourceInfo
     {
       std::string status_topic;
@@ -268,7 +270,12 @@ public:
         info.srv.request.resource_id = ext_resource.first;
         info.status_topic = ext_resource.second;
         infos.push_back(info);
+
       }
+      
+     // TODO: the following is temporary hack
+     // set FAILED flag for resource queries. The flag is checked when new query arrives to the server
+     server->setFailedFlag(srv.request.resource_id);
     }
     servers_mutex_.unlock();
 
@@ -335,13 +342,13 @@ public:
       if (client_it != clients_.end())
       {
         const auto int_resources = (*client_it)->getInternalResources(req.resource_id);
-        clients_mutex_.unlock();
         for (const auto& int_resource : int_resources)
         {
           // int_resource.first ==> internal resource id
           // int_resource.second ==> server name
           int_ids.emplace_back(int_resource.first);
         }
+        (*client_it)->setFailedFlag(req.resource_id);
       }
       else
       {

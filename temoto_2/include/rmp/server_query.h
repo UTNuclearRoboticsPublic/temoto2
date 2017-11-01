@@ -16,11 +16,11 @@ template <class ServiceMsgType, class Owner>
 class ServerQuery
 {
 public:
-  ServerQuery()
+  ServerQuery() : failed_(false), owner_(NULL)
   {
   } 
   // special constructor for resource server
-  ServerQuery(const typename ServiceMsgType::Request& req, Owner* owner) : owner_(owner)
+  ServerQuery(const typename ServiceMsgType::Request& req, Owner* owner) : owner_(owner), failed_(false)
   {
     log_class_ = "rmp/ServerQuery";
     log_subsys_ = owner_->getName();
@@ -96,6 +96,10 @@ public:
   {
     msg_.response = res;
   }
+
+
+  //TODO: REMOVE ME
+  bool failed_;
 
 private:
   std::string log_class_, log_subsys_;
