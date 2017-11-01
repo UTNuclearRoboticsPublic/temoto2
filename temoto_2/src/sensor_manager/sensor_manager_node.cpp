@@ -21,11 +21,11 @@ int main(int argc, char** argv)
   // sm.pkg_infos_back().addLaunchable({"usb_cam-test.launch", "/usb_cam/image_raw"});
 
   // camera on /dev/video1
-  sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("task_take_picture", "camera"));
+  sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("task_show", "camera"));
   sm.pkg_infos_.back()->addLaunchable({ "camera1.launch", "/usb_cam/image_raw" });
 
   // camera on /dev/video1
-  sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("task_take_picture", "camera"));
+  sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("task_show", "camera"));
   sm.pkg_infos_.back()->addLaunchable({ "camera0.launch", "/usb_cam/image_raw" });
 
 //  sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("pocket_sphinx", "speech"));

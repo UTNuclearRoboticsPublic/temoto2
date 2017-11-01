@@ -14,8 +14,7 @@
 
 // Task specific includes
 #include "ros/ros.h"
-#include "std_msgs/String.h"
-#include "context_manager/human_context/human_context_interface.h"
+#include "output_manager/output_manager_interface.h"
 
 // First implementaton
 class TaskShow: public TTP::BaseTask
@@ -73,9 +72,31 @@ void startInterface_0()
 
 // --------------------------------< USER CODE >-------------------------------
 
-    std::cout << "  TaskShow: Showing '" << what_0_word_in << "' in '" << where_0_word_in  <<  "' @ '" << what_0_data_0_in << "' topic\n";
-    what_0_word_out = what_0_word_in;
-    what_0_data_0_out = what_0_data_0_in;
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+
+    try
+    {
+        // Initialize the output manager interface
+        omi_.initialize(this);
+
+        TASK_INFO(" TaskShow: Showing '%s' in '%s' @ '%s' topic"
+                  , what_0_word_in.c_str()
+                  , where_0_word_in.c_str()
+                  , what_0_data_0_in.c_str());
+
+        // Show the image in rviz
+        omi_.showInRviz("image", what_0_data_0_in);
+
+        // Fill the out part of the current task-interface
+        what_0_word_out = what_0_word_in;
+        what_0_data_0_out = what_0_data_0_in;
+    }
+    catch( error::ErrorStackUtil& e )
+    {
+        e.forward( prefix );
+        this->error_handler_.append(e);
+    }
 
 // --------------------------------</ USER CODE >-------------------------------
 
@@ -114,18 +135,11 @@ std::vector<TTP::Subject> getSolution()
 
 private:
 
-// Human context interface object
-// HumanContextInterface <TaskShow> hci_;
+// Create sensor manager interface object for accessing sensor manager
+OutputManagerInterface omi_;
 
-/**
- * @brief class_name_
- */
+// Class name
 std::string class_name_ = "TaskShow";
-
-int numberOfArguments = 1;
-std::string arg_0;
-
-bool print_ = true;
 
 };
 

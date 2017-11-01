@@ -11,7 +11,6 @@
 
 // Task specific includes
 #include "ros/ros.h"
-#include "std_msgs/String.h"
 #include "output_manager/output_manager_interface.h"
 #include "sensor_manager/sensor_manager_interface.h"
 
@@ -28,7 +27,7 @@ public:
 TaskStart()
 {
     // Do something here if needed
-    ROS_INFO("TaskStart constructed");
+    TASK_INFO("TaskStart constructed");
 }
 
 // startTask with arguments
@@ -73,6 +72,8 @@ void startInterface_0()
 // --------------------------------< USER CODE >-------------------------------
 
     std::cout << "  TaskStart got: " << what_0_word_in << std::endl;
+    std::cout << getName() << std::endl;
+
     where_0_word_out = what_0_word_in + "land";
     where_0_data_0_out = 12.345;
 
@@ -105,20 +106,35 @@ void startInterface_1()
     std::string  what_0_word_out;
     std::string  what_0_data_0_out;
 
-    std::string  numeric_0_word_out;
-    float        numeric_0_data_0_out;
-
     // </ AUTO-GENERATED, DO NOT MODIFY >
 
 // -------------------------------< USER CODE >-------------------------------
 
-    std::cout << "  TaskStart got: " << what_0_word_in << std::endl;
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
-    what_0_word_out = what_0_word_in;
-    what_0_data_0_out = "/camera_topic_123";
+    try
+    {
+        // Initialize the sensor manager interface
+        smi_.initialize(this);
 
-    numeric_0_word_out = "ISO";
-    numeric_0_data_0_out = 1500;
+        TASK_INFO(" Starting the camera");
+
+        // Start the camera with our custom launch file
+        std::string camera_topic = smi_.startSensor("camera");
+
+        TASK_INFO_STREAM("Got camera on topic '" << camera_topic << "'");
+
+        // Pass the camera topic to the output
+        what_0_word_out = what_0_word_in;
+        what_0_data_0_out = camera_topic;
+    }
+    catch( error::ErrorStackUtil& e )
+    {
+        e.forward( prefix );
+        this->error_handler_.append(e);
+    }
+
 
 // -------------------------------</ USER CODE >-------------------------------
 
@@ -128,11 +144,6 @@ void startInterface_1()
     what_0_out.markComplete();
     what_0_out.data_.emplace_back("topic", boost::any_cast<std::string>(what_0_data_0_out));
     output_subjects.push_back(what_0_out);
-
-    TTP::Subject numeric_0_out("numeric", numeric_0_word_out);
-    numeric_0_out.markComplete();
-    numeric_0_out.data_.emplace_back("number", boost::any_cast<float>(numeric_0_data_0_out));
-    output_subjects.push_back(numeric_0_out);
 
     // </ AUTO-GENERATED, DO NOT MODIFY >
 }
@@ -154,12 +165,15 @@ std::vector<TTP::Subject> getSolution()
 
 ~TaskStart()
 {
-    ROS_INFO("TaskStart destructed");
+    TASK_INFO("TaskStart destructed");
 }
 
 private:
 
+// Create sensor manager interface object for accessing sensor manager
+SensorManagerInterface smi_;
 
+std::string class_name_ = "TaskStart";
 
 };
 

@@ -906,6 +906,7 @@ void TaskManager::instantiateTask(TaskTreeNode& node)
         ROS_DEBUG( "%s instatiating task: %s", prefix.c_str(), task_class_name.c_str());
         node.task_pointer_ = class_loader_->createInstance<BaseTask>(task_class_name);
         node.task_pointer_->task_package_name_ = task_descriptor.getTaskPackageName();
+        node.task_pointer_->task_id_ = id_manager_.generateID();
 
         // TODO: This is a hack and it should not exist. But currently this is necessary
         // because flow graph internally updates the task descriptors and the updated

@@ -25,7 +25,7 @@ public:
 TaskAdd()
 {
     // Do something here if needed
-    ROS_INFO("TaskAdd constructed");
+    TASK_INFO("TaskAdd constructed");
 }
 
 // startTask with arguments
@@ -71,9 +71,9 @@ void startInterface_0()
     numeric_0_data_0_out = numeric_0_data_0_in + numeric_1_data_0_in;
     numeric_0_word_out = numeric_0_word_in;
 
-    ROS_INFO("TaskAdd: %f %s + %f %s = %f %s", numeric_0_data_0_in, numeric_0_word_in.c_str()
-                                             , numeric_1_data_0_in, numeric_1_word_in.c_str()
-                                             , numeric_0_data_0_out, numeric_0_word_out.c_str());
+    TASK_INFO("TaskAdd: %f %s + %f %s = %f %s", numeric_0_data_0_in, numeric_0_word_in.c_str()
+                                              , numeric_1_data_0_in, numeric_1_word_in.c_str()
+                                              , numeric_0_data_0_out, numeric_0_word_out.c_str());
 
 // -------------------------------</ USER CODE >-------------------------------
 
@@ -104,7 +104,7 @@ std::vector<TTP::Subject> getSolution()
 
 ~TaskAdd()
 {
-    ROS_INFO("TaskAdd destructed");
+    TASK_INFO("TaskAdd destructed");
 }
 
 
