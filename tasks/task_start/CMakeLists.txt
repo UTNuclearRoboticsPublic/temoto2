@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   temoto_2
+  leap_motion_controller
 )
 
 catkin_package()

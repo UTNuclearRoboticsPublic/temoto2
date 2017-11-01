@@ -322,6 +322,11 @@ unsigned int findWordMatch (Subjects& required_subjects , Subjects& node_subject
             // Check words
             if (!r_sub.words_.empty())
             {
+                if (n_sub->words_.empty())
+                {
+                    continue;
+                }
+
                 // Go through the list of possible required words
                 bool word_match = false;
                 for (auto& r_word : r_sub.words_)
@@ -429,8 +434,8 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
     if (!node_task_descriptor.getIncompleteSubjects().empty())
     {
         // Debug
-        TEMOTO_DEBUG ("%s T'%s' depends on parent node, retrieving missing information ..."
-                      , prefix.c_str(), node_action);
+        TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action
+                             << "' depends on parent node, retrieving missing information ...");
 
         /*
          * Check the node subjects and get the missing information from

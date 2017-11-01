@@ -20,7 +20,7 @@
 #include <visualization_msgs/Marker.h>
 
 // First implementaton
-class TaskTemoto: public Task
+class TaskTemoto: public TTP::BaseTask
 {
 public:
 
@@ -33,6 +33,10 @@ TaskTemoto() : hci_(this)
     // Do something here if needed
    // ROS_INFO("TaskTemoto constructed");
 }
+
+
+
+
 /*
  * startTask without arguments
  */
@@ -242,11 +246,6 @@ HumanContextInterface <TaskTemoto> hci_;
 OutputManagerInterface omi_;
 
 /**
- * @brief smi_
- */
-SensorManagerInterface smi_;
-
-/**
  * @brief class_name_
  */
 std::string class_name_ = "TaskTemoto";
@@ -263,13 +262,7 @@ ros::Publisher marker_pub_;
 
 bool stop_task_ = true;
 
-
-// Random stuff for testing
-int numberOfArguments = 1;
-std::string arg_0;
-bool print_ = true;
-
 };
 
 // Dont forget that part, otherwise this class would not be loadable
-CLASS_LOADER_REGISTER_CLASS(TaskTemoto, Task);
+CLASS_LOADER_REGISTER_CLASS(TaskTemoto, TTP::BaseTask);

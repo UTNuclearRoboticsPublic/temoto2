@@ -1,5 +1,6 @@
 #include "TTP/tasking_core.h"
 #include "common/tools.h"
+#include "common/console_colors.h"
 #include "common/temoto_log_macros.h"
 #include "base_error/base_error.h"
 #include <cstdio>
@@ -60,6 +61,8 @@ void TaskingCore::humanChatterCb (std_msgs::String chat)
 {
     try
     {
+        std::cout << BOLDWHITE << "Received: " << chat.data << RESET << std::endl << std::endl;
+
         // Process the text and receive a task tree
         TaskTree tt = language_processor_->processText(std::move(chat.data));
 

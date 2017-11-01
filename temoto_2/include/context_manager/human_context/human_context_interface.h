@@ -10,7 +10,9 @@
 #include "common/interface_errors.h"
 
 #include "std_msgs/Float32.h"
+#include "std_msgs/String.h"
 #include "human_msgs/Hands.h"
+#include "leap_motion_controller/Set.h"
 
 #include "context_manager/human_context/human_context_services.h"
 #include "rmp/resource_manager.h"
@@ -21,7 +23,7 @@ class HumanContextInterface
 {
 public:
 
-  typedef void (OwnerTask::*GestureCallbackType)(human_msgs::Hands);
+  typedef void (OwnerTask::*GestureCallbackType)(leap_motion_controller::Set);
   typedef void (OwnerTask::*SpeechCallbackType)(std_msgs::String);
 
 
@@ -86,7 +88,7 @@ public:
 
     // Subscribe to the topic that was provided by the "Context Manager"
     TEMOTO_INFO("%s subscribing to topic'%s'", prefix.c_str(), srv_msg.response.topic.c_str());
-    gesture_subscriber_ = nh_.subscribe(srv_msg.response.topic, 1000, task_speech_cb_, task_speech_obj_);
+    gesture_subscriber_ = nh_.subscribe(srv_msg.response.topic, 1000, task_gesture_cb_, task_gesture_obj_);
   }
 
   void getSpeech(std::vector<temoto_2::SpeechSpecifier> speech_specifiers, SpeechCallbackType callback, OwnerTask* obj)
@@ -250,9 +252,9 @@ void statusInfoCb(temoto_2::ResourceStatus& srv)
   ~HumanContextInterface()
   {
     // Let the context manager know, that task is finished and topics are unsubscribed
-    stopAllocatedServices();
-    gesture_subscriber_.shutdown();
-    speech_subscriber_.shutdown();
+    //stopAllocatedServices();
+    //gesture_subscriber_.shutdown();
+    //speech_subscriber_.shutdown();
   }
 
   const std::string& getName() const
