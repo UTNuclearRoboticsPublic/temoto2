@@ -19,6 +19,11 @@
         <arg word="plan"/>
       </what>
     </in>
+    <out>    
+      <what>
+        <arg word="plan"/>
+      </what>
+    </out>
   </interface>
 
   <!--Interface block-->
@@ -26,7 +31,7 @@
     <!--Input block-->
     <in>    
       <what>
-        <arg word="executing"/>
+        <arg word="execution"/>
       </what>
     </in>
   </interface>

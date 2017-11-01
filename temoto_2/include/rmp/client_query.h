@@ -15,11 +15,11 @@ template <class ServiceMsgType, class Owner>
 class ClientQuery
 {
 public:
-  ClientQuery()
+  ClientQuery() : owner_(NULL), failed_(false)
   {
   }
   // special constructor for resource client
-  ClientQuery(const ServiceMsgType& msg, Owner* owner) : msg_(msg), owner_(owner)
+  ClientQuery(const ServiceMsgType& msg, Owner* owner) : msg_(msg), owner_(owner), failed_(false)
   {
     log_class_ = "rmp/ClientQuery";
     log_subsys_ = owner_->getName();
@@ -96,6 +96,8 @@ public:
   {
     return internal_resources_;
   }
+
+  bool failed_;
 
 private:
   // internal resource ids and their callers name

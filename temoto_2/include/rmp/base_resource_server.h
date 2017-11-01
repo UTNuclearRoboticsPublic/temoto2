@@ -32,10 +32,10 @@ class BaseResourceServer
 		virtual ~BaseResourceServer()
 		{
 		}
-		//template <class Service>
-		//bool addResourceEntry(ResourceEntry<Service> resource)=0;
 
-		const std::string& getName()
+    virtual void setFailedFlag(temoto_id::ID internal_resource_id) = 0;
+
+    const std::string& getName()
 		{
 			return name_;
 		};

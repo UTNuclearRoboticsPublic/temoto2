@@ -57,7 +57,7 @@ public:
     // search for given service request from previous queries
     auto q_it = std::find_if(queries_.begin(), queries_.end(),
                              [&](const ClientQuery<ServiceType, Owner>& q) -> bool {
-                               return q.getMsg().request == msg.request;
+                               return q.getMsg().request == msg.request && !q.failed_;
                              });
     if (q_it == queries_.end())
     {
@@ -148,6 +148,19 @@ public:
         sendUnloadRequest(q_it->getExternalId());
         queries_.erase(q_it);
       }
+    }
+  }
+
+  //TODO: REMOVE THIS STUFF
+  void setFailedFlag(temoto_id::ID external_resource_id)
+  {
+    auto q_it = std::find_if(queries_.begin(), queries_.end(),
+                             [&](const ClientQuery<ServiceType, Owner>& q) -> bool {
+                               return q.getExternalId() == external_resource_id;
+                             });
+    if (q_it != queries_.end())
+    {
+      q_it->failed_ = true;
     }
   }
 

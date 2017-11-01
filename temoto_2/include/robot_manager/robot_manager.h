@@ -5,6 +5,7 @@
 #include "common/temoto_id.h"
 #include "robot_manager/robot_manager_services.h"
 #include "process_manager/process_manager_services.h"
+#include "context_manager/human_context/human_context_services.h"
 #include "rmp/resource_manager.h"
 #include "package_info/package_info.h"
 #include <moveit/move_group_interface/move_group_interface.h>
@@ -75,6 +76,8 @@ private:
 
   void targetPoseCb(const leap_motion_controller::Set& set);
 
+  void statusInfoCb(temoto_2::ResourceStatus& srv);
+
   // Currently one robot at the time, add vec or map in future.
   std::shared_ptr<Robot> active_robot_;
   geometry_msgs::PoseStamped default_target_pose_;
@@ -89,6 +92,7 @@ private:
   ros::ServiceServer server_set_target_;
 
   ros::Subscriber target_pose_sub_;
+  temoto_2::LoadGesture hand_srv_msg_;
 
   // store active
   temoto_id::ID active_robot_id_;

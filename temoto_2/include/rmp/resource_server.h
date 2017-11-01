@@ -34,11 +34,13 @@ public:
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
     std::string rm_name = this->resource_manager_.getName();
     std::string server_srv_name = srv_name::PREFIX + "/" + rm_name + "/" + this->name_;
+    
     ros::AdvertiseServiceOptions load_service_opts =
         ros::AdvertiseServiceOptions::create<ServiceType>(
             server_srv_name,
             boost::bind(&ResourceServer<ServiceType, Owner>::wrappedLoadCallback, this, _1, _2),
             ros::VoidPtr(), &this->load_cb_queue_);
+    
     load_server_ = nh_.advertiseService(load_service_opts);
     load_spinner_.start();
     RMP_DEBUG("%s ResourceServer constructed, listening on '%s'.", prefix.c_str(),
@@ -86,7 +88,7 @@ public:
     // New or existing query? Check it out with this hi-tec lambda function :)
     auto found_query = std::find_if(queries_.begin(), queries_.end(),
                                     [&req](const ServerQuery<ServiceType, Owner>& query) -> bool {
-                                      return query.getMsg().request == req;
+                                      return query.getMsg().request == req && !query.failed_;
                                     });
 
     if (found_query == queries_.end())
@@ -257,6 +259,22 @@ public:
       ros::Duration(0.01).sleep();  // sleep for few ms
     }
     // RMP_DEBUG("%s Obtained lock()", prefix.c_str());
+  }
+
+  void setFailedFlag(temoto_id::ID internal_resource_id)
+  {
+    waitForLock(queries_mutex_);
+    const auto found_query_it =
+        std::find_if(queries_.begin(), queries_.end(),
+                     [internal_resource_id](const ServerQuery<ServiceType, Owner>& query) -> bool {
+                       return query.internalResourceExists(internal_resource_id);
+                     });
+    if (found_query_it != queries_.end())
+    {
+      // Query found, try to remove client from it.
+      found_query_it->failed_ = true;
+    }
+    queries_mutex_.unlock();
   }
 
 private:

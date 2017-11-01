@@ -1,6 +1,5 @@
 #include "robot_manager/robot_manager.h"
 #include "process_manager/process_manager_services.h"
-#include "context_manager/human_context/human_context_services.h"
 
 //#include "temoto_2/LoadGesture.h"
 //#include "rviz/QMap.h"
@@ -28,6 +27,7 @@ RobotManager::RobotManager() : resource_manager_(srv_name::MANAGER, this)
                                               &RobotManager::getRvizConfigCb, this);
   server_set_target_ = nh_.advertiseService(robot_manager::srv_name::SERVER_SET_TARGET,
                                             &RobotManager::setTargetCb, this);
+  resource_manager_.registerStatusCb(&RobotManager::statusInfoCb);
 
   TEMOTO_INFO("Robot manager is ready.");
 }
@@ -179,16 +179,15 @@ bool RobotManager::setTargetCb(temoto_2::RobotSetTarget::Request& req,
     gesture_specifier.type = "hand";
 //    gesture_specifiers.push_back(gesture_specifier);
 
-    temoto_2::LoadGesture srv_msg;
-    srv_msg.request.gesture_specifiers.push_back(gesture_specifier);
+    hand_srv_msg_.request.gesture_specifiers.push_back(gesture_specifier);
     if (resource_manager_.call<temoto_2::LoadGesture>(
-            human_context::srv_name::MANAGER, human_context::srv_name::GESTURE_SERVER, srv_msg))
+            human_context::srv_name::MANAGER, human_context::srv_name::GESTURE_SERVER, hand_srv_msg_))
     {
       TEMOTO_DEBUG("%s Call to ContextManager was sucessful.", prefix.c_str());
       res.code = 0;
       res.message = "Robot manager got a 'hand' topic from human_context.";
-      TEMOTO_DEBUG("%s Subscribing to '%s'", prefix.c_str(), srv_msg.response.topic.c_str());
-      target_pose_sub_ = nh_.subscribe(srv_msg.response.topic, 1, &RobotManager::targetPoseCb, this);
+      TEMOTO_DEBUG("%s Subscribing to '%s'", prefix.c_str(), hand_srv_msg_.response.topic.c_str());
+      target_pose_sub_ = nh_.subscribe(hand_srv_msg_.response.topic, 1, &RobotManager::targetPoseCb, this);
 
     }
     else
@@ -219,6 +218,38 @@ void RobotManager::targetPoseCb(const leap_motion_controller::Set& set)
     default_pose_mutex_.unlock();
   }
 }
+
+void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)
+  {
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+
+    TEMOTO_DEBUG("%s status info was received", prefix.c_str());
+    TEMOTO_DEBUG_STREAM(srv.request);
+    // if any resource should fail, just unload it and try again
+    // there is a chance that sensor manager gives us better sensor this time
+    if (srv.request.status_code == rmp::status_codes::FAILED &&
+        srv.request.resource_id == hand_srv_msg_.response.rmp.resource_id)
+    {
+      TEMOTO_WARN("Robot manager detected a hand sensor failure. Unloading and "
+                  "trying again");
+      resource_manager_.unloadClientResource(hand_srv_msg_.response.rmp.resource_id);
+
+      //retry with previous request
+      if (resource_manager_.call<temoto_2::LoadGesture>(human_context::srv_name::MANAGER,
+                                                        human_context::srv_name::GESTURE_SERVER,
+                                                        hand_srv_msg_))
+      {
+        TEMOTO_DEBUG("%s Call to ContextManager was sucessful.", prefix.c_str());
+        TEMOTO_DEBUG("%s Subscribing to '%s'", prefix.c_str(), hand_srv_msg_.response.topic.c_str());
+        target_pose_sub_ =
+            nh_.subscribe(hand_srv_msg_.response.topic, 1, &RobotManager::targetPoseCb, this);
+      }
+      else
+      {
+        TEMOTO_ERROR("%s Failed to call ContextManager.", prefix.c_str());
+      }
+    }
+  }
 
 PackageInfoPtr RobotManager::findRobot(temoto_2::LoadProcess::Request& req,
                                        const std::string& robot_name)
