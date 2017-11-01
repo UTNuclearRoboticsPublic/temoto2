@@ -280,6 +280,7 @@ unsigned int findNonstrictMatch (const std::vector<Subject>& complete_subjects,
             }
 
             subject_match = true;
+            score++;
 
             // The more data the complete subject has, the bigger the score
             score += complete_subjects_c[i].data_.size();
@@ -288,7 +289,7 @@ unsigned int findNonstrictMatch (const std::vector<Subject>& complete_subjects,
         }
         if (subject_match != true)
         {
-            return score;
+            return 0; // Return the score of zero
         }
     }
     return score;
@@ -574,14 +575,16 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
             // Loop over the interfaces and ...
             for (auto& interface : task_descriptor.getInterfaces())
             {
+                TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': looking at interface no: " << interface.id_);
+
                 // ... look for a word match + STRICT i-subjects match
                 unsigned int word_match_score = findWordMatch (interface.input_subjects_, node_subjects);
                 if (word_match_score == 0)
                 {
                     // Debug
                     TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': input subjects do not match. "
-                                         << " and we are talking about: " << interface.input_subjects_
-                                         << " and " << node_subjects);
+                                         << " and we are talking about: \n" << interface.input_subjects_
+                                         << " and\n" << node_subjects);
                     continue;
                 }
 
@@ -591,7 +594,9 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
                 {
                     // Debug
                     TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action
-                                         << "': output subjects do not match with dep childern");
+                                         << "': output subjects do not match with dep childern"
+                                         << " and we are talking about: \n" << interface.output_subjects_
+                                         << " and\n" << incomplete_subjects);
                     continue;
                 }
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<task action="start" alias="load,make,set">
+<task action="start" alias="load,make,set,execute">
 
   <!--Interface block-->
   <interface id="0" type="asynchronous">
@@ -19,6 +19,12 @@
         <arg word="plan"/>
       </what>
     </in>
+
+    <out>    
+      <what>
+        <arg word="plan"/>
+      </what>
+    </out>
   </interface>
 
   <!--Interface block-->
