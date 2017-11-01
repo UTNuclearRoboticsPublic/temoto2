@@ -12,7 +12,9 @@
 // Task specific includes
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-#include "context_manager/human_context/human_context_interface.h"
+#include "output_manager/output_manager_interface.h"
+#include "sensor_manager/sensor_manager_interface.h"
+
 
 // First implementaton
 class TaskStart: public TTP::BaseTask
@@ -156,9 +158,6 @@ std::vector<TTP::Subject> getSolution()
 }
 
 private:
-
-// Human context interface object
-// HumanContextInterface <TaskStart> hci_;
 
 
 

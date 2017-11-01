@@ -21,7 +21,7 @@
     <!--Input block-->
     <in>    
       <what>
-        <arg word="camera,robot"/>
+        <arg word="camera"/>
       </what>
     </in>
     
@@ -33,13 +33,6 @@
           <field datatype="topic"/>
         </data>
       </what> 
-
-      <numeric>
-        <arg word=""/>
-        <data>
-          <field datatype="number"/>
-        </data>
-      </numeric> 
     </out>
 
   </interface>

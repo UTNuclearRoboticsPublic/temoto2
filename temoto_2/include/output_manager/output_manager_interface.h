@@ -2,8 +2,8 @@
 
 #include "common/temoto_id.h"
 #include "common/interface_errors.h"
-#include "base_task/task_errors.h"
-#include "base_task/task.h"
+#include "TTP/base_task/task_errors.h"
+#include "TTP/base_task/base_task.h"
 #include "output_manager/output_manager_errors.h"
 #include "output_manager/rviz_manager/rviz_manager_services.h"
 #include "rmp/resource_manager.h"
@@ -28,7 +28,7 @@ public:
   /**
    * @brief initialize
    */
-  void initialize(Task* task)
+  void initialize(TTP::BaseTask* task)
   {
     log_class_ = "";
     log_subsys_ = "output_manager_interface";

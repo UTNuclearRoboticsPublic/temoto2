@@ -2,7 +2,8 @@
 #define SENSOR_MANAGER_INTERFACE_H
 
 #include "core/common.h"
-#include "base_task/task_errors.h"
+#include "TTP/base_task/task_errors.h"
+#include "TTP/base_task/base_task.h"
 #include "sensor_manager/sensor_manager_services.h"
 #include "rmp/resource_manager.h"
 #include "common/interface_errors.h"
@@ -20,7 +21,7 @@ public:
   {
   }
 
-  void initialize(Task* task)
+  void initialize(TTP::BaseTask* task)
   {
     log_class_= "";
     log_subsys_ = "sensor_manager_interface";
