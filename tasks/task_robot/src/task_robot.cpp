@@ -78,8 +78,9 @@ public:
     TASK_DEBUG("%s PLANNING", prefix.c_str());
     try
     {
-      geometry_msgs::Pose target_pose;
-      rmi_.plan(target_pose);
+     // geometry_msgs::PoseStamped target_pose;
+      //rmi_.plan(target_pose);
+      rmi_.plan();
     }
     catch (error::ErrorStackUtil& e)
     {

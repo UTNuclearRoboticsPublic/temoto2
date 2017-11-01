@@ -87,7 +87,7 @@ public:
     }
   }
 
-  void plan(const geometry_msgs::Pose& pose)
+  void plan(const geometry_msgs::PoseStamped& pose)
   {
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
     TEMOTO_DEBUG("%s", prefix.c_str());

@@ -1,5 +1,5 @@
 bool use_default_target
-geometry_msgs/Pose target_pose
+geometry_msgs/PoseStamped target_pose
 
 ---
 

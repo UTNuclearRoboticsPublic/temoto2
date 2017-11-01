@@ -36,7 +36,7 @@ void Robot::removePlanningGroup(const std::string& planning_group_name)
   planning_groups_.erase(planning_group_name);
 }
 
-void Robot::plan(const std::string& planning_group_name, geometry_msgs::Pose& target_pose)
+void Robot::plan(const std::string& planning_group_name, geometry_msgs::PoseStamped& target_pose)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   auto group_it =

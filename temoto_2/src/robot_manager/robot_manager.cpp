@@ -1,6 +1,7 @@
 #include "robot_manager/robot_manager.h"
 #include "process_manager/process_manager_services.h"
 #include "context_manager/human_context/human_context_services.h"
+
 //#include "temoto_2/LoadGesture.h"
 //#include "rviz/QMap.h"
 //#include "rviz/yaml_config_reader.h"
@@ -112,7 +113,11 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
   {
     if (req.use_default_target)
     {
-      active_robot_->plan("manipulator", default_target_pose_);
+      geometry_msgs::PoseStamped pose;
+      default_pose_mutex_.lock();
+      pose = default_target_pose_;
+      default_pose_mutex_.unlock();
+      active_robot_->plan("manipulator", pose);
     }
     else
     {
@@ -182,6 +187,8 @@ bool RobotManager::setTargetCb(temoto_2::RobotSetTarget::Request& req,
       TEMOTO_DEBUG("%s Call to ContextManager was sucessful.", prefix.c_str());
       res.code = 0;
       res.message = "Robot manager got a 'hand' topic from human_context.";
+      TEMOTO_DEBUG("%s Subscribing to '%s'", prefix.c_str(), srv_msg.response.topic.c_str());
+      target_pose_sub_ = nh_.subscribe(srv_msg.response.topic, 1, &RobotManager::targetPoseCb, this);
 
     }
     else
@@ -193,6 +200,24 @@ bool RobotManager::setTargetCb(temoto_2::RobotSetTarget::Request& req,
     }
   }
 return true;
+}
+
+// Take palm pose of whichever hand is present, prefer left_hand.
+// Store the pose in a class member for later use when planning is requested.
+void RobotManager::targetPoseCb(const leap_motion_controller::Set& set)
+{
+  if (set.left_hand.is_present)
+  {
+    default_pose_mutex_.lock();
+    default_target_pose_ = set.left_hand.palm_pose;
+    default_pose_mutex_.unlock();
+  }
+  else if (set.right_hand.is_present)
+  {
+    default_pose_mutex_.lock();
+    default_target_pose_ = set.right_hand.palm_pose;
+    default_pose_mutex_.unlock();
+  }
 }
 
 PackageInfoPtr RobotManager::findRobot(temoto_2::LoadProcess::Request& req,

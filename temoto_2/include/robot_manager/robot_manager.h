@@ -12,6 +12,10 @@
 #include <map>
 #include "robot_manager/robot.h"
 
+#include "leap_motion_controller/Set.h"
+
+#include <mutex>
+
 
 namespace robot_manager
 {
@@ -56,9 +60,6 @@ public:
     bool setTargetCb(temoto_2::RobotSetTarget::Request& req, temoto_2::RobotSetTarget::Response&
     res);
   
-  bool getRvizConfigCb(temoto_2::RobotGetRvizConfig::Request& req,
-                       temoto_2::RobotGetRvizConfig::Response& res);
-
   const std::string& getName() const
   {
     return log_subsys_;
@@ -69,9 +70,14 @@ public:
 private:
   PackageInfoPtr findRobot(temoto_2::LoadProcess::Request& req, const std::string& robot_name);
 
+  bool getRvizConfigCb(temoto_2::RobotGetRvizConfig::Request& req,
+                       temoto_2::RobotGetRvizConfig::Response& res);
+
+  void targetPoseCb(const leap_motion_controller::Set& set);
+
   // Currently one robot at the time, add vec or map in future.
   std::shared_ptr<Robot> active_robot_;
-  geometry_msgs::Pose default_target_pose_;
+  geometry_msgs::PoseStamped default_target_pose_;
 
   std::string log_class_, log_subsys_, log_group_;
 
@@ -90,6 +96,7 @@ private:
 
   // Resource manager for contacting process manager
   rmp::ResourceManager<RobotManager> resource_manager_;
+  std::mutex default_pose_mutex_;
 };
 }
 
