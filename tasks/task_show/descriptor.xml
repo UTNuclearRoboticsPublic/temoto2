@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 
-<task action="show" >
+<task action="show" alias="present,display" >
  
   <!--Interface block-->
   <interface id="0" type="asynchronous">
@@ -8,7 +8,7 @@
     <!--Input block-->
     <in>    
       <what>
-        <arg pos_tag="NN" word=""/>
+        <arg word="camera"/>
         
         <data>
           <field datatype="topic"/>
@@ -16,7 +16,7 @@
       </what>
       
       <where>
-        <arg pos_tag="NN" word="RViz,rviz,r-viz"/>
+        <arg word="RViz,rviz,r-viz,screen"/>
       </where>
 
     </in>
@@ -24,13 +24,34 @@
     <!--Output block-->
     <out>
       <what>
-        <arg pos_tag="NN" word=""/>
+        <arg word=""/>
         
         <data>
           <field datatype="topic"/>
         </data>
       </what> 
     </out>
+
+  </interface>
+
+  <!--Interface block-->
+  <interface id="1" type="asynchronous">
+    
+    <!--Input block-->
+    <in>    
+      <what>
+        <arg word="hand"/>
+        
+        <data>
+          <field datatype="topic"/>
+        </data>
+      </what>
+      
+      <where>
+        <arg word="RViz,rviz,r-viz,screen"/>
+      </where>
+
+    </in>
 
   </interface>
 

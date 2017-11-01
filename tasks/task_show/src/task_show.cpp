@@ -43,6 +43,11 @@ bool startTask(TTP::TaskInterface task_interface)
     case 0:
         startInterface_0();
     break;
+
+    // Interface 0
+    case 1:
+        startInterface_1();
+    break;
     }
 
     return true;
@@ -109,6 +114,51 @@ void startInterface_0()
 
     // </ AUTO-GENERATED, DO NOT MODIFY >
 }
+
+/*
+ * Interface 1 body
+ */
+void startInterface_1()
+{
+    // < AUTO-GENERATED, DO NOT MODIFY >
+
+    // Extracting input subjects
+    TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
+    std::string  what_0_word_in = what_0_in.words_[0];
+    std::string  what_0_data_0_in = boost::any_cast<std::string>(what_0_in.data_[0].value);
+
+    TTP::Subject where_0_in = TTP::getSubjectByType("where", input_subjects);
+    std::string  where_0_word_in = where_0_in.words_[0];
+
+    // </ AUTO-GENERATED, DO NOT MODIFY >
+
+// --------------------------------< USER CODE >-------------------------------
+
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+
+    try
+    {
+        // Initialize the output manager interface
+        omi_.initialize(this);
+
+        TASK_INFO(" TaskShow: Showing '%s' in '%s' @ '%s' topic"
+                  , what_0_word_in.c_str()
+                  , where_0_word_in.c_str()
+                  , what_0_data_0_in.c_str());
+
+        // Show the image in rviz
+        omi_.showInRviz("marker", what_0_data_0_in);
+    }
+    catch( error::ErrorStackUtil& e )
+    {
+        e.forward( prefix );
+        this->error_handler_.append(e);
+    }
+
+// --------------------------------</ USER CODE >-------------------------------
+}
+
 
 std::string getStatus()
 {

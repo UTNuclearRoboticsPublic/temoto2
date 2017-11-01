@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 
-<task action="start" alias="initiate">
+<task action="start" alias="initiate,track">
 
   <!--Interface block-->
   <interface id="0" type="synchronous">
@@ -28,7 +28,29 @@
     <!--Output block-->
     <out>
       <what>
-        <arg word=""/>
+        <arg word="camera"/>
+        <data>
+          <field datatype="topic"/>
+        </data>
+      </what> 
+    </out>
+
+  </interface>
+
+  <!--Interface block-->
+  <interface id="2" type="asynchronous">
+    
+    <!--Input block-->
+    <in>    
+      <what>
+        <arg word="hand"/>
+      </what>
+    </in>
+    
+    <!--Output block-->
+    <out>
+      <what>
+        <arg word="hand"/>
         <data>
           <field datatype="topic"/>
         </data>

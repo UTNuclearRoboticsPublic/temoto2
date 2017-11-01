@@ -124,7 +124,7 @@ const std::string& TaskDescriptor::getTaskPackageName() const
 
 std::ostream& operator<<( std::ostream& stream, const TaskDescriptor& td)
 {
-    stream << GREEN << "ACTION: " << td.getAction() << RESET << std::endl;
+    stream << BOLDGREEN << "ACTION: " << td.getAction() << RESET << std::endl;
 
     if (!td.aliases_.empty())
     {

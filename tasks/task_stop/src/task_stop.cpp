@@ -15,6 +15,7 @@
 // Task specific includes
 #include "ros/ros.h"
 #include "temoto_2/StopTask.h"
+#include "common/tools.h"
 
 // First implementaton
 class TaskStop: public TTP::BaseTask
@@ -76,22 +77,33 @@ void startInterface_0()
 
 // --------------------------------< USER CODE >-------------------------------
 
-    std::cout << "  TaskStop: Stopping '" << action_0_word_in << "' with arg '" << what_0_word_in << "'\n";
-    what_0_word_out = what_0_word_in;
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
-    temoto_2::StopTask stop_task_srv;
-    stop_task_srv.request.action = action_0_word_in;
-    stop_task_srv.request.what = what_0_word_in;
-
-    // Call the server
-    stop_task_client_.call(stop_task_srv);
-
-    ROS_INFO("[TaskStop::startTask] '/core/stop_task' service respinded: %s", stop_task_srv.response.message.c_str());
-
-    // Check the result
-    if (stop_task_srv.response.code != 0)
+    try
     {
-        // TODO: do something
+        std::cout << "  TaskStop: Stopping '" << action_0_word_in << "' with arg '" << what_0_word_in << "'\n";
+        what_0_word_out = what_0_word_in;
+
+        temoto_2::StopTask stop_task_srv;
+        stop_task_srv.request.action = action_0_word_in;
+        stop_task_srv.request.what = what_0_word_in;
+
+        // Call the server
+        stop_task_client_.call(stop_task_srv);
+
+        ROS_INFO("[TaskStop::startTask] '/core/stop_task' service respinded: %s", stop_task_srv.response.message.c_str());
+
+        // Check the result
+        if (stop_task_srv.response.code != 0)
+        {
+            // TODO: do something
+        }
+    }
+    catch( error::ErrorStackUtil& e )
+    {
+        e.forward( prefix );
+        this->error_handler_.append(e);
     }
 
 
@@ -124,21 +136,32 @@ void startInterface_1()
 
 // --------------------------------< USER CODE >-------------------------------
 
-    std::cout << "  TaskStop: Stopping '" << what_0_word_in << "'\n";
-    what_0_word_out = what_0_word_in;
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
-    temoto_2::StopTask stop_task_srv;
-    stop_task_srv.request.what = what_0_word_in;
-
-    // Call the server
-    stop_task_client_.call(stop_task_srv);
-
-    ROS_INFO("[TaskStop::startTask] '/core/stop_task' service respinded: %s", stop_task_srv.response.message.c_str());
-
-    // Check the result
-    if (stop_task_srv.response.code == 0)
+    try
     {
-        //bla
+        std::cout << "  TaskStop: Stopping '" << what_0_word_in << "'\n";
+        what_0_word_out = what_0_word_in;
+
+        temoto_2::StopTask stop_task_srv;
+        stop_task_srv.request.what = what_0_word_in;
+
+        // Call the server
+        stop_task_client_.call(stop_task_srv);
+
+        ROS_INFO("[TaskStop::startTask] '/core/stop_task' service respinded: %s", stop_task_srv.response.message.c_str());
+
+        // Check the result
+        if (stop_task_srv.response.code == 0)
+        {
+            //bla
+        }
+    }
+    catch( error::ErrorStackUtil& e )
+    {
+        e.forward( prefix );
+        this->error_handler_.append(e);
     }
 
 // --------------------------------</ USER CODE >-------------------------------
