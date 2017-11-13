@@ -37,17 +37,24 @@ bool startTask(TTP::TaskInterface task_interface)
 // * AUTO-GENERATED, DO NOT MODIFY *
     input_subjects = task_interface.input_subjects_;
 
-    switch(task_interface.id_)
+    try
     {
-    // Interface 0
-    case 0:
-        startInterface_0();
-    break;
+        switch(task_interface.id_)
+        {
+        // Interface 0
+        case 0:
+            startInterface_0();
+        break;
 
-    // Interface 0
-    case 1:
-        startInterface_1();
-    break;
+        // Interface 0
+        case 1:
+            startInterface_1();
+        break;
+        }
+    }
+    catch(boost::bad_any_cast& e)
+    {
+        std::cout << "OH NO: " << e.what() << std::endl; 
     }
 
     return true;
@@ -60,9 +67,9 @@ bool startTask(TTP::TaskInterface task_interface)
 void startInterface_0()
 {
     // < AUTO-GENERATED, DO NOT MODIFY >
-
+    
     // Extracting input subjects
-    TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
+    TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);    
     std::string  what_0_word_in = what_0_in.words_[0];
     std::string  what_0_data_0_in = boost::any_cast<std::string>(what_0_in.data_[0].value);
 
@@ -84,7 +91,8 @@ void startInterface_0()
     {
         // Initialize the output manager interface
         omi_.initialize(this);
-
+        
+        std::cout << "D2\n";
         TASK_INFO(" TaskShow: Showing '%s' in '%s' @ '%s' topic"
                   , what_0_word_in.c_str()
                   , where_0_word_in.c_str()
@@ -147,7 +155,7 @@ void startInterface_1()
                   , where_0_word_in.c_str()
                   , what_0_data_0_in.c_str());
 
-        // Show the image in rviz
+        // Show the marker in rviz
         omi_.showInRviz("marker", what_0_data_0_in);
     }
     catch( error::ErrorStackUtil& e )

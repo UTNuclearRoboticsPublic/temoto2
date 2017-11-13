@@ -121,6 +121,11 @@ const std::string& TaskDescriptor::getTaskPackageName() const
     return task_package_name_;
 }
 
+void TaskDescriptor::setFirstOutputSubjects(Subjects output_subjects)
+{
+    task_interfaces_[0].output_subjects_ = output_subjects;
+}
+
 
 std::ostream& operator<<( std::ostream& stream, const TaskDescriptor& td)
 {

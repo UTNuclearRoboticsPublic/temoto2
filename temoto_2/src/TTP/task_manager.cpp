@@ -474,6 +474,50 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
             TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "' got: " << n_sub);
         }
     }
+    /*
+     * Check if some information could already be received from running tasks
+     */
+    else
+    {
+        /*
+         * Skip all of this jazz when the tasks name is "stop", its a special case
+         * and if it is not skipped, then "stop" gets polluted by information just
+         * like mentioned above
+         */
+        if (node_action != "stop")
+        {
+            for (auto& n_sub : node_subjects)
+            {
+                // Check each background (asynchronous) task
+                for (auto& async_task : asynchronous_tasks_)
+                {
+                    // Check each output subject of the background task
+                    for (auto& t_out_sub : async_task.first->getFirstInterface().output_subjects_)
+                    {
+                        // Check if types match
+                        if (n_sub.type_ != t_out_sub.type_)
+                        {
+                            continue;
+                        }
+
+                        // Check if words are empty
+                        if (t_out_sub.words_.empty())
+                        {
+                            continue;
+                        }
+
+                        // Check if the first word matches
+                        if (n_sub.words_[0] != t_out_sub.words_[0])
+                        {
+                            continue;
+                        }
+
+                        n_sub = t_out_sub;
+                    }
+                }
+            }
+        }
+    }
 
     /*
      * Get the incomplete i-subjects of all dependent children

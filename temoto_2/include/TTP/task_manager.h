@@ -100,9 +100,8 @@ public:
 
     /**
      * @brief stopTask
-     * @param task_name
-     * @param task_id
-     * @return
+     * @param action
+     * @param what
      */
     void stopTask(std::string action = "", std::string what = "");
 

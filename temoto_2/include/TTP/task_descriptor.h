@@ -72,6 +72,8 @@ public:
     void setTaskClassName(std::string task_class_name);
 
 
+    void setFirstOutputSubjects(Subjects output_subjects);
+
     const std::string& getTaskPackageName() const;
 
 

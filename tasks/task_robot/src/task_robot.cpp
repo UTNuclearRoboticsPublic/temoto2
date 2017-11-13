@@ -25,6 +25,8 @@ public:
 
   bool startTask(TTP::TaskInterface task_interface)
   {
+
+    task_alias_ = task_interface.alias_;
     input_subjects = task_interface.input_subjects_;
 
     // initialize output manager and robot manager interfaces
@@ -38,7 +40,15 @@ public:
         break;
 
       case 1:
-        plan();
+        if (task_interface.alias_ == "make")
+        {
+            plan();
+        }
+        else
+        if (task_interface.alias_ == "execut")
+        {
+            execute();
+        }
         break;
 
       case 2:
@@ -141,6 +151,8 @@ private:
   // Create interfaces for accessing temoto devices
   OutputManagerInterface omi_;
   RobotManagerInterface<TaskRobot> rmi_;
+
+  std::string task_alias_;
 };
 
 // Dont forget that part, otherwise this class would not be loadable

@@ -51,6 +51,7 @@ Subjects TaskContainer::operator()(Subjects input_subjects)
     task_pointer_->startTask(task_descriptor_->getFirstInterface());
 
     // Return the solution
+    task_descriptor_->setFirstOutputSubjects(task_pointer_->getSolution());
     return task_pointer_->getSolution();
 }
 }// END of TTP namespace

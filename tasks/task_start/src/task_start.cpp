@@ -242,7 +242,7 @@ void gestureCallback( leap_motion_controller::Set gesture )
 {
     visualization_msgs::Marker marker;
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-    marker.header.frame_id = "/world";
+    marker.header.frame_id = "/wrist_3_link";
     marker.header.stamp = ros::Time::now();
 
     marker.ns = "hand_indicator";
@@ -256,11 +256,15 @@ void gestureCallback( leap_motion_controller::Set gesture )
 
     // Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
     marker.pose = gesture.left_hand.palm_pose.pose;
+//    double z = marker.pose.position.z;
+//    marker.pose.position.z = -0.5*marker.pose.position.y;
+//    marker.pose.position.y = -5*z;
+//    marker.pose.position.x *= -1.5;
 
     // Set the scale of the marker -- 1x1x1 here means 1m on a side
-    marker.scale.x = 0.3;
-    marker.scale.y = 0.1;
-    marker.scale.z = 0.2;
+    marker.scale.x = 0.1;
+    marker.scale.y = 0.17;
+    marker.scale.z = 0.05;
 
     // Set the color -- be sure to set alpha to something non-zero!
     marker.color.r = 1.0f;

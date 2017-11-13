@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="rosbag" type="play" name="hand_tracker_0" output="screen" args="-l -q $(find temoto_tests)/bagfiles/leap_motion_set_1.bag"/>
+  <node pkg="tf" type="static_transform_publisher" name="leap_to_world_publisher" output="screen" args="0.3 0.3 0.3 0 0 0 /world leap_motion 1000"/>
+</launch>
