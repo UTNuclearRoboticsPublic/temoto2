@@ -1,3 +1,5 @@
 *.so
 lib/
 *.swp
+*/doc/html
+*/doc/manifest.yaml

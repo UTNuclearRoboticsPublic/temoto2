@@ -1,31 +1,33 @@
 <?xml version="1.0"?>
 <package>
   <name>temoto_2</name>
-  <version>0.0.0</version>
+  <version>2.0.1</version>
   <description>The temoto_2 package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="robert@todo.todo">robert</maintainer>
+  <maintainer email="robert@todo.todo">Robert Valner</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
   <!-- Commonly used license strings: -->
   <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>TODO</license>
+  <license>LICENCE</license>
 
 
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/temoto_2</url> -->
+  <url type="website">https://github.com/UTNuclearRobotics/temoto2</url>
+  <url type="repository">https://github.com/UTNuclearRobotics/temoto2</url>
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
   <!-- Authors do not have to be maintainers, but could be -->
   <!-- Example: -->
-  <!-- <author email="jane.doe@example.com">Jane Doe</author> -->
+  <author email="rober@todo.todo">Robert Valner</author>
+  <author email="veix123@gmail.com">Veiko Vunder</author>
 
 
   <!-- The *_depend tags are used to specify dependencies -->
@@ -63,7 +65,6 @@
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
-    <!-- Other tools can request additional information be placed here -->
-
+    <rosdoc config="rosdoc.yaml"/>
   </export>
 </package>

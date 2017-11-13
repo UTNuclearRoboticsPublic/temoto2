@@ -1,0 +1,6 @@
+/**
+\mainpage
+\htmlinclude manifest.html
+
+\b TeMoto 2.0 is a framework for making teleoperation application development easy in ROS.
+*/
