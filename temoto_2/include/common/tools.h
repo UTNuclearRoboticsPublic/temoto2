@@ -2,6 +2,7 @@
 #define TOOLSX_H
 
 #include <string>
+#include <stdlib.h> // for getenv
 
 namespace common
 {
@@ -29,6 +30,16 @@ inline std::string generateLogPrefix(std::string subsys_name, std::string class_
   }
   prefix += method_name + "]";
   return prefix;
+}
+
+inline const std::string getTemotoName()
+{
+  std::string temoto_name = getenv("TEMOTO_NAME");
+  if (temoto_name == "")
+  {
+    temoto_name = "temoto_2";
+  }
+  return temoto_name;
 }
 }
 

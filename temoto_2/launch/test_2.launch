@@ -1,5 +1,5 @@
+<?xml version="1.0"?>
 <launch>
-	
 	<node name="$(anon text_input)" pkg="temoto_2" type="language_input" output="screen" launch-prefix="xterm -e" />
 
 </launch>

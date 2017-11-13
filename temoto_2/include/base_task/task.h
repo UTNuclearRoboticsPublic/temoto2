@@ -107,7 +107,7 @@ public:
    * @brief getID
    * @return
    */
-  inline const TemotoID::ID getID() const
+  inline TemotoID::ID getID() const
   {
     return task_id_;
   }
@@ -116,7 +116,7 @@ public:
    * @brief getName
    * @return Unique name that consists of package name and task ID
    */
-  const std::string getName() const
+  std::string getName() const
   {
     std::stringstream ss;
     ss << getPackageName() << "_" << getID();
