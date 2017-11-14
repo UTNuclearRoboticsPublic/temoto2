@@ -14,11 +14,6 @@ class SensorManager
 {
 public:
     /**
-     * @brief List of known sensors
-     */
-    std::vector <PackageInfoPtr> pkg_infos_;
-
-    /**
      * @brief SensorManager
      */
     SensorManager();
@@ -33,13 +28,12 @@ public:
       return log_subsys_;
     }
 
-  private:
-    std::string log_class_, log_subsys_, log_group_;
-    ros::NodeHandle nh_;
-    ros::ServiceServer list_devices_server_;
-    rmp::ResourceManager<SensorManager> resource_manager_;
-    std::map<temoto_id::ID, PackageInfoPtr> allocated_sensors_;
+    /**
+     * @brief List of known sensors
+     */
+    std::vector <PackageInfoPtr> pkg_infos_;
 
+  private:
     /**
      * @brief Callback to a service that lists all available packages that
      * are with a requested "type". For example "list all HANDtracking devices"
@@ -48,6 +42,8 @@ public:
      * @return
      */
     bool listDevicesCb (temoto_2::ListDevices::Request &req, temoto_2::ListDevices::Response &res);
+
+    void syncCb (temoto_2::SensorManagerSyncMsg &msg);
 
     /*
      * Callback to a service that executes/runs a requested device
@@ -93,6 +89,15 @@ public:
                      std::string name,
                      std::string executable);
 };
+
+    std::string log_class_, log_subsys_, log_group_;
+    ros::NodeHandle nh_;
+    ros::ServiceServer list_devices_server_;
+    ros::Publisher sync_pub_;
+    ros::Subscriber sync_sub_;
+    rmp::ResourceManager<SensorManager> resource_manager_;
+    std::map<temoto_id::ID, PackageInfoPtr> allocated_sensors_;
+
 
 } // sensor_manager namespace
 

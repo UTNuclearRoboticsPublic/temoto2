@@ -12,6 +12,7 @@ namespace sensor_manager
 	{
 		const std::string MANAGER = "sensor_manager";
 		const std::string SERVER = "start_sensor";
+		const std::string SYNC_TOPIC = "/temoto_2/"+MANAGER+"/sync";
 	}
 }
 

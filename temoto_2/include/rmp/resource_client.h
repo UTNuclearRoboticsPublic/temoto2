@@ -29,8 +29,10 @@ public:
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
     // Set client name where it is connecting to.
     name_ = ext_resource_manager_name + "/" + ext_server_name;
-    std::string load_srv_name = srv_name::PREFIX + "/" + name_;
-    std::string unload_name = srv_name::PREFIX + "/" + ext_resource_manager_name + "/unload";
+    //std::string load_srv_name = srv_name::PREFIX + "/" + name_;
+    //std::string unload_name = srv_name::PREFIX + "/" + ext_resource_manager_name + "/unload";
+    std::string load_srv_name = name_;
+    std::string unload_name = ext_resource_manager_name + "/unload";
 
     // Setup ROS service clients for loading and unloading the resource
     service_client_ = nh_.serviceClient<ServiceType>(load_srv_name);
@@ -63,7 +65,8 @@ public:
     {
       // New request
       // Prepare return topic
-      std::string topic = srv_name::PREFIX + "/" + this->resource_manager_.getName() + "/status";
+      //std::string topic = srv_name::PREFIX + "/" + this->resource_manager_.getName() + "/status";
+      std::string topic = this->resource_manager_.getName() + "/status";
       msg.request.rmp.status_topic = topic;
       RMP_DEBUG("%s New query, performing external call to %s", prefix.c_str(),
                service_client_.getService().c_str());

@@ -33,7 +33,8 @@ public:
     RMP_DEBUG("%s Resource manager is starting.", prefix.c_str());
 
     // set up status callback with separately threaded queue
-    std::string status_srv_name = srv_name::PREFIX + "/" + name_ + "/status";
+    //std::string status_srv_name = srv_name::PREFIX + "/" + name_ + "/status";
+    std::string status_srv_name = name_ + "/status";
     ros::AdvertiseServiceOptions status_service_opts =
         ros::AdvertiseServiceOptions::create<temoto_2::ResourceStatus>(
             status_srv_name, boost::bind(&ResourceManager<Owner>::statusCallback, this, _1, _2),
@@ -41,7 +42,8 @@ public:
     status_server_ = nh_.advertiseService(status_service_opts);
 
     // set up unload callback with separately threaded queue
-    std::string unload_srv_name = srv_name::PREFIX + "/" + name_ + "/unload";
+//    std::string unload_srv_name = srv_name::PREFIX + "/" + name_ + "/unload";
+    std::string unload_srv_name = name_ + "/unload";
     ros::AdvertiseServiceOptions unload_service_opts =
         ros::AdvertiseServiceOptions::create<temoto_2::UnloadResource>(
             unload_srv_name, boost::bind(&ResourceManager<Owner>::unloadCallback, this, _1, _2),

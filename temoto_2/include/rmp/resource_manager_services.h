@@ -3,6 +3,7 @@
 
 #include "temoto_2/UnloadResource.h"
 #include "temoto_2/ResourceStatus.h"
+#include "common/tools.h"
 
 namespace rmp
 {
@@ -14,7 +15,7 @@ enum status_codes : int
 
 namespace srv_name
 {
-const std::string PREFIX = "/temoto_2";
+//const std::string PREFIX = ::common::getTemotoNamespace();
 }
 }
 

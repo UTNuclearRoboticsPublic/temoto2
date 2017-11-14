@@ -1,8 +1,10 @@
 #ifndef TOOLSX_H
 #define TOOLSX_H
 
+#include <ros/ros.h>
 #include <string>
 #include <stdlib.h> // for getenv
+
 
 namespace common
 {
@@ -32,14 +34,29 @@ inline std::string generateLogPrefix(std::string subsys_name, std::string class_
   return prefix;
 }
 
-inline const std::string getTemotoName()
+inline const std::string getTemotoNamespace()
 {
-  std::string temoto_name = getenv("TEMOTO_NAME");
-  if (temoto_name == "")
+//  std::string temoto_name_str;
+//
+//  char* temoto_name_char = NULL;
+//  temoto_name_char = getenv("TEMOTO_NAMESPACE");
+//  if (temoto_name_char != NULL)
+//  {
+//    temoto_name_str = temoto_name_char;
+//  }
+//  else
+//  {
+//    temoto_name_str = "temoto_2_default";
+//  }
+
+  std::string temoto_ns = ::ros::this_node::getNamespace();
+  temoto_ns = ::ros::names::clean(temoto_ns); // clean up double and trailing slashes
+  if(temoto_ns.size()>0 and temoto_ns[0] == '/')
   {
-    temoto_name = "temoto_2";
+    temoto_ns.erase(temoto_ns.begin()); // remove the leading '/'
   }
-  return temoto_name;
+
+  return temoto_ns;
 }
 }
 

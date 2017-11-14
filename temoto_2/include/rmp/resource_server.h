@@ -33,7 +33,8 @@ public:
     log_subsys_ = owner_->getName();
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
     std::string rm_name = this->resource_manager_.getName();
-    std::string server_srv_name = srv_name::PREFIX + "/" + rm_name + "/" + this->name_;
+//    std::string server_srv_name = srv_name::PREFIX + "/" + rm_name + "/" + this->name_;
+    std::string server_srv_name = rm_name + "/" + this->name_;
     
     ros::AdvertiseServiceOptions load_service_opts =
         ros::AdvertiseServiceOptions::create<ServiceType>(

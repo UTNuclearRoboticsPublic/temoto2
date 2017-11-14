@@ -149,9 +149,10 @@ TTP::Subject parseToNumericSubject(parser::parse_tree& tree)
 
 void branch_finder::operator()(const leaf_node& ln)
 {
-    /*
-     * Do something with leaf nodes if necessary
-     */
+  (void)ln; // for suppressing compiler warning about unused param here
+  /*
+   * Do something with leaf nodes if necessary
+   */
 }
 
 void branch_finder::operator()(const internal_node& in)

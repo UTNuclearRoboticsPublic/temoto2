@@ -2,7 +2,7 @@
 #define RMP_LOG_MACROS_H
 
 // basic log management, everything put under temoto_2.tasks for easier level control
-#define RMP_CONSOLE_PREFIX ROSCONSOLE_ROOT_LOGGER_NAME ".temoto_2.rmp."+log_subsys_
+#define RMP_CONSOLE_PREFIX ROSCONSOLE_ROOT_LOGGER_NAME "." + ::common::getTemotoNamespace()  + "."+log_subsys_
 #define RMP_DEBUG(...) ROS_LOG(::ros::console::levels::Debug, RMP_CONSOLE_PREFIX, __VA_ARGS__)
 #define RMP_INFO(...) ROS_LOG(::ros::console::levels::Info, RMP_CONSOLE_PREFIX, __VA_ARGS__)
 #define RMP_WARN(...) ROS_LOG(::ros::console::levels::Warn, RMP_CONSOLE_PREFIX, __VA_ARGS__)

@@ -29,13 +29,19 @@ SensorManager::SensorManager() : resource_manager_(srv_name::MANAGER, this)
   log_class_ = "";
   log_subsys_ = "sensor_manager";
   log_group_ = "sensor_manager";
+ 
   // Start the server
   resource_manager_.addServer<temoto_2::LoadSensor>(srv_name::SERVER, &SensorManager::startSensorCb,
                                                     &SensorManager::stopSensorCb);
+  // Register callback for status info
   resource_manager_.registerStatusCb(&SensorManager::statusCb);
 
-  list_devices_server_ = nh_.advertiseService(srv_name::MANAGER + "/list_devices",
-                                              &SensorManager::listDevicesCb, this);
+//  list_devices_server_ = nh_.advertiseService(srv_name::MANAGER + "/list_devices",
+//                                              &SensorManager::listDevicesCb, this);
+
+  sync_pub_ = nh_.advertise<temoto_2::SensorManagerSyncMsg>(srv_name::SYNC_TOPIC, 1);
+  sync_sub_ = nh_.subscribe(srv_name::SYNC_TOPIC, 1, syncCb);
+
   TEMOTO_INFO("Sensor manager is ready.");
 }
 
@@ -67,13 +73,27 @@ bool SensorManager::listDevicesCb(temoto_2::ListDevices::Request& req,
   // Find the devices with the required type
   for (auto& entry : pkg_infos_)
   {
-    if (entry->getType().compare(req.type) == 0)
+    if (entry->getType() == req.type)
     {
       res.list.push_back(entry->getName());
     }
   }
 
   return true;
+}
+
+
+void SensorManager::syncCb(temoto_2::SensorManagerSyncMsg& msg)
+{
+  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  TEMOTO_DEBUG("%s Got new info about sensor.");
+
+  /**
+   * \todo some validation of the msg
+   */
+
+
+
 }
 
 /*
@@ -164,7 +184,7 @@ PackageInfoPtr SensorManager::findSensor(temoto_2::LoadProcess::Request& ret,
   // Find the devices that follow the "type" criteria
   for (auto pkg_ptr : pkg_infos_)
   {
-    if (pkg_ptr->getType().compare(type) == 0)
+    if (pkg_ptr->getType() == type)
     {
       candidates.push_back(pkg_ptr);
     }

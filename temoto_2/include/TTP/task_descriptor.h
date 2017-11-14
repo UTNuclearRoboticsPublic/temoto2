@@ -81,11 +81,11 @@ public:
 
 private:
 
-    std::vector<TaskInterface> task_interfaces_;
-
     Action action_;
 
     Action action_stemmed_;
+
+    std::vector<TaskInterface> task_interfaces_;
 
     std::vector<Action> aliases_;
 

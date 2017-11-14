@@ -42,7 +42,6 @@ bool operator==(const std::vector<Subject>& subs_1, const std::vector<Subject>& 
 {
     // create a copy of subs_2
     std::vector<Subject> subs_2_c = subs_2;
-    bool all_match = false;
 
     for (auto& sub_1 : subs_1)
     {

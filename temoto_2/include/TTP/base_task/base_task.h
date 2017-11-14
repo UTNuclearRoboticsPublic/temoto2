@@ -12,13 +12,14 @@
 #include "base_error/base_error.h"
 #include <boost/any.hpp>
 #include "common/temoto_id.h"
+#include "common/tools.h"
 #include "temoto_2/StopTaskMsg.h"
 #include "ros/ros.h"
 
 /*
  *basic log management, everything put under temoto_2.tasks for easier level control
  */
-#define TASK_CONSOLE_PREFIX ROSCONSOLE_ROOT_LOGGER_NAME ".temoto_2.tasks." + this->getPackageName()
+#define TASK_CONSOLE_PREFIX ROSCONSOLE_ROOT_LOGGER_NAME "."+::common::getTemotoNamespace()+".tasks." + this->getPackageName()
 #define TASK_DEBUG(...) ROS_LOG(::ros::console::levels::Debug, TASK_CONSOLE_PREFIX, __VA_ARGS__)
 #define TASK_INFO(...) ROS_LOG(::ros::console::levels::Info, TASK_CONSOLE_PREFIX, __VA_ARGS__)
 #define TASK_WARN(...) ROS_LOG(::ros::console::levels::Warn, TASK_CONSOLE_PREFIX, __VA_ARGS__)
@@ -85,7 +86,7 @@ public:
    * @brief getID
    * @return
    */
-    inline const TemotoID::ID getID() const
+    TemotoID::ID getID() const
     {
       return task_id_;
     }
@@ -94,7 +95,7 @@ public:
      * @brief getName
      * @return Unique name that consists of package name and task ID
      */
-    const std::string getName() const
+    std::string getName() const
     {
       std::stringstream ss;
       ss << getPackageName() << "_" << getID();
