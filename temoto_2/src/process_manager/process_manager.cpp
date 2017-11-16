@@ -16,6 +16,7 @@
 #include <sys/wait.h>
 #include <algorithm>
 #include <spawn.h>
+#include <regex>
 
 namespace process_manager
 {
@@ -148,32 +149,41 @@ void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
-  // Get the service parameters
-  const std::string& action = req.action;
-  const std::string& package_name = req.package_name;
-  const std::string& executable = req.executable;
-
   // Validate the action command.
-  if (std::find(valid_actions.begin(), valid_actions.end(), action) == valid_actions.end())
+  if (req.action == action::ROS_EXECUTE) //|| action == action::SYS_EXECUTE)
   {
-    TEMOTO_ERROR("%s Action '%s' is not supported.", prefix.c_str(), action.c_str());
-    return;  // TODO THROW EXCEPTION
+    std::regex rx(".*\\.launch$");
+    if (std::regex_match(req.executable, rx))
+    {
+      req.action = "roslaunch";
+    }
+    else
+    {
+      req.action = "rosrun";
+    }
+
+    TEMOTO_DEBUG("%s adding '%s' '%s' '%s' to the loading queue.", prefix.c_str(),
+                 req.action.c_str(), req.package_name.c_str(), req.executable.c_str());
+
+    temoto_2::LoadProcess srv;
+    srv.request = req;
+    srv.response = res;
+
+    loading_mutex_.lock();
+    loading_processes_.push_back(srv);
+    loading_mutex_.unlock();
+
+    // Fill response
+    res.rmp.code = 0;
+    res.rmp.message = "Request added to the loading queue.";
   }
-
-  TEMOTO_DEBUG("%s adding '%s' '%s' '%s' to loading queue.", prefix.c_str(), action.c_str(),
-            package_name.c_str(), executable.c_str());
-
-  temoto_2::LoadProcess srv;
-  srv.request = req;
-  srv.response = res;
-
-  loading_mutex_.lock();
-  loading_processes_.push_back(srv);
-  loading_mutex_.unlock();
-
-  // Fill response
-  res.rmp.code = 0;
-  res.rmp.message = "Command added to loading queue.";
+  else
+  {
+    res.rmp.code = -1;
+    res.rmp.message = "Action not supported by the process manager.";
+    TEMOTO_ERROR("%s Action '%s' is not supported.", prefix.c_str(), req.action.c_str());
+    return;  // TODO THROW EXCEPTION TO RMP?
+  }
 }
 
 void ProcessManager::unloadCb(temoto_2::LoadProcess::Request& req,

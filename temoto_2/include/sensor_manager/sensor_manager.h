@@ -28,6 +28,13 @@ public:
     {
       return log_subsys_;
     }
+    
+  /**
+   * \brief Add a new sensor to this manager
+   * \param sensor_info Object specifying information about the sensor that is added to this manager.
+   */
+  void addSensor(const SensorInfo& sensor_info);
+
 
   private:
     /**
@@ -39,7 +46,7 @@ public:
      */
     bool listDevicesCb(temoto_2::ListDevices::Request& req, temoto_2::ListDevices::Response& res);
 
-    void syncCb(temoto_2::SensorInfoSync& msg);
+    void syncCb(const temoto_2::SensorInfoSync& msg);
 
     /*
      * Callback to a service that executes/runs a requested device

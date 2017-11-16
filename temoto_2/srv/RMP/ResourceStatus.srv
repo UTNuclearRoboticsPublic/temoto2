@@ -1,4 +1,7 @@
 # Name of the manager where the status message came from
+string temoto_namespace
+
+# Name of the manager where the status message came from
 string manager_name
 
 # Name of the server where the status message came from

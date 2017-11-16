@@ -33,8 +33,6 @@ namespace process_manager
 
 
       std::string log_class_, log_subsys_, log_group_;
-      const std::vector<std::string> valid_actions = {"rosrun", "roslaunch"};
-
 			std::vector<temoto_2::LoadProcess> loading_processes_;
       std::map<pid_t, temoto_2::LoadProcess> running_processes_;
       std::vector<pid_t> unloading_processes_;

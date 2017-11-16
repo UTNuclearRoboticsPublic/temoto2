@@ -9,14 +9,41 @@ int main(int argc, char** argv)
   // Create a SensorManager object
   SensorManager sm;
 
-  SensorInfo sensor;
-  sensor.setName("leap_motion_controller");
-  sensor.setType("hand");
-  sensor.setExecutable("leap_motion");
-  sensor.setTopic("/leap_motion_output");
-  sm.addSensor(sensor);
+
+  {
+    SensorInfo sensor;
+    sensor.setName("Leap Motion Hand Tracker");
+    sensor.setPackageName("leap_motion_controller");
+    sensor.setType("hand");
+    sensor.setExecutable("leap_motion");
+    sensor.setTopic("/leap_motion_output");
+    sm.addSensor(sensor);
+  }
 
 
+  // set up terminal as backup input if the above should fail
+  {
+    SensorInfo s("Le Terminal pour TeMoto");
+    s.setPackageName("temoto_2");
+    s.setType("speech");
+    s.setExecutable("test_2.launch");
+    s.setTopic("/terminal_text");
+    sm.addSensor(s);
+  }
+
+  {
+    SensorInfo s("Google Speech");
+    s.setPackageName("google_speech_to_text");
+    s.setType("speech");
+    s.setExecutable("en-US.launch");
+    s.setTopic("/stt/spoken_text");
+    sm.addSensor(s);
+  }
+
+  // OLD FORMAT REMAININGS:
+
+//  sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("google_speech_to_text", "speech"));
+//  sm.pkg_infos_.back()->addLaunchable({ "en-US.launch", "/stt/spoken_text" });
 
 //  sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("leap_motion_controller", "hand"));
 //  sm.pkg_infos_.back()->addRunnable({ "leap_motion", "/leap_motion_output" });
@@ -30,7 +57,6 @@ int main(int argc, char** argv)
 //
 //  //sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("temoto_2", "hand"));
 //  //sm.pkg_infos_.back()->addRunnable({ "dummy_sensor", "/dummy_sensor_data" });
-//
 //
 //  // sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("usb_cam", "camera"));
 //  // sm.pkg_infos_back().addLaunchable({"usb_cam-test.launch", "/usb_cam/image_raw"});
@@ -46,17 +72,15 @@ int main(int argc, char** argv)
 //  sm.pkg_infos_.back()->addLaunchable({ "camera2.launch", "/usb_cam/image_raw" });
 //
 //
-////  sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("pocket_sphinx", "speech"));
-// // sm.pkg_infos_.back()->addLaunchable({ "camera0.launch", "/usb_cam/image_raw" });
+//  sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("pocket_sphinx", "speech"));
+//  sm.pkg_infos_.back()->addLaunchable({ "camera0.launch", "/usb_cam/image_raw" });
 // 
 //  
-//  // set up terminal as backup input if the above should fail
-//  sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("temoto_2", "speech"));
-//  sm.pkg_infos_.back()->addLaunchable({ "test_2.launch", "/terminal_text" });
-//
 //  // Google's speech to text sensor
 //  sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("google_speech_to_text", "speech"));
 //  sm.pkg_infos_.back()->addLaunchable({ "en-US.launch", "/stt/spoken_text" });
+
+
 
   //use single threaded spinner for global callback queue
    ros::spin();

@@ -17,22 +17,24 @@ template <class ServiceType, class Owner>
 class ResourceClient : public BaseResourceClient<Owner>
 {
 public:
-  ResourceClient(std::string ext_resource_manager_name, std::string ext_server_name, Owner* owner,
+  ResourceClient(std::string ext_temoto_namespace, std::string ext_resource_manager_name,
+                 std::string ext_server_name, Owner* owner,
                  ResourceManager<Owner>& resource_manager)
     : BaseResourceClient<Owner>(resource_manager)
     , ext_resource_manager_name_(ext_resource_manager_name)
     , ext_server_name_(ext_server_name)
+    , ext_temoto_namespace_(ext_temoto_namespace)
     , owner_(owner)
   {
     log_class_ = "rmp/Client";
     log_subsys_ = owner_->getName();
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
     // Set client name where it is connecting to.
-    name_ = ext_resource_manager_name + "/" + ext_server_name;
+    name_ = '/' + ext_temoto_namespace + '/' + ext_resource_manager_name + "/" + ext_server_name;
     //std::string load_srv_name = srv_name::PREFIX + "/" + name_;
     //std::string unload_name = srv_name::PREFIX + "/" + ext_resource_manager_name + "/unload";
     std::string load_srv_name = name_;
-    std::string unload_name = ext_resource_manager_name + "/unload";
+    std::string unload_name = '/' + ext_temoto_namespace + '/' + ext_resource_manager_name + "/unload";
 
     // Setup ROS service clients for loading and unloading the resource
     service_client_ = nh_.serviceClient<ServiceType>(load_srv_name);
@@ -66,7 +68,7 @@ public:
       // New request
       // Prepare return topic
       //std::string topic = srv_name::PREFIX + "/" + this->resource_manager_.getName() + "/status";
-      std::string topic = this->resource_manager_.getName() + "/status";
+      std::string topic = '/' + ext_temoto_namespace_ + '/' + this->resource_manager_.getName() + "/status";
       msg.request.rmp.status_topic = topic;
       RMP_DEBUG("%s New query, performing external call to %s", prefix.c_str(),
                service_client_.getService().c_str());
@@ -257,10 +259,10 @@ public:
 
 private:
   std::string log_class_, log_subsys_;
-  std::string name_;                       /// The unique name of a resource client.
-  std::string ext_server_name_;            /// The name of the server client calls.
-  std::string ext_resource_manager_name_;  /// Name of resource manager where the server is located
-                                           /// at.
+  std::string name_;                       ///< The unique name of a resource client.
+  std::string ext_server_name_;            ///< The name of the server client calls.
+  std::string ext_resource_manager_name_;  ///< Name of resource manager where the server is located at
+  std::string ext_temoto_namespace_;       ///< Name of the destination temoto namespace.
   std::vector<ClientQuery<ServiceType, Owner>> queries_;
 
   Owner* owner_;

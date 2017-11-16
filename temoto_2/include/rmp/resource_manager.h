@@ -122,7 +122,7 @@ public:
     waitForLock(clients_mutex_);
 
     // check if this client already exists
-    std::string client_name = temoto_namespace + "/" + resource_manager_name + "/" + server_name;
+    std::string client_name = '/'+temoto_namespace + "/" + resource_manager_name + "/" + server_name;
     typename std::vector<BaseClientPtr>::iterator client_it =
         std::find_if(clients_.begin(), clients_.end(),
                      [&](const BaseClientPtr& c) -> bool { return c->getName() == client_name; });
@@ -130,7 +130,8 @@ public:
     {
       RMP_DEBUG("%s Creating new resource client. %s", prefix.c_str(), log_subsys_.c_str());
 
-      client_ptr = std::make_shared<ClientType>(resource_manager_name, server_name, owner_, *this);
+      client_ptr = std::make_shared<ClientType>(temoto_namespace, resource_manager_name,
+                                                server_name, owner_, *this);
       // Push to clients and convert to BaseResourceClient type
       clients_.push_back(client_ptr);
       client_it = std::prev(clients_.end());  // set iterator to the client pointer we just added
@@ -263,6 +264,7 @@ public:
       auto ext_resources = server->getExternalResources(srv.request.resource_id);
       ResourceInfo info;
       info.srv = srv;  // initialize with given values
+      info.srv.request.temoto_namespace = ::common::getTemotoNamespace();
       info.srv.request.manager_name = name_;
       info.srv.request.server_name = server->getName();
       for (const auto& ext_resource : ext_resources)
@@ -328,7 +330,8 @@ public:
 
       // Go through clients and locate the one from
       // which the request arrived
-      std::string client_name = req.manager_name + "/" + req.server_name;
+      std::string client_name =
+          "/" + req.temoto_namespace + "/" + req.manager_name + "/" + req.server_name;
       RMP_DEBUG("%s got info that resource has failed, looking for %s",
                       prefix.c_str(), client_name.c_str());
 
