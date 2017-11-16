@@ -109,7 +109,7 @@ public:
   }
 
   template <class ServiceType>
-  bool call(std::string resource_manager_name, std::string server_name, ServiceType& msg)
+  bool call(std::string resource_manager_name, std::string server_name, ServiceType& msg, std::string temoto_namespace = ::common::getTemotoNamespace())
   {
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
     using ClientType = ResourceClient<ServiceType, Owner>;
@@ -122,7 +122,7 @@ public:
     waitForLock(clients_mutex_);
 
     // check if this client already exists
-    std::string client_name = resource_manager_name + "/" + server_name;
+    std::string client_name = temoto_namespace + "/" + resource_manager_name + "/" + server_name;
     typename std::vector<BaseClientPtr>::iterator client_it =
         std::find_if(clients_.begin(), clients_.end(),
                      [&](const BaseClientPtr& c) -> bool { return c->getName() == client_name; });

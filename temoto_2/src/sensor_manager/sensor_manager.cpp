@@ -71,7 +71,7 @@ bool SensorManager::listDevicesCb(temoto_2::ListDevices::Request& req,
   // std::vector <std::string> devList;
 
   // Find the devices with the required type
-  for (auto& entry : pkg_infos_)
+  for (auto& entry : sensors_)
   {
     if (entry->getType() == req.type)
     {
@@ -82,8 +82,7 @@ bool SensorManager::listDevicesCb(temoto_2::ListDevices::Request& req,
   return true;
 }
 
-
-void SensorManager::syncCb(temoto_2::SensorManagerSyncMsg& msg)
+void SensorManager::syncCb(temoto_2::SensorInfoSync& msg)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   TEMOTO_DEBUG("%s Got new info about sensor.");
@@ -92,7 +91,12 @@ void SensorManager::syncCb(temoto_2::SensorManagerSyncMsg& msg)
    * \todo some validation of the msg
    */
 
+}
 
+void addSensor(const SensorInfo& sensor_info)
+{
+
+// sensors_.emplace_back(std::make_shared<SensorInfo>("leap_motion_controller", "hand"));
 
 }
 
@@ -116,43 +120,84 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
   TEMOTO_DEBUG("%s received a request to start '%s': '%s', '%s'", prefix.c_str(),
                   req.sensor_type.c_str(), req.package_name.c_str(), req.executable.c_str());
 
-  // Create an empty message that will be filled out by "findSensor" function
-  temoto_2::LoadProcess load_process_msg;
 
   // Find the suitable sensor
-  auto pkg_ptr =
+  auto sensor_ptr =
       findSensor(load_process_msg.request, res, req.sensor_type, req.package_name, req.executable);
-  if (pkg_ptr)
+  if (sensor_ptr)
   {
-    TEMOTO_INFO("SensorManager found a suitable sensor: '%s', '%s', '%s', reliability %.3f",
-                   load_process_msg.request.action.c_str(),
-                   load_process_msg.request.package_name.c_str(),
-                   load_process_msg.request.executable.c_str(),
-                   pkg_ptr->getReliability()
-                   );
-    if (resource_manager_.call<temoto_2::LoadProcess>(process_manager::srv_name::MANAGER,
-                                                      process_manager::srv_name::SERVER,
-                                                      load_process_msg))
+    // sensor found, check if it's local or remote
+    if (sensor_ptr->getTemotoNamespace() == ::common::getTemotoNamespace())
     {
-      TEMOTO_DEBUG("%s Call to ProcessManager was sucessful.", prefix.c_str());
+      // this is a local sensor, make a call to the local resource manager
+      temoto_2::LoadProcess load_process_msg;
+      load_process_msg.request.action = resource_manager::action::ROS_EXECUTE;
+      load_process_msg.request.package_name = sensor_ptr->getPackageName();
+      load_process_msg.request.executable = sensor_ptr->getExecutable();
+
+      TEMOTO_INFO("SensorManager found a suitable local sensor: '%s', '%s', '%s', reliability %.3f",
+                  load_process_msg.request.action.c_str(),
+                  load_process_msg.request.package_name.c_str(),
+                  load_process_msg.request.executable.c_str(), sensor_ptr->getReliability());
+      
+      if (resource_manager_.call<temoto_2::LoadProcess>(process_manager::srv_name::MANAGER,
+                                                        process_manager::srv_name::SERVER,
+                                                        load_process_msg))
+      {
+        TEMOTO_DEBUG("%s Call to ProcessManager was sucessful.", prefix.c_str());
+      }
+      else
+      {
+        TEMOTO_ERROR("%s Failed to call the ProcessManager.", prefix.c_str());
+        return;
+      }
+
+      // fill in the response
+      res.package_name = sensor_ptr->getPackageName();
+      res.topic = sensor_ptr->getTopic();
+      res.executable = sensor_ptr->getExecutable();
+      res.rmp.code = load_process_msg.response.rmp.code;
+      res.rmp.message = load_process_msg.response.rmp.message;
     }
     else
     {
-      TEMOTO_ERROR("%s Failed to call to ProcessManager.", prefix.c_str());
-      return;
+      // this is a remote sensor, forward the request to the remote sensor manager
+      //
+
+      temoto_2::LoadSensor load_sensor_msg;
+      load_sensor_msg.request.sensor_type = sensor_ptr->getType();
+      load_sensor_msg.request.package_name = sensor_ptr->getPackageName();
+      load_sensor_msg.request.executable = sensor_ptr->getExecutable();
+      TEMOTO_INFO("SensorManager is forwarding request: '%s', '%s', '%s', reliability %.3f",
+                  sensor_ptr->getType().c_str(),
+                  sensor_ptr->getPackageName().c_str(),
+                  sensor_ptr->getExecutable().c_str(),
+                  sensor_ptr->getReliability());
+
+      if (resource_manager_.call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
+                                                        sensor_manager::srv_name::SERVER,
+                                                        load_sensor_msg,
+                                                        sensor_ptr->getTemotoNamespace()))
+      {
+        TEMOTO_DEBUG("%s Call to remote SensorManager was sucessful.", prefix.c_str());
+        res.rmp.code = load_sensor_msg.response.rmp.code;
+        res.rmp.message = load_sensor_msg.response.rmp.message;
+      }
+      else
+      {
+        TEMOTO_ERROR("%s Failed to call the remote SensorManager.", prefix.c_str());
+        return;
+      }
     }
-    res.rmp.code = load_process_msg.response.rmp.code;
-    res.rmp.message = load_process_msg.response.rmp.message;
 
-    // Increase or decrease reliability depending on the return code
-    (res.rmp.code == 0) ? pkg_ptr->adjustReliability(1.0) : pkg_ptr->adjustReliability(0.0);
+    // Increase or decrease the reliability depending on the return code
+    (res.rmp.code == 0) ? sensor_ptr->adjustReliability(1.0) : sensor_ptr->adjustReliability(0.0);
 
-    TEMOTO_DEBUG("%s LoadProcess server responded: '%s'", prefix.c_str(),
-                    res.rmp.message.c_str());
-    allocated_sensors_.emplace(res.rmp.resource_id, pkg_ptr);
+    allocated_sensors_.emplace(res.rmp.resource_id, sensor_ptr);
   }
   else
   {
+    // sensor was not found
     res.package_name = req.package_name;
     res.executable = "";
     res.topic = "";
@@ -172,159 +217,65 @@ void SensorManager::stopSensorCb(temoto_2::LoadSensor::Request& req,
   return;
 }
 
-PackageInfoPtr SensorManager::findSensor(temoto_2::LoadProcess::Request& ret,
-                                         temoto_2::LoadSensor::Response& retstartSensor,
-                                         std::string type, std::string name, std::string executable)
+SensorInfoPtr SensorManager::findSensor(std::string type, std::string name, std::string executable)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   // Local list of devices that follow the requirements
-  std::vector<PackageInfoPtr> candidates;
-  std::vector<PackageInfoPtr> candidatesLocal;
+  std::vector<SensorInfoPtr> candidates;
 
   // Find the devices that follow the "type" criteria
-  for (auto pkg_ptr : pkg_infos_)
-  {
-    if (pkg_ptr->getType() == type)
-    {
-      candidates.push_back(pkg_ptr);
-    }
-  }
+  auto it = std::copy_if(sensors.begin(), sensors.end(), candidates.begin(),
+                         [&](SensorInfoPtr s) { return s->getType() == type; });
 
-  // If the list is empty, leave the req empty
+  // The requested type of sensor is not available, leave the response part empty
   if (candidates.empty())
   {
     return NULL;
   }
 
-  std::sort(candidates.begin(), candidates.end(),
-            [](PackageInfoPtr& pkg_ptr1, PackageInfoPtr& pkg_ptr2) {
-              return pkg_ptr1->getReliability() > pkg_ptr2->getReliability();
-            });
+  // Sort all sensors of the given type.
+  std::sort(candidates.begin(), candidates.end(), [](SensorInfoPtr& s1, SensorInfoPtr& s2) {
+    return s1->getReliability() > s2->getReliability();
+  });
 
-  // Check if a name was specified
   if (name != "")
   {
-    // Filter out the devices that follow the "name" criteria
-    for (auto& entry : candidates)
+    // Search for a sensor, which is local and has the requested name.
+    auto it = std::find_if(candidates.begin(), candidates.end(), [&](SensorInfoPtr s) {
+      return s->getName() == name && s->getTemotoNamespace() == ::common::getTemotoNamespace();
+    });
+
+    if (it_local != candidates.end())
     {
-      if (entry->getName() == name)
-      {
-        if (entry->getLaunchables().size() != 0)
-          TEMOTO_DEBUG("%s sensor: %s reliability: %f", prefix.c_str(),
-                          entry->getLaunchables().begin()->first.c_str(), entry->getReliability());
-        candidatesLocal.push_back(entry);
-      }
+      TEMOTO_DEBUG("%s found local sensor: %s reliability: %f", prefix.c_str(), name.c_str(),
+                   it_local->getReliability());
+      return *it_local;
     }
 
-    // Copy the contents of "candidatesLocal" into "candidates"
-    candidates = candidatesLocal;
-
-    // If the list is empty, return an empty response
-    if (candidates.empty())
+    // The sensor was not found locally look for remote sensor with the requested name
+    auto it_remote = std::find_if(candidates.begin(), candidates.end(),
+                                  [&](SensorInfoPtr s) { return s->getName() == name; });
+    if (it_remote != candidates.end())
     {
-      return NULL;
+      return *it_remote;
     }
+
+    // Sensor with requested name was not found.
+    return NULL;
   }
 
-  else
+  // If name is not specified, take the first local sensor
+  auto it_local = std::find_if(candidates.begin(), candidates.end(), [&](SensorInfoPtr s) {
+    return s->getTemotoNamespace() == ::common::getTemotoNamespace();
+  });
+
+  if (it_local != candidates.end())
   {
-    // Get the name of the package
-    ret.package_name = candidates[0]->getName();
-
-    // Check for runnables
-    if (!candidates[0]->getRunnables().empty())
-    {
-      ret.action = "rosrun";
-      ret.executable = candidates[0]->getRunnables().begin()->first;
-      retstartSensor.topic = candidates[0]->getRunnables().begin()->second;
-    }
-
-    else if (!candidates[0]->getLaunchables().empty())
-    {
-      ret.action = "roslaunch";
-      ret.executable = candidates[0]->getLaunchables().begin()->first;
-      retstartSensor.topic = candidates[0]->getLaunchables().begin()->second;
-    }
-
-    // The name of the topic that this particular runnable publishes to
-    retstartSensor.package_name = ret.package_name;
-    retstartSensor.executable = ret.executable;
-
-    return candidates[0];
+    return *it_local;
   }
 
-  // Check if the runnable/launchable/executable was specified
-  if (executable != "")
-  {
-    // Clear out the "candidatesLocal" list
-    candidatesLocal.clear();
-
-    // Filter out the devices that follow the "executable" criteria
-    for (auto& entry : candidates)
-    {
-      // Get the local runnables
-      std::map<std::string, std::string> runnables_entry = entry->getRunnables();
-
-      // Check if the required runnable exists in the list of runnables
-      if (runnables_entry.find(executable) != runnables_entry.end())
-      {
-        candidatesLocal.push_back(entry);
-      }
-
-      // Get the local launchables
-      std::map<std::string, std::string> launchables_entry = entry->getLaunchables();
-
-      // Check if the required runnable exists in the list of runnables
-      if (launchables_entry.find(executable) != launchables_entry.end())
-      {
-        candidatesLocal.push_back(entry);
-      }
-    }
-
-    // Copy the contents of "candidatesLocal" into "candidates"
-    candidates = candidatesLocal;
-
-    // If the list is empty, return an empty response
-    if (candidates.empty())
-    {
-      return NULL;
-    }
-  }
-
-  else
-  {
-    // Return the first "runnable" of the element in the "candidates" list
-    ret.action = "roslaunch";
-    ret.package_name = name;
-    ret.executable = candidates[0]->getRunnables().begin()->first;
-
-    // The name of the topic that this particular runnable publishes to
-    retstartSensor.package_name = name;
-    retstartSensor.executable = ret.executable;
-    retstartSensor.topic = candidates[0]->getRunnables().begin()->second;
-
-    return candidates[0];
-  }
-
-  // If all above constraints were satisfied, then:
-  ret.action = "roslaunch";
-  ret.package_name = name;
-  ret.executable = executable;
-
-  // The name of the topic that this particular runnable publishes to
-  retstartSensor.package_name = name;
-  retstartSensor.executable = executable;
-
-  // Check if runnables were found
-  if (!candidates[0]->getRunnables().empty())
-  {
-    retstartSensor.topic = candidates[0]->getRunnables()[executable];
-  }
-  else if (!candidates[0]->getLaunchables().empty())
-  {
-    retstartSensor.topic = candidates[0]->getLaunchables()[executable];
-  }
-  return candidates[0];
+  // Out of options ... return the first remote sensor of the requested type.
+  return candidates.front()
 }
 
 }  // sensor_manager namespace

@@ -39,6 +39,9 @@ add_message_files(FILES
     # Human Context
     SpeechSpecifier.msg
     GestureSpecifier.msg
+
+    # Sensor Manager
+    SensorInfoSync.msg
 )
 
 add_service_files(
@@ -123,7 +126,7 @@ target_link_libraries(context_manager ${catkin_LIBRARIES} )
 # # # # # # # # # # # #
 add_executable(sensor_manager src/sensor_manager/sensor_manager.cpp 
 	src/sensor_manager/sensor_manager_node.cpp
-	src/package_info/package_info.cpp)
+	src/sensor_manager/sensor_info.cpp)
 add_dependencies(sensor_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(sensor_manager ${catkin_LIBRARIES} )
 

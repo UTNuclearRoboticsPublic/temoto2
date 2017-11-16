@@ -12,6 +12,12 @@ namespace process_manager
 		const std::string MANAGER = "process_manager";
 		const std::string SERVER = "load_process";
 	}
+
+  namespace action
+  {
+		const std::string ROS_EXECUTE = "ros_execute";
+		const std::string SYS_EXECUTE = "sys_execute";
+  }
 }
 
 

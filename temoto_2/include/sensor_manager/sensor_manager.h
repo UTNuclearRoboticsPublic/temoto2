@@ -1,10 +1,11 @@
 #ifndef SENSOR_MANAGER_H
 #define SENSOR_MANAGER_H
 
-#include "package_info/package_info.h"
+#include "sensor_manager/sensor_info.h"
 #include "sensor_manager/sensor_manager_services.h"
 #include "process_manager/process_manager_services.h"
 #include "rmp/resource_manager.h"
+#include "temoto_2/SensorInfoSync.h"
 
 namespace sensor_manager
 {
@@ -28,11 +29,6 @@ public:
       return log_subsys_;
     }
 
-    /**
-     * @brief List of known sensors
-     */
-    std::vector <PackageInfoPtr> pkg_infos_;
-
   private:
     /**
      * @brief Callback to a service that lists all available packages that
@@ -41,9 +37,9 @@ public:
      * @param res
      * @return
      */
-    bool listDevicesCb (temoto_2::ListDevices::Request &req, temoto_2::ListDevices::Response &res);
+    bool listDevicesCb(temoto_2::ListDevices::Request& req, temoto_2::ListDevices::Response& res);
 
-    void syncCb (temoto_2::SensorManagerSyncMsg &msg);
+    void syncCb(temoto_2::SensorInfoSync& msg);
 
     /*
      * Callback to a service that executes/runs a requested device
@@ -83,12 +79,7 @@ public:
      * @return Returns a boolean. If suitable device was found, then the req param
      * is formatted as a nodeSpawnKill::Request (first one in the list, even if there is more)
      */
-    PackageInfoPtr findSensor (temoto_2::LoadProcess::Request& ret,
-                     temoto_2::LoadSensor::Response& retstartSensor,
-                     std::string type,
-                     std::string name,
-                     std::string executable);
-};
+    SensorInfoPtr findSensor(std::string type, std::string name, std::string executable);
 
     std::string log_class_, log_subsys_, log_group_;
     ros::NodeHandle nh_;
@@ -96,8 +87,19 @@ public:
     ros::Publisher sync_pub_;
     ros::Subscriber sync_sub_;
     rmp::ResourceManager<SensorManager> resource_manager_;
-    std::map<temoto_id::ID, PackageInfoPtr> allocated_sensors_;
 
+    /**
+     * @brief List of all defined sensors
+     * This list is keep in sync with other sensor managers.
+     */
+    std::vector <SensorInfoPtr> sensors_;
+
+    /**
+     * @brief List of allocated sensors
+     */
+    std::map<temoto_id::ID, SensorInfoPtr> allocated_sensors_;
+
+}; // SensorManager
 
 } // sensor_manager namespace
 
