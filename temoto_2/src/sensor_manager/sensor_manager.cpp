@@ -18,6 +18,7 @@
 #include "core/common.h"
 #include "sensor_manager/sensor_manager.h"
 #include <algorithm>
+#include <utility>
 //#include "sensor_manager/sensor_manager_services.h"
 //#include "process_manager/process_manager_services.h"
 //#include <sstream>
@@ -39,8 +40,45 @@ SensorManager::SensorManager() : resource_manager_(srv_name::MANAGER, this)
   //  list_devices_server_ = nh_.advertiseService(srv_name::MANAGER + "/list_devices",
   //                                              &SensorManager::listDevicesCb, this);
 
-  sync_pub_ = nh_.advertise<temoto_2::SensorInfoSync>(srv_name::SYNC_TOPIC, 1);
-  sync_sub_ = nh_.subscribe(srv_name::SYNC_TOPIC, 1, &SensorManager::syncCb, this);
+  sync_pub_ = nh_.advertise<temoto_2::SensorInfoSync>(srv_name::SYNC_TOPIC, 1000);
+  sync_sub_ = nh_.subscribe(srv_name::SYNC_TOPIC, 1000, &SensorManager::syncCb, this);
+
+  // Ask from master how many nodes have subscribed to SYNC_TOPIC.
+  // Wait until all connections are established.
+  int total_connections = 0;
+  int active_connections = 0;
+  while(true)
+  {
+    XmlRpc::XmlRpcValue args, result, payload;
+    args[0] = ros::this_node::getName();
+    ros::S_string node_set;
+    if (ros::master::execute("getSystemState", args, result, payload, true))
+    {
+      for (int i = 0; i < payload.size(); ++i)
+      {
+        for (int j = 0; j < payload[i].size(); ++j)
+        {
+          std::string topic = payload[i][j][0];
+          XmlRpc::XmlRpcValue nodes = payload[i][j][1];
+          if (topic == srv_name::SYNC_TOPIC)
+          {
+            total_connections = nodes.size();
+          }
+        }
+      }
+    }
+    active_connections = sync_pub_.getNumSubscribers();
+    TEMOTO_WARN("Waiting for subscribers: %d/%d", active_connections, total_connections);
+    if (active_connections == total_connections)
+    {
+      break;
+    }
+    ros::Duration(0.1).sleep();
+  }
+
+  // publish sync message which causes each sensor manager to publish its sensors.
+  SensorInfo dummy_sensor;
+  sync_pub_.publish(dummy_sensor.getSyncMsg(sync_action::GET_SENSORS));
 
   TEMOTO_INFO("Sensor manager is ready.");
 }
@@ -61,6 +99,8 @@ void SensorManager::statusCb(temoto_2::ResourceStatus& srv)
     {
       TEMOTO_WARN("Sensor failure detected, adjusting reliability.");
       it->second->adjustReliability(0.0);
+      // Send out the information about the new sensor.
+      sync_pub_.publish(it->second->getSyncMsg(sync_action::UPDATE));
     }
   }
 }
@@ -85,26 +125,63 @@ bool SensorManager::listDevicesCb(temoto_2::ListDevices::Request& req,
 void SensorManager::syncCb(const temoto_2::SensorInfoSync& msg)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-  TEMOTO_DEBUG("%s Got new info about sensor.", prefix.c_str());
+  TEMOTO_WARN("%s GOT: action: %s, ns: %s", prefix.c_str(), msg.sync_action.c_str(), msg.temoto_namespace.c_str());
 
-  /**
-   * \todo some validation of the msg
-   */
+  if (msg.temoto_namespace == common::getTemotoNamespace())
+  {
+    TEMOTO_DEBUG("%s Ignoring sync message from our own manager.", prefix.c_str());
+    return;
+  }
+
+  if (msg.sync_action == sync_action::GET_SENSORS)
+  {
+    // publish all local sensors
+    for(auto& s : sensors_) 
+    {
+      if(s->getTemotoNamespace() == common::getTemotoNamespace())
+      {
+        sync_pub_.publish(s->getSyncMsg(sync_action::UPDATE));
+      }
+    }
+    return;
+  }
+
+  // Build sensor from incoming sync message
+  SensorInfo sensor(msg);
+
+  // Check if sensor has to be added or updated
+  auto it = std::find_if(sensors_.begin(), sensors_.end(),
+                         [&](const SensorInfoPtr& s) { return *s == sensor; });
+  if (it != sensors_.end())
+  {
+    TEMOTO_DEBUG("%s Updating remote sensor '%s'.", prefix.c_str(), sensor.getName().c_str());
+    // Update the sensor fields that were not compared with == operator
+    *it = std::make_shared<SensorInfo>(sensor);
+  }
+  else
+  {
+    TEMOTO_DEBUG("%s Adding remote sensor '%s'.", prefix.c_str(), sensor.getName().c_str());
+    sensors_.emplace_back(std::make_shared<SensorInfo>(sensor));
+  }
 }
 
-void SensorManager::addSensor(const SensorInfo& sensor_info)
+void SensorManager::addSensor(const SensorInfo& sensor)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   auto it = std::find_if(sensors_.begin(), sensors_.end(),
-                         [&](const SensorInfoPtr& s) { return *s == sensor_info; });
+                         [&](const SensorInfoPtr& s) { return *s == sensor; });
   if (it != sensors_.end())
   {
-    TEMOTO_ERROR("%s The sensor '%s' is already added.", prefix.c_str(), sensor_info.getName().c_str());
+    TEMOTO_ERROR("%s The sensor '%s' is already added.", prefix.c_str(), sensor.getName().c_str());
     return;
   }
+
+  // Add pointer to sensors list.
+  sensors_.emplace_back(std::make_shared<SensorInfo>(sensor));
+
+  // Send out information about the new sensor.
+  sync_pub_.publish(sensors_.back()->getSyncMsg(sync_action::UPDATE));
  
-  sensors_.emplace_back(std::make_shared<SensorInfo>(sensor_info));
-  TEMOTO_DEBUG("%s Added sensor '%s'.", prefix.c_str(), sensor_info.getName().c_str());
 }
 
 /*
@@ -193,6 +270,10 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
 
     // Increase or decrease the reliability depending on the return code
     (res.rmp.code == 0) ? sensor_ptr->adjustReliability(1.0) : sensor_ptr->adjustReliability(0.0);
+    // Send the update to other managers.
+    const temoto_2::SensorInfoSync msg;
+    sync_pub_.publish(sensor_ptr->getSyncMsg(sync_action::UPDATE));
+    //sync_pub_.publish(msg);
 
     allocated_sensors_.emplace(res.rmp.resource_id, sensor_ptr);
   }
