@@ -202,7 +202,7 @@ add_executable(robot_manager src/robot_manager/robot_manager.cpp
                              src/robot_manager/robot.cpp
                              src/package_info/package_info.cpp)
 add_dependencies(robot_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(robot_manager ${catkin_LIBRARIES} )
+target_link_libraries(robot_manager ${catkin_LIBRARIES} yaml-cpp)
 
 #add_library(ttp src/TTP/language_processors/meta/meta_lp.cpp
 #                src/TTP/language_processors/meta/branch_finder.cpp

@@ -48,7 +48,7 @@ bool RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
       return true;
     }
 
-    // a different robot is being requested, unload the one which is currently active
+    // a different robot is requested, unload the one which is currently active
     resource_manager_.unloadClientResource(active_robot_->getId());
     active_robot_ = NULL;
     temoto_2::RobotLoad empty_load_msg;
@@ -69,7 +69,7 @@ bool RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
             process_manager::srv_name::MANAGER, process_manager::srv_name::SERVER, load_proc_msg))
     {
       TEMOTO_DEBUG("%s Call to ProcessManager was sucessful.", prefix.c_str());
-//      ros::Duration(5).sleep(); ///< Wait for the moveit launch file to be loaded.
+     
       // wait for robot_description to become available on parameter server...
       while (!nh_.hasParam("robot_description"))
       {
