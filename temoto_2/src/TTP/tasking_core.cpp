@@ -64,10 +64,10 @@ void TaskingCore::humanChatterCb (std_msgs::String chat)
         std::cout << BOLDWHITE << "Received: " << chat.data << RESET << std::endl << std::endl;
 
         // Process the text and receive a task tree
-        TaskTree tt = language_processor_->processText(std::move(chat.data));
+        // TaskTree tt = language_processor_->processText(std::move(chat.data));
 
         // Print out the task tree
-        std::cout << "Task Tree: " << tt;
+        // std::cout << "Task Tree: " << tt;
 
         /*
          * TODO: There is a massive flaw somewhere in tbb, ros or in me. This flow graph
@@ -76,10 +76,11 @@ void TaskingCore::humanChatterCb (std_msgs::String chat)
          * just (randomly) hangs after returning from "executeTaskTree" ... If the flow graph object
          * is destructed in this scope, all works just fine.
          */
-        tbb::flow::graph flow_graph;
 
         // Execute the tree
-        task_manager_.executeTaskTree (tt.getRootNode(), flow_graph);
+        task_manager_.executeTaskTree (language_processor_, chat.data);
+
+        std::cout << "D3\n";
     }
     catch (error::ErrorStackUtil& e)
     {

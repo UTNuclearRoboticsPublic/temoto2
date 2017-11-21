@@ -79,7 +79,7 @@ void startInterface_0()
         hci_.initialize();
 
         // Advertise the topic where core listens for commands
-        core_pub_ = nh_.advertise<std_msgs::String>("/temoto_2/human_chatter", 1);
+        core_pub_ = nh_.advertise<std_msgs::String>("human_chatter", 1);
 
         // Build a speech specifier
         // TODO: This shoud be done via speech specifier helper class

@@ -8,10 +8,11 @@
  *
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+#include "ros/ros.h"
+#include "ros/package.h"
 
 #include "common/tools.h"
 #include "common/temoto_log_macros.h"
-
 #include "TTP/task_manager.h"
 #include "TTP/task_descriptor_processor.h"
 #include "TTP/task_container.h"
@@ -45,17 +46,145 @@ struct CandidateTask
 TaskManager::TaskManager (std::string system_prefix)
     : system_prefix_(system_prefix)
 {
-    // Construct the classloader
-    class_loader_ = new class_loader::MultiLibraryClassLoader(false);
+    try
+    {
+        // Name of the method, used for making debugging a bit simpler
+        std::string prefix = common::generateLogPrefix(system_prefix, class_name_, __func__);
 
-    // Start the servers
-    stop_task_server_ = n_.advertiseService (system_prefix_ + "/stop_task", &TaskManager::stopTaskCallback, this);
-    index_tasks_server_ = n_.advertiseService (system_prefix_ + "/index_tasks", &TaskManager::indexTasksCallback, this);
+        // Construct the classloader
+        class_loader_ = new class_loader::MultiLibraryClassLoader(true);
 
-    // Start subscribers
-    //stop_task_subscriber_ = n_.subscribe("temoto/stop_task", 10, &TaskManager::stopTaskMsgCallback, this);
+        // Initialize the language processor by giving it the path to language model files
+        std::string temoto_path = ros::package::getPath(ROS_PACKAGE_NAME);
+        language_processor_ = new MetaLP(temoto_path + "/include/TTP/language_processors/meta/models/");
+
+        /*
+         * Index (look recursivey for the tasks in the given folder up to specified depth)
+         * the available tasks, otherwise the task handler would have no clue about the available
+         * tasks. Later the indexing could be via indexing task.
+         * TODO: Read the base path from the parameter server
+         */
+        std::cout << prefix << " Indexing the tasks ... " << std::flush;
+        boost::filesystem::directory_entry dir(temoto_path + "/../tasks");
+        indexTasks(dir, 1);
+        std::cout << "done\n";
+
+        // Stop task server
+        stop_task_server_ = nh_.advertiseService ("stop_task", &TaskManager::stopTaskCallback, this);
+
+        // Task indexing subscriber
+        index_tasks_subscriber_ = nh_.subscribe("index_tasks", 1, &TaskManager::indexTasksCallback, this);
+
+        /*
+         * Subscribe to human chatter topic. This triggers the callback that processes text
+         * messages and trys to find and execute tasks based on the text
+         */
+        human_chatter_subscriber_ = nh_.subscribe("human_chatter", 1, &TaskManager::humanChatterCb, this);
+    }
+    catch (error::ErrorStackUtil& e)
+    {
+        // Rethrow or do whatever
+        // std::cout << e.getStack();
+    }
 }
 
+
+/* * * * * * * * *
+ *  humanChatterCb
+ * * * * * * * * */
+
+void TaskManager::humanChatterCb (std_msgs::String chat)
+{
+    try
+    {
+        std::cout << BOLDWHITE << "Received: " << chat.data << RESET << std::endl << std::endl;
+
+        executeVerbalInstruction (chat.data);
+
+    }
+    catch (error::ErrorStackUtil& e)
+    {
+        // Rethrow or do whatever
+        //std::cout << e.getStack();
+    }
+
+    std::cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * \n\n";
+}
+
+
+/* * * * * * * * *
+ *  EXECUTE TASK TREE
+ * * * * * * * * */
+
+void TaskManager::executeVerbalInstruction (std::string& verbal_instruction)
+{
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
+
+    // Let others know that action execution engine is busy
+    action_executioner_busy_ = true;
+
+    try
+    {
+        // Convert the verbal instruction into a incomplete semantic frame tree
+        TaskTree sft = language_processor_->processText(std::move(verbal_instruction));
+        TaskTreeNode& root_node = sft.getRootNode();
+
+        // Print out the semantic frame tree
+        std::cout << "SFTree: " << sft;
+
+        // Find connecting semantic frames
+        TEMOTO_DEBUG_STREAM(prefix << " Connecting the task tree");
+        std::vector<TTP::Subject> empty_subs; // stupid hack
+        connectTaskTree(root_node, empty_subs);
+
+        // Print task tree task descriptors
+        sft.printTaskDescriptors(root_node);
+
+        // Load and initialize the tasks
+        TEMOTO_DEBUG_STREAM(prefix << " Loadng and initializing the tree");
+        loadAndInitializeTaskTree(root_node);
+
+        // Create a tbb flow graph
+        TEMOTO_DEBUG_STREAM(prefix << " Creating an empty flow graph object");
+        tbb::flow::graph flow_graph;
+
+        // Build flow graph nodes
+        TEMOTO_DEBUG_STREAM(prefix << " Building flow graph nodes based on SF tree nodes");
+        makeFlowGraph(root_node, flow_graph); // TODO: better name would be populateFlowgraph
+
+        // Connect flow graph nodes
+        TEMOTO_DEBUG_STREAM(prefix << " Connecting flow graph nodes");
+        connectFlowGraph(root_node);
+
+        // Start the flow graph
+        TEMOTO_DEBUG_STREAM(prefix << " Starting the flow graph");
+        TTP::Subjects dummy_subjects; // stupid hack
+        root_node.root_fgn_->try_put(dummy_subjects);
+        flow_graph.wait_for_all();
+
+        TEMOTO_DEBUG_STREAM(prefix << " Finished executing the flow graph");
+    }
+    catch( error::ErrorStackUtil & e )
+    {
+        // Rethrow the exception
+        e.forward( prefix );
+        throw e;
+    }
+    catch(...)
+    {
+        throw error::ErrorStackUtil( TTPErr::UNHANDLED,
+                                     error::Subsystem::CORE,
+                                     error::Urgency::HIGH,
+                                     prefix + "Received an unhandled exception",
+                                     ros::Time::now() );
+    }
+
+    // Let others know that action execution engine is not busy
+    action_executioner_busy_ = false;
+
+    return;
+}
 
 /* * * * * * * * *
  *  FIND TASK
@@ -173,9 +302,21 @@ void TaskManager::indexTasks (boost::filesystem::directory_entry base_path, int 
     std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
 
     try
-    {   TEMOTO_DEBUG_STREAM(prefix << " Indexing the tasks");
+    {
+        TEMOTO_DEBUG_STREAM(prefix << " Indexing the tasks");
         tasks_indexed_ = findTaskFilesys ("", base_path, search_depth);
         TEMOTO_DEBUG_STREAM(prefix << " Found " << tasks_indexed_.size() << " tasks");
+
+        // Unload synchronous task libraries
+        TEMOTO_DEBUG_STREAM(prefix << " Unloading synchronous action libraries");
+
+        for (auto& task_lib : synchronous_task_libs_)
+        {
+            unloadTaskLib(task_lib);
+        }
+
+        // Clear the synchronous task libraries set
+        synchronous_task_libs_.clear();
     }
     catch( error::ErrorStackUtil & e )
     {
@@ -193,67 +334,6 @@ void TaskManager::indexTasks (boost::filesystem::directory_entry base_path, int 
 std::vector <TaskDescriptor>& TaskManager::getIndexedTasks()
 {
     return tasks_indexed_;
-}
-
-/* * * * * * * * *
- *  EXECUTE TASK TREE
- * * * * * * * * */
-
-void TaskManager::executeTaskTree (TaskTreeNode& root_node, tbb::flow::graph& flow_graph)
-{
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
-
-    try
-    {
-        // Find connecting tasks
-        TEMOTO_DEBUG_STREAM(prefix << " Connecting the task tree");
-        std::vector<TTP::Subject> empty_subs; // stupid hack
-        connectTaskTree(root_node, empty_subs);
-
-        // Print task tree task descriptors
-        //tt.printTaskDescriptors(root_node);
-
-        // Load and initialize the tasks
-        TEMOTO_DEBUG_STREAM(prefix << " Loadng and initializing the tree");
-        loadAndInitializeTaskTree(root_node);
-
-        // Create a tbb flow graph
-        //TEMOTO_DEBUG_STREAM(prefix << " Creating an empty flow graph object");
-        //tbb::flow::graph flow_graph;
-
-        // Build flow graph nodes
-        TEMOTO_DEBUG_STREAM(prefix << " Building flow graph nodes based on task tree nodes");
-        makeFlowGraph(root_node, flow_graph); // TODO: better name would be populateFlowgraph
-
-        // Connect flow graph nodes
-        TEMOTO_DEBUG_STREAM(prefix << " Connecting flow graph nodes");
-        connectFlowGraph(root_node);
-
-        // Start the flow graph
-        TEMOTO_DEBUG_STREAM(prefix << " Starting the flow graph");
-        TTP::Subjects dummy_subjects; // stupid hack
-        root_node.root_fgn_->try_put(dummy_subjects);
-        flow_graph.wait_for_all();
-
-        TEMOTO_DEBUG_STREAM(prefix << " Finished executing the flow graph");
-    }
-    catch( error::ErrorStackUtil & e )
-    {
-        // Rethrow the exception
-        e.forward( prefix );
-        throw e;
-    }
-    catch(...)
-    {
-        throw error::ErrorStackUtil( TTPErr::UNHANDLED,
-                                     error::Subsystem::CORE,
-                                     error::Urgency::HIGH,
-                                     prefix + "Received an unhandled exception",
-                                     ros::Time::now() );
-    }
-
-    return;
 }
 
 
@@ -824,14 +904,10 @@ void TaskManager::loadAndInitializeTaskTree(TaskTreeNode& node)
         try
         {
             // Load the task
-
-            //Debug
             TEMOTO_DEBUG_STREAM(prefix << " Loading task '" << node_task_descriptor.getAction() << "'");
             loadTask(node_task_descriptor);
 
             // Initialize the task
-
-            //Debug
             TEMOTO_DEBUG_STREAM(prefix << " Instatiating the task '" << node_task_descriptor.getAction() << "'");
             instantiateTask(node);
         }
@@ -866,28 +942,36 @@ void TaskManager::loadTask(TaskDescriptor& task_descriptor)
     std::vector<std::string> classes;
 
     // Get the "path" to its lib file
-    std::string path_to_lib =  task_descriptor.getLibPath();
+    std::string path_to_lib = task_descriptor.getLibPath();
 
     try
     {
-        // Make the path canonical, otherwise class loader will die
-        boost::filesystem::path path(path_to_lib);
-        std::string canonical_path = boost::filesystem::canonical(path).string();
+        TEMOTO_DEBUG("%s Loading class from path: %s",prefix.c_str(), path_to_lib.c_str());
 
-        TEMOTO_DEBUG("%s Loading class from path: %s",prefix.c_str(), canonical_path.c_str());
+        if (class_loaders_.find(path_to_lib) == class_loaders_.end())
+        {
+            class_loaders_[path_to_lib] = new class_loader::ClassLoader(path_to_lib, false);
 
-        class_loader_->loadLibrary(canonical_path);
-        classes = class_loader_->getAvailableClassesForLibrary<BaseTask>(canonical_path);
+            // Maintain the name of the synchronous task library, so that it could
+            // be unloaded after execution
+            if (task_descriptor.getFirstInterface().type_ == "synchronous")
+            {
+                TEMOTO_DEBUG_STREAM(prefix << "This is sync task maintaining the library path in a separate set" << std::endl);
+                synchronous_task_libs_.push_back(path_to_lib);
+            }
+        }
+
+        classes = class_loaders_[path_to_lib]->getAvailableClasses<BaseTask>();
 
         // Done loading
-        TEMOTO_DEBUG( "%s Loaded %lu classes from %s", prefix.c_str(), classes.size(), canonical_path.c_str() );
+        TEMOTO_DEBUG( "%s Loaded %lu classes from %s", prefix.c_str(), classes.size(), path_to_lib.c_str() );
 
         if (classes.empty())
         {
             throw error::ErrorStackUtil( TTPErr::CLASS_LOADER_FAIL,
                                          error::Subsystem::CORE,
                                          error::Urgency::HIGH,
-                                         prefix + " Could not load the class fom path: " + canonical_path,
+                                         prefix + " Could not load the class fom path: " + path_to_lib,
                                          ros::Time::now() );
         }
 
@@ -931,35 +1015,37 @@ void TaskManager::instantiateTask(TaskTreeNode& node)
                                      ros::Time::now() );
     }
 
-    // Check if there is a class with this name
-    bool task_class_found = false;
-    std::vector<std::string> loaded_classes = class_loader_->getAvailableClasses<BaseTask>();
+//    // Check if there is a class with this name
+//    bool task_class_found = false;
+//    std::vector<std::string> loaded_classes = class_loader_->getAvailableClasses<BaseTask>();
 
-    for (std::string loaded_class : loaded_classes)
-    {
-        if (loaded_class == task_class_name)
-        {
-            task_class_found = true;
-            break;
-        }
-    }
+//    for (std::string loaded_class : loaded_classes)
+//    {
+//        if (loaded_class == task_class_name)
+//        {
+//            task_class_found = true;
+//            break;
+//        }
+//    }
 
-    // If the task was not found, throw an error
-    if (!task_class_found)
-    {
-        throw error::ErrorStackUtil( TTPErr::NO_TASK_CLASS,
-                                     error::Subsystem::CORE,
-                                     error::Urgency::HIGH,
-                                     prefix + "Could not find a task class within loaded classes",
-                                     ros::Time::now() );
-    }
+//    // If the task was not found, throw an error
+//    if (!task_class_found)
+//    {
+//        throw error::ErrorStackUtil( TTPErr::NO_TASK_CLASS,
+//                                     error::Subsystem::CORE,
+//                                     error::Urgency::HIGH,
+//                                     prefix + "Could not find a task class within loaded classes",
+//                                     ros::Time::now() );
+//    }
 
-    // If the task was not found, create an instance of it
+    // If the task was found, create an instance of it
     try
     {
         // TODO: DO NOT ACCESS PRIVATE MEMBERS DIRECLY ,ie., UNFRIEND THE TASK MANAGER .. or should I?
-        ROS_DEBUG( "%s instatiating task: %s", prefix.c_str(), task_class_name.c_str());
-        node.task_pointer_ = class_loader_->createInstance<BaseTask>(task_class_name);
+        TEMOTO_DEBUG( "%s instatiating task: %s", prefix.c_str(), task_class_name.c_str());
+        //node.task_pointer_ = class_loader_->createInstance<BaseTask>(task_class_name);
+
+        node.task_pointer_ = class_loaders_[task_descriptor.getLibPath()]->createInstance<BaseTask>(task_class_name);
         node.task_pointer_->task_package_name_ = task_descriptor.getTaskPackageName();
         node.task_pointer_->task_id_ = id_manager_.generateID();
 
@@ -971,11 +1057,37 @@ void TaskManager::instantiateTask(TaskTreeNode& node)
         // Check if it is a synchronous or asynchronous task
         if (task_descriptor.getFirstInterface().type_ == "asynchronous")
         {
-            std::cout << "This is an async task, making a copy of the shared ptr\n";
+            TEMOTO_DEBUG_STREAM(prefix << "This is an async task, making a copy of the shared ptr\n");
             asynchronous_tasks_.push_back( {node.task_descriptor_ptr_, node.task_pointer_} );
         }
 
         return;
+    }
+    catch(class_loader::ClassLoaderException& e)
+    {
+        // Rethrow the exception
+        throw error::ErrorStackUtil( TTPErr::CLASS_LOADER_FAIL,
+                                     error::Subsystem::CORE,
+                                     error::Urgency::HIGH,
+                                     prefix + e.what(),
+                                     ros::Time::now() );
+    }
+}
+
+/* * * * * * * * *
+ *  UNLOAD TASK LIB
+ * * * * * * * * */
+
+void TaskManager::unloadTaskLib(std::string path_to_lib)
+{
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
+
+    try
+    {
+        TEMOTO_INFO_STREAM( prefix << " Unloading library: " << path_to_lib );
+        delete class_loaders_[path_to_lib];
+        class_loaders_.erase(path_to_lib);
     }
     catch(class_loader::ClassLoaderException& e)
     {
@@ -1238,329 +1350,33 @@ void TaskManager::stopTask(std::string action, std::string what)
  *  INDEX TASKS SERVICE CALLBACK
  * * * * * * * * */
 
-bool TaskManager::indexTasksCallback( temoto_2::IndexTasks::Request& req,
-                                      temoto_2::IndexTasks::Response& res)
+void TaskManager::indexTasksCallback(temoto_2::IndexTasks index_msg)
 {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
 
-    TEMOTO_DEBUG( "%s Received a request to index tasks at '%s'", prefix.c_str(), req.directory.c_str());
+    TEMOTO_DEBUG( "%s Received a request to index tasks at '%s'", prefix.c_str(), index_msg.directory.c_str());
     try
     {
-        boost::filesystem::directory_entry dir(req.directory);
-        indexTasks(dir, 1);
-        res.code = 0;
-        res.message = "Browsed and indexed the tasks successfully";
+        // Wait until the action execution engine is not busy
+        while (action_executioner_busy_)
+        {
+            ros::Duration(0.05).sleep();
+            TEMOTO_DEBUG_STREAM(prefix << "Waiting for action executioner ...");
+        }
+        TEMOTO_DEBUG_STREAM(prefix << "Done waiting. Starting indexing process");
 
-        return true;
+        boost::filesystem::directory_entry dir(index_msg.directory);
+        indexTasks(dir, 1);
+        TEMOTO_DEBUG_STREAM(prefix << "Browsed and indexed the tasks successfully");
     }
     catch( error::ErrorStackUtil & e )
     {
         // Append the error to local ErrorStack
         e.forward( prefix );
         error_handler_.append(e);
-
-        res.code = 1;
-        res.message = "Failed to index the tasks";
-        return true;
+        TEMOTO_ERROR("Failed to index the tasks");
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-// OLD STUFF
-
-
-
-
-
-
-
-
-
-
-
-
-
-///* * * * * * * * *
-// *  UNLOAD LIB
-// * * * * * * * * */
-
-//void TaskManager::unloadTaskLib(std::string path_to_lib)
-//{
-//    // Name of the method, used for making debugging a bit simpler
-//    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
-
-//    try
-//    {
-//        ROS_DEBUG( "[TaskManager/unloadTaskLib] unloading library");
-//        class_loader_->unloadLibrary(path_to_lib);
-//    }
-//    catch(class_loader::ClassLoaderException& e)
-//    {
-//        // Rethrow the exception
-//        throw error::ErrorStackUtil( TTPErr::CLASS_LOADER_FAIL,
-//                                     error::Subsystem::CORE,
-//                                     error::Urgency::HIGH,
-//                                     prefix + e.what(),
-//                                     ros::Time::now() );
-//    }
-//}
-
-
-
-
-///* * * * * * * * *
-// *  START TASK
-// *
-// *  TODO: * check the running tasks lists before doing anything
-// * * * * * * * * */
-
-//void TaskManager::startTask(RunningTask& task, std::vector<boost::any> arguments)
-//{
-//    // Name of the method, used for making debugging a bit simpler
-//    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
-
-//    try
-//    {
-//        ROS_DEBUG( "%s starting task: %s", prefix.c_str(), task.task_info_.getName().c_str());
-//        task.task_pointer_->setID( id_manager_.generateID() );
-//        task.task_pointer_->startTaskAutostop( 0, arguments );
-//    }
-
-//    catch(...)
-//    {
-//        // Rethrow the exception
-//        throw error::ErrorStackUtil( TTPErr::UNHANDLED,
-//                                     error::Subsystem::CORE,
-//                                     error::Urgency::HIGH,
-//                                     prefix + "Received an unhandled exception",
-//                                     ros::Time::now() );
-//    }
-//}
-
-///* * * * * * * * *
-// *  EXECUTE TASK
-// * * * * * * * * */
-
-//bool TaskManager::executeTask(TaskDescriptor task_info, std::vector<boost::any> arguments)
-//{
-//    // Name of the method, used for making debugging a bit simpler
-//    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
-
-//    bool start_attempted = false;
-
-//    try
-//    {
-//        // Create a RunningTask object
-//        RunningTask task_to_run;
-//        task_to_run.task_info_ = task_info;
-
-//        /*
-//         * Use the name of the task to load in the task class. task handler returns the internal
-//         * specific name of the task which is used in the next step.
-//         */
-//        ROS_DEBUG("%s Executing task '%s' ...", prefix.c_str(), task_to_run.task_info_.getName().c_str());
-
-//        // Load the task library
-//        loadTask(task_to_run);
-
-//        /*
-//         * Create an instance of the task based on the class name. a task .so file might
-//         * contain multiple classes, therefore path is not enough and specific name
-//         * must be used
-//         */
-//        instantiateTask(task_to_run);
-
-//        /*
-//         * MOVE the task info into the list of running tasks. If the move operation is done
-//         * after starting the task, the process will likely crash.
-//         */
-//        ROS_DEBUG("%s Moving the task into the 'running_tasks' vector ...", prefix.c_str());
-//        running_tasks_.push_back (std::move(task_to_run));
-
-//        start_attempted = true;
-
-//        //Start the task
-//        startTaskThread(running_tasks_.back(), arguments);
-//    }
-//    catch( error::ErrorStackUtil & e )
-//    {
-//        // Append the error to local ErrorStack
-//        e.forward( prefix );
-//        error_handler_.append(e);
-
-//        if( start_attempted )
-//        {
-//            try
-//            {
-//                stopTask(running_tasks_.back().task_info_.getName());
-//            }
-//            catch( error::ErrorStackUtil & e2 )
-//            {
-//                e2.forward( prefix );
-//                error_handler_.append(e2);
-//            }
-//        }
-//    }
-//}
-
-
-///* * * * * * * * *
-// *  stopTaskByID
-// * * * * * * * * */
-
-//void TaskManager::stopTaskByID( TemotoID::ID task_id )
-//{
-//    // Name of the method, used for making debugging a bit simpler
-//    std::string prefix = common::generateLogPrefix( system_prefix_, this->class_name_, __func__);
-
-//    try
-//    {
-//        // Find the task by iterating through the list of running tasks
-//        for (auto it = this->running_tasks_.begin(); it != this->running_tasks_.end(); it++)
-//        {
-//            if ((*it).task_pointer_->getID() == task_id)
-//            {
-//                ROS_DEBUG( "%s Stopping and erasing task: %s", prefix.c_str(), (*it).task_info_.getName().c_str());
-//                /*
-//                 * First, call the "stopTask", given that a task is checking the internal "stop_task_" flag
-//                 * TODO: Implement a way for brutally forcing  the task thread to stop in case the task is
-//                 * stuck inside a loop of some sort
-//                 */
-//                (*it).task_pointer_->stopTask();
-
-//                // If the task is stopped, join the thread
-//                (*it).task_thread_.join();
-
-//                // Delete the task entry, which also calls the destructor of the task
-//                running_tasks_.erase (it);
-
-//                ROS_DEBUG( "%s Task stopped", prefix.c_str());
-
-//                return;
-//            }
-//        }
-
-//        ROS_DEBUG("%s Could not find any tasks with TID: %d", prefix.c_str(), task_id);
-//    }
-//    catch(class_loader::ClassLoaderException& e)
-//    {
-//        // Rethrow the exception
-//        throw error::ErrorStackUtil( TTPErr::CLASS_LOADER_FAIL,
-//                                     error::Subsystem::CORE,
-//                                     error::Urgency::HIGH,
-//                                     prefix + e.what(),
-//                                     ros::Time::now() );
-//    }
-//    catch(...)
-//    {
-//        // Rethrow the exception
-//        throw error::ErrorStackUtil( TTPErr::UNHANDLED,
-//                                     error::Subsystem::CORE,
-//                                     error::Urgency::HIGH,
-//                                     prefix + "Received an unhandled exception",
-//                                     ros::Time::now() );
-//    }
-//}
-
-
-///* * * * * * * * *
-// *  stopTaskByName
-// *  TODO: when multiple tasks with the same name are found then do something more reasonable than
-// *        just stopping the first one.
-// * * * * * * * * */
-
-//void TaskManager::stopTaskByName( std::string task_name )
-//{
-//    // Name of the method, used for making debugging a bit simpler
-//    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
-
-//    try
-//    {
-//        // Find the task by iterating through the list of running tasks
-//        for (auto it = this->running_tasks_.begin(); it != this->running_tasks_.end(); it++)
-//        {
-//            // If a task was found then delete it
-//            if ((*it).task_info_.getName() == task_name)
-//            {
-//                ROS_DEBUG( "%s Stopping and erasing task: %s", prefix.c_str(), (*it).task_info_.getName().c_str());
-//                /*
-//                 * First, call the "stopTask", given that a task is checking the internal "stop_task_" flag
-//                 * TODO: Implement a way for brutally forcing  the task thread to stop in case the task is
-//                 * stuck inside a loop of some sort
-//                 */
-//                (*it).task_pointer_->stopTask();
-
-//                // If the task is stopped, join the thread
-//                (*it).task_thread_.join();
-
-//                // Delete the task entry, which also calls the destructor of the task
-//                running_tasks_.erase (it);
-
-//                ROS_DEBUG( "%s Task stopped", prefix.c_str());
-
-//                return;
-//            }
-//        }
-
-//        ROS_DEBUG("%s Could not find any tasks named: %s", prefix.c_str(), task_name.c_str());
-//    }
-//    catch(class_loader::ClassLoaderException& e)
-//    {
-//        // Rethrow the exception
-//        throw error::ErrorStackUtil( TTPErr::CLASS_LOADER_FAIL,
-//                                     error::Subsystem::CORE,
-//                                     error::Urgency::HIGH,
-//                                     prefix + e.what(),
-//                                     ros::Time::now() );
-//    }
-//    catch(...)
-//    {
-//        // Rethrow the exception
-//        throw error::ErrorStackUtil( TTPErr::UNHANDLED,
-//                                     error::Subsystem::CORE,
-//                                     error::Urgency::HIGH,
-//                                     prefix + "Received an unhandled exception.",
-//                                     ros::Time::now() );
-//    }
-//}
-
-
-
-
-
-
-///* * * * * * * * *
-// *  stopTaskMsgCallback
-// * * * * * * * * */
-
-//void TaskManager::stopTaskMsgCallback( temoto_2::StopTaskMsg msg )
-//{
-//    // Name of the method, used for making debugging a bit simpler
-//    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
-
-//    ROS_DEBUG( "%s Received a request to stop a task (TID = %ld)", prefix.c_str(), msg.task_id);
-//    try
-//    {
-//         stopTask( "", msg.task_id );
-//    }
-//    catch( error::ErrorStackUtil & e )
-//    {
-//        // Append the error to local ErrorStack
-//        e.forward( prefix );
-//        error_handler_.append(e);
-//    }
-//}
 
 }// END of TTP namespace

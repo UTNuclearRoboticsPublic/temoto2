@@ -50,8 +50,9 @@ Subjects TaskContainer::operator()(Subjects input_subjects)
     std::cout << "starting a task ...\n";
     task_pointer_->startTask(task_descriptor_->getFirstInterface());
 
-    // Return the solution
+    // Get the output subjects, make a local copy and return them to the next task
     task_descriptor_->setFirstOutputSubjects(task_pointer_->getSolution());
+
     return task_pointer_->getSolution();
 }
 }// END of TTP namespace
