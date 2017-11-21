@@ -2,6 +2,8 @@
 
 using namespace sensor_manager;
 
+
+
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "sensor_manager");
@@ -10,36 +12,36 @@ int main(int argc, char** argv)
   SensorManager sm;
 
 
-  {
-    SensorInfo sensor;
-    sensor.setName("Leap Motion Hand Tracker");
-    sensor.setPackageName("leap_motion_controller");
-    sensor.setType("hand");
-    sensor.setExecutable("leap_motion");
-    sensor.setTopic("/leap_motion_output");
-    sm.addSensor(sensor);
-  }
-
-
-  // set up terminal as backup input if the above should fail
-  {
-    SensorInfo s("Le Terminal pour TeMoto");
-    s.setPackageName("temoto_2");
-    s.setType("speech");
-    s.setExecutable("test_2.launch");
-    s.setTopic("/terminal_text");
-    sm.addSensor(s);
-  }
-
-  {
-    SensorInfo s("Google Speech");
-    s.setPackageName("google_speech_to_text");
-    s.setType("speech");
-    s.setExecutable("en-US.launch");
-    s.setTopic("/stt/spoken_text");
-    sm.addSensor(s);
-  }
-
+//  {
+//    SensorInfo sensor;
+//    sensor.setName("Leap Motion Hand Tracker");
+//    sensor.setPackageName("leap_motion_controller");
+//    sensor.setType("hand");
+//    sensor.setExecutable("leap_motion");
+//    sensor.setTopic("/leap_motion_output");
+//    sm.addSensor(sensor);
+//  }
+//
+//
+//  // set up terminal as backup input if the above should fail
+//  {
+//    SensorInfo s("Le Terminal pour TeMoto");
+//    s.setPackageName("temoto_2");
+//    s.setType("speech");
+//    s.setExecutable("test_2.launch");
+//    s.setTopic("/terminal_text");
+//    sm.addSensor(s);
+//  }
+//
+//  {
+//    SensorInfo s("Google Speech");
+//    s.setPackageName("google_speech_to_text");
+//    s.setType("speech");
+//    s.setExecutable("en-US.launch");
+//    s.setTopic("/stt/spoken_text");
+//    sm.addSensor(s);
+//  }
+//
   // OLD FORMAT REMAININGS:
 
 //  sm.pkg_infos_.emplace_back(std::make_shared<PackageInfo>("google_speech_to_text", "speech"));

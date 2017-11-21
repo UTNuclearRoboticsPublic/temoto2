@@ -1,0 +1,18 @@
+---
+- sensor_name: "Leap Motion Hand Tracker"
+  sensor_type: "hand"
+  package_name: "leap_motion_controller"
+  executable:  "leap_motion"
+  topic:  "/leap_motion_output"
+ 
+- sensor_name: "Camera 0"
+  sensor_type: "camera"
+  package_name: "task_show"
+  executable:  "camera0.launch"
+  topic:  "usb_cam/image_raw"
+
+- sensor_name: "Camera 1"
+  sensor_type: "camera"
+  package_name: "task_show"
+  executable:  "camera1.launch"
+  topic:  "usb_cam/image_raw"

@@ -6,7 +6,7 @@ namespace sensor_manager
 {
 SensorInfo::SensorInfo(std::string sensor_name)
 {
-  resetReliability(0.8);
+  setReliability(0.8);
 
   //set the sensor to current namespace
   msg_.temoto_namespace = ::common::getTemotoNamespace();
@@ -17,7 +17,7 @@ SensorInfo::SensorInfo(std::string sensor_name)
 // then override everything else from msg
 SensorInfo::SensorInfo(const temoto_2::SensorInfoSync& msg)
 {
-  resetReliability(msg_.reliability);
+  setReliability(msg_.reliability);
   msg_ = msg;
 }
 
@@ -35,12 +35,25 @@ void SensorInfo::adjustReliability(float reliability)
   msg_.reliability += reliability / (float)reliabilities_.size();
 }
 
-void SensorInfo::resetReliability(float initial_value)
+void SensorInfo::setReliability(float reliability)
 {
   // Fill array with initial reliability values;
-  reliabilities_.fill(initial_value);  // buffer for instantaneous reliability values
+  reliabilities_.fill(reliability);  // buffer for instantaneous reliability values
   msg_.reliability = 0.8;    // Filtered reliability is kept here
   reliability_idx = 0;
+}
+
+std::string SensorInfo::toString() const
+{
+  std::string ret;
+  ret += "SENSOR: " + getName() + "\n";
+  ret += "  type        : " + getType() + "\n";
+  ret += "  package name: " + getPackageName() + "\n";
+  ret += "  executable  : " + getExecutable() + "\n";
+  ret += "  topic       : " + getTopic() + "\n";
+  ret += "  description : " + getDescription() + "\n";
+  ret += "  reliability : " + std::to_string(getReliability()) + "\n";
+  return ret;
 }
 
 const temoto_2::SensorInfoSync& SensorInfo::getSyncMsg(const std::string& action)

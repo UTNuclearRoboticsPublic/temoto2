@@ -37,13 +37,8 @@ public:
    */
   void adjustReliability(float reliability = 1.0);
 
-  /**
-   * \brief Reset reliability
-   * \param initial_reliability Sets the initial values for the reliability moving average filter.
-   * The value has to be in range [0-1], 0 being not reliable at all and 1.0 is very
-   * reliable.
-   */
-  void resetReliability(float reliability = 0.8);
+
+  std::string toString() const;
 
   /* * * * * * * * * * * *
    *     GETTERS
@@ -137,10 +132,13 @@ public:
     msg_.description = description;
   }
 
-  void setReliability(float reliability)
-  {
-    msg_.reliability = reliability;
-  }
+  /**
+   * \brief Set reliability
+   * \param reliability Sets the initial values for the reliability moving average filter.
+   * The value has to be in range [0-1], 0 being not reliable at all and 1.0 is very
+   * reliable.
+   */
+  void setReliability(float reliability = 0.8);
 
 private:
 

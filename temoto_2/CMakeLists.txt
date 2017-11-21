@@ -128,7 +128,7 @@ add_executable(sensor_manager src/sensor_manager/sensor_manager.cpp
 	src/sensor_manager/sensor_manager_node.cpp
 	src/sensor_manager/sensor_info.cpp)
 add_dependencies(sensor_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(sensor_manager ${catkin_LIBRARIES} )
+target_link_libraries(sensor_manager ${catkin_LIBRARIES} yaml-cpp )
 
 # # # # # # # # # # # #
 # OUTPUT MANAGER
