@@ -5,7 +5,9 @@
 #include "sensor_manager/sensor_manager_services.h"
 #include "process_manager/process_manager_services.h"
 #include "rmp/resource_manager.h"
+#include "rmp/config_synchronizer.h"
 #include "temoto_2/SensorInfoSync.h"
+#include "temoto_2/ConfigSync.h"
 
 namespace sensor_manager
 {
@@ -23,6 +25,8 @@ public:
      * @brief ~SensorManager
      */
     ~SensorManager();
+
+    void configSyncCb(const temoto_2::ConfigSync& msg);
 
     const std::string& getName() const
     {
@@ -90,10 +94,9 @@ private:
 
   std::string log_class_, log_subsys_, log_group_;
   ros::NodeHandle nh_;
-  ros::ServiceServer list_devices_server_;
-  ros::Publisher sync_pub_;
-  ros::Subscriber sync_sub_;
+//  ros::ServiceServer list_devices_server_;
   rmp::ResourceManager<SensorManager> resource_manager_;
+  rmp::ConfigSynchronizer<SensorManager> config_syncer_;
 
   /**
    * @brief List of all defined sensors

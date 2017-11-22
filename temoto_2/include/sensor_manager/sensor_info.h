@@ -8,15 +8,10 @@
 #include <memory>  // shared_ptr
 #include "temoto_2/SensorInfoSync.h"
 #include "common/temoto_log_macros.h"
+#include <yaml-cpp/yaml.h>
 
 namespace sensor_manager
 {
-namespace sync_action
-{
-//const std::string ADD = "add";
-const std::string UPDATE = "update";
-const std::string GET_SENSORS = "get_sensors";
-}
 
 class SensorInfo
 {
@@ -174,5 +169,64 @@ static bool operator==(const SensorInfo& s1, const SensorInfo& s2)
   return (s1.getTemotoNamespace() == s2.getTemotoNamespace() && s1.getTopic() == s2.getTopic() &&
           s1.getExecutable() == s2.getExecutable() && s1.getPackageName() == s2.getPackageName());
 }
+} // namespace sensor_manager
+
+namespace YAML
+{
+template <>
+struct convert<sensor_manager::SensorInfo>
+{
+  static Node encode(const sensor_manager::SensorInfo& sensor)
+  {
+    Node node;
+    node["sensor_name"] = sensor.getName();
+    node["sensor_type"] = sensor.getType();
+    node["package_name"] = sensor.getPackageName();
+    node["execute"] = sensor.getExecutable();
+    node["topic"] = sensor.getTopic();
+    node["description"] = sensor.getDescription();
+    node["reliability"] = sensor.getReliability();
+    return node;
+  }
+
+  static bool decode(const Node& node, sensor_manager::SensorInfo& sensor)
+  {
+    if (!node.IsMap() || node.size() < 5)
+    {
+      return false;
+    }
+
+    try
+    {
+      sensor.setName(node["sensor_name"].as<std::string>());
+      sensor.setType(node["sensor_type"].as<std::string>());
+      sensor.setPackageName(node["package_name"].as<std::string>());
+      sensor.setExecutable(node["executable"].as<std::string>());
+      sensor.setTopic(node["topic"].as<std::string>());
+    }
+    catch (YAML::InvalidNode e)
+    {
+      return false;
+    }
+
+    try
+    {
+      sensor.setDescription(node["description"].as<std::string>());
+    }
+    catch (YAML::InvalidNode e)
+    {
+    }
+
+    try
+    {
+      sensor.setReliability(node["reliability"].as<float>());
+    }
+    catch (YAML::InvalidNode e)
+    {
+    }
+
+    return true;
+  }
+};
 }
 #endif

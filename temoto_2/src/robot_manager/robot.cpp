@@ -10,7 +10,6 @@ Robot::Robot(const std::string& robot_name)
   log_subsys_ = "robot_manager";
   log_group_ = "robot_manager";
   // TODO: this is temporary solution for default ur[X]_moveit_config groups
-  // additional constructor with planning grou
   addPlanningGroup("manipulator");
 }
 

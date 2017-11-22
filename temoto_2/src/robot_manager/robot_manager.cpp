@@ -29,6 +29,8 @@ RobotManager::RobotManager() : resource_manager_(srv_name::MANAGER, this)
                                             &RobotManager::setTargetCb, this);
   resource_manager_.registerStatusCb(&RobotManager::statusInfoCb);
 
+
+
   TEMOTO_INFO("Robot manager is ready.");
 }
 

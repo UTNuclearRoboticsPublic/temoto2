@@ -27,7 +27,9 @@
 
 namespace sensor_manager
 {
-SensorManager::SensorManager() : resource_manager_(srv_name::MANAGER, this)
+SensorManager::SensorManager()
+  : resource_manager_(srv_name::MANAGER, this)
+  , config_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &SensorManager::configSyncCb, this)
 {
   log_class_ = "";
   log_subsys_ = "sensor_manager";
@@ -42,54 +44,24 @@ SensorManager::SensorManager() : resource_manager_(srv_name::MANAGER, this)
   //  list_devices_server_ = nh_.advertiseService(srv_name::MANAGER + "/list_devices",
   //                                              &SensorManager::listDevicesCb, this);
 
-  sync_pub_ = nh_.advertise<temoto_2::SensorInfoSync>(srv_name::SYNC_TOPIC, 1000);
-  sync_sub_ = nh_.subscribe(srv_name::SYNC_TOPIC, 1000, &SensorManager::syncCb, this);
-
-  // Ask from master how many nodes have subscribed to SYNC_TOPIC.
-  // Wait until all connections are established.
-  int total_connections = 0;
-  int active_connections = 0;
-  while(true)
-  {
-    XmlRpc::XmlRpcValue args, result, payload;
-    args[0] = ros::this_node::getName();
-    ros::S_string node_set;
-    if (ros::master::execute("getSystemState", args, result, payload, true))
-    {
-      for (int i = 0; i < payload.size(); ++i)
-      {
-        for (int j = 0; j < payload[i].size(); ++j)
-        {
-          std::string topic = payload[i][j][0];
-          XmlRpc::XmlRpcValue nodes = payload[i][j][1];
-          if (topic == srv_name::SYNC_TOPIC)
-          {
-            total_connections = nodes.size();
-          }
-        }
-      }
-    }
-    active_connections = sync_pub_.getNumSubscribers();
-    TEMOTO_DEBUG("Waiting for subscribers: %d/%d", active_connections, total_connections);
-    if (active_connections == total_connections)
-    {
-      break;
-    }
-    ros::Duration(0.1).sleep();
-  }
   
   /// \todo HARDCODED PATH
   indexSensors("/home/veix/catkin_ws/src/temoto2/temoto_2/conf/"+common::getTemotoNamespace()+"_sensors.yaml");
 
   // publish sync message which causes each sensor manager to publish its sensors.
-  SensorInfo dummy_sensor;
-  sync_pub_.publish(dummy_sensor.getSyncMsg(sync_action::GET_SENSORS));
+ // SensorInfo dummy_sensor;
+ // sync_pub_.publish(dummy_sensor.getSyncMsg(sync_action::GET_SENSORS));
 
   TEMOTO_INFO("Sensor manager is ready.");
 }
 
 SensorManager::~SensorManager()
 {
+}
+
+void SensorManager::configSyncCb(const temoto_2::ConfigSync& msg)
+{
+  TEMOTO_INFO("CONF SYNC RECEIVED");
 }
 
 void SensorManager::statusCb(temoto_2::ResourceStatus& srv)
@@ -105,7 +77,8 @@ void SensorManager::statusCb(temoto_2::ResourceStatus& srv)
       TEMOTO_WARN("Sensor failure detected, adjusting reliability.");
       it->second->adjustReliability(0.0);
       // Send out the information about the new sensor.
-      sync_pub_.publish(it->second->getSyncMsg(sync_action::UPDATE));
+      //sync_pub_.publish(it->second->getSyncMsg(sync_action::UPDATE));
+      config_syncer_.sendUpdate(it->second->getSyncMsg().sensor_name);
     }
   }
 }
@@ -130,22 +103,16 @@ bool SensorManager::listDevicesCb(temoto_2::ListDevices::Request& req,
 void SensorManager::syncCb(const temoto_2::SensorInfoSync& msg)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-  //TEMOTO_DEBUG("%s GOT: action: %s, ns: %s", prefix.c_str(), msg.sync_action.c_str(), msg.temoto_namespace.c_str());
 
-  if (msg.temoto_namespace == common::getTemotoNamespace())
-  {
-    //TEMOTO_DEBUG("%s Ignoring sync message from our own manager.", prefix.c_str());
-    return;
-  }
-
-  if (msg.sync_action == sync_action::GET_SENSORS)
+  if (msg.sync_action == sync_action::REQUEST_CONFIG)
   {
     // publish all local sensors
     for(auto& s : sensors_) 
     {
       if(s->getTemotoNamespace() == common::getTemotoNamespace())
       {
-        sync_pub_.publish(s->getSyncMsg(sync_action::UPDATE));
+       // sync_pub_.publish(s->getSyncMsg(sync_action::UPDATE));
+        config_syncer_.sendUpdate(s->getSyncMsg().sensor_name);
       }
     }
     return;
@@ -187,7 +154,7 @@ void SensorManager::addSensor(const SensorInfo& sensor)
   sensors_.emplace_back(std::make_shared<SensorInfo>(sensor));
 
   // Send out information about the new sensor.
-  sync_pub_.publish(sensors_.back()->getSyncMsg(sync_action::UPDATE));
+ // sync_pub_.publish(sensors_.back()->getSyncMsg(sync_action::UPDATE));
  
 }
 
@@ -402,29 +369,14 @@ bool SensorManager::indexSensors(const std::string& yaml_filename)
     SensorInfo sensor_info;
     try
     {
-      sensor_info.setName((*node_it)["sensor_name"].as<std::string>());
-      sensor_info.setType((*node_it)["sensor_type"].as<std::string>());
-      sensor_info.setPackageName((*node_it)["package_name"].as<std::string>());
-      sensor_info.setExecutable((*node_it)["executable"].as<std::string>());
-      sensor_info.setTopic((*node_it)["topic"].as<std::string>());
+      sensor_info = node_it->as<SensorInfo>();
     }
     catch (YAML::InvalidNode e)
     {
-      TEMOTO_ERROR("%s Failed to parse some of the requred fields: sensor_name, sensor_type, package_name, executable, topic.", prefix.c_str());
+      TEMOTO_ERROR("%s Failed to parse SensorInfo from config.", prefix.c_str());
       continue;
     }
 
-    try
-    {
-      sensor_info.setDescription((*node_it)["description"].as<std::string>());
-    }
-    catch (YAML::InvalidNode e){}
-
-    try
-    {
-      sensor_info.setReliability((*node_it)["reliability"].as<float>());
-    }
-    catch (YAML::InvalidNode e){}
 
     addSensor(sensor_info);
   }
