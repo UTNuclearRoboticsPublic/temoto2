@@ -56,18 +56,18 @@ std::string SensorInfo::toString() const
   return ret;
 }
 
-const temoto_2::SensorInfoSync& SensorInfo::getSyncMsg(const std::string& action)
-{
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-  if (action == sync_action::GET_SENSORS || action == sync_action::UPDATE)
-  {
-    msg_.sync_action = action;
-  }
-  else
-  {
-    TEMOTO_ERROR("%s Unknown sync_action %s", prefix.c_str(), action.c_str());
-  }
-  return msg_;
-}
+//const temoto_2::SensorInfoSync& SensorInfo::getSyncMsg(const std::string& action)
+//{
+//  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+//  if (action == rmp::sync_action::GET_SENSORS || action == rmp::sync_action::UPDATE)
+//  {
+//    msg_.sync_action = action;
+//  }
+//  else
+//  {
+//    TEMOTO_ERROR("%s Unknown sync_action %s", prefix.c_str(), action.c_str());
+//  }
+//  return msg_;
+//}
 
 }  // SensorManager namespace

@@ -24,7 +24,7 @@ public:
 
   ConfigSynchronizer(const std::string& name, const std::string& sync_topic, OwnerCbType sync_cb,
                      Owner* owner)
-    : name_(name), sync_cb_(sync_cb), owner_(owner)
+    : name_(name), sync_topic_(sync_topic), sync_cb_(sync_cb), owner_(owner)
   {
     log_class_ = "rmp/ConfigSync";
     log_subsys_ = name;
@@ -51,7 +51,7 @@ public:
           {
             std::string topic = payload[i][j][0];
             XmlRpc::XmlRpcValue nodes = payload[i][j][1];
-            if (topic == srv_name::SYNC_TOPIC)
+            if (topic == sync_topic_)
             {
               total_connections = nodes.size();
             }
@@ -78,7 +78,7 @@ public:
 
   void requestConfig()
   {
-    ConfigSync msg;
+    temoto_2::ConfigSync msg;
     msg.temoto_namespace = common::getTemotoNamespace();
     msg.action = sync_action::REQUEST_CONFIG;
     msg.config = "";
@@ -87,11 +87,11 @@ public:
 
   void sendUpdate(std::string config)
   {
-    ConfigSync msg;
+    temoto_2::ConfigSync msg;
     msg.temoto_namespace = common::getTemotoNamespace();
     msg.action = sync_action::UPDATE;
     msg.config = config;
-      sync_pub_.publish(config);
+    sync_pub_.publish(config);
   }
 
 private:
@@ -108,9 +108,11 @@ private:
   }
 
   std::string name_;
+  std::string sync_topic_;
   OwnerCbType sync_cb_;
   Owner* owner_;
 
+  ros::NodeHandle nh_;
   ros::Publisher sync_pub_;
   ros::Subscriber sync_sub_;
 

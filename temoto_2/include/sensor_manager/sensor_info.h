@@ -86,7 +86,7 @@ public:
   };
 
   // get sync message with proper sync_action (ADD or UPDATE)
-  const temoto_2::SensorInfoSync& getSyncMsg(const std::string& action);
+  //const temoto_2::SensorInfoSync& getSyncMsg(const std::string& action);
 
 
   /* * * * * * * * * * * *

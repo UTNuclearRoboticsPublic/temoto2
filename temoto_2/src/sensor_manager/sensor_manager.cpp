@@ -61,7 +61,7 @@ SensorManager::~SensorManager()
 
 void SensorManager::configSyncCb(const temoto_2::ConfigSync& msg)
 {
-  TEMOTO_INFO("CONF SYNC RECEIVED");
+  TEMOTO_INFO("CONF SYNC RECEIVED %s", msg.action.c_str());
 }
 
 void SensorManager::statusCb(temoto_2::ResourceStatus& srv)
@@ -78,7 +78,7 @@ void SensorManager::statusCb(temoto_2::ResourceStatus& srv)
       it->second->adjustReliability(0.0);
       // Send out the information about the new sensor.
       //sync_pub_.publish(it->second->getSyncMsg(sync_action::UPDATE));
-      config_syncer_.sendUpdate(it->second->getSyncMsg().sensor_name);
+      //config_syncer_.sendUpdate(it->second->getSyncMsg().sensor_name);
     }
   }
 }
@@ -104,37 +104,37 @@ void SensorManager::syncCb(const temoto_2::SensorInfoSync& msg)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
-  if (msg.sync_action == sync_action::REQUEST_CONFIG)
-  {
-    // publish all local sensors
-    for(auto& s : sensors_) 
-    {
-      if(s->getTemotoNamespace() == common::getTemotoNamespace())
-      {
-       // sync_pub_.publish(s->getSyncMsg(sync_action::UPDATE));
-        config_syncer_.sendUpdate(s->getSyncMsg().sensor_name);
-      }
-    }
-    return;
-  }
+  //if (msg.sync_action == sync_action::REQUEST_CONFIG)
+  //{
+  //  // publish all local sensors
+  //  for(auto& s : sensors_) 
+  //  {
+  //    if(s->getTemotoNamespace() == common::getTemotoNamespace())
+  //    {
+  //     // sync_pub_.publish(s->getSyncMsg(sync_action::UPDATE));
+  //      config_syncer_.sendUpdate(s->getSyncMsg().sensor_name);
+  //    }
+  //  }
+  //  return;
+  //}
 
-  // Build sensor from incoming sync message
-  SensorInfo sensor(msg);
+  //// Build sensor from incoming sync message
+  //SensorInfo sensor(msg);
 
-  // Check if sensor has to be added or updated
-  auto it = std::find_if(sensors_.begin(), sensors_.end(),
-                         [&](const SensorInfoPtr& s) { return *s == sensor; });
-  if (it != sensors_.end())
-  {
-    TEMOTO_DEBUG("%s Updating remote sensor '%s' at '%s'.", prefix.c_str(), sensor.getName().c_str(), sensor.getTemotoNamespace().c_str());
-    // Update the sensor fields that were not compared with == operator
-    *it = std::make_shared<SensorInfo>(sensor);
-  }
-  else
-  {
-    TEMOTO_DEBUG("%s Adding remote sensor '%s' at '%s'.", prefix.c_str(), sensor.getName().c_str(), sensor.getTemotoNamespace().c_str());
-    sensors_.emplace_back(std::make_shared<SensorInfo>(sensor));
-  }
+  //// Check if sensor has to be added or updated
+  //auto it = std::find_if(sensors_.begin(), sensors_.end(),
+  //                       [&](const SensorInfoPtr& s) { return *s == sensor; });
+  //if (it != sensors_.end())
+  //{
+  //  TEMOTO_DEBUG("%s Updating remote sensor '%s' at '%s'.", prefix.c_str(), sensor.getName().c_str(), sensor.getTemotoNamespace().c_str());
+  //  // Update the sensor fields that were not compared with == operator
+  //  *it = std::make_shared<SensorInfo>(sensor);
+  //}
+  //else
+  //{
+  //  TEMOTO_DEBUG("%s Adding remote sensor '%s' at '%s'.", prefix.c_str(), sensor.getName().c_str(), sensor.getTemotoNamespace().c_str());
+  //  sensors_.emplace_back(std::make_shared<SensorInfo>(sensor));
+  //}
 }
 
 void SensorManager::addSensor(const SensorInfo& sensor)
@@ -217,7 +217,7 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
       // Increase or decrease the reliability depending on the return code 
       // and send the update to other managers.
       (res.rmp.code == 0) ? sensor_ptr->adjustReliability(1.0) : sensor_ptr->adjustReliability(0.0);
-      sync_pub_.publish(sensor_ptr->getSyncMsg(sync_action::UPDATE));
+      //sync_pub_.publish(sensor_ptr->getSyncMsg(sync_action::UPDATE));
     }
     else
     {
