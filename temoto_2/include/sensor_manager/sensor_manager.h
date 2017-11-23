@@ -31,12 +31,6 @@ public:
       return log_subsys_;
     }
     
-  /**
-   * \brief Add a new sensor to this manager
-   * \param sensor_info Object specifying information about the sensor that is added to this manager.
-   */
-  void addSensor(const SensorInfo& sensor_info);
-
 private:
   bool indexSensors(const std::string& yaml_filename);
   /**
@@ -77,6 +71,8 @@ private:
    */
   void statusCb(temoto_2::ResourceStatus& srv);
 
+  void advertiseLocalSensors();
+
   std::vector<SensorInfoPtr> parseSensors(const YAML::Node& config);
 
   /**
@@ -90,7 +86,7 @@ private:
    * @return Returns a boolean. If suitable device was found, then the req param
    * is formatted as a nodeSpawnKill::Request (first one in the list, even if there is more)
    */
-  SensorInfoPtr findSensor(std::string type, std::string name, std::string executable, std::vector<SensorInfoPtr>& sensors);
+  SensorInfoPtr findSensor(std::string type, std::string name, std::string executable, const std::vector<SensorInfoPtr>& sensors);
 
   std::string log_class_, log_subsys_, log_group_;
   ros::NodeHandle nh_;

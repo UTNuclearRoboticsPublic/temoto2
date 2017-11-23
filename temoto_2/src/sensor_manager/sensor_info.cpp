@@ -47,12 +47,13 @@ std::string SensorInfo::toString() const
 {
   std::string ret;
   ret += "SENSOR: " + getName() + "\n";
-  ret += "  type        : " + getType() + "\n";
-  ret += "  package name: " + getPackageName() + "\n";
-  ret += "  executable  : " + getExecutable() + "\n";
-  ret += "  topic       : " + getTopic() + "\n";
-  ret += "  description : " + getDescription() + "\n";
-  ret += "  reliability : " + std::to_string(getReliability()) + "\n";
+  ret += "  temoto_namespace : " + getTemotoNamespace() + "\n";
+  ret += "  type             : " + getType() + "\n";
+  ret += "  package name     : " + getPackageName() + "\n";
+  ret += "  executable       : " + getExecutable() + "\n";
+  ret += "  topic            : " + getTopic() + "\n";
+  ret += "  description      : " + getDescription() + "\n";
+  ret += "  reliability      : " + std::to_string(getReliability()) + "\n";
   return ret;
 }
 

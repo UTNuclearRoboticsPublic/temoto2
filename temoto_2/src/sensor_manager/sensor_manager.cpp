@@ -13,17 +13,13 @@
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-//#include "PackageInfo/PackageInfo.h"
-
+#include "ros/package.h"
 #include "core/common.h"
 #include "sensor_manager/sensor_manager.h"
 #include <algorithm>
 #include <utility>
 #include <yaml-cpp/yaml.h>
 #include <fstream>
-//#include "sensor_manager/sensor_manager_services.h"
-//#include "process_manager/process_manager_services.h"
-//#include <sstream>
 
 namespace sensor_manager
 {
@@ -44,18 +40,20 @@ SensorManager::SensorManager()
 
   config_syncer_.requestRemoteConfigs();
 
-  //  list_devices_server_ = nh_.advertiseService(srv_name::MANAGER + "/list_devices",
-  //                                              &SensorManager::listDevicesCb, this);
-
   // Read the sensors for this manager. 
-  /// \todo HARDCODED PATH
-  std::string yaml_filename = "/home/veix/catkin_ws/src/temoto2/temoto_2/conf/" +
+  std::string yaml_filename = ros::package::getPath(ROS_PACKAGE_NAME) + "/conf/" +
                               common::getTemotoNamespace() + "_sensors.yaml";
   std::ifstream in(yaml_filename);
-  YAML::Node config = YAML::Load(in)["Sensors"];
-  if (config.IsSequence())
+  YAML::Node config = YAML::Load(in);
+  if (config["Sensors"])
   {
     local_sensors_ = parseSensors(config);
+    for (auto& s : local_sensors_)
+    {
+      TEMOTO_DEBUG("%s Added sensor: '%s'.", prefix.c_str(), s->getName().c_str());
+    }
+    // notify other managers about our sensors
+    advertiseLocalSensors();
   }
   else
   {
@@ -64,9 +62,6 @@ SensorManager::SensorManager()
                 prefix.c_str(), yaml_filename.c_str());
   }
 
-  // publish sync message which causes each sensor manager to publish its sensors.
- // SensorInfo dummy_sensor;
- // sync_pub_.publish(dummy_sensor.getSyncMsg(sync_action::GET_SENSORS));
 
   TEMOTO_INFO("Sensor manager is ready.");
 }
@@ -87,9 +82,9 @@ void SensorManager::statusCb(temoto_2::ResourceStatus& srv)
     {
       TEMOTO_WARN("Sensor failure detected, adjusting reliability.");
       it->second->adjustReliability(0.0);
-      // Send out the information about the new sensor.
-      //sync_pub_.publish(it->second->getSyncMsg(sync_action::UPDATE));
-      //config_syncer_.sendUpdate(it->second->getSyncMsg().sensor_name);
+      YAML::Node config;
+      config["Sensors"].push_back(*it->second);
+      config_syncer_.advertise(config);
     }
   }
 }
@@ -117,73 +112,62 @@ void SensorManager::syncCb(const temoto_2::ConfigSync& msg)
 
   if (msg.action == rmp::sync_action::REQUEST_CONFIG)
   {
+    advertiseLocalSensors();
+    return;
+  }
+
+  if (msg.action == rmp::sync_action::ADVERTISE_CONFIG)
+  {
+    // Convert the config string to YAML tree and parse
+    YAML::Node config = YAML::Load(msg.config);
+    std::vector<SensorInfoPtr> sensors = parseSensors(config);
+
+    //TODO hold remote stuff in a map or something keyed by namespace
+    for (auto& s : sensors)
+    {
+      s->setTemotoNamespace(msg.temoto_namespace);
+    }
+
+    for (auto& sensor : sensors)
+    {
+      // Check if sensor has to be added or updated
+      auto it = std::find_if(remote_sensors_.begin(), remote_sensors_.end(),
+          [&](const SensorInfoPtr& rs) { return *rs == *sensor; });
+      if (it != remote_sensors_.end())
+      {
+        TEMOTO_DEBUG("%s Updating remote sensor '%s' at '%s'.", prefix.c_str(),
+            sensor->getName().c_str(), sensor->getTemotoNamespace().c_str());
+        *it = sensor; // overwrite found sensor
+      }
+      else
+      {
+        TEMOTO_DEBUG("%s Adding remote sensor '%s' at '%s'.", prefix.c_str(),
+            sensor->getName().c_str(), sensor->getTemotoNamespace().c_str());
+        remote_sensors_.push_back(sensor);
+      }
+    }
+  }
+}
+
+void SensorManager::advertiseLocalSensors()
+{
     // publish all local sensors
     YAML::Node config;
     for(auto& s : local_sensors_) 
     {
-      if(s->getTemotoNamespace() == common::getTemotoNamespace())
-      {
         config["Sensors"].push_back(*s);
-      }
     }
-    config_syncer_.sendUpdate(config);
-    return;
-  }
-
-  if (msg.action == rmp::sync_action::UPDATE_CONFIG)
-  {
-    // Convert the config string to YAML tree and parse
-    YAML::Node config = YAML::Load(msg.config);
-    SensorInfo sensors = parseSensors(config);
-
-    // Check if sensor has to be added or updated
-    auto it = std::find_if(sensors_.begin(), sensors_.end(),
-                           [&](const SensorInfoPtr& s) { return *s == sensor; });
-    if (it != sensors_.end())
+    
+    // send to other managers if there is anything to send
+    if(config.size())
     {
-      TEMOTO_DEBUG("%s Updating remote sensor '%s' at '%s'.", prefix.c_str(),
-                   sensor.getName().c_str(), sensor.getTemotoNamespace().c_str());
-      *it = std::make_shared<SensorInfo>(sensor); // overwrite found sensor
+      config_syncer_.advertise(config);
     }
-    else
-    {
-      TEMOTO_DEBUG("%s Adding remote sensor '%s' at '%s'.", prefix.c_str(),
-                   sensor.getName().c_str(), sensor.getTemotoNamespace().c_str());
-      sensors_.emplace_back(std::make_shared<SensorInfo>(sensor));
-    }
-  }
 }
 
-void SensorManager::addSensor(const SensorInfo& sensor)
-{
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-  auto it = std::find_if(local_sensors_.begin(), local_sensors_.end(),
-                         [&](const SensorInfoPtr& s) { return *s == sensor; });
-  if (it != local_sensors_.end())
-  {
-    TEMOTO_WARN("%s The sensor '%s' is already added.", prefix.c_str(), sensor.getName().c_str());
-    return;
-  }
-
-  TEMOTO_DEBUG("%s Adding sensor: \n%s", prefix.c_str(), sensor.toString().c_str());
-
-  // Add pointer to sensors list.
-  local_sensors_.emplace_back(std::make_shared<SensorInfo>(sensor));
-
-  // Send out information about the new sensor.
- // sync_pub_.publish(local_sensors_.back()->getSyncMsg(sync_action::UPDATE));
- 
-}
-
-/*
- * Callback to a service that executes/runs a requested device
- * and sends back the topic that the device is publishing to
- * THIS IS LIKELY A GENERIC FUNCTION THAT WILL BE USED ALSO BY
- * OTHER MANAGERS
- */
 
 /**
- * @brief Start node service
+ * @brief Start sensor callback
  * @param req
  * @param res
  * @return
@@ -215,7 +199,8 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
                                                       load_process_msg))
     {
       TEMOTO_DEBUG("%s Call to ProcessManager was sucessful.", prefix.c_str());
-      // fill in the response
+
+      // fill in the response about which particular sensor was chosen
       res.package_name = sensor_ptr->getPackageName();
       res.topic = sensor_ptr->getTopic();
       res.executable = sensor_ptr->getExecutable();
@@ -232,11 +217,17 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
     // and send the update to other managers.
     (res.rmp.code == 0) ? sensor_ptr->adjustReliability(1.0) : sensor_ptr->adjustReliability(0.0);
     allocated_sensors_.emplace(res.rmp.resource_id, sensor_ptr);
-    // sync_pub_.publish(sensor_ptr->getSyncMsg(sync_action::UPDATE));
+    YAML::Node config;
+    config["Sensors"].push_back(*sensor_ptr);
+    config_syncer_.advertise(config);
     return;
   }
 
   // try remote sensors
+  for (auto& rs : remote_sensors_)
+  {
+    TEMOTO_INFO("Looking from: \n%s", rs->toString().c_str());
+  }
   sensor_ptr = findSensor(req.sensor_type, req.package_name, req.executable, remote_sensors_);
   if (sensor_ptr)
   {
@@ -296,8 +287,6 @@ SensorInfoPtr SensorManager::findSensor(std::string type, std::string package_na
   auto it = std::copy_if(sensors.begin(), sensors.end(), std::back_inserter(candidates),
                          [&](const SensorInfoPtr& s) { return s->getType() == type; });
   
-  TEMOTO_INFO("Local candidates: %lu", candidates.size());
-
   // The requested type of sensor is not available
   if (candidates.empty())
   {
@@ -340,13 +329,23 @@ SensorInfoPtr SensorManager::findSensor(std::string type, std::string package_na
 std::vector<SensorInfoPtr> SensorManager::parseSensors(const YAML::Node& config)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-
   std::vector<SensorInfoPtr> sensors;
+
+//  TEMOTO_DEBUG("%s CONFIG NODE:%d %s", prefix.c_str(), config.Type(), Dump(config).c_str());
+  if (!config.IsMap())
+  {
+    // TODO Throw
+    TEMOTO_WARN("%s Unable to parse 'Sensors' key from config.", prefix.c_str());
+    return sensors;
+  }
+
   YAML::Node sensors_node = config["Sensors"];
+ // TEMOTO_DEBUG("%s SENSORS NODE:%d", prefix.c_str(), sensors_node.Type());
   if (!sensors_node.IsSequence())
   {
     TEMOTO_WARN("%s The given config does not contain sequence of sensors.", prefix.c_str());
-    return false;
+    // TODO Throw
+    return sensors;
   }
 
   TEMOTO_DEBUG("%s Parsing %lu sensors.", prefix.c_str(), sensors_node.size());
@@ -383,6 +382,7 @@ std::vector<SensorInfoPtr> SensorManager::parseSensors(const YAML::Node& config)
       continue;
     }
   }
+  return sensors;
 }
 
 }  // sensor_manager namespace

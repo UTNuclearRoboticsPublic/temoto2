@@ -12,7 +12,7 @@ namespace rmp
 
 namespace sync_action
 {
-const std::string UPDATE = "update_config";
+const std::string ADVERTISE_CONFIG = "advertise_config";
 const std::string REQUEST_CONFIG = "request_config";
 }
 
@@ -86,11 +86,11 @@ public:
     sync_pub_.publish(msg);
   }
 
-  void sendUpdate(const YAML::Node& config)
+  void advertise(const YAML::Node& config)
   {
     temoto_2::ConfigSync msg;
     msg.temoto_namespace = common::getTemotoNamespace();
-    msg.action = sync_action::UPDATE;
+    msg.action = sync_action::ADVERTISE_CONFIG;
     
     msg.config = Dump(config);
     sync_pub_.publish(msg);

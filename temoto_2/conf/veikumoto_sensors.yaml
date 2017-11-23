@@ -1,4 +1,5 @@
 ---
+Sensors:
 - sensor_name: "Leap Motion Hand Tracker"
   sensor_type: "hand"
   package_name: "leap_motion_controller"

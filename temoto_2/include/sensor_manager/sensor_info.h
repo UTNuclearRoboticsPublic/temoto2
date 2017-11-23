@@ -182,7 +182,7 @@ struct convert<sensor_manager::SensorInfo>
     node["sensor_name"] = sensor.getName();
     node["sensor_type"] = sensor.getType();
     node["package_name"] = sensor.getPackageName();
-    node["execute"] = sensor.getExecutable();
+    node["executable"] = sensor.getExecutable();
     node["topic"] = sensor.getTopic();
     node["description"] = sensor.getDescription();
     node["reliability"] = sensor.getReliability();
