@@ -26,8 +26,6 @@ public:
      */
     ~SensorManager();
 
-    void configSyncCb(const temoto_2::ConfigSync& msg);
-
     const std::string& getName() const
     {
       return log_subsys_;
@@ -50,7 +48,7 @@ private:
    */
   bool listDevicesCb(temoto_2::ListDevices::Request& req, temoto_2::ListDevices::Response& res);
 
-  void syncCb(const temoto_2::SensorInfoSync& msg);
+  void syncCb(const temoto_2::ConfigSync& msg);
 
   /*
    * Callback to a service that executes/runs a requested device
@@ -79,6 +77,8 @@ private:
    */
   void statusCb(temoto_2::ResourceStatus& srv);
 
+  std::vector<SensorInfoPtr> parseSensors(const YAML::Node& config);
+
   /**
    * @brief Function for finding the right sensor, based on the request parameters
    * type - requested, name - optional, node - optional
@@ -90,7 +90,7 @@ private:
    * @return Returns a boolean. If suitable device was found, then the req param
    * is formatted as a nodeSpawnKill::Request (first one in the list, even if there is more)
    */
-  SensorInfoPtr findSensor(std::string type, std::string name, std::string executable);
+  SensorInfoPtr findSensor(std::string type, std::string name, std::string executable, std::vector<SensorInfoPtr>& sensors);
 
   std::string log_class_, log_subsys_, log_group_;
   ros::NodeHandle nh_;
@@ -99,10 +99,14 @@ private:
   rmp::ConfigSynchronizer<SensorManager> config_syncer_;
 
   /**
-   * @brief List of all defined sensors
-   * This list is keep in sync with other sensor managers.
+   * @brief List of all locally defined sensors.
    */
-  std::vector<SensorInfoPtr> sensors_;
+  std::vector<SensorInfoPtr> local_sensors_;
+  
+  /**
+   * @brief List of all sensors in remote managers.
+   */
+  std::vector<SensorInfoPtr> remote_sensors_;
 
   /**
    * @brief List of allocated sensors

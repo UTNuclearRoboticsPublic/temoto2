@@ -1,4 +1,5 @@
 ---
+Sensors:
 - sensor_name: "Le Terminal pour TeMoto"
   sensor_type: "speech"
   package_name: "temoto_2"

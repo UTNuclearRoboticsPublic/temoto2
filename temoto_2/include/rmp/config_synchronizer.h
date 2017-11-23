@@ -4,6 +4,7 @@
 #include "ros/ros.h"
 #include "rmp/log_macros.h"
 #include <string>
+#include <sstream>
 #include "temoto_2/ConfigSync.h"
 
 namespace rmp
@@ -76,7 +77,7 @@ public:
     sync_sub_.shutdown();
   }
 
-  void requestConfig()
+  void requestRemoteConfigs()
   {
     temoto_2::ConfigSync msg;
     msg.temoto_namespace = common::getTemotoNamespace();
@@ -85,13 +86,14 @@ public:
     sync_pub_.publish(msg);
   }
 
-  void sendUpdate(std::string config)
+  void sendUpdate(const YAML::Node& config)
   {
     temoto_2::ConfigSync msg;
     msg.temoto_namespace = common::getTemotoNamespace();
     msg.action = sync_action::UPDATE;
-    msg.config = config;
-    sync_pub_.publish(config);
+    
+    msg.config = Dump(config);
+    sync_pub_.publish(msg);
   }
 
 private:
