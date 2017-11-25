@@ -29,19 +29,19 @@ public:
     log_subsys_ = "robot_manager_interface";
     log_group_ = "interfaces." + task_->getPackageName();
     name_ = task_->getName() + "/robot_manager_interface";
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
     // create resource manager
     resource_manager_ = std::unique_ptr<rmp::ResourceManager<RobotManagerInterface>>(
         new rmp::ResourceManager<RobotManagerInterface>(name_, this));
 
     // ensure that resource_manager was created
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
     validateInterface(prefix);
 
     // register status callback function
     // resource_manager_->registerStatusCb(&RobotManagerInterface::statusInfoCb);
-    client_load_ =
-        nh_.serviceClient<temoto_2::RobotLoad>(robot_manager::srv_name::SERVER_LOAD);
+//    client_load_ =
+//        nh_.serviceClient<temoto_2::RobotLoad>(robot_manager::srv_name::SERVER_LOAD);
     client_plan_ =
         nh_.serviceClient<temoto_2::RobotPlan>(robot_manager::srv_name::SERVER_PLAN);
     client_exec_ =
@@ -61,8 +61,10 @@ public:
     // the name of the topic
     temoto_2::RobotLoad load_srv;
     load_srv.request.robot_name = robot_name;
-    if(client_load_.call(load_srv))
+    if (resource_manager_->call<temoto_2::RobotLoad>(
+            robot_manager::srv_name::MANAGER, robot_manager::srv_name::SERVER_LOAD, load_srv))
     {
+
       TEMOTO_DEBUG("%s Call successful", prefix.c_str());
     }
     else
@@ -94,7 +96,12 @@ public:
 
     temoto_2::RobotPlan msg;
     msg.request.use_default_target = false;
-    client_plan_.call(msg);
+    if (!client_plan_.call(msg) || msg.response.code != 0)
+    {
+      throw error::ErrorStackUtil(
+          taskErr::SERVICE_REQ_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
+          prefix + " Service request failed: " + msg.response.message, ros::Time::now());
+    }
   }
 
   void execute()
@@ -103,7 +110,12 @@ public:
     TEMOTO_DEBUG("%s", prefix.c_str());
 
     temoto_2::RobotExecute msg;
-    client_exec_.call(msg);
+    if (!client_exec_.call(msg) || msg.response.code != 0)
+    {
+      throw error::ErrorStackUtil(
+          taskErr::SERVICE_REQ_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
+          prefix + " Service request failed: " + msg.response.message, ros::Time::now());
+    }
   }
 
   std::string getMoveitRvizConfig()

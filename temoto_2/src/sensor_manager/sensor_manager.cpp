@@ -42,7 +42,7 @@ SensorManager::SensorManager()
 
   // Read the sensors for this manager. 
   std::string yaml_filename = ros::package::getPath(ROS_PACKAGE_NAME) + "/conf/" +
-                              common::getTemotoNamespace() + "_sensors.yaml";
+                              common::getTemotoNamespace() + ".yaml";
   std::ifstream in(yaml_filename);
   YAML::Node config = YAML::Load(in);
   if (config["Sensors"])
@@ -277,14 +277,14 @@ void SensorManager::stopSensorCb(temoto_2::LoadSensor::Request& req,
 }
 
 SensorInfoPtr SensorManager::findSensor(std::string type, std::string package_name,
-                                        std::string executable, const std::vector<SensorInfoPtr>& sensors)
+                                        std::string executable, const SensorInfoPtrs& sensor_infos)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   // Local list of devices that follow the requirements
   std::vector<SensorInfoPtr> candidates;
 
   // Find the devices that follow the "type" criteria
-  auto it = std::copy_if(sensors.begin(), sensors.end(), std::back_inserter(candidates),
+  auto it = std::copy_if(sensor_infos.begin(), sensor_infos.end(), std::back_inserter(candidates),
                          [&](const SensorInfoPtr& s) { return s->getType() == type; });
   
   // The requested type of sensor is not available
@@ -326,7 +326,7 @@ SensorInfoPtr SensorManager::findSensor(std::string type, std::string package_na
 }
 
 
-std::vector<SensorInfoPtr> SensorManager::parseSensors(const YAML::Node& config)
+SensorInfoPtrs SensorManager::parseSensors(const YAML::Node& config)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   std::vector<SensorInfoPtr> sensors;

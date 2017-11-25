@@ -1,6 +1,10 @@
+# Remote Management Request
+temoto_2/RMPRequest rmp
+
+# The name of the robot to load 
 string robot_name
 
 ---
 
-int64 code
-string message
+# Remote Management Response
+temoto_2/RMPResponse rmp

@@ -30,7 +30,8 @@ static bool operator==(const temoto_2::LoadProcess::Request& r1,
 	return(
 			r1.action == r2.action &&
 			r1.package_name == r2.package_name &&
-			r1.executable == r2.executable
+			r1.executable == r2.executable &&
+			r1.args == r2.args
 		  );
 }
 

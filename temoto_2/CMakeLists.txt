@@ -40,9 +40,6 @@ add_message_files(FILES
     SpeechSpecifier.msg
     GestureSpecifier.msg
 
-    # Sensor Manager
-    SensorInfoSync.msg
-
     # Configuration Synchronizer
     ConfigSync.msg
 )
@@ -203,7 +200,7 @@ target_link_libraries(process_manager ${catkin_LIBRARIES} )
 add_executable(robot_manager src/robot_manager/robot_manager.cpp
 	                           src/robot_manager/robot_manager_node.cpp
                              src/robot_manager/robot.cpp
-                             src/package_info/package_info.cpp)
+                             src/robot_manager/robot_info.cpp)
 add_dependencies(robot_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(robot_manager ${catkin_LIBRARIES} yaml-cpp)
 

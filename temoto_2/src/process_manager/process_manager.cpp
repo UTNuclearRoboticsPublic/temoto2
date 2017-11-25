@@ -48,6 +48,7 @@ void ProcessManager::update(const ros::TimerEvent&)
     const std::string& action = srv.request.action;
     const std::string& package_name = srv.request.package_name;
     const std::string& executable = srv.request.executable;
+    const std::string& args = srv.request.args;
 
     // Fork the parent process
     TEMOTO_DEBUG("%s Forking the process.", prefix.c_str());
@@ -58,7 +59,7 @@ void ProcessManager::update(const ros::TimerEvent&)
     {
       // Execute the requested process
       //  std::cout << "Child is executing a program ..." << std::endl;
-      std::string ros_cmd = action + " " + package_name+ " " + executable;
+      std::string ros_cmd = action + " " + package_name+ " " + executable + " " + args;
       execlp("/bin/bash", "/bin/bash", "-c", ros_cmd.c_str() , (char*)NULL);
       return;
     }

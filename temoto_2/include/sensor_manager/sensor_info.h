@@ -6,7 +6,6 @@
 #include <map>
 #include <ctype.h>
 #include <memory>  // shared_ptr
-#include "temoto_2/SensorInfoSync.h"
 #include "common/temoto_log_macros.h"
 #include <yaml-cpp/yaml.h>
 
@@ -22,8 +21,6 @@ public:
 
   SensorInfo(std::string sensor_name = "A noname sensor");
   
-  SensorInfo(const temoto_2::SensorInfoSync& msg);
-
   /**
    * \brief Adjust reliability
    * \param reliability the new reliability contribution to the moving average filter. The value has
@@ -42,51 +39,48 @@ public:
   // Get the temoto namespace where this sensor is defined
   std::string getTemotoNamespace() const
   {
-    return msg_.temoto_namespace;
+    return temoto_namespace_;
   }
 
   /// Get name
   std::string getName() const
   {
-    return msg_.sensor_name;
+    return sensor_name_;
   }
 
   std::string getTopic() const
   {
-    return msg_.topic;
+    return topic_;
   }
 
   // Get sensor type
   std::string getType() const
   {
-    return msg_.sensor_type;
+    return sensor_type_;
   }
 
   // Get sensor package name
   std::string getPackageName() const
   {
-    return msg_.package_name;
+    return package_name_;
   }
 
   // Get executable
   std::string getExecutable() const
   {
-    return msg_.executable;
+    return executable_;
   }
 
   // Get description
   std::string getDescription() const
   {
-    return msg_.description;
+    return description_;
   }
 
   float getReliability() const
   {
-    return msg_.reliability;
+    return reliability_;
   };
-
-  // get sync message with proper sync_action (ADD or UPDATE)
-  //const temoto_2::SensorInfoSync& getSyncMsg(const std::string& action);
 
 
   /* * * * * * * * * * * *
@@ -94,37 +88,37 @@ public:
    * * * * * * * * * * * */
   void setTemotoNamespace(std::string temoto_namespace)
   {
-    msg_.temoto_namespace = temoto_namespace;
+    temoto_namespace_ = temoto_namespace;
   }
 
   void setName(std::string name)
   {
-    msg_.sensor_name = name;
+    sensor_name_ = name;
   }
 
   void setTopic(std::string topic)
   {
-    msg_.topic = topic;
+    topic_ = topic;
   }
 
   void setType(std::string sensor_type)
   {
-    msg_.sensor_type = sensor_type;
+    sensor_type_ = sensor_type;
   }
 
   void setPackageName(std::string package_name)
   {
-    msg_.package_name = package_name;
+    package_name_ = package_name;
   }
 
   void setExecutable(std::string executable)
   {
-    msg_.executable = executable;
+    executable_ = executable;
   }
 
   void setDescription(std::string description)
   {
-    msg_.description = description;
+    description_ = description;
   }
 
   /**
@@ -141,11 +135,13 @@ private:
   std::string log_subsys_ = "sensor_manager";
   std::string log_group_ = "sensor_manager";
   
-  /**
-   * @brief Message container where the sensor info is stored.
-   */
-  temoto_2::SensorInfoSync msg_;
-
+  std::string temoto_namespace_;
+  std::string sensor_name_;
+  std::string topic_;
+  std::string sensor_type_;
+  std::string package_name_;
+  std::string executable_;
+  std::string description_;
   /**
    * @brief Reliability ratings of the sensor.
    */
@@ -154,15 +150,16 @@ private:
   /**
    * @brief Reliability moving average.
    */
-  float reliability_average;
+  float reliability_;
 
   /**
    * @brief Reliability rating of the sensor.
    */
-  unsigned int reliability_idx;
+  unsigned int reliability_idx_;
 };
 
 typedef std::shared_ptr<SensorInfo> SensorInfoPtr;
+typedef std::vector<SensorInfoPtr> SensorInfoPtrs;
 
 static bool operator==(const SensorInfo& s1, const SensorInfo& s2)
 {
@@ -196,6 +193,7 @@ struct convert<sensor_manager::SensorInfo>
       return false;
     }
 
+    // Convert the compulsory fields
     try
     {
       sensor.setName(node["sensor_name"].as<std::string>());
@@ -209,6 +207,7 @@ struct convert<sensor_manager::SensorInfo>
       return false;
     }
 
+    // These fields are optional
     try
     {
       sensor.setDescription(node["description"].as<std::string>());

@@ -9,38 +9,30 @@ SensorInfo::SensorInfo(std::string sensor_name)
   setReliability(0.8);
 
   //set the sensor to current namespace
-  msg_.temoto_namespace = ::common::getTemotoNamespace();
-  msg_.sensor_name = sensor_name;
-}
-
-// Delegate the constructor to initialize reliability filter and
-// then override everything else from msg
-SensorInfo::SensorInfo(const temoto_2::SensorInfoSync& msg)
-{
-  setReliability(msg_.reliability);
-  msg_ = msg;
+  temoto_namespace_ = ::common::getTemotoNamespace();
+  sensor_name_ = sensor_name;
 }
 
 // Adds a reliability contribution to a moving average filter
 void SensorInfo::adjustReliability(float reliability)
 {
   reliability = std::max(std::min(reliability, 1.0f), 0.0f);  // clamp to [0-1]
-  ++reliability_idx %= reliabilities_.size();                 // rolling index
+  ++reliability_idx_ %= reliabilities_.size();                 // rolling index
 
   // take out the last reliability
-  msg_.reliability -= reliabilities_[reliability_idx] / (float)reliabilities_.size();
+  reliability_ -= reliabilities_[reliability_idx_] / (float)reliabilities_.size();
 
   // insert new reliability value
-  reliabilities_[reliability_idx] = reliability / (float)reliabilities_.size();
-  msg_.reliability += reliability / (float)reliabilities_.size();
+  reliabilities_[reliability_idx_] = reliability / (float)reliabilities_.size();
+  reliability_ += reliability / (float)reliabilities_.size();
 }
 
 void SensorInfo::setReliability(float reliability)
 {
   // Fill array with initial reliability values;
   reliabilities_.fill(reliability);  // buffer for instantaneous reliability values
-  msg_.reliability = 0.8;    // Filtered reliability is kept here
-  reliability_idx = 0;
+  reliability_ = reliability;    // Filtered reliability is kept here
+  reliability_idx_ = 0;
 }
 
 std::string SensorInfo::toString() const
@@ -56,19 +48,5 @@ std::string SensorInfo::toString() const
   ret += "  reliability      : " + std::to_string(getReliability()) + "\n";
   return ret;
 }
-
-//const temoto_2::SensorInfoSync& SensorInfo::getSyncMsg(const std::string& action)
-//{
-//  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-//  if (action == rmp::sync_action::GET_SENSORS || action == rmp::sync_action::UPDATE)
-//  {
-//    msg_.sync_action = action;
-//  }
-//  else
-//  {
-//    TEMOTO_ERROR("%s Unknown sync_action %s", prefix.c_str(), action.c_str());
-//  }
-//  return msg_;
-//}
 
 }  // SensorManager namespace

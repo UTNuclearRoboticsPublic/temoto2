@@ -6,17 +6,11 @@
 #include <map>
 #include <ctype.h>
 #include <memory>  // shared_ptr
-#include "temoto_2/RobotInfoSync.h"
 #include "common/temoto_log_macros.h"
+#include <yaml-cpp/yaml.h>
 
 namespace robot_manager
 {
-namespace sync_action
-{
-//const std::string ADD = "add";
-const std::string UPDATE = "update";
-const std::string GET_ROBOTS = "get_robots";
-}
 
 class RobotInfo
 {
@@ -27,8 +21,6 @@ public:
 
   RobotInfo(std::string robot_name = "A noname robot");
   
-  RobotInfo(const temoto_2::RobotInfoSync& msg);
-
   /**
    * \brief Adjust reliability
    * \param reliability the new reliability contribution to the moving average filter. The value has
@@ -47,47 +39,37 @@ public:
   // Get the temoto namespace where this robot is defined
   std::string getTemotoNamespace() const
   {
-    return msg_.temoto_namespace;
+    return temoto_namespace_;
   }
 
   /// Get name
   std::string getName() const
   {
-    return msg_.robot_name;
-  }
-
-
-  // Get robot type
-  std::string getType() const
-  {
-    return msg_.robot_type;
+    return robot_name_;
   }
 
   // Get robot package name
   std::string getPackageName() const
   {
-    return msg_.package_name;
+    return package_name_;
   }
 
   // Get executable
   std::string getExecutable() const
   {
-    return msg_.executable;
+    return executable_;
   }
 
   // Get description
   std::string getDescription() const
   {
-    return msg_.description;
+    return description_;
   }
 
   float getReliability() const
   {
-    return msg_.reliability;
+    return reliability_;
   };
-
-  // get sync message with proper sync_action (ADD or UPDATE)
-  const temoto_2::RobotInfoSync& getSyncMsg(const std::string& action);
 
 
   /* * * * * * * * * * * *
@@ -95,37 +77,32 @@ public:
    * * * * * * * * * * * */
   void setTemotoNamespace(std::string temoto_namespace)
   {
-    msg_.temoto_namespace = temoto_namespace;
+    temoto_namespace_ = temoto_namespace;
   }
 
   void setName(std::string name)
   {
-    msg_.robot_name = name;
+    robot_name_ = name;
   }
 
   void setTopic(std::string topic)
   {
-    msg_.topic = topic;
-  }
-
-  void setType(std::string robot_type)
-  {
-    msg_.robot_type = robot_type;
+    topic_ = topic;
   }
 
   void setPackageName(std::string package_name)
   {
-    msg_.package_name = package_name;
+    package_name_ = package_name;
   }
 
   void setExecutable(std::string executable)
   {
-    msg_.executable = executable;
+    executable_ = executable;
   }
 
   void setDescription(std::string description)
   {
-    msg_.description = description;
+    description_ = description;
   }
 
   /**
@@ -141,11 +118,13 @@ private:
   std::string log_class_ = "RobotInfo";
   std::string log_subsys_ = "robot_manager";
   std::string log_group_ = "robot_manager";
-  
-  /**
-   * @brief Message container where the robot info is stored.
-   */
-  temoto_2::RobotInfoSync msg_;
+
+  std::string temoto_namespace_;
+  std::string robot_name_;
+  std::string topic_;
+  std::string package_name_;
+  std::string executable_;
+  std::string description_;
 
   /**
    * @brief Reliability ratings of the robot.
@@ -153,22 +132,80 @@ private:
   std::array<float, 100> reliabilities_;
 
   /**
-   * @brief Reliability moving average.
+   * @brief Average reliability.
    */
-  float reliability_average;
+  float reliability_;
 
   /**
    * @brief Reliability rating of the robot.
    */
-  unsigned int reliability_idx;
+  unsigned int reliability_idx_;
 };
 
 typedef std::shared_ptr<RobotInfo> RobotInfoPtr;
+typedef std::vector<RobotInfoPtr> RobotInfos;
 
-static bool operator==(const RobotInfo& s1, const RobotInfo& s2)
+static bool operator==(const RobotInfo& r1, const RobotInfo& r2)
 {
-  return (s1.getTemotoNamespace() == s2.getTemotoNamespace() && s1.getTopic() == s2.getTopic() &&
-          s1.getExecutable() == s2.getExecutable() && s1.getPackageName() == s2.getPackageName());
+  return (r1.getTemotoNamespace() == r2.getTemotoNamespace() && r1.getName() == r2.getName() &&
+          r1.getExecutable() == r2.getExecutable() && r1.getPackageName() == r2.getPackageName());
 }
+
+} // robot_manager namespace
+
+namespace YAML
+{
+template <>
+struct convert<robot_manager::RobotInfo>
+{
+  static Node encode(const robot_manager::RobotInfo& robot_info)
+  {
+    Node node;
+    node["robot_name"] = robot_info.getName();
+    node["package_name"] = robot_info.getPackageName();
+    node["executable"] = robot_info.getExecutable();
+    node["description"] = robot_info.getDescription();
+    node["reliability"] = robot_info.getReliability();
+    return node;
+  }
+
+  static bool decode(const Node& node, robot_manager::RobotInfo& robot_info)
+  {
+    if (!node.IsMap() || node.size() < 3)
+    {
+      return false;
+    }
+
+    try
+    {
+      robot_info.setName(node["robot_name"].as<std::string>());
+      robot_info.setPackageName(node["package_name"].as<std::string>());
+      robot_info.setExecutable(node["executable"].as<std::string>());
+    }
+    catch (YAML::InvalidNode e)
+    {
+      return false;
+    }
+
+    try
+    {
+      robot_info.setDescription(node["description"].as<std::string>());
+    }
+    catch (YAML::InvalidNode e)
+    {
+    }
+
+    try
+    {
+      robot_info.setReliability(node["reliability"].as<float>());
+    }
+    catch (YAML::InvalidNode e)
+    {
+    }
+
+    return true;
+  }
+};
+
 }
 #endif

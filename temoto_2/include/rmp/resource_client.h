@@ -68,8 +68,10 @@ public:
       // New request
       // Prepare return topic
       //std::string topic = srv_name::PREFIX + "/" + this->resource_manager_.getName() + "/status";
-      std::string topic = '/' + common::getTemotoNamespace() + '/' + this->resource_manager_.getName() + "/status";
+      std::string temoto_namespace = common::getTemotoNamespace();
+      std::string topic = '/' + temoto_namespace + '/' + this->resource_manager_.getName() + "/status";
       msg.request.rmp.status_topic = topic;
+      msg.request.rmp.temoto_namespace = temoto_namespace;
       RMP_DEBUG("%s New query, performing external call to %s", prefix.c_str(),
                service_client_.getService().c_str());
       if (service_client_.call(msg))

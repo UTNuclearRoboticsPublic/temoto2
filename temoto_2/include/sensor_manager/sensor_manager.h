@@ -6,7 +6,6 @@
 #include "process_manager/process_manager_services.h"
 #include "rmp/resource_manager.h"
 #include "rmp/config_synchronizer.h"
-#include "temoto_2/SensorInfoSync.h"
 #include "temoto_2/ConfigSync.h"
 
 namespace sensor_manager

@@ -6,6 +6,7 @@
 #include <string>
 #include <sstream>
 #include "temoto_2/ConfigSync.h"
+#include <yaml-cpp/yaml.h>
 
 namespace rmp
 {

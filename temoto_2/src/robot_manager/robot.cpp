@@ -3,8 +3,8 @@
 
 namespace robot_manager
 {
-Robot::Robot(const std::string& robot_name)
-  : robot_name_(robot_name), robot_id_(temoto_id::UNASSIGNED_ID), is_plan_valid_(false)
+Robot::Robot(RobotInfoPtr robot_info_ptr)
+  : robot_info_ptr_(robot_info_ptr), is_plan_valid_(false)
 {
   log_class_ = "Robot";
   log_subsys_ = "robot_manager";
@@ -80,4 +80,13 @@ void Robot::execute(const std::string& planning_group_name)
                  planning_group_name.c_str());
   }
 }
+
+std::string Robot::getName() const
+{
+  if(robot_info_ptr_)
+  {
+    return robot_info_ptr_->getName();
+  }
+}
+
 }

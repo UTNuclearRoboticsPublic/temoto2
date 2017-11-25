@@ -10,6 +10,8 @@ string package_name
 # name of the node or launch file
 string executable
 
+# additional arguments
+string args
 ---
 
 # Remote Management Response

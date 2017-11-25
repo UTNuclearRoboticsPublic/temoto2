@@ -13,6 +13,7 @@ namespace robot_manager
 	namespace srv_name
 	{
 		const std::string MANAGER = "robot_manager";
+    const std::string SYNC_TOPIC = "/temoto_2/"+MANAGER+"/sync";
 
 		const std::string SERVER_LOAD = "/temoto_2/robot_manager/load";
 		const std::string SERVER_PLAN = "/temoto_2/robot_manager/plan";
