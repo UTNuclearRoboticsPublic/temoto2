@@ -11,12 +11,11 @@
 
 int main(int argc, char **argv)
 {
-
     ros::init(argc, argv, "context_manager");
     ros::NodeHandle n;
 
     // Create instance of human context
-	human_context::HumanContext humanContext;
+    human_context::HumanContext humanContext;
 
     ros::Rate loop_rate(10);
 

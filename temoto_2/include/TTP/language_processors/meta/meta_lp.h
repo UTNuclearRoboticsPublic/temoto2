@@ -39,8 +39,6 @@ private:
 
     meta::parser::sr_parser parser_;
 
-    TaskTreeBuilder task_tree_builder_;
-
     TaskTree task_tree_;
 };
 

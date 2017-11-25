@@ -43,8 +43,9 @@ struct CandidateTask
  *  CONSTRUCTOR
  * * * * * * * * */
 
-TaskManager::TaskManager (std::string system_prefix)
+TaskManager::TaskManager (std::string system_prefix, bool nlp_enabled)
     : system_prefix_(system_prefix)
+    , nlp_enabled_(nlp_enabled)
 {
     try
     {
@@ -54,9 +55,21 @@ TaskManager::TaskManager (std::string system_prefix)
         // Construct the classloader
         class_loader_ = new class_loader::MultiLibraryClassLoader(true);
 
-        // Initialize the language processor by giving it the path to language model files
+        // Create a base path for getting stuff like nlp model files and tasks
         std::string temoto_path = ros::package::getPath(ROS_PACKAGE_NAME);
-        language_processor_ = new MetaLP(temoto_path + "/include/TTP/language_processors/meta/models/");
+
+        /*
+         * If the language processor is enabled, then initialize
+         * it by giving it the path to language model files
+         */
+        if (nlp_enabled_)
+        {
+            language_processor_ = new MetaLP(temoto_path + "/include/TTP/language_processors/meta/models/");
+
+            // Subscribe to human chatter topic. This triggers the callback that processes text
+            // messages and trys to find and execute tasks based on the text
+            human_chatter_subscriber_ = nh_.subscribe("human_chatter", 1, &TaskManager::humanChatterCb, this);
+        }
 
         /*
          * Index (look recursivey for the tasks in the given folder up to specified depth)
@@ -74,12 +87,6 @@ TaskManager::TaskManager (std::string system_prefix)
 
         // Task indexing subscriber
         index_tasks_subscriber_ = nh_.subscribe("index_tasks", 1, &TaskManager::indexTasksCallback, this);
-
-        /*
-         * Subscribe to human chatter topic. This triggers the callback that processes text
-         * messages and trys to find and execute tasks based on the text
-         */
-        human_chatter_subscriber_ = nh_.subscribe("human_chatter", 1, &TaskManager::humanChatterCb, this);
     }
     catch (error::ErrorStackUtil& e)
     {
@@ -95,17 +102,19 @@ TaskManager::TaskManager (std::string system_prefix)
 
 void TaskManager::humanChatterCb (std_msgs::String chat)
 {
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
+
     try
     {
         std::cout << BOLDWHITE << "Received: " << chat.data << RESET << std::endl << std::endl;
-
         executeVerbalInstruction (chat.data);
-
     }
     catch (error::ErrorStackUtil& e)
     {
-        // Rethrow or do whatever
-        //std::cout << e.getStack();
+        // Append the error to local ErrorStack
+        e.forward( prefix );
+        error_handler_.append(e);
     }
 
     std::cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * \n\n";
@@ -113,10 +122,68 @@ void TaskManager::humanChatterCb (std_msgs::String chat)
 
 
 /* * * * * * * * *
- *  EXECUTE TASK TREE
+ *  EXECUTE VERBAL INSTRUCTION
  * * * * * * * * */
 
 void TaskManager::executeVerbalInstruction (std::string& verbal_instruction)
+{
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
+
+    try
+    {
+        // First check if NLP is enabled, if not then throw an error
+        if (!nlp_enabled_)
+        {
+            throw error::ErrorStackUtil( TTPErr::NLP_DISABLED,
+                                         error::Subsystem::CORE,
+                                         error::Urgency::HIGH,
+                                         prefix + " NLP cannot be used if its disabled",
+                                         ros::Time::now() );
+        }
+
+        // Convert the verbal instruction into a incomplete semantic frame tree
+        TaskTree sft = language_processor_->processText(std::move(verbal_instruction));
+
+//        std::string action = "add";
+//        Subjects subjects;
+
+//        Subject sub_1("numeric", "inch");
+//        sub_1.addData("number", 5.344);
+
+//        Subject sub_2("numeric", "inch");
+//        sub_2.addData("number", 43.22);
+
+//        subjects.push_back(sub_1);
+//        subjects.push_back(sub_2);
+
+//        std::vector<TaskDescriptor> task_descriptors;
+//        task_descriptors.emplace_back(action, subjects);
+//        task_descriptors[0].action_stemmed_ = action;
+
+//        TaskTree sft = SFTBuilder::build(task_descriptors);
+
+//        TaskTreeNode& root_node = sft.getRootNode();
+//        sft.printTaskDescriptors(root_node);
+
+        // Execute the SFT
+        executeSFT(std::move(sft));
+    }
+    catch( error::ErrorStackUtil & e )
+    {
+        // Rethrow the exception
+        e.forward( prefix );
+        throw e;
+    }
+
+    return;
+}
+
+/* * * * * * * * *
+ *  EXECUTE SEMANTIC FRAME TREE
+ * * * * * * * * */
+
+void TaskManager::executeSFT (TaskTree sft)
 {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = common::generateLogPrefix(system_prefix_, this->class_name_, __func__);
@@ -126,12 +193,11 @@ void TaskManager::executeVerbalInstruction (std::string& verbal_instruction)
 
     try
     {
-        // Convert the verbal instruction into a incomplete semantic frame tree
-        TaskTree sft = language_processor_->processText(std::move(verbal_instruction));
-        TaskTreeNode& root_node = sft.getRootNode();
+        TaskTree sft_new = std::move(sft);
+        TaskTreeNode& root_node = sft_new.getRootNode();
 
         // Print out the semantic frame tree
-        std::cout << "SFTree: " << sft;
+        std::cout << "SFTree: " << sft_new;
 
         // Find connecting semantic frames
         TEMOTO_DEBUG_STREAM(prefix << " Connecting the task tree");
@@ -139,7 +205,7 @@ void TaskManager::executeVerbalInstruction (std::string& verbal_instruction)
         connectTaskTree(root_node, empty_subs);
 
         // Print task tree task descriptors
-        sft.printTaskDescriptors(root_node);
+        sft_new.printTaskDescriptors(root_node);
 
         // Load and initialize the tasks
         TEMOTO_DEBUG_STREAM(prefix << " Loadng and initializing the tree");
@@ -185,6 +251,7 @@ void TaskManager::executeVerbalInstruction (std::string& verbal_instruction)
 
     return;
 }
+
 
 /* * * * * * * * *
  *  FIND TASK

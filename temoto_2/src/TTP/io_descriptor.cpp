@@ -1,4 +1,6 @@
 #include "TTP/io_descriptor.h"
+#include "TTP/TTP_errors.h"
+#include "common/tools.h"
 #include <iostream>
 
 namespace TTP
@@ -18,6 +20,61 @@ void Subject::markIncomplete()
 void Subject::markComplete()
 {
     is_complete_ = true;
+}
+
+void Subject::addData(std::string datatype, float data)
+{
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+
+    // Check if the given datatype is amongst valid datatypes
+    if (std::find(valid_datatypes.begin(), valid_datatypes.end(), datatype) == valid_datatypes.end())
+    {
+        throw error::ErrorStackUtil (TTPErr::DESC_INVALID_ARG
+                                     , error::Subsystem::CORE
+                                     , error::Urgency::LOW
+                                     , prefix + " Invalid datatype: '" + datatype + "'."
+                                     , ros::Time::now() );
+    }
+
+    if (datatype != "number")
+    {
+        throw error::ErrorStackUtil (TTPErr::DESC_INVALID_ARG
+                                     , error::Subsystem::CORE
+                                     , error::Urgency::LOW
+                                     , prefix + " Numerical data '" + std::to_string(data) +
+                                     "' cannot be tagged with a non-numerical datatype '" + datatype + "'."
+                                     , ros::Time::now() );
+    }
+
+    data_.emplace_back(datatype, boost::any_cast<float>(data));
+}
+
+void Subject::addData(std::string datatype, std::string data)
+{
+    // Name of the method, used for making debugging a bit simpler
+    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+
+    // Check if the given datatype is amongst valid datatypes
+    if (std::find(valid_datatypes.begin(), valid_datatypes.end(), datatype) == valid_datatypes.end())
+    {
+        throw error::ErrorStackUtil (TTPErr::DESC_INVALID_ARG
+                                     , error::Subsystem::CORE
+                                     , error::Urgency::LOW
+                                     , prefix + " Invalid datatype: '" + datatype + "'."
+                                     , ros::Time::now() );
+    }
+
+    if (datatype == "number")
+    {
+        throw error::ErrorStackUtil (TTPErr::DESC_INVALID_ARG
+                                     , error::Subsystem::CORE
+                                     , error::Urgency::LOW
+                                     , prefix + " A string is not a numerical datatype."
+                                     , ros::Time::now() );
+    }
+
+    data_.emplace_back(datatype, boost::any_cast<std::string>(data));
 }
 
 // Get subjects by type

@@ -33,29 +33,15 @@ private:
 };
 
 /**
- * @brief The TaskTreeBuilder class
+ * Semantic Frame Tree Builder namespace.
+ * This namespace contains a collection of functions for building a
+ * semantic frame tree. The logic about how to detect dependencies
+ * between SFs is contained within SFT Builder.
  */
-class TaskTreeBuilder
+namespace SFTBuilder
 {
-public:
-
-    //TaskTree build( std::vector<IODescriptor> input_descs );
-
-    /**
-     * @brief TaskTreeBuilder
-     */
-    TaskTreeBuilder(){}
-
-    /**
-     * @brief build
-     * @param input_task_descs
-     * @return
-     */
     TaskTree build( std::vector<TaskDescriptor>& input_task_descs );
-
-private:
-
     bool checkIfDependent(TaskDescriptor& task_descriptor);
-};
+}
 }
 #endif

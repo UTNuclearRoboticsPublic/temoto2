@@ -36,7 +36,7 @@ void TaskTree::printTaskDescriptors(TaskTreeNode& node)
 /*
  * --------------- Task Tree Builder implementations ---------------
  */
-TaskTree TaskTreeBuilder::build( std::vector<TaskDescriptor>& input_task_descs )
+TaskTree SFTBuilder::build( std::vector<TaskDescriptor>& input_task_descs )
 {
     /*
      * Create the first (root) node. The root node just points to the first tasks
@@ -66,7 +66,7 @@ TaskTree TaskTreeBuilder::build( std::vector<TaskDescriptor>& input_task_descs )
              * Check if this node is depending on the output results of a previous node.
              * This is evaluated based on keywords, that indicate if a node is independent or not
              */
-            if (checkIfDependent(task_desc))
+            if (SFTBuilder::checkIfDependent(task_desc))
             {
                 // Create a node, add it as a child of previous node
                 TaskTreeNode node(task_desc);
@@ -92,7 +92,7 @@ TaskTree TaskTreeBuilder::build( std::vector<TaskDescriptor>& input_task_descs )
     return TaskTree(std::move(root_node));
 }
 
-bool TaskTreeBuilder::checkIfDependent(TaskDescriptor& task_descriptor)
+bool SFTBuilder::checkIfDependent(TaskDescriptor& task_descriptor)
 {
     bool isDependent = false;
 

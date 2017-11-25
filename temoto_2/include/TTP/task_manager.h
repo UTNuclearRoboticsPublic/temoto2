@@ -1,11 +1,6 @@
 #ifndef TASK_HANDLER_H
 #define TASK_HANDLER_H
 
-#include <class_loader/multi_library_class_loader.h>
-#include <boost/any.hpp>
-#include "boost/filesystem.hpp"
-#include <exception>
-
 #include "base_error/base_error.h"
 #include "common/temoto_id.h"
 #include "TTP/task_descriptor.h"
@@ -18,8 +13,12 @@
 #include "temoto_2/StopTaskMsg.h"
 #include "std_msgs/String.h"
 
-#include <cstdio>
 #include "tbb/flow_graph.h"
+#include <class_loader/multi_library_class_loader.h>
+#include <boost/any.hpp>
+#include "boost/filesystem.hpp"
+#include <exception>
+#include <cstdio>
 
 namespace TTP
 {
@@ -36,8 +35,9 @@ public:
     /**
      * @brief TaskManager
      * @param system_prefix
+     * @param nlp_enabled
      */
-    TaskManager(std::string system_prefix);
+    TaskManager(std::string system_prefix, bool nlp_enabled);
 
     /**
      * @brief findTask
@@ -86,6 +86,8 @@ public:
 
     void executeVerbalInstruction (std::string& verbal_instruction);
 
+    void executeSFT (TaskTree sft);
+
     /**
      * @brief loadTask
      * @param task_descriptor
@@ -122,6 +124,8 @@ private:
     const std::string description_file_ = "descriptor.xml";
 
     bool action_executioner_busy_ = false;
+
+    bool nlp_enabled_ = false;
 
     std::vector<std::pair<boost::shared_ptr<TaskDescriptor>, boost::shared_ptr<BaseTask>>> asynchronous_tasks_;
 
