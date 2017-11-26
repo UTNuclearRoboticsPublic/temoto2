@@ -61,7 +61,7 @@ public:
     // the name of the topic
     temoto_2::RobotLoad load_srv;
     load_srv.request.robot_name = robot_name;
-    if (resource_manager_->call<temoto_2::RobotLoad>(
+    if (resource_manager_-> template call<temoto_2::RobotLoad>(
             robot_manager::srv_name::MANAGER, robot_manager::srv_name::SERVER_LOAD, load_srv))
     {
 
@@ -162,6 +162,11 @@ public:
           interface_error::NOT_INITIALIZED, error::Subsystem::TASK, error::Urgency::MEDIUM,
           log_prefix + " Interface is not initialized.", ros::Time::now());
     }
+  }
+
+  const std::string& getName() const
+  {
+    return name_;
   }
 
   ~RobotManagerInterface()

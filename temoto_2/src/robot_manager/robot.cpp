@@ -89,4 +89,13 @@ std::string Robot::getName() const
   }
 }
 
+bool Robot::isLocal() const
+{
+  if (robot_info_ptr_) 
+  {
+    return robot_info_ptr_->getTemotoNamespace() == ::common::getTemotoNamespace();
+  }
+ return true; // some default that should never reached. 
+}
+
 }

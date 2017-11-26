@@ -26,6 +26,8 @@ public:
     return robot_info_ptr_;
   }
 
+  bool isLocal() const;
+
 private:
   bool is_plan_valid_;
   moveit::planning_interface::MoveGroupInterface::Plan last_plan;

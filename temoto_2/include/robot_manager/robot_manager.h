@@ -102,11 +102,15 @@ private:
   std::string log_class_, log_subsys_, log_group_;
 
   ros::NodeHandle nh_;
-  ros::ServiceServer server_load_;
   ros::ServiceServer server_plan_;
   ros::ServiceServer server_exec_;
   ros::ServiceServer server_get_rviz_cfg_;
   ros::ServiceServer server_set_target_;
+
+  ros::ServiceClient client_plan_;
+  ros::ServiceClient client_exec_;
+  ros::ServiceClient client_get_rviz_cfg_;
+  ros::ServiceClient client_set_target_;
 
   ros::Subscriber target_pose_sub_;
   temoto_2::LoadGesture hand_srv_msg_;

@@ -110,13 +110,40 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
     (res.rmp.code == 0) ? info_ptr->adjustReliability(1.0) : info_ptr->adjustReliability(0.0);
 
     TEMOTO_DEBUG("%s Robot '%s' loaded.", prefix.c_str(), req.robot_name.c_str());
+    return;
   }
-  else
+
+
+  info_ptr = findRobot(req.robot_name, remote_robot_infos_);
+  if (info_ptr)
   {
+    temoto_2::RobotLoad load_robot_srvc;
+    load_robot_srvc.request.robot_name = req.robot_name;
+    TEMOTO_INFO("%s RobotManager is forwarding request: '%s'",prefix.c_str(),req.robot_name.c_str());
+
+    if (resource_manager_.call<temoto_2::RobotLoad>(robot_manager::srv_name::MANAGER, robot_manager::srv_name::SERVER_LOAD, load_robot_srvc, info_ptr->getTemotoNamespace()))
+    {
+      TEMOTO_DEBUG("%s Call to remote RobotManager was sucessful.", prefix.c_str());
+      res.rmp.code = load_robot_srvc.response.rmp.code;
+      res.rmp.message = load_robot_srvc.response.rmp.message;
+      active_robot_ = std::make_shared<Robot>(info_ptr);
+      loaded_robots_.emplace(load_robot_srvc.response.rmp.resource_id, active_robot_);
+    }
+    else
+    {
+      TEMOTO_ERROR("%s Failed to call the remote RobotManager.", prefix.c_str());
+      return;
+    }
+
+
+    
+    return;
+  }
+
+  // no local nor remote robot found
     res.rmp.code = 1;
     res.rmp.message = "Robot manager did not find a suitable robot.";
     TEMOTO_ERROR("%s %s", prefix.c_str(), res.rmp.message.c_str());
-  }
 }
 
 void RobotManager::unloadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad::Response& res)
@@ -250,19 +277,41 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
   TEMOTO_DEBUG("%s PLANNING...", prefix.c_str());
   if(active_robot_)
   {
-    if (req.use_default_target)
+    if (active_robot_->isLocal())
     {
-      geometry_msgs::PoseStamped pose;
-      default_pose_mutex_.lock();
-      pose = default_target_pose_;
-      default_pose_mutex_.unlock();
-      active_robot_->plan("manipulator", pose);
+      if (req.use_default_target)
+      {
+        geometry_msgs::PoseStamped pose;
+        default_pose_mutex_.lock();
+        pose = default_target_pose_;
+        default_pose_mutex_.unlock();
+        active_robot_->plan("manipulator", pose);
+      }
+      else
+      {
+        active_robot_->plan("manipulator", req.target_pose);
+      }
+      TEMOTO_DEBUG("%s DONE PLANNING...", prefix.c_str());
     }
     else
     {
-      active_robot_->plan("manipulator", req.target_pose);
+      // Forward the planning command to a remote robot manager
+      std::string topic = "/" + active_robot_->getRobotInfo()->getTemotoNamespace() + "/" +
+                          robot_manager::srv_name::SERVER_PLAN;
+      ros::ServiceClient client_plan = nh_.serviceClient<temoto_2::RobotLoad>(topic);
+      temoto_2::RobotPlan fwd_plan_srvc;
+      fwd_plan_srvc.request = req;
+      fwd_plan_srvc.response = res;
+      if(client_plan.call(fwd_plan_srvc))
+      {
+        TEMOTO_DEBUG("%s Call to remote RobotManager was sucessful.", prefix.c_str());
+        res = fwd_plan_srvc.response;
+      }
+      else
+      {
+        TEMOTO_ERROR("%s Call to remote RobotManager failed.", prefix.c_str());
+      }
     }
-    TEMOTO_DEBUG("%s DONE PLANNING...", prefix.c_str()); 
   }
   else
   {

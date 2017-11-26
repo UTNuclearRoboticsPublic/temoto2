@@ -23,7 +23,7 @@ void RobotInfo::adjustReliability(float reliability)
   reliability_ -= reliabilities_[reliability_idx_] / (float)reliabilities_.size();
 
   // insert new reliability value
-  reliabilities_[reliability_idx_] = reliability / (float)reliabilities_.size();
+  reliabilities_[reliability_idx_] = reliability;
   reliability_ += reliability / (float)reliabilities_.size();
 }
 
