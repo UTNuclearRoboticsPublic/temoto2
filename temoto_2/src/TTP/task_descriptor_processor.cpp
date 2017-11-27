@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 #include <boost/any.hpp>
-
+#include <boost/filesystem/operations.hpp>
 
 namespace TTP
 {
@@ -271,7 +271,10 @@ TaskDescriptor TaskDescriptorProcessor::getTaskDescriptor()
 
         task_descriptor.task_interfaces_ = getInterfaces();
         task_descriptor.task_package_name_ = getPackageName();
-        task_descriptor.task_lib_path_ = base_path_ + "/lib/lib" + task_descriptor.task_package_name_ + ".so"; // TODO: check if this file even exists
+
+        // TODO: check if this file even exists
+        boost::filesystem::path path(base_path_ + "/lib/lib" + task_descriptor.task_package_name_ + ".so");
+        task_descriptor.task_lib_path_ = boost::filesystem::canonical(path).string();
     }
 
     catch( error::ErrorStackUtil& e )

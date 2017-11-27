@@ -25,7 +25,7 @@ public:
 
 TaskIndex()
 {
-    index_tasks_client_ = n_.serviceClient<temoto_2::IndexTasks>("temoto_agent/index_tasks");
+    index_tasks_publisher_ = n_.advertise<temoto_2::IndexTasks>("index_tasks", 10);
     ROS_INFO("TaskIndex constructed");
 }
 
@@ -67,19 +67,12 @@ void startInterface_0()
     std::cout << "  TaskIndex: Indexing the tasks '" << what_0_word_in << "'\n";
 
     // Create a service message
-    temoto_2::IndexTasks index_tasks_srv;
-    index_tasks_srv.request.directory = ros::package::getPath(ROS_PACKAGE_NAME) + "/..";
-    //index_tasks_srv.request.directory = "/home/robert/catkin_ws/src/temoto2/temoto_2/../tasks";
-    // Call the server
-    index_tasks_client_.call(index_tasks_srv);
+    temoto_2::IndexTasks index_tasks_msg;
+    index_tasks_msg.directory = ros::package::getPath(ROS_PACKAGE_NAME) + "/..";
 
-    ROS_INFO("[TaskIndex::startTask] '/temoto_core/index_tasks' service responded: %s", index_tasks_srv.response.message.c_str());
+    // Publish
+    index_tasks_publisher_.publish(index_tasks_msg);
 
-    // Check the result
-    if (index_tasks_srv.response.code != 0)
-    {
-        // TODO: do something
-    }
 // --------------------------------</ USER CODE >-------------------------------
 }
 
@@ -106,7 +99,7 @@ std::vector<TTP::Subject> getSolution()
 private:
 
     ros::NodeHandle n_;
-    ros::ServiceClient index_tasks_client_;
+    ros::Publisher index_tasks_publisher_;
 };
 
 // Dont forget that part, otherwise this class would not be loadable

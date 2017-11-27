@@ -55,6 +55,7 @@ const std::vector<std::string> valid_subjects = {"what",
 class Subject
 {
 public:
+
     std::string type_;
     std::string pos_tag_;
     std::vector<std::string> words_;
@@ -67,12 +68,20 @@ public:
 
     friend bool operator==(const std::vector<Subject>& subs_1, const std::vector<Subject>& subs_2);
 
+    void addData(std::string datatype, float data);
+    void addData(std::string datatype, std::string data);
+
     void markIncomplete();
     void markComplete();
+
+private:
+
+    std::string class_name_ = "Subject";
 };
 
 std::ostream& operator<<( std::ostream& stream, const Subject& subject);
 
 std::ostream& operator<<( std::ostream& stream, const std::vector<Subject>& subjects);
+
 }
 #endif

@@ -1,7 +1,7 @@
 #include "ros/ros.h"
 #include "common/tools.h"
 #include "common/temoto_log_macros.h"
-#include "TTP/tasking_core.h"
+#include "TTP/task_manager.h"
 #include "std_msgs/String.h"
 
 int main(int argc, char **argv)
@@ -15,7 +15,7 @@ int main(int argc, char **argv)
     std::cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * " << std::endl;
     std::cout << "*                                                     * " << std::endl;
     std::cout << "*                       TEMOTO CORE                   * " << std::endl;
-    std::cout << "*                          v.2.0                      * " << std::endl;
+    std::cout << "*                         v.2.0.0                     * " << std::endl;
     std::cout << "*                                                     * " << std::endl;
     std::cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * \n" << std::endl;
 
@@ -23,10 +23,10 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
 
     // Publisher for publishing messages to core itself
-    ros::Publisher chatter_publisher = nh.advertise<std_msgs::String>("/temoto_2/human_chatter", 1000);
+    ros::Publisher chatter_publisher = nh.advertise<std_msgs::String>("human_chatter", 1000);
 
-    // Create a tasking core
-    TTP::TaskingCore tasking_core(node_name);
+    // Create a tasking core and enable the language processor
+    TTP::TaskManager task_manager(node_name, true);
 
     // Publish a message to the tasking core
     std_msgs::String init_msg;

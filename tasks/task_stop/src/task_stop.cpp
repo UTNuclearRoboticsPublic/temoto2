@@ -29,7 +29,7 @@ public:
 TaskStop()
 {
     // Do something here if needed
-    stop_task_client_ = n_.serviceClient<temoto_2::StopTask>("temoto_agent/stop_task");
+    stop_task_client_ = n_.serviceClient<temoto_2::StopTask>("stop_task");
     ROS_INFO("TaskStop constructed");
 }
 

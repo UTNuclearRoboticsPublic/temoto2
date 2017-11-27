@@ -1,23 +1,24 @@
 #ifndef TASK_HANDLER_H
 #define TASK_HANDLER_H
 
-#include <class_loader/multi_library_class_loader.h>
-#include <boost/any.hpp>
-#include "boost/filesystem.hpp"
-#include <exception>
-
 #include "base_error/base_error.h"
 #include "common/temoto_id.h"
 #include "TTP/task_descriptor.h"
 #include "TTP/task_tree.h"
 #include "TTP/base_task/base_task.h"
+#include "TTP/language_processors/meta/meta_lp.h"
 
 #include "temoto_2/StopTask.h"
 #include "temoto_2/IndexTasks.h"
 #include "temoto_2/StopTaskMsg.h"
+#include "std_msgs/String.h"
 
-#include <cstdio>
 #include "tbb/flow_graph.h"
+#include <class_loader/multi_library_class_loader.h>
+#include <boost/any.hpp>
+#include "boost/filesystem.hpp"
+#include <exception>
+#include <cstdio>
 
 namespace TTP
 {
@@ -34,8 +35,9 @@ public:
     /**
      * @brief TaskManager
      * @param system_prefix
+     * @param nlp_enabled
      */
-    TaskManager(std::string system_prefix);
+    TaskManager(std::string system_prefix, bool nlp_enabled);
 
     /**
      * @brief findTask
@@ -82,19 +84,25 @@ public:
 
     void connectFlowGraph(TaskTreeNode& node);
 
-    void executeTaskTree (TaskTreeNode& root_node, tbb::flow::graph& flow_graph);
+    void executeVerbalInstruction (std::string& verbal_instruction);
+
+    void executeSFT (TaskTree sft);
 
     /**
      * @brief loadTask
-     * @param task
-     * @return
+     * @param task_descriptor
      */
     void loadTask(TaskDescriptor& task_descriptor);
 
     /**
+     * @brief unloadTaskLib
+     * @param task_descriptor
+     */
+    void unloadTaskLib(std::string path_to_lib);
+
+    /**
      * @brief instantiateTask
-     * @param task
-     * @return
+     * @param node
      */
     void instantiateTask(TaskTreeNode& node);
 
@@ -105,12 +113,7 @@ public:
      */
     void stopTask(std::string action = "", std::string what = "");
 
-//    /**
-//     * @brief unloadTaskLib
-//     * @param path_to_lib
-//     * @return
-//     */
-//    void unloadTaskLib(std::string path_to_lib);
+
 
 private:
 
@@ -120,12 +123,27 @@ private:
 
     const std::string description_file_ = "descriptor.xml";
 
+    bool action_executioner_busy_ = false;
+
+    /**
+     * @brief system_prefix_
+     */
+    std::string system_prefix_;
+
+    bool nlp_enabled_;
+
     std::vector<std::pair<boost::shared_ptr<TaskDescriptor>, boost::shared_ptr<BaseTask>>> asynchronous_tasks_;
+
+    std::vector<std::string> synchronous_task_libs_;
+
+    TTP::MetaLP* language_processor_;
+
+    ros::Subscriber human_chatter_subscriber_;
 
     /**
      * @brief n_
      */
-    ros::NodeHandle n_;
+    ros::NodeHandle nh_;
 
     /**
      * @brief id_manager_
@@ -136,19 +154,14 @@ private:
     ros::ServiceServer stop_task_server_;
 
     /**
-     * @brief index_tasks_server_
+     * @brief index_tasks_subscriber_
      */
-    ros::ServiceServer index_tasks_server_;
+    ros::Subscriber index_tasks_subscriber_;
 
     /**
      * @brief join_task_server_
      */
     ros::Subscriber stop_task_subscriber_;
-
-    /**
-     * @brief system_prefix_
-     */
-    std::string system_prefix_;
 
     /**
      * @brief tasks_indexed_
@@ -159,6 +172,8 @@ private:
      * @brief class_loader_
      */
     class_loader::MultiLibraryClassLoader* class_loader_;
+
+    std::map<std::string, class_loader::ClassLoader*> class_loaders_;
 
     /**
      * @brief langProcessor_
@@ -176,14 +191,16 @@ private:
 
     /**
      * @brief indexTasksCallback
-     * @param req
-     * @param res
+     * @param index_msg
      * @return
      */
-    bool indexTasksCallback (temoto_2::IndexTasks::Request& req,
-                             temoto_2::IndexTasks::Response& res);
+    void indexTasksCallback (temoto_2::IndexTasks index_msg);
 
-//    void stopTaskMsgCallback( temoto_2::StopTaskMsg msg );
+    /**
+     * @brief humanChatterCb
+     * @param chat
+     */
+    void humanChatterCb (std_msgs::String chat);
 
 };
 

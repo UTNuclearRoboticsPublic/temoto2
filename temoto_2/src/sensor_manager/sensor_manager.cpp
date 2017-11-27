@@ -122,7 +122,8 @@ void SensorManager::syncCb(const temoto_2::ConfigSync& msg)
     YAML::Node config = YAML::Load(msg.config);
     std::vector<SensorInfoPtr> sensors = parseSensors(config);
 
-    //TODO hold remote stuff in a map or something keyed by namespace
+    // TODO: Hold remote stuff in a map or something keyed by namespace
+    // TODO: Temoto namespace can (doesn't have to) be contained in config
     for (auto& s : sensors)
     {
       s->setTemotoNamespace(msg.temoto_namespace);
@@ -166,12 +167,7 @@ void SensorManager::advertiseLocalSensors()
 }
 
 
-/**
- * @brief Start sensor callback
- * @param req
- * @param res
- * @return
- */
+// TODO: rename "startSensorCb" to "loadSensorCb"
 void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
                                   temoto_2::LoadSensor::Response& res)
 {
@@ -204,11 +200,11 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
       res.package_name = sensor_ptr->getPackageName();
       res.topic = sensor_ptr->getTopic();
       res.executable = sensor_ptr->getExecutable();
-      res.rmp.code = load_process_msg.response.rmp.code;
-      res.rmp.message = load_process_msg.response.rmp.message;
+      res.rmp = load_process_msg.response.rmp;
     }
     else
     {
+      // TODO: Client needs a proper response
       TEMOTO_ERROR("%s Failed to call the ProcessManager.", prefix.c_str());
       return;
     }
@@ -228,6 +224,7 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
   {
     TEMOTO_INFO("Looking from: \n%s", rs->toString().c_str());
   }
+
   sensor_ptr = findSensor(req.sensor_type, req.package_name, req.executable, remote_sensors_);
   if (sensor_ptr)
   {
@@ -245,12 +242,12 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
             sensor_ptr->getTemotoNamespace()))
     {
       TEMOTO_DEBUG("%s Call to remote SensorManager was sucessful.", prefix.c_str());
-      res.rmp.code = load_sensor_msg.response.rmp.code;
-      res.rmp.message = load_sensor_msg.response.rmp.message;
+      res = load_sensor_msg.response;
       allocated_sensors_.emplace(res.rmp.resource_id, sensor_ptr);
     }
     else
     {
+      // TODO: Client needs a proper response
       TEMOTO_ERROR("%s Failed to call the remote SensorManager.", prefix.c_str());
       return;
     }
@@ -266,6 +263,7 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
   TEMOTO_ERROR("%s %s", prefix.c_str(), res.rmp.message.c_str());
 }
 
+// TODO: rename "stopSensorCb" to "unloadSensorCb"
 void SensorManager::stopSensorCb(temoto_2::LoadSensor::Request& req,
                                  temoto_2::LoadSensor::Response& res)
 {
@@ -321,7 +319,7 @@ SensorInfoPtr SensorManager::findSensor(std::string type, std::string package_na
     return NULL;
   }
 
-  // Out of options ... return the first remote sensor of the requested type.
+  // Return the first sensor of the requested type.
   return candidates.front();
 }
 

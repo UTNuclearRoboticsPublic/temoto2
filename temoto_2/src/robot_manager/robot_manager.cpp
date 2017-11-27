@@ -94,8 +94,15 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
         ros::Duration(0.2).sleep();
       }
       ros::Duration(0.5).sleep();  // In case there is anythin else to load
-      active_robot_ = std::make_shared<Robot>(info_ptr);
-      loaded_robots_.emplace(load_proc_srvc.response.rmp.resource_id, active_robot_);
+      try
+      {
+        active_robot_ = std::make_shared<Robot>(info_ptr);
+        loaded_robots_.emplace(load_proc_srvc.response.rmp.resource_id, active_robot_);
+      }
+      catch(...)
+      {
+        TEMOTO_ERROR("%s Exception occured while creating Robot object.", prefix.c_str());
+      }
     }
     else
     {
@@ -113,7 +120,7 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
     return;
   }
 
-
+  // Try to find suitable candidate from remote managers
   info_ptr = findRobot(req.robot_name, remote_robot_infos_);
   if (info_ptr)
   {
@@ -126,8 +133,15 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
       TEMOTO_DEBUG("%s Call to remote RobotManager was sucessful.", prefix.c_str());
       res.rmp.code = load_robot_srvc.response.rmp.code;
       res.rmp.message = load_robot_srvc.response.rmp.message;
-      active_robot_ = std::make_shared<Robot>(info_ptr);
-      loaded_robots_.emplace(load_robot_srvc.response.rmp.resource_id, active_robot_);
+      try
+      {
+        active_robot_ = std::make_shared<Robot>(info_ptr);
+        loaded_robots_.emplace(load_robot_srvc.response.rmp.resource_id, active_robot_);
+      }
+      catch(...)
+      {
+        TEMOTO_ERROR("%s Exception occured while creating Robot object.", prefix.c_str());
+      }
     }
     else
     {
@@ -298,7 +312,7 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
       // Forward the planning command to a remote robot manager
       std::string topic = "/" + active_robot_->getRobotInfo()->getTemotoNamespace() + "/" +
                           robot_manager::srv_name::SERVER_PLAN;
-      ros::ServiceClient client_plan = nh_.serviceClient<temoto_2::RobotLoad>(topic);
+      ros::ServiceClient client_plan = nh_.serviceClient<temoto_2::RobotPlan>(topic);
       temoto_2::RobotPlan fwd_plan_srvc;
       fwd_plan_srvc.request = req;
       fwd_plan_srvc.response = res;
@@ -343,10 +357,19 @@ bool RobotManager::getRvizConfigCb(temoto_2::RobotGetRvizConfig::Request& req,
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   TEMOTO_INFO("%s GETTING CONFIG...", prefix.c_str());
+  if(!active_robot_)
+  {
+    TEMOTO_ERROR("%s Robot not loaded.", prefix.c_str());
+  }
+  else
+  {
+    std::string act_rob_ns = active_robot_->getRobotInfo()->getTemotoNamespace();
+    std::string rviz_conf = "{Robot Description: /" + act_rob_ns +
+                            "/robot_description, Planning Request: {Planning Group: "
+                            "manipulator}}";
 
-  std::string rviz_conf = "{Planning Request: {Planning Group: manipulator}}";
-
-  res.config = rviz_conf;
+    res.config = rviz_conf;
+  }
   res.code = 0;
   return true;
 }

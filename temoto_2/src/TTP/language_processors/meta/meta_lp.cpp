@@ -78,7 +78,7 @@ TaskTree MetaLP::processText(std::string input_text)
                 std::cout << "Found " << task_descs.size() << " potential tasks addressed to: " << bf.getAddressable() << std::endl;
 
                 // Build a task tree
-                task_tree_ = task_tree_builder_.build(task_descs);
+                task_tree_ = SFTBuilder::build(task_descs);
 
                 // Print out the tasks after being parsed
                 for( auto& task_descriptor : task_descs )

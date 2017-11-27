@@ -47,7 +47,7 @@ void RvizManager::runRviz()
 
   // Create the message and fill out the request part
   temoto_2::LoadProcess msg;
-  msg.request.action = "roslaunch";
+  msg.request.action = process_manager::action::ROS_EXECUTE;
   msg.request.package_name = "rviz_plugin_manager";
   msg.request.executable = "rviz_plugin_manager.launch";
 

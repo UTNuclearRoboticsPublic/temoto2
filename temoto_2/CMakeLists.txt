@@ -42,6 +42,9 @@ add_message_files(FILES
 
     # Configuration Synchronizer
     ConfigSync.msg
+
+    # Task manager
+    TTP/task_manager/IndexTasks.msg
 )
 
 add_service_files(
@@ -79,7 +82,7 @@ add_service_files(
 	  task_handler/stopTask.srv # Deprecated
     task_handler/indexTasks.srv # Deprecated
     TTP/task_manager/StopTask.srv
-    TTP/task_manager/IndexTasks.srv
+    #TTP/task_manager/IndexTasks.srv
 	  
 
 )
@@ -165,7 +168,6 @@ add_dependencies(agent_core ${catkin_EXPORTED_TARGETS})
 # # # # # # # # # # # #
 
 add_executable(temoto_agent src/core/temoto_agent.cpp
-                            src/TTP/tasking_core.cpp
                             src/TTP/language_processors/meta/meta_lp.cpp
                             src/TTP/language_processors/meta/branch_finder.cpp
                             src/TTP/task_manager.cpp
@@ -242,24 +244,6 @@ target_link_libraries(broken_node_1 ${catkin_LIBRARIES} )
 add_executable(pos_tagger src/tools/pos_tagger.cpp)
 add_dependencies(pos_tagger ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(pos_tagger ${catkin_LIBRARIES} meta-classify meta-sequence-analyzers meta-parser-analyzers)
-
-add_executable(sentence_parser src/tools/sentence_parser.cpp
-                               src/TTP/language_processors/meta/meta_lp.cpp
-                               src/TTP/language_processors/meta/branch_finder.cpp
-                               src/TTP/task_manager.cpp
-                               src/TTP/task_descriptor_processor.cpp
-                               src/TTP/io_descriptor.cpp
-                               src/TTP/task_descriptor.cpp
-                               src/TTP/task_tree_node.cpp
-                               src/TTP/task_tree.cpp
-                               src/TTP/task_container.cpp
-                               src/base_error/base_error.cpp)
-add_dependencies(sentence_parser ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(sentence_parser 
-                      ${catkin_LIBRARIES}
-                      ${TinyXML_LIBRARIES}
-                      ${TBB_LIBRARIES}
-                      meta-classify meta-sequence-analyzers meta-parser-analyzers)
 
 #link_directories(/tmp/usr/local/lib/)
 #add_executable(blinker src/tools/blinker.cpp)
