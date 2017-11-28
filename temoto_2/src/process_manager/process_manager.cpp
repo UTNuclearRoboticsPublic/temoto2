@@ -45,10 +45,22 @@ void ProcessManager::update(const ros::TimerEvent&)
   waitForLock(loading_mutex_);
   for (auto& srv : loading_processes_)
   {
-    const std::string& action = srv.request.action;
     const std::string& package_name = srv.request.package_name;
     const std::string& executable = srv.request.executable;
     const std::string& args = srv.request.args;
+
+    std::string cmd = "";
+
+    if (srv.request.action == action::ROS_EXECUTE)
+    {
+      std::regex rx(".*\\.launch$");
+      cmd += (std::regex_match(executable, rx)) ? "roslaunch " : "rosrun ";
+      cmd += package_name + " " + executable + " " + args;
+    }
+    else if (srv.request.action == action::SYS_EXECUTE)
+    {
+      cmd += executable + " " + args;
+    }
 
     // Fork the parent process
     TEMOTO_DEBUG("%s Forking the process.", prefix.c_str());
@@ -59,8 +71,7 @@ void ProcessManager::update(const ros::TimerEvent&)
     {
       // Execute the requested process
       //  std::cout << "Child is executing a program ..." << std::endl;
-      std::string ros_cmd = action + " " + package_name+ " " + executable + " " + args;
-      execlp("/bin/bash", "/bin/bash", "-c", ros_cmd.c_str() , (char*)NULL);
+      execlp("/bin/bash", "/bin/bash", "-c", cmd.c_str() , (char*)NULL);
       return;
     }
 
@@ -80,10 +91,10 @@ void ProcessManager::update(const ros::TimerEvent&)
     if (proc_it != running_processes_.end())
     {
       // Kill the process
-      TEMOTO_DEBUG("%s Sending kill(SIGTERM) to %d)", prefix.c_str(), pid);
+      TEMOTO_DEBUG("%s Sending kill(SIGTERM) to %d", prefix.c_str(), pid);
 
       int ret = kill(pid, SIGTERM);
-      TEMOTO_DEBUG("%s kill(SIGTERM) returned: %d)", prefix.c_str(), ret);
+      TEMOTO_DEBUG("%s kill(SIGTERM) returned: %d", prefix.c_str(), ret);
       // TODO: Check the returned value
 
       // Remove the process from the map
@@ -117,9 +128,7 @@ void ProcessManager::update(const ros::TimerEvent&)
       srv.request.resource_id = proc_it->second.response.rmp.resource_id;
       srv.request.status_code = rmp::status_codes::FAILED;
       std::stringstream ss;
-      ss << "The process with pid = ";
-      ss << proc_it->first;
-      ss << " has stopped.";
+      ss << "The process with pid '" << proc_it->first << "' has stopped.";
       srv.request.message = ss.str();
 
       // store statuses to send
@@ -153,15 +162,6 @@ void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
   // Validate the action command.
   if (req.action == action::ROS_EXECUTE) //|| action == action::SYS_EXECUTE)
   {
-    std::regex rx(".*\\.launch$");
-    if (std::regex_match(req.executable, rx))
-    {
-      req.action = "roslaunch";
-    }
-    else
-    {
-      req.action = "rosrun";
-    }
 
     TEMOTO_DEBUG("%s adding '%s' '%s' '%s' to the loading queue.", prefix.c_str(),
                  req.action.c_str(), req.package_name.c_str(), req.executable.c_str());
@@ -191,7 +191,7 @@ void ProcessManager::unloadCb(temoto_2::LoadProcess::Request& req,
                               temoto_2::LoadProcess::Response& res)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-  TEMOTO_DEBUG("%s Unload resource requested ...", prefix.c_str());
+  TEMOTO_DEBUG("%s Unloading resource with id '%ld' ...", prefix.c_str(), res.rmp.resource_id);
 
   // Lookup the requested process by its resource id.
   waitForLock(running_mutex_);
@@ -202,11 +202,12 @@ void ProcessManager::unloadCb(temoto_2::LoadProcess::Request& req,
   {
     unloading_processes_.push_back(proc_it->first);
     res.rmp.code = 0;
-    res.rmp.message = "Resource sucessfully unloaded.";
+    res.rmp.message = "Resource added to unload queue.";
+    TEMOTO_DEBUG("%s Resource with id '%ld' added to unload queue.", prefix.c_str(), res.rmp.resource_id);
   }
   else
   {
-    TEMOTO_ERROR("%s Unable to unload reource with pid: %ld. Resource is not running.", prefix.c_str(),
+    TEMOTO_ERROR("%s Unable to unload reource with resource_id: %ld. Resource is not running.", prefix.c_str(),
               res.rmp.resource_id);
     // Fill response
     res.rmp.code = rmp::status_codes::FAILED;
