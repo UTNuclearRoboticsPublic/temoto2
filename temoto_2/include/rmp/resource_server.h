@@ -196,7 +196,6 @@ public:
         typename ServiceType::Request orig_req = found_query_it->getMsg().request;
         typename ServiceType::Response orig_res = found_query_it->getMsg().response;
         (owner_->*unload_callback_)(orig_req, orig_res);
-
         /// TODO: Do or do not something with the response part?
 
         // Send unload command to all internal clients...

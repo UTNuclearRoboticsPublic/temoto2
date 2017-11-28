@@ -177,6 +177,8 @@ public:
     client_exec_.shutdown();
     client_rviz_cfg_.shutdown();
     client_set_target_.shutdown();
+
+    TEMOTO_DEBUG("RobotManagerInterface destroyed.");
   }
 
 private:

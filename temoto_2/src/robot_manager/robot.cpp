@@ -16,6 +16,11 @@ Robot::Robot(RobotInfoPtr robot_info_ptr)
   }
 }
 
+Robot::~Robot()
+{
+    TEMOTO_DEBUG("Robot destructed");
+}
+
 void Robot::addPlanningGroup(const std::string& planning_group_name)
 {
   std::unique_ptr<moveit::planning_interface::MoveGroupInterface> group(

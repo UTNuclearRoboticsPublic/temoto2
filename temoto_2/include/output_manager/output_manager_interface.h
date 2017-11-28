@@ -208,6 +208,8 @@ public:
   {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+
+    TEMOTO_DEBUG("OutputManagerInterface destroyed.");
   }
 
   const std::string& getName() const

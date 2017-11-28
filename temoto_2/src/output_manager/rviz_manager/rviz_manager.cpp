@@ -58,6 +58,39 @@ void RvizManager::runRviz()
     // Ask process manager to start rviz
     resource_manager_.call<temoto_2::LoadProcess>(process_manager::srv_name::MANAGER,
                                                   process_manager::srv_name::SERVER, msg);
+    if (msg.response.rmp.code == 0)
+    {
+      TEMOTO_INFO("%s Rviz launched succesfully: %s", prefix.c_str(),
+                  msg.response.rmp.message.c_str());
+
+      // Wait until rviz_plugin_manager clients become active or throw an error on timeout
+      ros::Time timeout = ros::Time::now() + ros::Duration(10);
+      while ((!load_plugin_client_.exists() || !unload_plugin_client_.exists() ||
+              !set_plugin_config_client_.exists() || !get_plugin_config_client_.exists()) &&
+             ros::Time::now() < timeout)
+      {
+        ros::Duration diff = timeout - ros::Time::now();
+        TEMOTO_DEBUG("%s Waiting for rviz to start (timeout in %.1f sec).", prefix.c_str(),
+                     diff.toSec());
+        ros::Duration(1).sleep();
+      }
+
+      if (ros::Time::now() >= timeout)
+      {
+        throw error::ErrorStackUtil(
+            outputManagerErr::RVIZ_OPEN_FAIL, error::Subsystem::OUTPUT_MANAGER,
+            error::Urgency::MEDIUM,
+            prefix + " Failed to launch rviz plugin manager: Timeout reached.", ros::Time::now());
+      }
+      TEMOTO_DEBUG("%s All rviz_plugin_manager services connected.", prefix.c_str());
+    }
+    else
+    {
+      throw error::ErrorStackUtil(outputManagerErr::RVIZ_OPEN_FAIL,
+                                  error::Subsystem::OUTPUT_MANAGER, error::Urgency::MEDIUM,
+                                  prefix + " Failed to launch rviz: " + msg.response.rmp.message,
+                                  ros::Time::now());
+    }
   }
   catch (...)
   {
@@ -66,37 +99,6 @@ void RvizManager::runRviz()
                                 prefix + " Failed to start RViz", ros::Time::now());
   }
 
-  if (msg.response.rmp.code == 0)
-  {
-    TEMOTO_INFO("%s Rviz launched succesfully: %s", prefix.c_str(),
-                msg.response.rmp.message.c_str());
-
-    // Wait until rviz_plugin_manager clients become active or throw an error on timeout
-    ros::Time timeout = ros::Time::now() + ros::Duration(10);
-    while ((!load_plugin_client_.exists() || !unload_plugin_client_.exists() ||
-           !set_plugin_config_client_.exists() || !get_plugin_config_client_.exists()) && 
-           ros::Time::now() < timeout)
-    {
-      ros::Duration diff = timeout - ros::Time::now();
-      TEMOTO_DEBUG("%s Waiting for rviz to start (timeout in %.1f sec).", prefix.c_str(), diff.toSec());
-      ros::Duration(1).sleep();
-    }
-
-    if (ros::Time::now() >= timeout)
-    {
-      throw error::ErrorStackUtil(outputManagerErr::RVIZ_OPEN_FAIL,
-                                  error::Subsystem::OUTPUT_MANAGER, error::Urgency::MEDIUM,
-                                  prefix + " Failed to launch rviz plugin manager: Timeout reached.",
-                                  ros::Time::now());
-    }
-    TEMOTO_DEBUG("%s All rviz_plugin_manager services connected.", prefix.c_str());
-  }
-  else
-  {
-    throw error::ErrorStackUtil(
-        outputManagerErr::RVIZ_OPEN_FAIL, error::Subsystem::OUTPUT_MANAGER, error::Urgency::MEDIUM,
-        prefix + " Failed to launch rviz: " + msg.response.rmp.message, ros::Time::now());
-  }
 }
 
 /* * * * * * * * * * * * * * * * *
@@ -283,6 +285,7 @@ void RvizManager::LoadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
     rviz_plugin_manager::PluginLoad load_plugin_srv;
     load_plugin_srv.request.plugin_class = plugin_info.getClassName();
     load_plugin_srv.request.plugin_topic = req.topic;
+    load_plugin_srv.request.plugin_config = req.config;
     load_plugin_srv.request.plugin_data_type = plugin_info.getDataType();
     load_plugin_srv.request.plugin_name = plugin_info.getRvizName();
 
@@ -299,15 +302,16 @@ void RvizManager::LoadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
       // Add the request and ID into the active_requests_
       active_requests_.emplace(res.rmp.resource_id, load_plugin_srv.response.plugin_uid);
 
+      // \TODO this is now deprecated, clean up!
       // In presence of config, send it to rviz_plugin_manager
-      if (req.config != "")
-      {
-        //ros::Duration(10).sleep();
-        rviz_plugin_manager::PluginSetConfig set_plugin_config_srv;
-        set_plugin_config_srv.request.plugin_uid = load_plugin_srv.response.plugin_uid;
-        set_plugin_config_srv.request.config = req.config;
-        setPluginConfigRequest(set_plugin_config_srv);
-      }
+     // if (req.config != "")
+     // {
+     //   //ros::Duration(10).sleep();
+     //   rviz_plugin_manager::PluginSetConfig set_plugin_config_srv;
+     //   set_plugin_config_srv.request.plugin_uid = load_plugin_srv.response.plugin_uid;
+     //   set_plugin_config_srv.request.config = req.config;
+     //   setPluginConfigRequest(set_plugin_config_srv);
+     // }
     }
     catch (error::ErrorStackUtil& e)
     {

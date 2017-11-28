@@ -163,9 +163,22 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
 void RobotManager::unloadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad::Response& res)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-  TEMOTO_DEBUG("%s ROBOT '%s' unloaded...", prefix.c_str(), req.robot_name.c_str());
+  TEMOTO_DEBUG("%s ROBOT '%s' unloading...", prefix.c_str(), req.robot_name.c_str());
 
-  loaded_robots_.erase(res.rmp.resource_id);
+  ros::Duration(5).sleep();
+  
+  // search for the robot based on its resource id, remove from map, 
+  // and clear active_robot_ if the unloaded robot was active.
+  auto it = loaded_robots_.find(res.rmp.resource_id);
+  if (it != loaded_robots_.end())
+  {
+    if (active_robot_ == it->second)
+    {
+      active_robot_ = NULL;
+    }
+    loaded_robots_.erase(it);
+  }
+  TEMOTO_DEBUG("%s ROBOT '%s' unloaded.", prefix.c_str(), req.robot_name.c_str());
 }
 
 void RobotManager::syncCb(const temoto_2::ConfigSync& msg)
@@ -364,9 +377,12 @@ bool RobotManager::getRvizConfigCb(temoto_2::RobotGetRvizConfig::Request& req,
   else
   {
     std::string act_rob_ns = active_robot_->getRobotInfo()->getTemotoNamespace();
-    std::string rviz_conf = "{Robot Description: /" + act_rob_ns +
-                            "/robot_description, Planning Request: {Planning Group: "
-                            "manipulator}}";
+    std::string rviz_conf =
+        "{Robot Description: /" + act_rob_ns + "/robot_description, Move Group Namespace: /" +
+        act_rob_ns + ", Planning Scene Topic: /" + act_rob_ns +
+        "/move_group/monitored_planning_scene, Planning Request: {Planning Group: "
+        "manipulator}, Planned Path: {Trajectory Topic: /" +
+        act_rob_ns + "/move_group/display_planned_path}}";
 
     res.config = rviz_conf;
   }
