@@ -1,18 +1,19 @@
-#ifndef HUMAN_CONTEXT_H
-#define HUMAN_CONTEXT_H
+#ifndef CONTEXT_MANAGER_H
+#define CONTEXT_MANAGER_H
 
 #include "core/common.h"
 #include "common/temoto_id.h"
-#include "context_manager/human_context/human_context_services.h"
+#include "context_manager/context_manager_services.h"
 #include "sensor_manager/sensor_manager_services.h"
 #include "rmp/resource_manager.h"
+#include "rmp/config_synchronizer.h"
 
-namespace human_context
+namespace context_manager
 {
-class HumanContext
+class ContextManager
 {
 public:
-  HumanContext();
+  ContextManager();
 
   const std::string& getName() const
   {
@@ -55,8 +56,13 @@ private:
   void unloadSpeechCb(temoto_2::LoadSpeech::Request& req, temoto_2::LoadSpeech::Response& res);
 
   std::string log_class_, log_subsys_, log_group_;
+
   // Resource manager for handling servers and clients
-  rmp::ResourceManager<HumanContext> resource_manager_;
+  rmp::ResourceManager<ContextManager> resource_manager_;
+
+  // Configuration syncer that manages external resource descriptions and synchronizes them
+  // between all other (context) managers
+  // rmp::ConfigSynchronizer<ContextManager> config_syncer_;
 };
 }
 

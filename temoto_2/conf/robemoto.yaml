@@ -12,6 +12,19 @@ Sensors:
   executable:  "en-US.launch"
   topic:  "stt/spoken_text"
 
+Algorithms:
+- algorithm_name: "AR Tag detector"
+  algorithm_type: "artag"
+  package_name: "temoto_2"
+  executable:  "test_2.launch"
+  topic: "bla3" 
+  topics_in:
+    camera_info: "/camera_info"
+    camera_data: "/usb_cam/raw"
+  topics_out:
+    visualization: "visualization_marker"
+    markers: "ar_pose_marker"
+
 Robots:
 - robot_name: "ur5"
   package_name: "task_robot"

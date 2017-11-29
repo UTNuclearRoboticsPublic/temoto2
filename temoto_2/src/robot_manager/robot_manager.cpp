@@ -392,11 +392,11 @@ bool RobotManager::setTargetCb(temoto_2::RobotSetTarget::Request& req,
 
     hand_srv_msg_.request.gesture_specifiers.push_back(gesture_specifier);
     if (resource_manager_.call<temoto_2::LoadGesture>(
-            human_context::srv_name::MANAGER, human_context::srv_name::GESTURE_SERVER, hand_srv_msg_))
+            context_manager::srv_name::MANAGER, context_manager::srv_name::GESTURE_SERVER, hand_srv_msg_))
     {
       TEMOTO_DEBUG("%s Call to ContextManager was sucessful.", prefix.c_str());
       res.code = 0;
-      res.message = "Robot manager got a 'hand' topic from human_context.";
+      res.message = "Robot manager got a 'hand' topic from context_manager.";
       TEMOTO_DEBUG("%s Subscribing to '%s'", prefix.c_str(), hand_srv_msg_.response.topic.c_str());
       target_pose_sub_ = nh_.subscribe(hand_srv_msg_.response.topic, 1, &RobotManager::targetPoseCb, this);
 
@@ -446,8 +446,8 @@ void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)
       resource_manager_.unloadClientResource(hand_srv_msg_.response.rmp.resource_id);
 
       //retry with previous request
-      if (resource_manager_.call<temoto_2::LoadGesture>(human_context::srv_name::MANAGER,
-                                                        human_context::srv_name::GESTURE_SERVER,
+      if (resource_manager_.call<temoto_2::LoadGesture>(context_manager::srv_name::MANAGER,
+                                                        context_manager::srv_name::GESTURE_SERVER,
                                                         hand_srv_msg_))
       {
         TEMOTO_DEBUG("%s Call to ContextManager was sucessful.", prefix.c_str());

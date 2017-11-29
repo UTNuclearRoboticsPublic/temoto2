@@ -6,7 +6,6 @@ project(temoto_2)
 # add_compile_options(-std=c++11 -Wno-deprecated-declarations)
 add_compile_options(-std=c++1y)
 
-
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   genmsg
@@ -61,12 +60,8 @@ add_service_files(
     sensor_manager/LoadSensor.srv
 
     # Context Managers
-    context_manager/human_context/LoadGesture.srv
-    context_manager/human_context/LoadSpeech.srv
-
-    # Task Handler
-    task_handler/stopTask.srv
-    task_handler/indexTasks.srv
+    context_manager/LoadGesture.srv
+    context_manager/LoadSpeech.srv
 
     # Output Manager
     output_manager/rviz_manager/LoadRvizPlugin.srv
@@ -79,12 +74,8 @@ add_service_files(
     robot_manager/RobotGetRvizConfig.srv
   
     # Task manager
-	  task_handler/stopTask.srv # Deprecated
-    task_handler/indexTasks.srv # Deprecated
     TTP/task_manager/StopTask.srv
     #TTP/task_manager/IndexTasks.srv
-	  
-
 )
 
 generate_messages(
@@ -119,7 +110,7 @@ include_directories(
 # CONTEXT MANAGER
 # # # # # # # # # # # #
 add_executable(context_manager src/context_manager/context_manager_node.cpp
-				src/context_manager/human_context/human_context.cpp)
+				                       src/context_manager/context_manager.cpp)
 
 add_dependencies(context_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(context_manager ${catkin_LIBRARIES} )
@@ -128,8 +119,8 @@ target_link_libraries(context_manager ${catkin_LIBRARIES} )
 # SENSOR MANAGER
 # # # # # # # # # # # #
 add_executable(sensor_manager src/sensor_manager/sensor_manager.cpp 
-	src/sensor_manager/sensor_manager_node.cpp
-	src/sensor_manager/sensor_info.cpp)
+	                            src/sensor_manager/sensor_manager_node.cpp
+	                            src/sensor_manager/sensor_info.cpp)
 add_dependencies(sensor_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(sensor_manager ${catkin_LIBRARIES} yaml-cpp )
 
@@ -143,28 +134,9 @@ add_executable(output_manager src/output_manager/output_manager.cpp
 add_dependencies(output_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(output_manager ${catkin_LIBRARIES})
 
+
 # # # # # # # # # # # #
 # CORE
-# # # # # # # # # # # #
-add_executable(agent_core src/core/agent_core.cpp 
-			  src/core/language_processor/language_processor.cpp
-			  src/core/task_handler/task_handler.cpp
-			  src/core/task_handler/description_processor.cpp
-			  src/core/task_handler/task_info.cpp
-			  src/base_error/base_error.cpp
-)
-
-add_dependencies(agent_core ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(agent_core
-   ${catkin_LIBRARIES}
-   ${class_loader_LIBRARIES}
-   ${TinyXML_LIBRARIES}
-   ${TBB_LIBRARIES} )
-add_dependencies(agent_core ${catkin_EXPORTED_TARGETS})
-
-
-# # # # # # # # # # # #
-# NEW CORE
 # # # # # # # # # # # #
 
 add_executable(temoto_agent src/core/temoto_agent.cpp
@@ -229,21 +201,26 @@ add_executable(language_input src/tools/language_input.cpp
 add_dependencies(language_input ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(language_input ${catkin_LIBRARIES} )
 
-add_executable(blinker_publisher src/tools/blinker_publisher.cpp)
-add_dependencies(blinker_publisher ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(blinker_publisher ${catkin_LIBRARIES} )
+add_executable(algorithm_info_tests src/tools/algorithm_info_tests.cpp
+                                    src/context_manager/algorithm_info.cpp)
+add_dependencies(algorithm_info_tests ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(algorithm_info_tests ${catkin_LIBRARIES} yaml-cpp)
 
-add_executable(dummy_sensor src/tools/dummy_sensor.cpp)
-add_dependencies(dummy_sensor ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(dummy_sensor ${catkin_LIBRARIES} )
+#add_executable(blinker_publisher src/tools/blinker_publisher.cpp)
+#add_dependencies(blinker_publisher ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+#target_link_libraries(blinker_publisher ${catkin_LIBRARIES} )
 
-add_executable(broken_node_1 src/tools/broken_node_1.cpp)
-add_dependencies(broken_node_1 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(broken_node_1 ${catkin_LIBRARIES} )
+#add_executable(dummy_sensor src/tools/dummy_sensor.cpp)
+#add_dependencies(dummy_sensor ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+#target_link_libraries(dummy_sensor ${catkin_LIBRARIES} )
 
-add_executable(pos_tagger src/tools/pos_tagger.cpp)
-add_dependencies(pos_tagger ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(pos_tagger ${catkin_LIBRARIES} meta-classify meta-sequence-analyzers meta-parser-analyzers)
+#add_executable(broken_node_1 src/tools/broken_node_1.cpp)
+#add_dependencies(broken_node_1 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+#target_link_libraries(broken_node_1 ${catkin_LIBRARIES} )
+
+#add_executable(pos_tagger src/tools/pos_tagger.cpp)
+#add_dependencies(pos_tagger ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+#target_link_libraries(pos_tagger ${catkin_LIBRARIES} meta-classify meta-sequence-analyzers meta-parser-analyzers)
 
 #link_directories(/tmp/usr/local/lib/)
 #add_executable(blinker src/tools/blinker.cpp)

@@ -14,12 +14,12 @@
 #include "human_msgs/Hands.h"
 #include "leap_motion_controller/Set.h"
 
-#include "context_manager/human_context/human_context_services.h"
+#include "context_manager/context_manager_services.h"
 #include "rmp/resource_manager.h"
 #include <vector>
 
 template <class OwnerTask>
-class HumanContextInterface
+class ContextManagerInterface
 {
 public:
 
@@ -27,26 +27,26 @@ public:
   typedef void (OwnerTask::*SpeechCallbackType)(std_msgs::String);
 
 
-  HumanContextInterface(TTP::BaseTask* task) : task_(task)
+  ContextManagerInterface(TTP::BaseTask* task) : task_(task)
   {
   }
 
   void initialize()
   {
     log_class_= "";
-    log_subsys_ = "human_context_interface";
+    log_subsys_ = "context_manager_interface";
     log_group_ = "interfaces." + task_->getPackageName();
-    name_ = task_->getName() + "/human_context_interface";
+    name_ = task_->getName() + "/context_manager_interface";
 
     // create resource manager
-    resource_manager_ = std::unique_ptr<rmp::ResourceManager<HumanContextInterface>>(new rmp::ResourceManager<HumanContextInterface>(name_, this));
+    resource_manager_ = std::unique_ptr<rmp::ResourceManager<ContextManagerInterface>>(new rmp::ResourceManager<ContextManagerInterface>(name_, this));
 
     // ensure that resource_manager was created
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
     validateInterface(prefix);
 
     // register status callback function
-    resource_manager_->registerStatusCb(&HumanContextInterface::statusInfoCb);
+    resource_manager_->registerStatusCb(&ContextManagerInterface::statusInfoCb);
   }
 
   void getGesture(std::vector<temoto_2::GestureSpecifier> gesture_specifiers, GestureCallbackType callback, OwnerTask* obj)
@@ -67,7 +67,7 @@ public:
     try
     {
       resource_manager_->template call<temoto_2::LoadGesture>(
-          human_context::srv_name::MANAGER, human_context::srv_name::GESTURE_SERVER, srv_msg);
+          context_manager::srv_name::MANAGER, context_manager::srv_name::GESTURE_SERVER, srv_msg);
       allocated_gestures_.push_back(srv_msg);
     }
     catch (...)
@@ -110,7 +110,7 @@ public:
     try
     {
       resource_manager_->template call<temoto_2::LoadSpeech>(
-          human_context::srv_name::MANAGER, human_context::srv_name::SPEECH_SERVER, srv_msg);
+          context_manager::srv_name::MANAGER, context_manager::srv_name::SPEECH_SERVER, srv_msg);
       allocated_speeches_.push_back(srv_msg);
     }
     catch (...)
@@ -185,7 +185,7 @@ void statusInfoCb(temoto_2::ResourceStatus& srv)
         resource_manager_->unloadClientResource(speech_it->response.rmp.resource_id);
         TEMOTO_DEBUG("Asking the same speech again");
         if (!resource_manager_->template call<temoto_2::LoadSpeech>(
-                human_context::srv_name::MANAGER, human_context::srv_name::SPEECH_SERVER, *speech_it))
+                context_manager::srv_name::MANAGER, context_manager::srv_name::SPEECH_SERVER, *speech_it))
         {
           throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK,
                                       error::Urgency::MEDIUM, prefix + " Failed to call service",
@@ -216,7 +216,7 @@ void statusInfoCb(temoto_2::ResourceStatus& srv)
         resource_manager_->unloadClientResource(gest_it->response.rmp.resource_id);
         TEMOTO_DEBUG("Asking the same gesture again");
         if (!resource_manager_->template call<temoto_2::LoadGesture>(
-                human_context::srv_name::MANAGER, human_context::srv_name::GESTURE_SERVER, *gest_it))
+                context_manager::srv_name::MANAGER, context_manager::srv_name::GESTURE_SERVER, *gest_it))
         {
           throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK,
                                       error::Urgency::MEDIUM, prefix + " Failed to call service",
@@ -249,7 +249,7 @@ void statusInfoCb(temoto_2::ResourceStatus& srv)
 
 
 
-  ~HumanContextInterface()
+  ~ContextManagerInterface()
   {
     // Let the context manager know, that task is finished and topics are unsubscribed
     //stopAllocatedServices();
@@ -272,7 +272,7 @@ private:
   OwnerTask* task_speech_obj_;
   OwnerTask* task_gesture_obj_;
   
-  std::unique_ptr<rmp::ResourceManager<HumanContextInterface>> resource_manager_;
+  std::unique_ptr<rmp::ResourceManager<ContextManagerInterface>> resource_manager_;
 
   std::string name_; 
   std::string log_class_, log_subsys_, log_group_;

@@ -1,33 +1,36 @@
 /*
  * TODO: * (?) Implement piping: raw_data -> filter_1 -> filter_n -> end_user
- *       * Decide wether its sensor manager's problem to look if different tasks
- *         are using the same resource or not. Its not a good idea to stop a node
- *         that is used by multiple tasks
- *       * START USING ROS NAMING CONVETIONS
  */
 
-#include "context_manager/human_context/human_context.h"
+#include "context_manager/context_manager.h"
 
-namespace human_context
+namespace context_manager
 {
-HumanContext::HumanContext() : resource_manager_(srv_name::MANAGER, this)
+ContextManager::ContextManager() : resource_manager_(srv_name::MANAGER, this)
 {
   log_class_ = "";
-  log_subsys_ = "human_context";
-  log_group_ = "human_context";
+  log_subsys_ = "context_manager";
+  log_group_ = "context_manager";
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   
-  // Fire up servers
-  resource_manager_.addServer<temoto_2::LoadGesture>(
-      srv_name::GESTURE_SERVER, &HumanContext::loadGestureCb, &HumanContext::unloadGestureCb);
+  /*
+   * Start the servers
+   */
 
-  resource_manager_.addServer<temoto_2::LoadSpeech>(
-      srv_name::SPEECH_SERVER, &HumanContext::loadSpeechCb, &HumanContext::unloadSpeechCb);
+  // Hand tracking service
+  resource_manager_.addServer<temoto_2::LoadGesture>(srv_name::GESTURE_SERVER
+                                                     , &ContextManager::loadGestureCb
+                                                     , &ContextManager::unloadGestureCb);
 
-  TEMOTO_INFO("Human Context is ready.");
+  // Speech recognition service
+  resource_manager_.addServer<temoto_2::LoadSpeech>(srv_name::SPEECH_SERVER
+                                                    , &ContextManager::loadSpeechCb
+                                                    , &ContextManager::unloadSpeechCb);
+
+  TEMOTO_INFO("Context Manager is ready.");
 }
 
-void HumanContext::loadGestureCb(temoto_2::LoadGesture::Request& req,
+void ContextManager::loadGestureCb(temoto_2::LoadGesture::Request& req,
                                  temoto_2::LoadGesture::Response& res)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
@@ -59,14 +62,14 @@ void HumanContext::loadGestureCb(temoto_2::LoadGesture::Request& req,
   // TODO: send a reasonable response message and code
 }
 
-void HumanContext::unloadGestureCb(temoto_2::LoadGesture::Request& req,
+void ContextManager::unloadGestureCb(temoto_2::LoadGesture::Request& req,
                                    temoto_2::LoadGesture::Response& res)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   TEMOTO_DEBUG("%s Gesture unloaded.", prefix.c_str());
 }
 
-void HumanContext::loadSpeechCb(temoto_2::LoadSpeech::Request& req,
+void ContextManager::loadSpeechCb(temoto_2::LoadSpeech::Request& req,
                                 temoto_2::LoadSpeech::Response& res)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
@@ -98,14 +101,14 @@ void HumanContext::loadSpeechCb(temoto_2::LoadSpeech::Request& req,
   // TODO: send a reasonable response message and code
 }
 
-void HumanContext::unloadSpeechCb(temoto_2::LoadSpeech::Request& req,
+void ContextManager::unloadSpeechCb(temoto_2::LoadSpeech::Request& req,
                                   temoto_2::LoadSpeech::Response& res)
 {
-  std::string prefix = "[HumanContext::unloadSpeechCb]:";
+  std::string prefix = "[ContextManager::unloadSpeechCb]:";
   TEMOTO_INFO("%s Speech unloaded.", prefix.c_str());
 }
 
-}  // namespace human_context
+}  // namespace context_manager
 
 /**
  * TODO: * Implement parsing multiple type requests: position(xyz) + orientation(rpy) +
@@ -114,7 +117,7 @@ void HumanContext::unloadSpeechCb(temoto_2::LoadSpeech::Request& req,
  * based on msgs
  *       * (?) Implement piping: raw_data -> filter_1 -> filter_n -> end_user
  */
-// bool HumanContext::parseGestureSpecifier (temoto_2::gestureSpecifier spec)
+// bool ContextManager::parseGestureSpecifier (temoto_2::gestureSpecifier spec)
 //{
 
 //}

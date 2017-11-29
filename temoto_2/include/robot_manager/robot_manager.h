@@ -5,7 +5,7 @@
 #include "common/temoto_id.h"
 #include "robot_manager/robot_manager_services.h"
 #include "process_manager/process_manager_services.h"
-#include "context_manager/human_context/human_context_services.h"
+#include "context_manager/context_manager_services.h"
 #include "rmp/resource_manager.h"
 #include "rmp/config_synchronizer.h"
 #include "temoto_2/ConfigSync.h"
