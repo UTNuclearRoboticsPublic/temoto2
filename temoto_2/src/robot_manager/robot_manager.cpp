@@ -67,7 +67,6 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   TEMOTO_INFO("%s Starting to load robot '%s'...", prefix.c_str(), req.robot_name.c_str());
 
-
   // Find the suitable robot and fill the process manager service request
   auto info_ptr = findRobot(req.robot_name, local_robot_infos_);
   if (info_ptr)
@@ -91,32 +90,46 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
       while (!nh_.hasParam("robot_description"))
       {
         TEMOTO_DEBUG("%s Waiting for robot_description ...", prefix.c_str());
+        if (resource_manager_.isResourceFailed(load_proc_srvc.response.rmp.resource_id))
+        {
+          res.rmp.code = rmp::status_codes::FAILED;
+          res.rmp.message = "Loading was cancelled because got FAILED status from process manager";
+          break;
+        }
+
         ros::Duration(0.2).sleep();
       }
-      ros::Duration(0.5).sleep();  // In case there is anythin else to load
-      try
+      // Wait a little longer, in case there is anythin else to load
+      ros::Duration(0.5).sleep();  
+
+      if (res.rmp.code == rmp::status_codes::FAILED)
       {
-        active_robot_ = std::make_shared<Robot>(info_ptr);
-        loaded_robots_.emplace(load_proc_srvc.response.rmp.resource_id, active_robot_);
+        try
+        {
+          active_robot_ = std::make_shared<Robot>(info_ptr);
+          loaded_robots_.emplace(load_proc_srvc.response.rmp.resource_id, active_robot_);
+          info_ptr->adjustReliability(1.0);
+          TEMOTO_DEBUG("%s Robot '%s' loaded.", prefix.c_str(), req.robot_name.c_str());
+          res.rmp = load_proc_srvc.response.rmp;
+        }
+        catch (...)
+        {
+          TEMOTO_ERROR("%s Exception occured while creating Robot object.", prefix.c_str());
+          res.rmp.message = "Exception while creating Robot object.";
+
+        }
       }
-      catch(...)
+      else
       {
-        TEMOTO_ERROR("%s Exception occured while creating Robot object.", prefix.c_str());
+        info_ptr->adjustReliability(0.0);
+        res.rmp = load_proc_srvc.response.rmp;
       }
     }
     else
     {
       TEMOTO_ERROR("%s Failed to call to ProcessManager.", prefix.c_str());
-      return;
     }
 
-    res.rmp.code = load_proc_srvc.response.rmp.code;
-    res.rmp.message = load_proc_srvc.response.rmp.message;
-
-    // Increase or decrease reliability depending on the return code
-    (res.rmp.code == 0) ? info_ptr->adjustReliability(1.0) : info_ptr->adjustReliability(0.0);
-
-    TEMOTO_DEBUG("%s Robot '%s' loaded.", prefix.c_str(), req.robot_name.c_str());
     return;
   }
 
@@ -126,9 +139,12 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
   {
     temoto_2::RobotLoad load_robot_srvc;
     load_robot_srvc.request.robot_name = req.robot_name;
-    TEMOTO_INFO("%s RobotManager is forwarding request: '%s'",prefix.c_str(),req.robot_name.c_str());
+    TEMOTO_INFO("%s RobotManager is forwarding request: '%s'", prefix.c_str(),
+                req.robot_name.c_str());
 
-    if (resource_manager_.call<temoto_2::RobotLoad>(robot_manager::srv_name::MANAGER, robot_manager::srv_name::SERVER_LOAD, load_robot_srvc, info_ptr->getTemotoNamespace()))
+    if (resource_manager_.call<temoto_2::RobotLoad>(
+            robot_manager::srv_name::MANAGER, robot_manager::srv_name::SERVER_LOAD, load_robot_srvc,
+            info_ptr->getTemotoNamespace()))
     {
       TEMOTO_DEBUG("%s Call to remote RobotManager was sucessful.", prefix.c_str());
       res.rmp.code = load_robot_srvc.response.rmp.code;
@@ -138,7 +154,7 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
         active_robot_ = std::make_shared<Robot>(info_ptr);
         loaded_robots_.emplace(load_robot_srvc.response.rmp.resource_id, active_robot_);
       }
-      catch(...)
+      catch (...)
       {
         TEMOTO_ERROR("%s Exception occured while creating Robot object.", prefix.c_str());
       }
@@ -149,15 +165,13 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
       return;
     }
 
-
-    
     return;
   }
 
   // no local nor remote robot found
-    res.rmp.code = 1;
-    res.rmp.message = "Robot manager did not find a suitable robot.";
-    TEMOTO_ERROR("%s %s", prefix.c_str(), res.rmp.message.c_str());
+  res.rmp.code = 1;
+  res.rmp.message = "Robot manager did not find a suitable robot.";
+  TEMOTO_ERROR("%s %s", prefix.c_str(), res.rmp.message.c_str());
 }
 
 void RobotManager::unloadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad::Response& res)

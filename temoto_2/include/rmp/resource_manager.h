@@ -309,6 +309,23 @@ public:
     }
   }
 
+  void setResourceFailed(temoto_id::ID resource_id)
+  {
+    RMP_DEBUG("Setting failed resource %d: ", resource_id);
+    waitForLock(failed_resource_mutex_);
+    failed_resources_.emplace(resource_id);
+    failed_resource_mutex_.unlock();
+  }
+
+  bool isResourceFailed(temoto_id::ID resource_id)
+  {
+    waitForLock(failed_resource_mutex_);
+    bool is_failed = (failed_resources_.find(resource_id) != failed_resources_.end());
+    RMP_DEBUG("isResFailed %d failed:%d size:%lu", resource_id, is_failed, failed_resources_.size());
+    failed_resource_mutex_.unlock();
+    return is_failed;
+  }
+
   bool statusCallback(temoto_2::ResourceStatus::Request& req,
                       temoto_2::ResourceStatus::Response& res)
   {
@@ -321,6 +338,10 @@ public:
 
     if (req.status_code == status_codes::FAILED)
     {
+      // reqister failed resource
+      setResourceFailed(req.resource_id);
+      
+      
       //      ROS_INFO("START DEBUGGING CLIENTS");
       //      for (auto& client : clients_)
       //      {
@@ -435,7 +456,7 @@ private:
     while (!m.try_lock())
     {
       RMP_DEBUG("%s Waiting for lock()", prefix.c_str());
-      ros::Duration(0.01).sleep();  // sleep for few ms
+      ros::Duration(0.2).sleep();  // sleep for few ms
     }
     // RMP_DEBUG("%s Obtained lock()", prefix.c_str());
   }
@@ -448,6 +469,7 @@ private:
   std::shared_ptr<BaseResourceServer<Owner>> active_server_;
   temoto_id::ID last_generated_id;
   void (Owner::*status_callback_)(temoto_2::ResourceStatus&);
+  std::set<temoto_id::ID> failed_resources_;
 
   ros::AsyncSpinner status_spinner_;
   ros::AsyncSpinner unload_spinner_;
@@ -462,6 +484,7 @@ private:
   std::mutex servers_mutex_;
   std::mutex clients_mutex_;
   std::mutex active_server_mutex_;
+  std::mutex failed_resource_mutex_;
 
   // log prefixes
   std::string log_subsys_, log_class_;

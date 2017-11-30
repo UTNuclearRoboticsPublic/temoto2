@@ -15,6 +15,7 @@ Sensors:
 Robots:
 - robot_name: "ur5"
   package_name: "task_robot"
+  #  executable: "ur5.launch"
   executable: "ur5.launch"
   description: "Heavy duty piece made by Universal Robotics"
   reliability: 0.5
