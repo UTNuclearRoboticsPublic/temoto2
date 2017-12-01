@@ -64,8 +64,12 @@ public:
     if (resource_manager_-> template call<temoto_2::RobotLoad>(
             robot_manager::srv_name::MANAGER, robot_manager::srv_name::SERVER_LOAD, load_srv))
     {
-
       TEMOTO_DEBUG("%s Call successful", prefix.c_str());
+      if(load_srv.response.rmp.code == rmp::status_codes::FAILED)
+      {
+        TEMOTO_ERROR("%s Failed to load the robot '%s': %s", prefix.c_str(), robot_name.c_str(), load_srv.response.rmp.message.c_str());
+      }
+      
     }
     else
     {

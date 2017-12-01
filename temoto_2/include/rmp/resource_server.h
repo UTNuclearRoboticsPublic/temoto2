@@ -137,8 +137,8 @@ public:
 
         // prepare the response for the client
         res.rmp.resource_id = ext_resource_id;
-        res.rmp.code = status_codes::OK;
-        res.rmp.message = "New resource sucessfully loaded.";
+        //res.rmp.code = status_codes::OK;
+        //res.rmp.message = "New resource sucessfully loaded.";
       }
       else
       {
@@ -155,8 +155,8 @@ public:
       queries_.back().addExternalResource(ext_resource_id, req.rmp.status_topic);
       res = found_query->getMsg().response;
       res.rmp.resource_id = ext_resource_id;
-      res.rmp.code = status_codes::OK;
-      res.rmp.message = "Sucessfully sharing existing resource.";
+      //res.rmp.code = status_codes::OK;
+      //res.rmp.message = "Sucessfully sharing existing resource.";
     }
 
     // release the queries lock

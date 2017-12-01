@@ -34,6 +34,7 @@ class BaseResourceClient
     virtual size_t getQueryCount() const = 0;
     virtual void unloadResource(temoto_id::ID resource_id) = 0;
     virtual void setFailedFlag(temoto_id::ID external_resource_id) = 0;
+    virtual bool hasFailed(temoto_id::ID internal_resource_id) = 0;
     virtual void unloadResources() = 0;
     virtual bool internalResourceExists(temoto_id::ID) = 0;
     virtual void debug() = 0;

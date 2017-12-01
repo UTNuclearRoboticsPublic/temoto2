@@ -158,7 +158,7 @@ public:
     }
   }
 
-  //TODO: REMOVE THIS STUFF
+  //TODO: Consider creating additional states to a resource
   void setFailedFlag(temoto_id::ID external_resource_id)
   {
     auto q_it = std::find_if(queries_.begin(), queries_.end(),
@@ -169,6 +169,20 @@ public:
     {
       q_it->failed_ = true;
     }
+  }
+
+  bool hasFailed(temoto_id::ID internal_resource_id)
+  {
+    auto q_it = std::find_if(queries_.begin(), queries_.end(),
+                             [&](const ClientQuery<ServiceType, Owner>& q) -> bool {
+                               return q.internalResourceExists(internal_resource_id);
+                             });
+    if (q_it != queries_.end())
+    {
+      return q_it->failed_;
+    }
+    // Return with false if resource was not found from this client
+    return false; 
   }
 
   /// Send unload service request to the server

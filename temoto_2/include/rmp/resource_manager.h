@@ -309,21 +309,18 @@ public:
     }
   }
 
-  void setResourceFailed(temoto_id::ID resource_id)
+// This method returns true when statusCallback() has set the FAILED flag to the given resource
+  bool hasFailed(temoto_id::ID resource_id)
   {
-    RMP_DEBUG("Setting failed resource %d: ", resource_id);
-    waitForLock(failed_resource_mutex_);
-    failed_resources_.emplace(resource_id);
-    failed_resource_mutex_.unlock();
-  }
-
-  bool isResourceFailed(temoto_id::ID resource_id)
-  {
-    waitForLock(failed_resource_mutex_);
-    bool is_failed = (failed_resources_.find(resource_id) != failed_resources_.end());
-    RMP_DEBUG("isResFailed %d failed:%d size:%lu", resource_id, is_failed, failed_resources_.size());
-    failed_resource_mutex_.unlock();
-    return is_failed;
+    waitForLock(clients_mutex_);
+    auto client_it =
+        std::find_if(clients_.begin(), clients_.end(),
+                     [&](const std::shared_ptr<BaseResourceClient<Owner>>& client_ptr) -> bool {
+                       return client_ptr->hasFailed(resource_id);
+                     });
+    bool has_failed =  client_it != clients_.end();
+    clients_mutex_.unlock();
+    return has_failed;
   }
 
   bool statusCallback(temoto_2::ResourceStatus::Request& req,
@@ -339,8 +336,6 @@ public:
     if (req.status_code == status_codes::FAILED)
     {
       // reqister failed resource
-      setResourceFailed(req.resource_id);
-      
       
       //      ROS_INFO("START DEBUGGING CLIENTS");
       //      for (auto& client : clients_)
