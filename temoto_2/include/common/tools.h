@@ -3,8 +3,7 @@
 
 #include <ros/ros.h>
 #include <string>
-#include <stdlib.h> // for getenv
-
+#include <stdlib.h>  // for getenv
 
 namespace common
 {
@@ -36,27 +35,46 @@ inline std::string generateLogPrefix(std::string subsys_name, std::string class_
 
 inline const std::string getTemotoNamespace()
 {
-//  std::string temoto_name_str;
-//
-//  char* temoto_name_char = NULL;
-//  temoto_name_char = getenv("TEMOTO_NAMESPACE");
-//  if (temoto_name_char != NULL)
-//  {
-//    temoto_name_str = temoto_name_char;
-//  }
-//  else
-//  {
-//    temoto_name_str = "temoto_2_default";
-//  }
+  //  std::string temoto_name_str;
+  //
+  //  char* temoto_name_char = NULL;
+  //  temoto_name_char = getenv("TEMOTO_NAMESPACE");
+  //  if (temoto_name_char != NULL)
+  //  {
+  //    temoto_name_str = temoto_name_char;
+  //  }
+  //  else
+  //  {
+  //    temoto_name_str = "temoto_2_default";
+  //  }
 
   std::string temoto_ns = ::ros::this_node::getNamespace();
-  temoto_ns = ::ros::names::clean(temoto_ns); // clean up double and trailing slashes
-  if(temoto_ns.size()>0 and temoto_ns[0] == '/')
+  temoto_ns = ::ros::names::clean(temoto_ns);  // clean up double and trailing slashes
+  if (temoto_ns.size() > 0 and temoto_ns[0] == '/')
   {
-    temoto_ns.erase(temoto_ns.begin()); // remove the leading '/'
+    temoto_ns.erase(temoto_ns.begin());  // remove the leading '/'
   }
 
   return temoto_ns;
+}
+
+inline std::string getAbsoluteTopic(const std::string& topic_in)
+{
+  std::string abs_topic;
+  if (topic_in.size())
+  {
+    if (topic_in[0] == '/')
+    {
+      // Specified topic is already absolute
+      abs_topic = topic_in;
+    }
+    else
+    {
+      // Add current namespace as a prefix.
+      abs_topic = '/' + getTemotoNamespace() + '/' + topic_in;
+    }
+  }
+  return abs_topic;
 }
 }
 

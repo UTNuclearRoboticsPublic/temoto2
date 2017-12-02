@@ -1,7 +1,9 @@
+RMPRequest rmp
 bool use_default_target
 geometry_msgs/PoseStamped target_pose
 
 ---
 
+RMPResponse rmp
 int64 code
 string message

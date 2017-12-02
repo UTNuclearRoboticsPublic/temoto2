@@ -198,7 +198,7 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
 
       // fill in the response about which particular sensor was chosen
       res.package_name = sensor_ptr->getPackageName();
-      res.topic = sensor_ptr->getTopic();
+      res.topic = common::getAbsoluteTopic(sensor_ptr->getTopic());
       res.executable = sensor_ptr->getExecutable();
       res.rmp = load_process_msg.response.rmp;
     }

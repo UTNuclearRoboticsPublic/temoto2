@@ -106,7 +106,7 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
       // check if resource the wait block above was interrupted via FAILED status message
       if (res.rmp.code == rmp::status_codes::FAILED)
       {
-        TEMOTO_WARN("%s No need to wait because status was received that resource has FAILED", prefix.c_str());
+        TEMOTO_WARN("%s No need to wait because status about failed resource was received.", prefix.c_str());
         info_ptr->adjustReliability(0.0);
         res.rmp.message = "Robot loading was interrupted by FAILED status message";
         res.rmp.code = rmp::status_codes::FAILED;
@@ -342,10 +342,12 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
         active_robot_->plan("manipulator", req.target_pose);
       }
       TEMOTO_DEBUG("%s DONE PLANNING...", prefix.c_str());
+      res.rmp.message = "Planning sent to MoveIt";
+      res.rmp.code = rmp::status_codes::OK;
     }
     else
     {
-      // Forward the planning command to a remote robot manager
+      // This robot is present in a remote robotmanager, forward the planning command to there.
       std::string topic = "/" + active_robot_->getRobotInfo()->getTemotoNamespace() + "/" +
                           robot_manager::srv_name::SERVER_PLAN;
       ros::ServiceClient client_plan = nh_.serviceClient<temoto_2::RobotPlan>(topic);
@@ -359,13 +361,17 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
       }
       else
       {
-        TEMOTO_ERROR("%s Call to remote RobotManager failed.", prefix.c_str());
+        TEMOTO_ERROR("%s Call to remote RobotManager service failed.", prefix.c_str());
+        res.rmp.message = "Call to remote RobotManager service failed.";
+        res.rmp.code = rmp::status_codes::FAILED;
       }
     }
   }
   else
   {
     TEMOTO_ERROR("%s Unable to plan, because the robot is not loaded.", prefix.c_str());
+    res.rmp.message = "Unable to plan, because the robot is not loaded.";
+    res.rmp.code = rmp::status_codes::FAILED;
   }
 
   return true;
@@ -378,8 +384,34 @@ bool RobotManager::execCb(temoto_2::RobotExecute::Request& req,
   TEMOTO_INFO("%s EXECUTING...", prefix.c_str());
   if(active_robot_)
   {
-    active_robot_->execute("manipulator");
-    TEMOTO_DEBUG("%s DONE EXECUTING...", prefix.c_str());
+    if(active_robot_->isLocal())
+    {
+      active_robot_->execute("manipulator");
+      TEMOTO_DEBUG("%s DONE EXECUTING...", prefix.c_str());
+      res.rmp.message = "Execute command sent to MoveIt";
+      res.rmp.code = rmp::status_codes::OK;
+    }
+    else
+    {
+      // This robot is present in a remote robotmanager, forward the command to there.
+      std::string topic = "/" + active_robot_->getRobotInfo()->getTemotoNamespace() + "/" +
+                          robot_manager::srv_name::SERVER_EXECUTE;
+      ros::ServiceClient client_exec = nh_.serviceClient<temoto_2::RobotExecute>(topic);
+      temoto_2::RobotExecute fwd_exec_srvc;
+      fwd_exec_srvc.request = req;
+      fwd_exec_srvc.response = res;
+      if(client_exec.call(fwd_exec_srvc))
+      {
+        TEMOTO_DEBUG("%s Call to remote RobotManager was sucessful.", prefix.c_str());
+        res = fwd_exec_srvc.response;
+      }
+      else
+      {
+        TEMOTO_ERROR("%s Call to remote RobotManager service failed.", prefix.c_str());
+        res.rmp.message = "Call to remote RobotManager service failed.";
+        res.rmp.code = rmp::status_codes::FAILED;
+      }
+    }
   }
   else
   {

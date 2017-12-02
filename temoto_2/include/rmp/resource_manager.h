@@ -464,7 +464,6 @@ private:
   std::shared_ptr<BaseResourceServer<Owner>> active_server_;
   temoto_id::ID last_generated_id;
   void (Owner::*status_callback_)(temoto_2::ResourceStatus&);
-  std::set<temoto_id::ID> failed_resources_;
 
   ros::AsyncSpinner status_spinner_;
   ros::AsyncSpinner unload_spinner_;
@@ -479,7 +478,6 @@ private:
   std::mutex servers_mutex_;
   std::mutex clients_mutex_;
   std::mutex active_server_mutex_;
-  std::mutex failed_resource_mutex_;
 
   // log prefixes
   std::string log_subsys_, log_class_;

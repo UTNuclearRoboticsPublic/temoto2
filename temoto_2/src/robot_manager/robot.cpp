@@ -52,7 +52,9 @@ void Robot::plan(const std::string& planning_group_name, geometry_msgs::PoseStam
   {
     group_it->second->setStartStateToCurrentState();
     group_it->second->setPoseTarget(target_pose);
-    is_plan_valid_ = group_it->second->plan(last_plan);
+    int* bbb = new int(35); 
+    char* c = (char*)bbb;
+    is_plan_valid_ = static_cast<bool>( group_it->second->plan(last_plan) );
     TEMOTO_DEBUG("%s Plan %s", prefix.c_str(), is_plan_valid_ ? "FOUND" : "FAILED");
   }
   else
@@ -79,7 +81,7 @@ void Robot::execute(const std::string& planning_group_name)
     bool success;
     group_it->second->setStartStateToCurrentState();
     group_it->second->setRandomTarget();
-    success = group_it->second->execute(last_plan);
+    success = static_cast<bool>(group_it->second->execute(last_plan));
     TEMOTO_DEBUG("%s Execution %s", prefix.c_str(), success ? "SUCCESSFUL" : "FAILED");
   }
   else
