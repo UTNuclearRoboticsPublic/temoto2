@@ -4,15 +4,13 @@
 #include <yaml-cpp/yaml.h>
 #include <fstream>
 
-//#include "temoto_2/LoadGesture.h"
-//#include "rviz/QMap.h"
-//#include "rviz/yaml_config_reader.h"
-//#include "rviz/config.h"
 
 namespace robot_manager
 {
-RobotManager::RobotManager() : resource_manager_(srv_name::MANAGER, this)
+RobotManager::RobotManager()
+  : resource_manager_(srv_name::MANAGER, this)
   , config_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &RobotManager::syncCb, this)
+  , mode_(modes::AUTO)
 {
   log_class_ = "";
   log_subsys_ = "robot_manager";
@@ -27,7 +25,7 @@ RobotManager::RobotManager() : resource_manager_(srv_name::MANAGER, this)
   // Ask remote robot managers to send their robot infos
   config_syncer_.requestRemoteConfigs();
 
-  // Fire up additional servers for executing asynchronous actions.
+  // Fire up additional servers for performing various actions on a robot.
   server_plan_ =
       nh_.advertiseService(robot_manager::srv_name::SERVER_PLAN, &RobotManager::planCb, this);
   server_exec_ =
@@ -36,7 +34,9 @@ RobotManager::RobotManager() : resource_manager_(srv_name::MANAGER, this)
                                               &RobotManager::getRvizConfigCb, this);
   server_set_target_ = nh_.advertiseService(robot_manager::srv_name::SERVER_SET_TARGET,
                                             &RobotManager::setTargetCb, this);
-  
+  server_set_mode_ = nh_.advertiseService(robot_manager::srv_name::SERVER_SET_TARGET,
+                                            &RobotManager::setModeCb, this);
+
   // Read the robot information for this manager. 
   std::string yaml_filename = ros::package::getPath(ROS_PACKAGE_NAME) + "/conf/" +
                               common::getTemotoNamespace() + ".yaml";
@@ -342,8 +342,8 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
         active_robot_->plan("manipulator", req.target_pose);
       }
       TEMOTO_DEBUG("%s DONE PLANNING...", prefix.c_str());
-      res.rmp.message = "Planning sent to MoveIt";
-      res.rmp.code = rmp::status_codes::OK;
+      res.message = "Planning sent to MoveIt";
+      res.code = rmp::status_codes::OK;
     }
     else
     {
@@ -362,16 +362,16 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
       else
       {
         TEMOTO_ERROR("%s Call to remote RobotManager service failed.", prefix.c_str());
-        res.rmp.message = "Call to remote RobotManager service failed.";
-        res.rmp.code = rmp::status_codes::FAILED;
+        res.message = "Call to remote RobotManager service failed.";
+        res.code = rmp::status_codes::FAILED;
       }
     }
   }
   else
   {
     TEMOTO_ERROR("%s Unable to plan, because the robot is not loaded.", prefix.c_str());
-    res.rmp.message = "Unable to plan, because the robot is not loaded.";
-    res.rmp.code = rmp::status_codes::FAILED;
+    res.message = "Unable to plan, because the robot is not loaded.";
+    res.code = rmp::status_codes::FAILED;
   }
 
   return true;
@@ -388,8 +388,8 @@ bool RobotManager::execCb(temoto_2::RobotExecute::Request& req,
     {
       active_robot_->execute("manipulator");
       TEMOTO_DEBUG("%s DONE EXECUTING...", prefix.c_str());
-      res.rmp.message = "Execute command sent to MoveIt";
-      res.rmp.code = rmp::status_codes::OK;
+      res.message = "Execute command sent to MoveIt";
+      res.code = rmp::status_codes::OK;
     }
     else
     {
@@ -408,8 +408,8 @@ bool RobotManager::execCb(temoto_2::RobotExecute::Request& req,
       else
       {
         TEMOTO_ERROR("%s Call to remote RobotManager service failed.", prefix.c_str());
-        res.rmp.message = "Call to remote RobotManager service failed.";
-        res.rmp.code = rmp::status_codes::FAILED;
+        res.message = "Call to remote RobotManager service failed.";
+        res.code = rmp::status_codes::FAILED;
       }
     }
   }
@@ -452,7 +452,7 @@ bool RobotManager::setTargetCb(temoto_2::RobotSetTarget::Request& req,
   TEMOTO_INFO("%s Looking for target of type '%s'", prefix.c_str(), req.target_type.c_str());
 
 
-  // Only "hand" type is experimentally implemented
+  // TODO: Only "hand" type is experimentally implemented
   if (req.target_type == "hand")
   {
     std::vector<temoto_2::GestureSpecifier> gesture_specifiers;
@@ -483,9 +483,62 @@ bool RobotManager::setTargetCb(temoto_2::RobotSetTarget::Request& req,
 return true;
 }
 
-// Take palm pose of whichever hand is present, prefer left_hand.
-// Store the pose in a class member for later use when planning is requested.
-void RobotManager::targetPoseCb(const leap_motion_controller::Set& set)
+bool RobotManager::setModeCb(temoto_2::RobotSetMode::Request& req,
+                             temoto_2::RobotSetMode::Response& res)
+{
+  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  TEMOTO_INFO("%s SET MODE...", prefix.c_str());
+  // input validation
+  if (req.mode != modes::AUTO && req.mode != modes::NAVIGATION && req.mode != modes::MANIPULATION)
+  {
+    TEMOTO_ERROR("%s Mode '%s' is not supported.", prefix.c_str(), req.mode.c_str());
+    res.message = "Mode is not supported.";
+    res.code = rmp::status_codes::FAILED;
+    return true;
+  }
+
+  if(active_robot_)
+  {
+    if(active_robot_->isLocal())
+    {
+      mode_ = req.mode;
+      TEMOTO_DEBUG("%s Robot mode set to: %s...", prefix.c_str(), mode_.c_str());
+      res.message = "Execute command sent to MoveIt";
+      res.code = rmp::status_codes::OK;
+    }
+    else
+    {
+      // This robot is present in a remote robotmanager, forward the command to there.
+      std::string topic = "/" + active_robot_->getRobotInfo()->getTemotoNamespace() + "/" +
+        robot_manager::srv_name::SERVER_SET_MODE;
+      ros::ServiceClient client_mode = nh_.serviceClient<temoto_2::RobotSetMode>(topic);
+      temoto_2::RobotSetMode fwd_mode_srvc;
+      fwd_mode_srvc.request = req;
+      fwd_mode_srvc.response = res;
+      if(client_mode.call(fwd_mode_srvc))
+      {
+        TEMOTO_DEBUG("%s Call to remote RobotManager was sucessful.", prefix.c_str());
+        res = fwd_mode_srvc.response;
+      }
+      else
+      {
+        TEMOTO_ERROR("%s Call to remote RobotManager service failed.", prefix.c_str());
+        res.message = "Call to remote RobotManager service failed.";
+        res.code = rmp::status_codes::FAILED;
+      }
+    }
+  }
+  else
+  {
+    TEMOTO_ERROR("%s Unable to set mode, because the robot is not loaded.", prefix.c_str());
+  }
+  return true;
+
+}
+
+    // Take palm pose of whichever hand is present, prefer left_hand.
+    // Store the pose in a class member for later use when planning is requested.
+    void RobotManager::targetPoseCb(const leap_motion_controller::Set& set)
 {
   if (set.left_hand.is_present)
   {

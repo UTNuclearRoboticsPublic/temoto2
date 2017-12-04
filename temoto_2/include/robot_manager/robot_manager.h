@@ -75,6 +75,8 @@ private:
 
   bool setTargetCb(temoto_2::RobotSetTarget::Request& req, temoto_2::RobotSetTarget::Response& res);
 
+  bool setModeCb(temoto_2::RobotSetMode::Request& req, temoto_2::RobotSetMode::Response& res);
+
   void syncCb(const temoto_2::ConfigSync& msg);
 
   void advertiseLocalRobotInfos();
@@ -97,6 +99,7 @@ private:
   RobotInfos local_robot_infos_;
   RobotInfos remote_robot_infos_;
 
+  std::string mode_;
   geometry_msgs::PoseStamped default_target_pose_;
 
   std::string log_class_, log_subsys_, log_group_;
@@ -106,11 +109,13 @@ private:
   ros::ServiceServer server_exec_;
   ros::ServiceServer server_get_rviz_cfg_;
   ros::ServiceServer server_set_target_;
+  ros::ServiceServer server_set_mode_;
 
   ros::ServiceClient client_plan_;
   ros::ServiceClient client_exec_;
   ros::ServiceClient client_get_rviz_cfg_;
   ros::ServiceClient client_set_target_;
+  ros::ServiceClient client_set_mode_;
 
   ros::Subscriber target_pose_sub_;
   temoto_2::LoadGesture hand_srv_msg_;
