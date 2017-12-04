@@ -1,7 +1,5 @@
-RMPRequest rmp
 
 ---
 
-RMPResponse rmp
 int64 code
 string message
