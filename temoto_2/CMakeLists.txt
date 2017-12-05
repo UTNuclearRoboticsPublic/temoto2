@@ -104,14 +104,12 @@ catkin_package(
 )
 
 include_directories(SYSTEM ${Boost_INCLUDE_DIR} ${EIGEN_INCLUDE_DIRS})
-
 include_directories(
   include/
   /tmp/usr/local/include/
   ${catkin_INCLUDE_DIRS}
   ${TinyXML_INCLUDE_DIRS}
   ${TBB_INCLUDE_DIRS}
-  #${MeTA_INCLUDE_DIRS}
 )
 
 # # # # # # # # # # # #   TEMOTO SYSTEM NODES   # # # # # # # # # # # # # # #
@@ -144,48 +142,33 @@ add_executable(output_manager src/output_manager/output_manager.cpp
 add_dependencies(output_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(output_manager ${catkin_LIBRARIES})
 
+
 # # # # # # # # # # # #
-# CORE
+# TPP
 # # # # # # # # # # # #
-add_executable(agent_core src/core/agent_core.cpp 
-			  src/core/language_processor/language_processor.cpp
-			  src/core/task_handler/task_handler.cpp
-			  src/core/task_handler/description_processor.cpp
-			  src/core/task_handler/task_info.cpp
-			  src/base_error/base_error.cpp
-)
-
-add_dependencies(agent_core ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(agent_core
-   ${catkin_LIBRARIES}
-   ${class_loader_LIBRARIES}
-   ${TinyXML_LIBRARIES}
-   ${TBB_LIBRARIES} )
-add_dependencies(agent_core ${catkin_EXPORTED_TARGETS})
-
-
+add_library(ttp STATIC src/TTP/language_processors/meta/meta_lp.cpp
+                src/TTP/language_processors/meta/branch_finder.cpp
+                src/TTP/task_manager.cpp
+                src/TTP/task_descriptor_processor.cpp
+                src/TTP/io_descriptor.cpp
+                src/TTP/task_descriptor.cpp
+                src/TTP/task_tree_node.cpp
+                src/TTP/task_tree.cpp
+                src/TTP/task_container.cpp
+                src/base_error/base_error.cpp)
+                
+add_dependencies(ttp ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(ttp ${catkin_LIBRARIES}
+                          ${TinyXML_LIBRARIES}
+                          ${TBB_LIBRARIES}
+                          meta-classify meta-sequence-analyzers meta-parser-analyzers )
 # # # # # # # # # # # #
 # NEW CORE
 # # # # # # # # # # # #
 
-add_executable(temoto_agent src/core/temoto_agent.cpp
-                            src/TTP/language_processors/meta/meta_lp.cpp
-                            src/TTP/language_processors/meta/branch_finder.cpp
-                            src/TTP/task_manager.cpp
-                            src/TTP/task_descriptor_processor.cpp
-                            src/TTP/io_descriptor.cpp
-                            src/TTP/task_descriptor.cpp
-                            src/TTP/task_tree_node.cpp
-                            src/TTP/task_tree.cpp
-                            src/TTP/task_container.cpp
-                            src/base_error/base_error.cpp)
-
+add_executable(temoto_agent src/core/temoto_agent.cpp)
 add_dependencies(temoto_agent ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(temoto_agent 
-                      ${catkin_LIBRARIES}
-                      ${TinyXML_LIBRARIES}
-                      ${TBB_LIBRARIES}
-                      meta-classify meta-sequence-analyzers meta-parser-analyzers)
+target_link_libraries(temoto_agent ttp)
 
 
 # # # # # # # # # # # #
@@ -203,24 +186,12 @@ target_link_libraries(process_manager ${catkin_LIBRARIES} )
 add_executable(robot_manager src/robot_manager/robot_manager.cpp
 	                           src/robot_manager/robot_manager_node.cpp
                              src/robot_manager/robot.cpp
-                             src/robot_manager/robot_info.cpp)
-add_dependencies(robot_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(robot_manager ${catkin_LIBRARIES} yaml-cpp)
+                             src/robot_manager/robot_info.cpp
+                              src/base_error/base_error.cpp)
 
-#add_library(ttp src/TTP/language_processors/meta/meta_lp.cpp
-#                src/TTP/language_processors/meta/branch_finder.cpp
-#                src/TTP/task_manager.cpp
-#                src/TTP/task_descriptor_processor.cpp
-#                src/TTP/io_descriptor.cpp
-#                src/TTP/task_descriptor.cpp
-#                src/TTP/task_tree_node.cpp
-#                src/TTP/task_tree.cpp
-#                src/TTP/task_container.cpp)
-#add_dependencies(ttp ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-#target_link_libraries(ttp ${catkin_LIBRARIES}
-#                          ${TinyXML_LIBRARIES}
-#                          ${TBB_LIBRARIES}
-#                          meta-classify meta-sequence-analyzers meta-parser-analyzers )
+  add_dependencies(robot_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+  target_link_libraries(robot_manager ${catkin_LIBRARIES} yaml-cpp)
+
 
 # # # # # # # # # # # #   TESTING TOOLS   # # # # # # # # # # # # # # #
 

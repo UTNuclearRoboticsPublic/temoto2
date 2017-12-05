@@ -3,6 +3,7 @@
 #include "process_manager/process_manager_services.h"
 #include <yaml-cpp/yaml.h>
 #include <fstream>
+#include <sstream>
 
 #include "base_error/base_error.h"
 #include "robot_manager/robot_manager_errors.h"
@@ -37,7 +38,7 @@ RobotManager::RobotManager()
                                               &RobotManager::getRvizConfigCb, this);
   server_set_target_ = nh_.advertiseService(robot_manager::srv_name::SERVER_SET_TARGET,
                                             &RobotManager::setTargetCb, this);
-  server_set_mode_ = nh_.advertiseService(robot_manager::srv_name::SERVER_SET_TARGET,
+  server_set_mode_ = nh_.advertiseService(robot_manager::srv_name::SERVER_SET_MODE,
                                             &RobotManager::setModeCb, this);
 
   // Read the robot information for this manager. 
@@ -132,24 +133,23 @@ void RobotManager::loadLocalRobot(RobotInfoPtr info_ptr)
     waitForMoveGroup(load_proc_res.rmp.resource_id);
 
     active_robot_ = std::make_shared<Robot>(info_ptr);
-    loaded_robots_.emplace(load_proc_srvc.response.rmp.resource_id, active_robot_);
+    loaded_robots_.emplace(load_proc_res.rmp.resource_id, active_robot_);
     info_ptr->adjustReliability(1.0);
-    TEMOTO_DEBUG("%s Robot '%s' loaded.", prefix.c_str(), req.robot_name.c_str());
+    TEMOTO_DEBUG("%s Robot '%s' loaded.", prefix.c_str(), info_ptr->getName().c_str());
   }
   catch (error::ErrorStackUtil& e)
   {
-    if (e.getStack().back().code == robot_error::SERVICE_STATUS_FAIL)
+    if (e.getStack().front().code == robot_error::SERVICE_STATUS_FAIL)
     {
       info_ptr->adjustReliability(0.0);
     }
+    
     std::stringstream ss;
-    ss << prefix << " Exception occured while loading a robot:" << e;
-    TEMOTO_ERROR_STREAM(ss);
-    res.rmp.message = ss.str();
-    res.rmp.code = rmp::status_codes::FAILED;
+    ss << prefix << " Exception occured while loading a robot: " << e.getStack();
+    TEMOTO_ERROR_STREAM(ss.str());
+    e.forward(prefix);
+    throw e;
   }
-
-  return true;
 }
 
 void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad::Response& res)
@@ -164,12 +164,12 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
     try
     {
       loadLocalRobot(info_ptr);
-      res.code = 0;
-      res.message = "Robot sucessfully loaded.";
+      res.rmp.code = rmp::status_codes::FAILED;
+      res.rmp.message = "Robot sucessfully loaded.";
     }
     catch (error::ErrorStackUtil& e)
     {
-      TEMOTO_ERROR_STREAM("Failed to load local robot: " << e);
+      //TEMOTO_ERROR_STREAM("Failed to load local robot: " << e);
       return;
     }
     catch (...)
@@ -544,7 +544,7 @@ bool RobotManager::setModeCb(temoto_2::RobotSetMode::Request& req,
     {
       mode_ = req.mode;
       TEMOTO_DEBUG("%s Robot mode set to: %s...", prefix.c_str(), mode_.c_str());
-      res.message = "Robot mode set to '"+mode+"'.";
+      res.message = "Robot mode set to '" + mode_ + "'.";
       res.code = rmp::status_codes::OK;
     }
     else
