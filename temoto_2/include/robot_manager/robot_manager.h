@@ -92,6 +92,12 @@ private:
 
   void statusInfoCb(temoto_2::ResourceStatus& srv);
 
+  void loadLocalRobot(RobotInfoPtr info_ptr);
+
+  void rosExecute(const std::string& package_name, const std::string& executable, temoto_2::LoadProcess::Response& res);
+
+  void waitForMoveGroup(temoto_id::ID resource_id);
+
   typedef std::shared_ptr<Robot> RobotPtr;
   typedef std::map<temoto_id::ID, RobotPtr> Robots;
   RobotPtr active_robot_;

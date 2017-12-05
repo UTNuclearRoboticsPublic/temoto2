@@ -14,19 +14,24 @@ Sensors:
 
 Robots:
 - robot_name: "ur5"
-  package_name: "task_robot"
-  executable: "ur5.launch"
   description: "Heavy duty piece made by Universal Robotics"
   reliability: 0.5
-    
-- robot_name: "ur3"
   package_name: "task_robot"
-  executable: "ur3.launch"
-  description: "A little brother of the UR5"
-  reliability: 0.8
+  executable: "ur5.launch"
+  manipulation:
+    moveit_config_package: "ur5_moveit_config"
+  navigation:
+    package_name: "task_robot"
+    executable: "ur5.launch"
 
-- robot_name: "youbot"
-  package_name: "task_robot"
-  executable: "youbot.launch"
-  description: "Yet Another Robot in temoto"
-  reliability: 0.7
+  #- robot_name: "ur3"
+  #  package_name: "task_robot"
+  #  executable: "ur3.launch"
+  #  description: "A little brother of the UR5"
+  #  reliability: 0.8
+  #
+  #- robot_name: "youbot"
+  #  package_name: "task_robot"
+  #  executable: "youbot.launch"
+  #  description: "Yet Another Robot in temoto"
+  #  reliability: 0.7

@@ -62,7 +62,7 @@ public:
                        Subsystem subsystem,
                        Urgency urgency,
                        std::string message,
-                       ros::Time timeStamp );
+                       ros::Time timeStamp = ros::Time::now());
 
     /**
      * @brief getStack
@@ -82,7 +82,7 @@ public:
                 Subsystem subsystem,
                 Urgency urgency,
                 std::string message,
-                ros::Time timeStamp );
+                ros::Time timeStamp = ros::Time::now());
 
     /**
      * @brief apush
@@ -116,7 +116,7 @@ private:
                                         Subsystem subsystem,
                                         Urgency urgency,
                                         std::string message,
-                                        ros::Time stamp);
+                                        ros::Time stamp = ros::Time::now());
 };
 
 

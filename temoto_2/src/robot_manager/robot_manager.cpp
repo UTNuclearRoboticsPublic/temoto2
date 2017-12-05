@@ -4,6 +4,9 @@
 #include <yaml-cpp/yaml.h>
 #include <fstream>
 
+#include "base_error/base_error.h"
+#include "robot_manager/robot_manager_errors.h"
+
 
 namespace robot_manager
 {
@@ -62,6 +65,93 @@ RobotManager::RobotManager()
   TEMOTO_INFO("Robot manager is ready.");
 }
 
+// Wait for move group. Poll parameter server until robot_description becomes available.
+// \TODO: add 30 sec timeout protection.
+void RobotManager::waitForMoveGroup(temoto_id::ID res_id)
+{
+  while (!nh_.hasParam("robot_description"))
+  {
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    TEMOTO_DEBUG("%s Waiting for move group to be ready ...", prefix.c_str());
+    if (resource_manager_.hasFailed(res_id))
+    {
+      throw error::ErrorStackUtil(
+          robot_error::SERVICE_STATUS_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
+          prefix + "Loading interrupted due to FAILED status response from process manager.");
+    }
+    ros::Duration(0.2).sleep();
+  }
+
+  // Wait a little longer, in case there is anythin else to load
+  // ros::Duration(0.5).sleep();
+}
+
+void RobotManager::rosExecute(const std::string& package_name, const std::string& executable, temoto_2::LoadProcess::Response& res)
+{
+  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  temoto_2::LoadProcess load_proc_srvc;
+  load_proc_srvc.request.package_name = package_name;
+  load_proc_srvc.request.action = process_manager::action::ROS_EXECUTE;
+  load_proc_srvc.request.executable = executable;
+
+  if (!resource_manager_.call<temoto_2::LoadProcess>(
+          process_manager::srv_name::MANAGER, process_manager::srv_name::SERVER, load_proc_srvc))
+  {
+    res = load_proc_srvc.response;
+    throw error::ErrorStackUtil(robot_error::SERVICE_REQ_FAIL, error::Subsystem::ROBOT_MANAGER,
+                                error::Urgency::MEDIUM,
+                                prefix + " Failed to make a service call to ProcessManager.");
+  }
+
+  if (load_proc_srvc.response.rmp.code == rmp::status_codes::FAILED)
+  {
+    res = load_proc_srvc.response;
+    throw error::ErrorStackUtil(robot_error::SERVICE_STATUS_FAIL, error::Subsystem::ROBOT_MANAGER,
+                                error::Urgency::MEDIUM,
+                                prefix + " ProcessManager failed to execute '" + executable +
+                                    "': " + load_proc_srvc.response.rmp.message);
+  }
+  res = load_proc_srvc.response;
+}
+
+void RobotManager::loadLocalRobot(RobotInfoPtr info_ptr)
+{
+  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  if (!info_ptr)
+  {
+    throw error::ErrorStackUtil(robot_error::NULL_PTR, error::Subsystem::ROBOT_MANAGER,
+                                error::Urgency::MEDIUM, prefix + " info_ptr == NULL");
+  }
+
+  temoto_2::LoadProcess::Response load_proc_res;
+  try
+  {
+    // Load robot's main launch file
+    // It should bring up URDF, and joint_state/robot publishers and hw specific nodes
+    rosExecute(info_ptr->getPackageName(), info_ptr->getExecutable(), load_proc_res);
+    waitForMoveGroup(load_proc_res.rmp.resource_id);
+
+    active_robot_ = std::make_shared<Robot>(info_ptr);
+    loaded_robots_.emplace(load_proc_srvc.response.rmp.resource_id, active_robot_);
+    info_ptr->adjustReliability(1.0);
+    TEMOTO_DEBUG("%s Robot '%s' loaded.", prefix.c_str(), req.robot_name.c_str());
+  }
+  catch (error::ErrorStackUtil& e)
+  {
+    if (e.getStack().back().code == robot_error::SERVICE_STATUS_FAIL)
+    {
+      info_ptr->adjustReliability(0.0);
+    }
+    std::stringstream ss;
+    ss << prefix << " Exception occured while loading a robot:" << e;
+    TEMOTO_ERROR_STREAM(ss);
+    res.rmp.message = ss.str();
+    res.rmp.code = rmp::status_codes::FAILED;
+  }
+
+  return true;
+}
+
 void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad::Response& res)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
@@ -71,71 +161,22 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
   auto info_ptr = findRobot(req.robot_name, local_robot_infos_);
   if (info_ptr)
   {
-    // Filled out message for process manager
-    temoto_2::LoadProcess load_proc_srvc;
-    load_proc_srvc.request.package_name = info_ptr->getPackageName();
-    load_proc_srvc.request.action = process_manager::action::ROS_EXECUTE;
-    load_proc_srvc.request.executable = info_ptr->getExecutable();
-
-    TEMOTO_INFO("%s Loading a robot: '%s', '%s', '%s', %.3f", prefix.c_str(),
-                info_ptr->getName().c_str(), info_ptr->getPackageName().c_str(),
-                info_ptr->getExecutable().c_str(), info_ptr->getReliability());
-
-    if (resource_manager_.call<temoto_2::LoadProcess>(
-            process_manager::srv_name::MANAGER, process_manager::srv_name::SERVER, load_proc_srvc))
+    try
     {
-      TEMOTO_DEBUG("%s Call to ProcessManager was sucessful.", prefix.c_str());
-
-      // Wait for move group. Poll parameter server until robot_description becomes available.
-      // \TODO: 30 sec timeout protection.
-      while (!nh_.hasParam("robot_description"))
-      {
-        TEMOTO_DEBUG("%s Waiting for move group to be ready ...", prefix.c_str());
-        if (resource_manager_.hasFailed(load_proc_srvc.response.rmp.resource_id))
-        {
-          res.rmp.code = rmp::status_codes::FAILED;
-          res.rmp.message = "Loading was cancelled because got FAILED status from process manager";
-          break;
-        }
-        ros::Duration(0.2).sleep();
-      }
-
-      // Wait a little longer, in case there is anythin else to load
-      ros::Duration(0.5).sleep();  
-
-      // check if resource the wait block above was interrupted via FAILED status message
-      if (res.rmp.code == rmp::status_codes::FAILED)
-      {
-        TEMOTO_WARN("%s No need to wait because status about failed resource was received.", prefix.c_str());
-        info_ptr->adjustReliability(0.0);
-        res.rmp.message = "Robot loading was interrupted by FAILED status message";
-        res.rmp.code = rmp::status_codes::FAILED;
-      }
-      else
-      {
-        try
-        {
-          active_robot_ = std::make_shared<Robot>(info_ptr);
-          loaded_robots_.emplace(load_proc_srvc.response.rmp.resource_id, active_robot_);
-          info_ptr->adjustReliability(1.0);
-          TEMOTO_DEBUG("%s Robot '%s' loaded.", prefix.c_str(), req.robot_name.c_str());
-          res.rmp = load_proc_srvc.response.rmp;
-        }
-        catch (...)
-        {
-          TEMOTO_ERROR("%s Exception occured while creating Robot object.", prefix.c_str());
-          res.rmp.message = "Exception while creating Robot object.";
-          res.rmp.code = rmp::status_codes::FAILED;
-        }
-      }
+      loadLocalRobot(info_ptr);
+      res.code = 0;
+      res.message = "Robot sucessfully loaded.";
     }
-    else
+    catch (error::ErrorStackUtil& e)
     {
-      TEMOTO_ERROR("%s Failed to call to ProcessManager.", prefix.c_str());
-      res.rmp.message = "Failed to make a service call to ProcessManager";
-      res.rmp.code = rmp::status_codes::FAILED;
+      TEMOTO_ERROR_STREAM("Failed to load local robot: " << e);
+      return;
     }
-
+    catch (...)
+    {
+      TEMOTO_ERROR_STREAM("Failed to load local robot: Unknown exception.");
+      return;
+    }
     return;
   }
 
@@ -503,7 +544,7 @@ bool RobotManager::setModeCb(temoto_2::RobotSetMode::Request& req,
     {
       mode_ = req.mode;
       TEMOTO_DEBUG("%s Robot mode set to: %s...", prefix.c_str(), mode_.c_str());
-      res.message = "Execute command sent to MoveIt";
+      res.message = "Robot mode set to '"+mode+"'.";
       res.code = rmp::status_codes::OK;
     }
     else
