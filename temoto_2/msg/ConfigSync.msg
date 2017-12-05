@@ -6,5 +6,5 @@ string action
 # Temoto namespace where the configuration belongs to.
 string temoto_namespace
 
-# configuration in YAML format
-string config
+# byte array that contains the serialized payload
+uint8[] payload

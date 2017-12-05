@@ -10,10 +10,12 @@ namespace context_manager
 {
 	namespace srv_name
 	{
-                const std::string MANAGER = "context_manager";
-		const std::string GESTURE_SERVER = "load_gesture";
-		const std::string SPEECH_SERVER = "load_speech";
-	}
+    const std::string MANAGER = "context_manager";
+    const std::string GESTURE_SERVER = "load_gesture";
+    const std::string SPEECH_SERVER = "load_speech";
+    const std::string TRACKING_SERVER = "load_tracker";
+    const std::string SYNC_TOPIC = "/temoto_2/"+MANAGER+"/sync";
+  }
 }
 
 static bool operator==(const temoto_2::LoadGesture::Request& r1,

@@ -15,6 +15,15 @@
 #include <yaml-cpp/yaml.h>
 #include <fstream>
 
+#include <ros/serialization.h>
+#include "std_msgs/String.h"
+#include "std_msgs/UInt8.h"
+#include "temoto_2/RMPResponse.h"
+#include "temoto_2/ConfigSync.h"
+
+
+namespace ser = ros::serialization;
+
 namespace context_manager
 {
 
@@ -140,31 +149,76 @@ private:
 
 } // context_manager namespace
 
+
+void conf_sub_cb(temoto_2::ConfigSync conf_msg)
+{
+  temoto_2::RMPResponse my_value_back;
+
+  uint32_t serial_size_back = conf_msg.payload.size();
+  boost::shared_array<uint8_t> buffer_back(new uint8_t[serial_size_back]);
+
+  // Fill buffer with the serialized payload
+  for (int i=0; i<serial_size_back; i++)
+  {
+    (buffer_back.get())[i] = conf_msg.payload[i];
+  }
+  std::cout << std::endl;
+
+  // Convert the serialized payload to msg
+  ser::IStream stream_back(buffer_back.get(), serial_size_back);
+  ser::deserialize(stream_back, my_value_back);
+
+  std::cout << my_value_back << std::endl;
+}
+
+
 // main
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "algorithm_info_tests");
-    ros::NodeHandle n;
+  ros::init(argc, argv, "algorithm_info_tests");
+  ros::NodeHandle n;
 
-    context_manager::AlgorithmTest alg_test;
+  ros::Publisher conf_pub = n.advertise<temoto_2::ConfigSync>("conf_test", 10);
+  ros::Subscriber conf_sub = n.subscribe("conf_test", 10, conf_sub_cb);
 
+  temoto_2::RMPResponse my_value;
+  my_value.code = 34;
+  my_value.message = "tervist";
+  my_value.resource_id = 987;
 
-    // Publisher
+  uint32_t serial_size = ros::serialization::serializationLength(my_value);
+  boost::shared_array<uint8_t> buffer(new uint8_t[serial_size]);
 
-//    float counter = 0;
-//    ros::Rate loop_rate(10);
+  ser::OStream stream(buffer.get(), serial_size);
+  ser::serialize(stream, my_value);
 
-//    while (ros::ok())
-//    {
-//        std_msgs::Float32 msg;
-//        msg.data = sin(counter);
-//        counter += 0.02;
+  // Create a byte array
+  std::vector<uint8_t> byte_array_msg;
 
-//        ROS_INFO("sending: %f", msg.data);
-//        data_pub.publish(msg);
-//        ros::spinOnce();
-//        loop_rate.sleep();
-//    }
+  // Fill out the byte array
+  for (int i=0; i<serial_size; i++)
+  {
+    uint8_t msg;
+    msg = (buffer.get())[i];
+    byte_array_msg.push_back(msg);
+  }
 
-    return 0;
+  // Create a config sync message
+  temoto_2::ConfigSync config_sync_msg;
+  config_sync_msg.action = "ADD";
+  config_sync_msg.temoto_namespace = "test43test";
+  config_sync_msg.payload = byte_array_msg;
+
+  // Publish the message
+  conf_pub.publish(config_sync_msg);
+
+  ros::Rate loop_rate(10);
+
+  while (ros::ok())
+  {
+    ros::spinOnce();
+    loop_rate.sleep();
+  }
+
+  return 0;
 }

@@ -168,7 +168,7 @@ void RobotManager::unloadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLo
   loaded_robots_.erase(res.rmp.resource_id);
 }
 
-void RobotManager::syncCb(const temoto_2::ConfigSync& msg)
+void RobotManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
@@ -181,7 +181,7 @@ void RobotManager::syncCb(const temoto_2::ConfigSync& msg)
   if (msg.action == rmp::sync_action::ADVERTISE_CONFIG)
   {
     // Convert the config string to YAML tree and parse
-    YAML::Node config = YAML::Load(msg.config);
+    YAML::Node config = YAML::Load(payload.data);
     std::vector<RobotInfoPtr> robot_infos = parseRobotInfos(config);
 
     //TODO hold remote stuff in a map or something keyed by namespace
@@ -223,7 +223,9 @@ void RobotManager::advertiseLocalRobotInfos()
     // send to other managers if there is anything to send
     if(config.size())
     {
-      config_syncer_.advertise(config);
+      PayloadType payload;
+      payload.data = Dump(config);
+      config_syncer_.advertise(payload);
     }
 }
 
@@ -473,7 +475,10 @@ void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)
         info_ptr->adjustReliability(0.0);
         YAML::Node config;
         config["Robots"].push_back(*info_ptr);
-        config_syncer_.advertise(config);
+
+        PayloadType payload;
+        payload.data = Dump(config);
+        config_syncer_.advertise(payload);
       }
     }
   }

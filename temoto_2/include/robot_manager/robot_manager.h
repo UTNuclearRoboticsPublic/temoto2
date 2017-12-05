@@ -14,6 +14,7 @@
 #include <map>
 #include "robot_manager/robot.h"
 #include "robot_manager/robot_info.h"
+#include "std_msgs/String.h"
 
 #include "leap_motion_controller/Set.h"
 
@@ -22,6 +23,9 @@
 
 namespace robot_manager
 {
+
+typedef std_msgs::String PayloadType;
+
 class RobotManager
 {
 public:
@@ -75,7 +79,7 @@ private:
 
   bool setTargetCb(temoto_2::RobotSetTarget::Request& req, temoto_2::RobotSetTarget::Response& res);
 
-  void syncCb(const temoto_2::ConfigSync& msg);
+  void syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload);
 
   void advertiseLocalRobotInfos();
 
@@ -116,7 +120,7 @@ private:
   temoto_2::LoadGesture hand_srv_msg_;
   
   // Keeps robot_infos in sync with other managers
-  rmp::ConfigSynchronizer<RobotManager> config_syncer_;
+  rmp::ConfigSynchronizer<RobotManager, PayloadType> config_syncer_;
 
   // Resource manager for contacting process manager
   rmp::ResourceManager<RobotManager> resource_manager_;

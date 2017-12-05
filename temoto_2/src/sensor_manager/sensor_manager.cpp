@@ -84,7 +84,10 @@ void SensorManager::statusCb(temoto_2::ResourceStatus& srv)
       it->second->adjustReliability(0.0);
       YAML::Node config;
       config["Sensors"].push_back(*it->second);
-      config_syncer_.advertise(config);
+
+      PayloadType payload;
+      payload.data = Dump(config);
+      config_syncer_.advertise(payload);
     }
   }
 }
@@ -106,7 +109,7 @@ bool SensorManager::listDevicesCb(temoto_2::ListDevices::Request& req,
   return true;
 }
 
-void SensorManager::syncCb(const temoto_2::ConfigSync& msg)
+void SensorManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
@@ -119,7 +122,7 @@ void SensorManager::syncCb(const temoto_2::ConfigSync& msg)
   if (msg.action == rmp::sync_action::ADVERTISE_CONFIG)
   {
     // Convert the config string to YAML tree and parse
-    YAML::Node config = YAML::Load(msg.config);
+    YAML::Node config = YAML::Load(payload.data);
     std::vector<SensorInfoPtr> sensors = parseSensors(config);
 
     // TODO: Hold remote stuff in a map or something keyed by namespace
@@ -162,7 +165,9 @@ void SensorManager::advertiseLocalSensors()
     // send to other managers if there is anything to send
     if(config.size())
     {
-      config_syncer_.advertise(config);
+      PayloadType payload;
+      payload.data = Dump(config);
+      config_syncer_.advertise(payload);
     }
 }
 
@@ -215,7 +220,10 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
     allocated_sensors_.emplace(res.rmp.resource_id, sensor_ptr);
     YAML::Node config;
     config["Sensors"].push_back(*sensor_ptr);
-    config_syncer_.advertise(config);
+
+    PayloadType payload;
+    payload.data = Dump(config);
+    config_syncer_.advertise(payload);
     return;
   }
 
