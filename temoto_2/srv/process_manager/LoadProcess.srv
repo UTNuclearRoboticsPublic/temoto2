@@ -1,8 +1,12 @@
 # Remote Management Request
 temoto_2/RMPRequest rmp
 
-# actions (rosrun or roslaunch):
+# actions (rosrun or roslaunch) or system command:
 string action
+
+# ROS namespace where the program is executed
+# temoto_namespace of the process manager if empty string is given
+string ros_namespace
 
 # name of the package
 string package_name

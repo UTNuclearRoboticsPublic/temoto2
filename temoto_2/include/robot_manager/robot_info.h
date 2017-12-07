@@ -42,6 +42,12 @@ public:
     return temoto_namespace_;
   }
 
+  // Get the robot's namespace
+  std::string getRobotNamespace() const
+  {
+    return temoto_namespace_ + '/' + robot_name_;
+  }
+
   /// Get name
   std::string getName() const
   {

@@ -34,8 +34,8 @@ RobotManager::RobotManager()
       nh_.advertiseService(robot_manager::srv_name::SERVER_PLAN, &RobotManager::planCb, this);
   server_exec_ =
       nh_.advertiseService(robot_manager::srv_name::SERVER_EXECUTE, &RobotManager::execCb, this);
-  server_get_rviz_cfg_ = nh_.advertiseService(robot_manager::srv_name::SERVER_GET_RVIZ_CONFIG,
-                                              &RobotManager::getRvizConfigCb, this);
+  server_get_viz_cfg_ = nh_.advertiseService(robot_manager::srv_name::SERVER_GET_VIZ_CONFIG,
+                                              &RobotManager::getVizConfigCb, this);
   server_set_target_ = nh_.advertiseService(robot_manager::srv_name::SERVER_SET_TARGET,
                                             &RobotManager::setTargetCb, this);
   server_set_mode_ = nh_.advertiseService(robot_manager::srv_name::SERVER_SET_MODE,
@@ -69,9 +69,9 @@ RobotManager::RobotManager()
 
 // Wait for move group. Poll parameter server until robot_description becomes available.
 // \TODO: add 30 sec timeout protection.
-void RobotManager::waitForMoveGroup(temoto_id::ID res_id)
+void RobotManager::waitForMoveGroup(const RobotInfoPtr robot_info, temoto_id::ID res_id)
 {
-  while (!nh_.hasParam("robot_description"))
+  while (!nh_.hasParam('/' + robot_info->getRobotNamespace() + "/robot_description"))
   {
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
     TEMOTO_DEBUG("%s Waiting for move group to be ready ...", prefix.c_str());
@@ -88,11 +88,13 @@ void RobotManager::waitForMoveGroup(temoto_id::ID res_id)
   // ros::Duration(0.5).sleep();
 }
 
-void RobotManager::rosExecute(const std::string& package_name, const std::string& executable, temoto_2::LoadProcess::Response& res)
+void RobotManager::rosExecute(const std::string& ros_ns, const std::string& package_name,
+                              const std::string& executable, temoto_2::LoadProcess::Response& res)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   temoto_2::LoadProcess load_proc_srvc;
   load_proc_srvc.request.package_name = package_name;
+  load_proc_srvc.request.ros_namespace = ros_ns;
   load_proc_srvc.request.action = process_manager::action::ROS_EXECUTE;
   load_proc_srvc.request.executable = executable;
 
@@ -130,8 +132,8 @@ void RobotManager::loadLocalRobot(RobotInfoPtr info_ptr)
   {
     // Load robot's main launch file
     // It should bring up URDF, and joint_state/robot publishers and hw specific nodes
-    rosExecute(info_ptr->getPackageName(), info_ptr->getExecutable(), load_proc_res);
-    waitForMoveGroup(load_proc_res.rmp.resource_id);
+    rosExecute(info_ptr->getName(), info_ptr->getPackageName(), info_ptr->getExecutable(), load_proc_res);
+    waitForMoveGroup(info_ptr, load_proc_res.rmp.resource_id);
 
     active_robot_ = std::make_shared<Robot>(info_ptr);
     loaded_robots_.emplace(load_proc_res.rmp.resource_id, active_robot_);
@@ -462,8 +464,8 @@ bool RobotManager::execCb(temoto_2::RobotExecute::Request& req,
   return true;
 }
 
-bool RobotManager::getRvizConfigCb(temoto_2::RobotGetRvizConfig::Request& req,
-                                   temoto_2::RobotGetRvizConfig::Response& res)
+bool RobotManager::getInfoCb(temoto_2::RobotGetVizConfig::Request& req,
+                                   temoto_2::RobotGetVizConfig::Response& res)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   TEMOTO_INFO("%s GETTING CONFIG...", prefix.c_str());
@@ -473,13 +475,6 @@ bool RobotManager::getRvizConfigCb(temoto_2::RobotGetRvizConfig::Request& req,
   }
   else
   {
-    std::string act_rob_ns = active_robot_->getRobotInfo()->getTemotoNamespace();
-    std::string rviz_conf =
-        "{Robot Description: /" + act_rob_ns + "/robot_description, Move Group Namespace: /" +
-        act_rob_ns + ", Planning Scene Topic: /" + act_rob_ns +
-        "/move_group/monitored_planning_scene, Planning Request: {Planning Group: "
-        "manipulator}, Planned Path: {Trajectory Topic: /" +
-        act_rob_ns + "/move_group/display_planned_path}}";
 
     res.config = rviz_conf;
   }

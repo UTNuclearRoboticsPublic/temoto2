@@ -85,8 +85,8 @@ private:
 
   RobotInfoPtr findRobot(const std::string& robot_name, const RobotInfos& robot_infos);
 
-  bool getRvizConfigCb(temoto_2::RobotGetRvizConfig::Request& req,
-                       temoto_2::RobotGetRvizConfig::Response& res);
+  bool getVizConfigCb(temoto_2::RobotGetVizConfig::Request& req,
+                       temoto_2::RobotGetVizConfig::Response& res);
 
   void targetPoseCb(const leap_motion_controller::Set& set);
 
@@ -94,9 +94,10 @@ private:
 
   void loadLocalRobot(RobotInfoPtr info_ptr);
 
-  void rosExecute(const std::string& package_name, const std::string& executable, temoto_2::LoadProcess::Response& res);
+  void rosExecute(const std::string& ros_namespace, const std::string& package_name,
+                  const std::string& executable, temoto_2::LoadProcess::Response& res);
 
-  void waitForMoveGroup(temoto_id::ID resource_id);
+  void waitForMoveGroup(const RobotInfoPtr robot_info, temoto_id::ID resource_id);
 
   typedef std::shared_ptr<Robot> RobotPtr;
   typedef std::map<temoto_id::ID, RobotPtr> Robots;
@@ -113,13 +114,13 @@ private:
   ros::NodeHandle nh_;
   ros::ServiceServer server_plan_;
   ros::ServiceServer server_exec_;
-  ros::ServiceServer server_get_rviz_cfg_;
+  ros::ServiceServer server_get_viz_cfg_;
   ros::ServiceServer server_set_target_;
   ros::ServiceServer server_set_mode_;
 
   ros::ServiceClient client_plan_;
   ros::ServiceClient client_exec_;
-  ros::ServiceClient client_get_rviz_cfg_;
+  ros::ServiceClient client_get_viz_cfg_;
   ros::ServiceClient client_set_target_;
   ros::ServiceClient client_set_mode_;
 

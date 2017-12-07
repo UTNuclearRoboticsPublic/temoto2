@@ -53,6 +53,10 @@ void ProcessManager::update(const ros::TimerEvent&)
 
     if (srv.request.action == action::ROS_EXECUTE)
     {
+      if (srv.request.ros_namespace != "")
+      {
+        cmd += "ROS_NAMESPACE=" + common::getAbsolutePath(srv.request.ros_namespace) + " ";
+      }
       std::regex rx(".*\\.launch$");
       cmd += (std::regex_match(executable, rx)) ? "roslaunch " : "rosrun ";
       cmd += package_name + " " + executable + " " + args;

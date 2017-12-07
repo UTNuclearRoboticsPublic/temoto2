@@ -58,23 +58,23 @@ inline const std::string getTemotoNamespace()
   return temoto_ns;
 }
 
-inline std::string getAbsoluteTopic(const std::string& topic_in)
+inline std::string getAbsolutePath(const std::string& path_in)
 {
-  std::string abs_topic;
-  if (topic_in.size())
+  std::string abs_path;
+  if (path_in.size())
   {
-    if (topic_in[0] == '/')
+    if (path_in[0] == '/')
     {
       // Specified topic is already absolute
-      abs_topic = topic_in;
+      abs_path = path_in;
     }
     else
     {
       // Add current namespace as a prefix.
-      abs_topic = '/' + getTemotoNamespace() + '/' + topic_in;
+      abs_path = '/' + getTemotoNamespace() + '/' + path_in;
     }
   }
-  return abs_topic;
+  return abs_path;
 }
 }
 
