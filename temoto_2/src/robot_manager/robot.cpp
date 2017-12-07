@@ -9,9 +9,9 @@ Robot::Robot(RobotInfoPtr robot_info_ptr)
   log_class_ = "Robot";
   log_subsys_ = "robot_manager";
   log_group_ = "robot_manager";
-  // TODO: this is temporary solution for default ur[X]_moveit_config groups
   if (isLocal())
   {
+  // TODO: this is temporary solution for default ur[X]_moveit_config groups
     addPlanningGroup("manipulator");
   }
 }

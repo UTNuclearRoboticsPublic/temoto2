@@ -3,6 +3,8 @@
 
 #include <string>
 #include <map>
+#include <vector>
+
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <moveit/planning_interface/planning_interface.h>
 #include "common/temoto_id.h"
@@ -10,6 +12,12 @@
 
 namespace robot_manager
 {
+namespace capability
+{
+const std::string MANIPULATION = "manipulation";
+const std::string NAVIGATION = "navigation";
+}
+
 class Robot
 {
 public:
@@ -37,9 +45,10 @@ private:
   std::string robot_name_;
   RobotInfoPtr robot_info_ptr_;
 
-                            /// robot
+  /// robot
   std::map<std::string, std::unique_ptr<moveit::planning_interface::MoveGroupInterface>>
       planning_groups_;
+  std::vector<std::string> capabilities;
 };
 }
 

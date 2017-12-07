@@ -44,6 +44,7 @@ RobotManager::RobotManager()
   // Read the robot information for this manager. 
   std::string yaml_filename = ros::package::getPath(ROS_PACKAGE_NAME) + "/conf/" +
                               common::getTemotoNamespace() + ".yaml";
+  // \TODO: check
   std::ifstream in(yaml_filename);
   YAML::Node config = YAML::Load(in);
   if (config["Robots"])
