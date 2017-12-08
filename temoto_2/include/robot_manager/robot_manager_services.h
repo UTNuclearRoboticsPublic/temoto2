@@ -7,7 +7,7 @@
 #include "temoto_2/RobotExecute.h"
 #include "temoto_2/RobotSetTarget.h"
 #include "temoto_2/RobotSetMode.h"
-#include "temoto_2/RobotGetRvizConfig.h"
+#include "temoto_2/RobotGetVizInfo.h"
 
 namespace robot_manager
 {

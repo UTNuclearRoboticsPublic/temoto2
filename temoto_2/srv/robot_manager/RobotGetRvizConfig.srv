@@ -1,8 +1,0 @@
-
----
-
-# YAML config string
-string config
-
-int64 code
-string message

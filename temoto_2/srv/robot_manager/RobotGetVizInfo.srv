@@ -1,0 +1,10 @@
+# Robot name. Active robot is used when the name is empty.
+string robot_name
+
+---
+
+# YAML info string
+string info
+
+int64 code
+string message

@@ -85,8 +85,8 @@ private:
 
   RobotInfoPtr findRobot(const std::string& robot_name, const RobotInfos& robot_infos);
 
-  bool getVizConfigCb(temoto_2::RobotGetVizConfig::Request& req,
-                       temoto_2::RobotGetVizConfig::Response& res);
+  bool getVizInfoCb(temoto_2::RobotGetVizInfo::Request& req,
+                       temoto_2::RobotGetVizInfo::Response& res);
 
   void targetPoseCb(const leap_motion_controller::Set& set);
 
@@ -95,7 +95,8 @@ private:
   void loadLocalRobot(RobotInfoPtr info_ptr);
 
   void rosExecute(const std::string& ros_namespace, const std::string& package_name,
-                  const std::string& executable, temoto_2::LoadProcess::Response& res);
+                  const std::string& executable, const std::string& args,
+                  temoto_2::LoadProcess::Response& res);
 
   void waitForMoveGroup(const RobotInfoPtr robot_info, temoto_id::ID resource_id);
 

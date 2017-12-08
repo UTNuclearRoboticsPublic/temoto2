@@ -11,6 +11,8 @@
 #include <sstream>
 #include <fstream>
 #include <memory>
+#include <vector>
+#include <yaml-cpp/yaml.h>
 
 /**
  * @brief The OutputManagerInterface class
@@ -116,7 +118,44 @@ public:
     }
   }
 
-  /**
+  void showRobot(const std::set<const std::string>& visualization_options)
+  {
+    showRobot("", visualization_options);
+  }
+
+  void showRobot(const std::string& robot_name,
+                 const std::vector<const std::string>& visualization_options)
+  {
+
+    YAML::Node info = YAML::load(getRobotInfo(robot_name));
+    
+    if (info["urdf"].isMap())
+    {
+      
+    }
+
+  // --Robot description
+  std::string viz_conf = "{Robot Description: /" + act_rob_ns +
+                         "/robot_description, Move Group Namespace: /" + act_rob_ns +
+                         ", Planning Scene Topic: /" + act_rob_ns +
+                         "/move_group/monitored_planning_scene, Planning Request: {Planning Group: "
+                         "manipulator}, Planned Path: {Trajectory Topic: /" +
+                         act_rob_ns + "/move_group/display_planned_path}}";
+  }
+
+  void getRobotInfo(const std::string& robot_name)
+  {
+    ros::ServiceClient rm_client;
+    temoto_2::RobotGetVizInfo info_srvc;
+    info_srvc.request.robot_name = robot_name;
+    if (rm_client.call(info_srvc))
+    {
+      TEMOTO_DEBUG(" GET ROBOT INFO SUCESSFUL ");
+      TEMOTO_DEBUG_STREAM(info_srvc);
+    }
+  }
+
+  /*
    * @brief displayConfigFromFile
    * @param config_path
    * @return

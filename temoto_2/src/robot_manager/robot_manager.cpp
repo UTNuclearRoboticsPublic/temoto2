@@ -89,7 +89,8 @@ void RobotManager::waitForMoveGroup(const RobotInfoPtr robot_info, temoto_id::ID
 }
 
 void RobotManager::rosExecute(const std::string& ros_ns, const std::string& package_name,
-                              const std::string& executable, temoto_2::LoadProcess::Response& res)
+                              const std::string& executable, const std::string args,
+                              temoto_2::LoadProcess::Response& res)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   temoto_2::LoadProcess load_proc_srvc;
@@ -132,7 +133,7 @@ void RobotManager::loadLocalRobot(RobotInfoPtr info_ptr)
   {
     // Load robot's main launch file
     // It should bring up URDF, and joint_state/robot publishers and hw specific nodes
-    rosExecute(info_ptr->getName(), info_ptr->getPackageName(), info_ptr->getExecutable(), load_proc_res);
+    rosExecute(info_ptr->getName(), info_ptr->getPackageName(), info_ptr->getExecutable(), "", load_proc_res);
     waitForMoveGroup(info_ptr, load_proc_res.rmp.resource_id);
 
     active_robot_ = std::make_shared<Robot>(info_ptr);
@@ -464,19 +465,19 @@ bool RobotManager::execCb(temoto_2::RobotExecute::Request& req,
   return true;
 }
 
-bool RobotManager::getInfoCb(temoto_2::RobotGetVizConfig::Request& req,
-                                   temoto_2::RobotGetVizConfig::Response& res)
+bool RobotManager::getVizInfoCb(temoto_2::RobotGetVizInfo::Request& req,
+                                   temoto_2::RobotGetVizInfo::Response& res)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-  TEMOTO_INFO("%s GETTING CONFIG...", prefix.c_str());
+  TEMOTO_INFO("%s GETTING visualization info...", prefix.c_str());
   if(!active_robot_)
   {
     TEMOTO_ERROR("%s Robot not loaded.", prefix.c_str());
+    res.code = -1;
   }
   else
   {
-
-    res.config = rviz_conf;
+    res.config = active_robot_->getVizInfo();
   }
   res.code = 0;
   return true;

@@ -108,24 +108,30 @@ bool Robot::isLocal() const
  return true; // some default that should never reached. 
 }
 
-std::string getVisualizationConfig()
+std::string getVizInfo()
 {
-  std::string act_rob_ns = active_robot_->getRobotInfo()->getRobotNamespace();
+  std::string act_rob_ns = robot_info_ptr_->getRobotNamespace();
   YAML::Node config;
   YAML::Node rviz = config["RViz"];
 
   // RViz options
 
-  rviz["robot_description"] = "/" + act_rob_ns + "/robot_description";
-  rviz["manipulation"]["move_group_ns"]
+  if (cabilities_.find(capability::URDF) != capabilities_.end())
+  {
+    rviz["urdf"] = "/" + act_rob_ns + "/robot_description";
+  }
+
+  if (cabilities_.find(capability::MANIPULATION != capabilities_.end())
+  {
+    rviz["manipulation"]["move_group_ns"] = '/' + act_rob_ns;
+  }
+
+  if (cabilities_.find(capability::NAVIGATION != capabilities_.end())
+  {
+    rviz["navigation"]["move_base_ns"] = '/' + act_rob_ns;
+  }
+
   
-  // --Robot description
-  std::string viz_conf = "{Robot Description: /" + act_rob_ns +
-                         "/robot_description, Move Group Namespace: /" + act_rob_ns +
-                         ", Planning Scene Topic: /" + act_rob_ns +
-                         "/move_group/monitored_planning_scene, Planning Request: {Planning Group: "
-                         "manipulator}, Planned Path: {Trajectory Topic: /" +
-                         act_rob_ns + "/move_group/display_planned_path}}";
   return viz_conf;
 }
 }

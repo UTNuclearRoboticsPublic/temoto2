@@ -77,7 +77,7 @@ add_service_files(
     robot_manager/RobotExecute.srv
     robot_manager/RobotSetTarget.srv
     robot_manager/RobotSetMode.srv
-    robot_manager/RobotGetRvizConfig.srv
+    robot_manager/RobotGetVizInfo.srv
   
     # Task manager
 	  task_handler/stopTask.srv # Deprecated

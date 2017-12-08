@@ -14,6 +14,7 @@ namespace robot_manager
 {
 namespace capability
 {
+const std::string URDF = "urdf";
 const std::string MANIPULATION = "manipulation";
 const std::string NAVIGATION = "navigation";
 }
@@ -48,7 +49,7 @@ private:
   /// robot
   std::map<std::string, std::unique_ptr<moveit::planning_interface::MoveGroupInterface>>
       planning_groups_;
-  std::vector<std::string> capabilities;
+  std::set<std::string> capabilities_;
 };
 }
 
