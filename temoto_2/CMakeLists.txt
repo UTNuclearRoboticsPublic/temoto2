@@ -35,9 +35,10 @@ add_message_files(FILES
     RMPRequest.msg
     RMPResponse.msg
 
-    # Human Context
+    # Context Manager
     SpeechSpecifier.msg
     GestureSpecifier.msg
+    ObjectContainer.msg
 
     # Configuration Synchronizer
     ConfigSync.msg
@@ -59,9 +60,10 @@ add_service_files(
     sensor_manager/ListDevices.srv
     sensor_manager/LoadSensor.srv
 
-    # Context Managers
+    # Context Manager
     context_manager/LoadGesture.srv
     context_manager/LoadSpeech.srv
+    context_manager/AddObject.srv
 
     # Output Manager
     output_manager/rviz_manager/LoadRvizPlugin.srv

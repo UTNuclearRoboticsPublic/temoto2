@@ -59,10 +59,22 @@ public:
      * @param timeStamp
      */
     ErrorStackUtil ( int code,
-                       Subsystem subsystem,
-                       Urgency urgency,
-                       std::string message,
-                       ros::Time timeStamp );
+                     Subsystem subsystem,
+                     Urgency urgency,
+                     std::string message,
+                     ros::Time timeStamp );
+
+    /**
+     * @brief ErrorStackUtil
+     * @param code
+     * @param subsystem
+     * @param urgency
+     * @param message
+     */
+    ErrorStackUtil ( int code,
+                     Subsystem subsystem,
+                     Urgency urgency,
+                     std::string message);
 
     /**
      * @brief getStack

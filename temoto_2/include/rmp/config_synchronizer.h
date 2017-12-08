@@ -108,7 +108,7 @@ public:
       // Fill out the byte array
       for (int i=0; i<payload_size; i++)
       {
-        payload_byte_array.push_back((buffer.get())[i]);
+        payload_byte_array.push_back(buffer.get()[i]);
       }
 
       msg.payload = payload_byte_array;

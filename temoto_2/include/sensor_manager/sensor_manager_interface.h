@@ -26,8 +26,8 @@ public:
     log_class_= "";
     log_subsys_ = "sensor_manager_interface";
     log_group_ = "interfaces." + task->getPackageName();
-
     name_ = task->getName() + "/sensor_manager_interface";
+
     resource_manager_ = std::unique_ptr<rmp::ResourceManager<SensorManagerInterface>>(new rmp::ResourceManager<SensorManagerInterface>(name_, this));
     resource_manager_->registerStatusCb(&SensorManagerInterface::statusInfoCb);
   }

@@ -26,9 +26,26 @@ error::ErrorStackUtil::ErrorStackUtil( int code,
 }
 
 /*
+ * Constructor
+ */
+error::ErrorStackUtil::ErrorStackUtil( int code,
+                                       error::Subsystem subsystem,
+                                       error::Urgency urgency,
+                                       std::string message)
+{
+    // Print the message to the console
+    ROS_ERROR("%s", message.c_str());
+
+    push( code,
+          subsystem,
+          urgency,
+          message,
+          ros::Time::now());
+}
+
+/*
  * Get stack
  */
-
 error::ErrorStack error::ErrorStackUtil::getStack()
 {
     return this->error_stack_;
@@ -37,7 +54,6 @@ error::ErrorStack error::ErrorStackUtil::getStack()
 /*
  * Push
  */
-
 void error::ErrorStackUtil::push( int code,
                                   error::Subsystem subsystem,
                                   error::Urgency urgency,
@@ -54,7 +70,6 @@ void error::ErrorStackUtil::push( int code,
 /*
  * Push
  */
-
 void error::ErrorStackUtil::push ( temoto_2::BaseError base_error )
 {
     this->error_stack_.push_back ( base_error );
@@ -63,7 +78,6 @@ void error::ErrorStackUtil::push ( temoto_2::BaseError base_error )
 /*
  * Initialize Base Error
  */
-
 temoto_2::BaseError error::ErrorStackUtil::initBaseError( int code,
                                                           error::Subsystem subsystem,
                                                           error::Urgency urgency,
@@ -83,7 +97,6 @@ temoto_2::BaseError error::ErrorStackUtil::initBaseError( int code,
 /*
  * Forward error
  */
-
 void error::ErrorStackUtil::forward ( std::string from_where )
 {
     temoto_2::BaseError fwd_err = this->error_stack_.back();

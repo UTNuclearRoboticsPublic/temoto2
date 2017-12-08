@@ -1,0 +1,13 @@
+# Object description container
+temoto_2/ObjectContainer object
+
+---
+
+# return code
+#   0: Success
+#   1: Failure
+#  -1: Undefined
+int64 code
+
+# return message
+string message

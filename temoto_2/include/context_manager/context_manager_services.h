@@ -5,6 +5,7 @@
 #include "rmp/resource_manager_services.h"
 #include "temoto_2/LoadGesture.h"
 #include "temoto_2/LoadSpeech.h"
+#include "temoto_2/AddObject.h"
 
 namespace context_manager
 {
@@ -13,6 +14,7 @@ namespace context_manager
     const std::string MANAGER = "context_manager";
     const std::string GESTURE_SERVER = "load_gesture";
     const std::string SPEECH_SERVER = "load_speech";
+    const std::string SERVER_ADD_OBJECT = "add_object";
     const std::string TRACKING_SERVER = "load_tracker";
     const std::string SYNC_TOPIC = "/temoto_2/"+MANAGER+"/sync";
   }

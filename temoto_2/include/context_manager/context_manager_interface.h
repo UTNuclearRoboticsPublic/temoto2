@@ -13,7 +13,6 @@
 #include "std_msgs/String.h"
 #include "human_msgs/Hands.h"
 #include "leap_motion_controller/Set.h"
-//#include "temoto_2/ObjectContainer.h"
 
 #include "context_manager/context_manager_services.h"
 #include "rmp/resource_manager.h"
@@ -28,14 +27,14 @@ public:
   typedef void (OwnerTask::*SpeechCallbackType)(std_msgs::String);
 
 
-  ContextManagerInterface(TTP::BaseTask* task) : task_(task){}
+  ContextManagerInterface(){}
 
-  void initialize()
+  void initialize(TTP::BaseTask* task)
   {
     log_class_= "";
     log_subsys_ = "context_manager_interface";
-    log_group_ = "interfaces." + task_->getPackageName();
-    name_ = task_->getName() + "/context_manager_interface";
+    log_group_ = "interfaces." + task->getPackageName();
+    name_ = task->getName() + "/context_manager_interface";
 
     // create resource manager
     resource_manager_ = std::unique_ptr<rmp::ResourceManager<ContextManagerInterface>>(new rmp::ResourceManager<ContextManagerInterface>(name_, this));
@@ -46,6 +45,8 @@ public:
 
     // register status callback function
     resource_manager_->registerStatusCb(&ContextManagerInterface::statusInfoCb);
+
+    client_add_object_ = nh_.serviceClient<temoto_2::AddObject>(context_manager::srv_name::SERVER_ADD_OBJECT);
   }
 
   void getSpeech(std::vector<temoto_2::SpeechSpecifier> speech_specifiers, SpeechCallbackType callback, OwnerTask* obj)
@@ -137,16 +138,27 @@ public:
     gesture_subscriber_ = nh_.subscribe(srv_msg.response.topic, 1000, task_gesture_cb_, task_gesture_obj_);
   }
 
-//  void addWorldObject(temoto_2::ObjectContainer object)
-//  {
-//    // Start the world object publisher
-//    world_object_publisher = nh.advertise<temoto_2::ObjectContainer>("chatter", 1000);
+  void addWorldObject(temoto_2::ObjectContainer object)
+  {
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
-//    if (world_object_publisher.getNumSubscribers() != 0)
-//    {
+    // Check if this message contains the basic parameters
+    if (object.name == "")
+    {
+      throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL
+                                  , error::Subsystem::TASK
+                                  , error::Urgency::MEDIUM
+                                  , prefix + " The object is missing a name");
+    }
 
-//    }
-//  }
+    temoto_2::AddObject add_obj_srvmsg;
+    add_obj_srvmsg.object = object;
+
+    if (false)
+    {
+
+    }
+  }
 
   bool stopAllocatedServices()
   {
@@ -290,8 +302,7 @@ private:
   ros::NodeHandle nh_;
   ros::Subscriber gesture_subscriber_;
   ros::Subscriber speech_subscriber_;
-
-  ros::Publisher world_object_publisher;
+  ros::ServiceClient client_add_object_;
 
   std::vector<temoto_2::LoadGesture> allocated_gestures_;
   std::vector<temoto_2::LoadSpeech> allocated_speeches_;
@@ -308,7 +319,7 @@ private:
       throw error::ErrorStackUtil (interface_error::NOT_INITIALIZED
                                    , error::Subsystem::TASK
                                    , error::Urgency::MEDIUM
-                                   ,log_prefix + " Interface is not initialized."
+                                   , log_prefix + " Interface is not initialized."
                                    , ros::Time::now());
     }
   }
