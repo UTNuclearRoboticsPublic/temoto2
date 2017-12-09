@@ -46,8 +46,8 @@ public:
         nh_.serviceClient<temoto_2::RobotPlan>(robot_manager::srv_name::SERVER_PLAN);
     client_exec_ =
         nh_.serviceClient<temoto_2::RobotExecute>(robot_manager::srv_name::SERVER_EXECUTE);
-    client_rviz_cfg_ =
-        nh_.serviceClient<temoto_2::RobotGetRvizConfig>(robot_manager::srv_name::SERVER_GET_RVIZ_CONFIG);
+    client_viz_info_ =
+        nh_.serviceClient<temoto_2::RobotGetVizInfo>(robot_manager::srv_name::SERVER_GET_VIZ_INFO);
     client_set_target_ =
         nh_.serviceClient<temoto_2::RobotSetTarget>(robot_manager::srv_name::SERVER_SET_TARGET);
   }
@@ -127,15 +127,15 @@ public:
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
     TEMOTO_DEBUG("%s", prefix.c_str());
 
-    temoto_2::RobotGetRvizConfig msg;
+    temoto_2::RobotGetVizInfo msg;
 
-    if (!client_rviz_cfg_.call(msg) || msg.response.code != 0)
+    if (!client_viz_info_.call(msg) || msg.response.code != 0)
     {
       throw error::ErrorStackUtil(
           taskErr::SERVICE_REQ_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
           prefix + " Service request failed: " + msg.response.message, ros::Time::now());
     }
-    return msg.response.config;
+    return msg.response.info;
   }
 
   void setTarget(std::string target_type)
@@ -179,7 +179,7 @@ public:
     client_load_.shutdown();
     client_plan_.shutdown();
     client_exec_.shutdown();
-    client_rviz_cfg_.shutdown();
+    client_viz_info_.shutdown();
     client_set_target_.shutdown();
 
     TEMOTO_DEBUG("RobotManagerInterface destroyed.");
@@ -194,7 +194,7 @@ private:
   ros::ServiceClient client_load_;
   ros::ServiceClient client_plan_;
   ros::ServiceClient client_exec_;
-  ros::ServiceClient client_rviz_cfg_;
+  ros::ServiceClient client_viz_info_;
   ros::ServiceClient client_set_target_;
 
   std::unique_ptr<rmp::ResourceManager<RobotManagerInterface>> resource_manager_;

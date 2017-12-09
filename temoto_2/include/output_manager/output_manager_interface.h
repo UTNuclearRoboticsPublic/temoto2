@@ -6,6 +6,7 @@
 #include "TTP/base_task/base_task.h"
 #include "output_manager/output_manager_errors.h"
 #include "output_manager/rviz_manager/rviz_manager_services.h"
+#include "robot_manager/robot_manager_services.h"
 #include "rmp/resource_manager.h"
 #include "temoto_2/LoadRvizPlugin.h"
 #include <sstream>
@@ -118,41 +119,53 @@ public:
     }
   }
 
-  void showRobot(const std::set<const std::string>& visualization_options)
+  void showRobot(const std::set<std::string>& visualization_options)
   {
     showRobot("", visualization_options);
   }
 
   void showRobot(const std::string& robot_name,
-                 const std::vector<const std::string>& visualization_options)
+                 const std::set<std::string>& visualization_options)
   {
 
-    YAML::Node info = YAML::load(getRobotInfo(robot_name));
+    YAML::Node info = YAML::Load(getRobotInfo(robot_name));
     
-    if (info["urdf"].isMap())
+    if (visualization_options.find("robot_model") != visualization_options.end())
     {
-      
+      if (info["urdf"].IsMap())
+      {
+        std::string rob_desc_param = info["urdf"]["robot_description"].as<std::string>();
+        showInRviz("robot_model", rob_desc_param);
+      }
+      else
+      {
+        TEMOTO_ERROR("Robot does not have an urdf capability.");
+      }
     }
 
+
   // --Robot description
-  std::string viz_conf = "{Robot Description: /" + act_rob_ns +
-                         "/robot_description, Move Group Namespace: /" + act_rob_ns +
-                         ", Planning Scene Topic: /" + act_rob_ns +
-                         "/move_group/monitored_planning_scene, Planning Request: {Planning Group: "
-                         "manipulator}, Planned Path: {Trajectory Topic: /" +
-                         act_rob_ns + "/move_group/display_planned_path}}";
+//  std::string viz_conf = "{Robot Description: /" + act_rob_ns +
+//                         "/robot_description, Move Group Namespace: /" + act_rob_ns +
+//                         ", Planning Scene Topic: /" + act_rob_ns +
+//                         "/move_group/monitored_planning_scene, Planning Request: {Planning Group: "
+//                         "manipulator}, Planned Path: {Trajectory Topic: /" +
+//                         act_rob_ns + "/move_group/display_planned_path}}";
   }
 
-  void getRobotInfo(const std::string& robot_name)
+  std::string getRobotInfo(const std::string& robot_name)
   {
+    std::string info;
     ros::ServiceClient rm_client;
     temoto_2::RobotGetVizInfo info_srvc;
     info_srvc.request.robot_name = robot_name;
     if (rm_client.call(info_srvc))
     {
-      TEMOTO_DEBUG(" GET ROBOT INFO SUCESSFUL ");
-      TEMOTO_DEBUG_STREAM(info_srvc);
+      TEMOTO_DEBUG(" GET ROBOT INFO SUCESSFUL. Response:");
+      TEMOTO_DEBUG_STREAM(info_srvc.response);
+      info = info_srvc.response.info;
     }
+    return info;
   }
 
   /*

@@ -39,6 +39,9 @@ public:
 
   bool isLocal() const;
 
+  // return all the information required to visualize this robot
+  std::string getVizInfo();
+
 private:
   bool is_plan_valid_;
   moveit::planning_interface::MoveGroupInterface::Plan last_plan;

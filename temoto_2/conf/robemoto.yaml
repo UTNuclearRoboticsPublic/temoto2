@@ -18,6 +18,9 @@ Robots:
   reliability: 0.5
   package_name: "task_robot"
   executable: "ur5.launch"
+  urdf:
+    package_name: "ur_description"
+    executable: "urdf/ur5_joint_limited_robot.urdf.xacro"
   manipulation:
     moveit_config_package: "ur5_moveit_config"
   navigation:

@@ -96,7 +96,7 @@ generate_messages(
 
 catkin_package(
   INCLUDE_DIRS include
-  # LIBRARIES temoto_2
+  LIBRARIES yaml-cpp
   CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs message_runtime human_msgs
   DEPENDS 
     TinyXML
@@ -141,6 +141,10 @@ add_executable(output_manager src/output_manager/output_manager.cpp
                               src/base_error/base_error.cpp )
 add_dependencies(output_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(output_manager ${catkin_LIBRARIES})
+
+#add_library(temoto_libs include/output_manager/output_manager_interface.h)
+#set_target_properties(temoto_libs PROPERTIES LINKER_LANGUAGE CXX)
+#target_link_libraries(temoto_libs yaml-cpp)
 
 
 # # # # # # # # # # # #

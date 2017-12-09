@@ -34,7 +34,9 @@ RvizManager::RvizManager() : resource_manager_(srv_name::MANAGER, this)
   plugin_info_handler_.plugins_.emplace_back("camera", "rviz_textured_sphere/SphereDisplay",
                                              "Temoto camera");
   plugin_info_handler_.plugins_.emplace_back("image", "rviz/Image", "Temoto Image", "sensor_msgs/Image");
-  plugin_info_handler_.plugins_.emplace_back("robot", "moveit_rviz_plugin/MotionPlanning", "Moveit Motion Planning", "");
+  plugin_info_handler_.plugins_.emplace_back("path", "rviz/Path", "Path plugin", "");
+  plugin_info_handler_.plugins_.emplace_back("robot_model", "rviz/RobotModel", "Robot model plugin", "");
+  plugin_info_handler_.plugins_.emplace_back("manipulator", "moveit_rviz_plugin/MotionPlanning", "Moveit Motion Planning", "");
 }
 
 /* * * * * * * * * * * * * * * * *

@@ -34,8 +34,8 @@ RobotManager::RobotManager()
       nh_.advertiseService(robot_manager::srv_name::SERVER_PLAN, &RobotManager::planCb, this);
   server_exec_ =
       nh_.advertiseService(robot_manager::srv_name::SERVER_EXECUTE, &RobotManager::execCb, this);
-  server_get_viz_cfg_ = nh_.advertiseService(robot_manager::srv_name::SERVER_GET_VIZ_CONFIG,
-                                              &RobotManager::getVizConfigCb, this);
+  server_get_viz_cfg_ = nh_.advertiseService(robot_manager::srv_name::SERVER_GET_VIZ_INFO,
+                                              &RobotManager::getVizInfoCb, this);
   server_set_target_ = nh_.advertiseService(robot_manager::srv_name::SERVER_SET_TARGET,
                                             &RobotManager::setTargetCb, this);
   server_set_mode_ = nh_.advertiseService(robot_manager::srv_name::SERVER_SET_MODE,
@@ -89,7 +89,7 @@ void RobotManager::waitForMoveGroup(const RobotInfoPtr robot_info, temoto_id::ID
 }
 
 void RobotManager::rosExecute(const std::string& ros_ns, const std::string& package_name,
-                              const std::string& executable, const std::string args,
+                              const std::string& executable, const std::string& args,
                               temoto_2::LoadProcess::Response& res)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
@@ -117,6 +117,11 @@ void RobotManager::rosExecute(const std::string& ros_ns, const std::string& pack
                                     "': " + load_proc_srvc.response.rmp.message);
   }
   res = load_proc_srvc.response;
+}
+
+void loadUrdf(const std::string& package_name, const std::string urdf_filename)
+{
+
 }
 
 void RobotManager::loadLocalRobot(RobotInfoPtr info_ptr)
@@ -477,7 +482,7 @@ bool RobotManager::getVizInfoCb(temoto_2::RobotGetVizInfo::Request& req,
   }
   else
   {
-    res.config = active_robot_->getVizInfo();
+    res.info = active_robot_->getVizInfo();
   }
   res.code = 0;
   return true;

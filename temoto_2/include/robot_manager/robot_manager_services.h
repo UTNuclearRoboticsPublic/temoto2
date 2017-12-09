@@ -19,7 +19,7 @@ const std::string SYNC_TOPIC = "/temoto_2/" + MANAGER + "/sync";
 const std::string SERVER_LOAD = "load";
 const std::string SERVER_PLAN = "plan";
 const std::string SERVER_EXECUTE = "execute";
-const std::string SERVER_GET_RVIZ_CONFIG = "get_rviz_config";
+const std::string SERVER_GET_VIZ_INFO = "get_visualization_info";
 const std::string SERVER_SET_TARGET = "set_target";
 const std::string SERVER_SET_MODE = "set_mode";
 }
