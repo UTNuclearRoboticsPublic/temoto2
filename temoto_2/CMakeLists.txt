@@ -27,7 +27,7 @@ find_package(MeTA REQUIRED)
 
 # THE FOLLOWING FILES CANNOT BE PLACED UNDER SUBDIRS!
 add_message_files(FILES 
-    BaseError.msg
+    Error.msg
     ErrorStack.msg
     StopTaskMsg.msg
 
@@ -132,7 +132,7 @@ target_link_libraries(sensor_manager ${catkin_LIBRARIES} yaml-cpp )
 add_executable(output_manager src/output_manager/output_manager.cpp
 															src/output_manager/rviz_manager/rviz_manager.cpp
 															src/output_manager/rviz_manager/plugin_info.cpp
-                              src/base_error/base_error.cpp )
+                              src/temoto_error/temoto_error.cpp )
 add_dependencies(output_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(output_manager ${catkin_LIBRARIES})
 
@@ -151,7 +151,7 @@ add_executable(temoto_agent src/core/temoto_agent.cpp
                             src/TTP/task_tree_node.cpp
                             src/TTP/task_tree.cpp
                             src/TTP/task_container.cpp
-                            src/base_error/base_error.cpp)
+                            src/temoto_error/temoto_error.cpp)
 
 add_dependencies(temoto_agent ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(temoto_agent 
@@ -199,7 +199,7 @@ target_link_libraries(robot_manager ${catkin_LIBRARIES} yaml-cpp)
 
 
 add_executable(language_input src/tools/language_input.cpp
-                              src/base_error/base_error.cpp)
+                              src/temoto_error/temoto_error.cpp)
 add_dependencies(language_input ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(language_input ${catkin_LIBRARIES} )
 

@@ -136,7 +136,7 @@ void TaskManager::executeVerbalInstruction (std::string& verbal_instruction)
         if (!nlp_enabled_)
         {
             throw error::ErrorStackUtil( TTPErr::NLP_DISABLED,
-                                         error::Subsystem::CORE,
+                                         error::Subsystem::AGENT,
                                          error::Urgency::HIGH,
                                          prefix + " NLP cannot be used if its disabled",
                                          ros::Time::now() );
@@ -240,7 +240,7 @@ void TaskManager::executeSFT (TaskTree sft)
     catch(...)
     {
         throw error::ErrorStackUtil( TTPErr::UNHANDLED,
-                                     error::Subsystem::CORE,
+                                     error::Subsystem::AGENT,
                                      error::Urgency::HIGH,
                                      prefix + "Received an unhandled exception",
                                      ros::Time::now() );
@@ -342,7 +342,7 @@ std::vector <TaskDescriptor> TaskManager::findTaskFilesys(std::string task_to_fi
     {
         // Rethrow the exception
         throw error::ErrorStackUtil( TTPErr::FIND_TASK_FAIL,
-                                     error::Subsystem::CORE,
+                                     error::Subsystem::AGENT,
                                      error::Urgency::HIGH,
                                      prefix + e.what(),
                                      ros::Time::now() );
@@ -352,7 +352,7 @@ std::vector <TaskDescriptor> TaskManager::findTaskFilesys(std::string task_to_fi
     {
         // Rethrow the exception
         throw error::ErrorStackUtil( TTPErr::UNHANDLED,
-                                     error::Subsystem::CORE,
+                                     error::Subsystem::AGENT,
                                      error::Urgency::HIGH,
                                      prefix + "Received an unhandled exception",
                                      ros::Time::now() );
@@ -916,7 +916,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
     {
         // Throw error
         error::ErrorStackUtil error_stack_util(TTPErr::NLP_NO_TASK,
-                                               error::Subsystem::CORE,
+                                               error::Subsystem::AGENT,
                                                error::Urgency::MEDIUM,
                                                prefix + " Couldn't find a suitable task for action: " + node_action,
                                                ros::Time::now() );
@@ -1036,7 +1036,7 @@ void TaskManager::loadTask(TaskDescriptor& task_descriptor)
         if (classes.empty())
         {
             throw error::ErrorStackUtil( TTPErr::CLASS_LOADER_FAIL,
-                                         error::Subsystem::CORE,
+                                         error::Subsystem::AGENT,
                                          error::Urgency::HIGH,
                                          prefix + " Could not load the class fom path: " + path_to_lib,
                                          ros::Time::now() );
@@ -1051,7 +1051,7 @@ void TaskManager::loadTask(TaskDescriptor& task_descriptor)
     {
         // Rethrow the exception
         throw error::ErrorStackUtil( TTPErr::CLASS_LOADER_FAIL,
-                                     error::Subsystem::CORE,
+                                     error::Subsystem::AGENT,
                                      error::Urgency::HIGH,
                                      prefix + e.what(),
                                      ros::Time::now() );
@@ -1076,7 +1076,7 @@ void TaskManager::instantiateTask(TaskTreeNode& node)
     if (task_class_name.empty())
     {
         throw error::ErrorStackUtil( TTPErr::NAMELESS_TASK_CLASS,
-                                     error::Subsystem::CORE,
+                                     error::Subsystem::AGENT,
                                      error::Urgency::HIGH,
                                      prefix + "Task missing a class name",
                                      ros::Time::now() );
@@ -1099,7 +1099,7 @@ void TaskManager::instantiateTask(TaskTreeNode& node)
 //    if (!task_class_found)
 //    {
 //        throw error::ErrorStackUtil( TTPErr::NO_TASK_CLASS,
-//                                     error::Subsystem::CORE,
+//                                     error::Subsystem::AGENT,
 //                                     error::Urgency::HIGH,
 //                                     prefix + "Could not find a task class within loaded classes",
 //                                     ros::Time::now() );
@@ -1133,7 +1133,7 @@ void TaskManager::instantiateTask(TaskTreeNode& node)
     {
         // Rethrow the exception
         throw error::ErrorStackUtil( TTPErr::CLASS_LOADER_FAIL,
-                                     error::Subsystem::CORE,
+                                     error::Subsystem::AGENT,
                                      error::Urgency::HIGH,
                                      prefix + e.what(),
                                      ros::Time::now() );
@@ -1159,7 +1159,7 @@ void TaskManager::unloadTaskLib(std::string path_to_lib)
     {
         // Rethrow the exception
         throw error::ErrorStackUtil( TTPErr::CLASS_LOADER_FAIL,
-                                     error::Subsystem::CORE,
+                                     error::Subsystem::AGENT,
                                      error::Urgency::HIGH,
                                      prefix + e.what(),
                                      ros::Time::now() );
@@ -1404,7 +1404,7 @@ void TaskManager::stopTask(std::string action, std::string what)
     {
         // If nothing was specified, then throw error
         throw error::ErrorStackUtil( TTPErr::UNSPECIFIED_TASK,
-                                     error::Subsystem::CORE,
+                                     error::Subsystem::AGENT,
                                      error::Urgency::MEDIUM,
                                      prefix + " Task 'action' and 'what' unspecified.",
                                      ros::Time::now() );

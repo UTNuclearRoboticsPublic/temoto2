@@ -4,22 +4,24 @@
 #include <string>
 #include <vector>
 #include "ros/ros.h"
-#include "temoto_2/BaseError.h"
+#include "temoto_2/Error.h"
 #include "temoto_2/ErrorStack.h"
+#include "common/temoto_log_macros.h"
 #include "common/console_colors.h"
 
 namespace error
 {
 
 const int FORWARDING_CODE = 0;
+const bool VERBOSE = true;
 
 /**
  * @brief Enum that stores the subsystem codes
  */
 enum class Subsystem : int
 {
-    CORE,
-    CONTEXT_CENTER,
+    AGENT,
+    CONTEXT_MANAGER,
     HEALTH_MONITOR,
     SENSOR_MANAGER,
     ROBOT_MANAGER,
@@ -40,12 +42,9 @@ enum class Urgency : int
 /**
  * @brief ErrorStack
  */
-typedef std::vector <temoto_2::BaseError> ErrorStack;
+typedef std::vector <temoto_2::Error> ErrorStack;
 
-
-/**
- * @brief The ErrorStackUtil class
- */
+// TODO: Dont use this anymore and change the old error management system
 class ErrorStackUtil
 {
 public:
@@ -100,7 +99,7 @@ public:
      * @brief apush
      * @param base_error
      */
-    void push ( temoto_2::BaseError base_error );
+    void push ( temoto_2::Error base_error );
 
     /**
      * @brief forward
@@ -124,7 +123,7 @@ private:
      * @param stamp
      * @return
      */
-    temoto_2::BaseError initBaseError ( int code,
+    temoto_2::Error initBaseError ( int code,
                                         Subsystem subsystem,
                                         Urgency urgency,
                                         std::string message,
@@ -139,53 +138,63 @@ class ErrorHandler
 {
 public:
 
-    ErrorHandler();
+  ErrorHandler();
 
-    /**
-     * @brief Appends the ErrorStack
-     * @param errorStack
-     */
-    void append( ErrorStack errorStack );
+  ErrorHandler(Subsystem subsystem, std::string log_group);
 
-    /**
-     * @brief append
-     * @param err_stk_util
-     */
-    void append( ErrorStackUtil err_stck_util );
+  void createAndThrow(int code, std::string prefix, std::string message);
 
-    /**
-     * @brief Returns the ErrorStack and sets the "newErrors" flag to false
-     * @return
-     */
-    ErrorStack read();
+  void forwardAndThrow(ErrorStack& est, std::string prefix);
 
-    /**
-     * @brief Returns the ErrorStack and does not change the "newErrors" flag
-     * @return
-     */
-    ErrorStack readSilent() const;
+  /**
+   * @brief Appends the ErrorStack
+   * @param errorStack
+   */
+  void append( ErrorStack errorStack );
 
-    /**
-     * @brief Returns the ErrorStack, sets the "newErrors" flag to false and clears the stack
-     * @return
-     */
-    ErrorStack readAndClear();
+  /**
+   * @brief append
+   * @param err_stk_util
+   */
+  void append( ErrorStackUtil err_stck_util );
 
-    /**
-     * @brief Returns "true" if there are any new unread errors
-     * @return
-     */
-    bool gotUnreadErrors() const;
+  /**
+   * @brief Returns the ErrorStack and sets the "newErrors" flag to false
+   * @return
+   */
+  ErrorStack read();
+
+  /**
+   * @brief Returns the ErrorStack and does not change the "newErrors" flag
+   * @return
+   */
+  ErrorStack readSilent() const;
+
+  /**
+   * @brief Returns the ErrorStack, sets the "newErrors" flag to false and clears the stack
+   * @return
+   */
+  ErrorStack readAndClear();
+
+  /**
+   * @brief Returns "true" if there are any new unread errors
+   * @return
+   */
+  bool gotUnreadErrors() const;
 
 private:
 
-    ros::NodeHandle n_;
+  Subsystem subsystem_;
 
-    ros::Publisher error_publisher_;
+  std::string log_group_;
 
-    bool newErrors_ = false;
+  ros::NodeHandle n_;
 
-    ErrorStack errorStack_;
+  ros::Publisher error_publisher_;
+
+  bool newErrors_ = false;
+
+  ErrorStack errorStack_;
 };
 
 
@@ -197,7 +206,7 @@ private:
  * @param t
  * @return
  */
-std::ostream& operator<<(std::ostream& out, const temoto_2::BaseError& t);
+std::ostream& operator<<(std::ostream& out, const temoto_2::Error& t);
 
 /**
  * @brief operator <<

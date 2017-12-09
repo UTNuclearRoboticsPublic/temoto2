@@ -1,7 +1,7 @@
 #ifndef CORE_ERRORS_H
 #define CORE_ERRORS_H
 
-#include "base_error/base_error.h"
+#include "temoto_error/temoto_error.h"
 
 namespace coreErr
 {

@@ -1,7 +1,7 @@
 #ifndef TASK_HANDLER_H
 #define TASK_HANDLER_H
 
-#include "base_error/base_error.h"
+#include "temoto_error/temoto_error.h"
 #include "common/temoto_id.h"
 #include "TTP/task_descriptor.h"
 #include "TTP/task_tree.h"

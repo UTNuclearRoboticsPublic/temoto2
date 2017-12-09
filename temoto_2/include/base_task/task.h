@@ -9,7 +9,7 @@
 
 #include <string>
 #include <boost/any.hpp>
-#include "base_error/base_error.h"
+#include "temoto_error/temoto_error.h"
 #include "common/temoto_id.h"
 #include "temoto_2/StopTaskMsg.h"
 #include "ros/ros.h"

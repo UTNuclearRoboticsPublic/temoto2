@@ -1,11 +1,11 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-#include "base_error/base_error.h"
+#include "temoto_error/temoto_error.h"
 #include "common/console_colors.h"
 
 void displayErrorMessages( const temoto_2::ErrorStack &e_stack )
 {
-    error::ErrorStack e = e_stack.ErrorStack;
+    error::ErrorStack e = e_stack.errorStack;
     std::cout << e << std::endl;
 }
 

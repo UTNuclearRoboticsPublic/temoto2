@@ -152,7 +152,7 @@ public:
     }
 
     temoto_2::AddObject add_obj_srvmsg;
-    add_obj_srvmsg.object = object;
+    add_obj_srvmsg.request.object = object;
 
     if (false)
     {
@@ -176,7 +176,7 @@ public:
     catch (...)
     {
       throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL
-                                  , error::Subsystem::CORE
+                                  , error::Subsystem::AGENT
                                   , error::Urgency::HIGH
                                   , prefix + " Failed to unload resources"
                                   , ros::Time::now());

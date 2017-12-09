@@ -25,7 +25,7 @@ public:
  * Inherited methods that have to be implemented /START
  * * * * * * * * * * * * * * * * * * * * * * * * */
 
-TaskStart() : cmi_(this)
+TaskStart()
 {
     // Do something here if needed
     TASK_INFO("TaskStart constructed");
@@ -197,7 +197,7 @@ void startInterface_2()
     try
     {
         // Initialize the context manager interface
-        cmi_.initialize();
+        cmi_.initialize(this);
 
         TASK_INFO(" Starting the hand tracker");
 

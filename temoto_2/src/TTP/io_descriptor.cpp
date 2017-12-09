@@ -35,7 +35,7 @@ void Subject::addData(std::string datatype, float data)
     if (std::find(valid_datatypes.begin(), valid_datatypes.end(), datatype) == valid_datatypes.end())
     {
         throw error::ErrorStackUtil (TTPErr::DESC_INVALID_ARG
-                                     , error::Subsystem::CORE
+                                     , error::Subsystem::AGENT
                                      , error::Urgency::LOW
                                      , prefix + " Invalid datatype: '" + datatype + "'."
                                      , ros::Time::now() );
@@ -44,7 +44,7 @@ void Subject::addData(std::string datatype, float data)
     if (datatype != "number")
     {
         throw error::ErrorStackUtil (TTPErr::DESC_INVALID_ARG
-                                     , error::Subsystem::CORE
+                                     , error::Subsystem::AGENT
                                      , error::Urgency::LOW
                                      , prefix + " Numerical data '" + std::to_string(data) +
                                      "' cannot be tagged with a non-numerical datatype '" + datatype + "'."
@@ -64,7 +64,7 @@ void Subject::addData(std::string datatype, std::string data)
     if (std::find(valid_datatypes.begin(), valid_datatypes.end(), datatype) == valid_datatypes.end())
     {
         throw error::ErrorStackUtil (TTPErr::DESC_INVALID_ARG
-                                     , error::Subsystem::CORE
+                                     , error::Subsystem::AGENT
                                      , error::Urgency::LOW
                                      , prefix + " Invalid datatype: '" + datatype + "'."
                                      , ros::Time::now() );
@@ -73,7 +73,7 @@ void Subject::addData(std::string datatype, std::string data)
     if (datatype == "number")
     {
         throw error::ErrorStackUtil (TTPErr::DESC_INVALID_ARG
-                                     , error::Subsystem::CORE
+                                     , error::Subsystem::AGENT
                                      , error::Urgency::LOW
                                      , prefix + " A string is not a numerical datatype."
                                      , ros::Time::now() );

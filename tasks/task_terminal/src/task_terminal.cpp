@@ -29,7 +29,7 @@ public:
  * Inherited methods that have to be implemented /START
  * * * * * * * * * * * * * * * * * * * * * * * * */
 
-TaskTerminal() : cmi_(this)
+TaskTerminal()
 {
     class_name_ = "TaskTerminal";
 
@@ -76,7 +76,7 @@ void startInterface_0()
     try
     {
         // Initialize context manager interface
-        cmi_.initialize();
+        cmi_.initialize(this);
 
         // Advertise the topic where core listens for commands
         core_pub_ = nh_.advertise<std_msgs::String>("human_chatter", 1);
