@@ -135,6 +135,7 @@ public:
       if (info["urdf"].IsMap())
       {
         std::string rob_desc_param = info["urdf"]["robot_description"].as<std::string>();
+        TEMOTO_WARN("robot desc %s",rob_desc_param.c_str() );
         showInRviz("robot_model", rob_desc_param);
       }
       else
@@ -190,9 +191,7 @@ public:
 
       // Stream the file into a stringstream
       std::stringstream sstr;
-      while (config_file >> sstr.rdbuf())
-        ;
-
+      while (config_file >> sstr.rdbuf());
       return sstr.str();
     }
     catch (std::ifstream::failure e)

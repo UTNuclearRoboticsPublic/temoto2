@@ -3,16 +3,15 @@
 
 namespace robot_manager
 {
-Robot::Robot(RobotInfoPtr robot_info_ptr)
-  : robot_info_ptr_(robot_info_ptr), is_plan_valid_(false)
+Robot::Robot(RobotConfigPtr config)
+  : config_(config), is_plan_valid_(false)
 {
   log_class_ = "Robot";
   log_subsys_ = "robot_manager";
   log_group_ = "robot_manager";
   if (isLocal())
   {
-  // TODO: this is temporary solution for default ur[X]_moveit_config groups
-    //addPlanningGroup("manipulator");
+    load();
   }
 }
 
@@ -23,29 +22,57 @@ Robot::~Robot()
 
 void Robot::load()
 {
+    if (features_.size())
+    {
+      TEMOTO_ERROR("Loading failed! Robot has to have at least one of the following features "
+                   "(URDF, manipulation, "
+                   "navigation or gripper).");
+      // \TODO:: throw
+      return;
+    }
 
-  if (features_.size())
-  {
-    TEMOTO_ERROR("Loading failed! Robot has to have at least one of the following features (URDF, manipulation, "
-                 "navigation or gripper).");
-    // \TODO:: throw
-    return;
-  }
+    loadHardware();
+    waitForHardware();
 
-  // if manipulation
-  //   hasUrdf() has to return true.
-  //   joint states
-  //   robot state
-  //
-  // if navigation
-  //   vel_cmd
+    if (hasFeature(feature::URDF))
+    {
+      loadUrdf();
+    }
+    
+    if (hasFeature(feature::MANIPULATION))
+    {
+      loadManipulation();
+    }
 
+    if (hasFeature(feature::NAVIGATION))
+    {
+      loadNavigation();
+    }
+
+    if (hasFeature(feature::GRIPPER))
+    {
+      loadGripper();
+    }
+
+}
+
+// Load robot's hardware
+void Robot::loadHardware()
+{
+
+    // Load robot's main launch file
+    // It should bring up joint_state/robot publishers and hw specific nodes
+
+//    rosExecute(config->getName(), config->getPackageName(), config->getExecutable(), "", load_proc_res);
+
+ // rosExecute("temoto_2", "urdf_loader.py", "");
 }
 
 // Load robot's urdf
 void Robot::loadUrdf()
 {
 
+ // rosExecute("temoto_2", "urdf_loader.py", "");
 }
 
 // Load MoveIt! move group and move group interfaces
@@ -53,13 +80,37 @@ void Robot::loadManipulation()
 {
 
   // for each planning group, add 
-  addPlanningGroup("manipulator")
+  addPlanningGroup("manipulator");
 }
 
 // Load Move Base
 void Robot::loadNavigation()
 {
 
+}
+
+// Load Gripper
+void Robot::loadGripper()
+{
+
+}
+
+// Wait for hardware. Poll parameter server until robot_description becomes available.
+// \TODO: add 30 sec timeout protection.
+void Robot::waitForHardware()
+{
+//  while (!nh_.hasParam('/' + config->getRobotNamespace() + "/robot_description"))
+//  {
+//    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+//    TEMOTO_DEBUG("%s Waiting for move group to be ready ...", prefix.c_str());
+//    if (resource_manager_.hasFailed(res_id))
+//    {
+//      throw error::ErrorStackUtil(
+//          robot_error::SERVICE_STATUS_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
+//          prefix + "Loading interrupted. A FAILED status was received from process manager.");
+//    }
+//    ros::Duration(0.2).sleep();
+//  }
 }
 
 void Robot::addPlanningGroup(const std::string& planning_group_name)
@@ -133,16 +184,16 @@ void Robot::execute(const std::string& planning_group_name)
 
 bool Robot::isLocal() const
 {
-  if (robot_info_ptr_) 
+  if (config_) 
   {
-    return robot_info_ptr_->getTemotoNamespace() == ::common::getTemotoNamespace();
+    return config_->getTemotoNamespace() == ::common::getTemotoNamespace();
   }
  return true; // some default that should never reached. 
 }
 
 std::string Robot::getVizInfo()
 {
-  std::string act_rob_ns = robot_info_ptr_->getRobotNamespace();
+  std::string act_rob_ns = config_->getRobotNamespace();
   YAML::Node info;
   YAML::Node rviz = info["RViz"];
 

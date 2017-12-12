@@ -8,7 +8,7 @@
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <moveit/planning_interface/planning_interface.h>
 #include "common/temoto_id.h"
-#include "robot_manager/robot_info.h"
+#include "robot_manager/robot_config.h"
 
 namespace robot_manager
 {
@@ -17,12 +17,13 @@ namespace feature
 const std::string URDF = "urdf";
 const std::string MANIPULATION = "manipulation";
 const std::string NAVIGATION = "navigation";
+const std::string GRIPPER = "gripper";
 }
 
 class Robot
 {
 public:
-  Robot(RobotInfoPtr robot_config_);
+  Robot(RobotConfigPtr config_);
   virtual ~Robot();
   void addPlanningGroup(const std::string& planning_group_name);
   void removePlanningGroup(const std::string& planning_group_name);
@@ -32,31 +33,38 @@ public:
 
   std::string getName() const
   {
-    return name_;
+    return config_->getName();
   }
 
-  RobotInfoPtr getRobotInfo()
+  RobotConfigPtr getConfig()
   {
-    return robot_config_;
+    return config_;
   }
 
   bool isLocal() const;
 
   inline bool hasFeature(const std::string& feature) const
   {
-    return features_.find(feature) != features_.end()
+    return features_.find(feature) != features_.end();
   }
 
   // return all the information required to visualize this robot
   std::string getVizInfo();
 
 private:
+  void load();
+  void loadHardware();
+  void waitForHardware();
+  void loadUrdf();
+  void loadManipulation();
+  void loadNavigation();
+  void loadGripper();
+  
   // General
   std::string log_class_, log_subsys_, log_group_;
-  std::string robot_name_;
 
   // Robot configuration
-  RobotInfoPtr robot_config_;
+  RobotConfigPtr config_;
 
   // Enabled features for this robot
   std::set<std::string> features_;

@@ -1,5 +1,5 @@
-#ifndef ROBOT_INFO_H
-#define ROBOT_INFO_H
+#ifndef ROBOT_CONFIG_H
+#define ROBOT_CONFIG_H
 
 #include <string>
 #include <vector>
@@ -8,26 +8,20 @@
 #include <memory>  // shared_ptr
 #include "common/temoto_log_macros.h"
 #include <yaml-cpp/yaml.h>
+#include "common/reliability.h"
 
 namespace robot_manager
 {
 
-class RobotInfo
+class RobotConfig
 {
 public:
   /**
-   * @brief RobotInfo
+   * @brief RobotConfig
    */
 
-  RobotInfo(std::string robot_name = "A noname robot");
+  RobotConfig(std::string robot_name = "A noname robot");
   
-  /**
-   * \brief Adjust reliability
-   * \param reliability the new reliability contribution to the moving average filter. The value has
-   * to be in range [0-1], 0 being not reliable at all and 1.0 is very
-   * reliable.
-   */
-  void adjustReliability(float reliability = 1.0);
 
 
   std::string toString() const;
@@ -74,8 +68,18 @@ public:
 
   float getReliability() const
   {
-    return reliability_;
+    return reliability_.getReliability();
   };
+
+  void adjustReliability(float reliability)
+  {
+    reliability_.adjustReliability(reliability);
+  }
+
+  void resetReliability(float reliability)
+  {
+    reliability_.resetReliability(reliability);
+  }
 
 
   /* * * * * * * * * * * *
@@ -111,17 +115,10 @@ public:
     description_ = description;
   }
 
-  /**
-   * \brief Set reliability
-   * \param reliability Sets the initial values for the reliability moving average filter.
-   * The value has to be in range [0-1], 0 being not reliable at all and 1.0 is very
-   * reliable.
-   */
-  void setReliability(float reliability = 0.8);
 
 private:
 
-  std::string log_class_ = "RobotInfo";
+  std::string log_class_ = "RobotConfig";
   std::string log_subsys_ = "robot_manager";
   std::string log_group_ = "robot_manager";
 
@@ -131,27 +128,13 @@ private:
   std::string package_name_;
   std::string executable_;
   std::string description_;
-
-  /**
-   * @brief Reliability ratings of the robot.
-   */
-  std::array<float, 100> reliabilities_;
-
-  /**
-   * @brief Average reliability.
-   */
-  float reliability_;
-
-  /**
-   * @brief Reliability rating of the robot.
-   */
-  unsigned int reliability_idx_;
+  Reliability reliability_;
 };
 
-typedef std::shared_ptr<RobotInfo> RobotInfoPtr;
-typedef std::vector<RobotInfoPtr> RobotInfos;
+typedef std::shared_ptr<RobotConfig> RobotConfigPtr;
+typedef std::vector<RobotConfigPtr> RobotConfigs;
 
-static bool operator==(const RobotInfo& r1, const RobotInfo& r2)
+static bool operator==(const RobotConfig& r1, const RobotConfig& r2)
 {
   return (r1.getTemotoNamespace() == r2.getTemotoNamespace() && r1.getName() == r2.getName() &&
           r1.getExecutable() == r2.getExecutable() && r1.getPackageName() == r2.getPackageName());
@@ -162,20 +145,20 @@ static bool operator==(const RobotInfo& r1, const RobotInfo& r2)
 namespace YAML
 {
 template <>
-struct convert<robot_manager::RobotInfo>
+struct convert<robot_manager::RobotConfig>
 {
-  static Node encode(const robot_manager::RobotInfo& robot_info)
+  static Node encode(const robot_manager::RobotConfig& config)
   {
     Node node;
-    node["robot_name"] = robot_info.getName();
-    node["package_name"] = robot_info.getPackageName();
-    node["executable"] = robot_info.getExecutable();
-    node["description"] = robot_info.getDescription();
-    node["reliability"] = robot_info.getReliability();
+    node["robot_name"] = config.getName();
+    node["package_name"] = config.getPackageName();
+    node["executable"] = config.getExecutable();
+    node["description"] = config.getDescription();
+    node["reliability"] = config.getReliability();
     return node;
   }
 
-  static bool decode(const Node& node, robot_manager::RobotInfo& robot_info)
+  static bool decode(const Node& node, robot_manager::RobotConfig& config)
   {
     if (!node.IsMap() || node.size() < 3)
     {
@@ -184,9 +167,9 @@ struct convert<robot_manager::RobotInfo>
 
     try
     {
-      robot_info.setName(node["robot_name"].as<std::string>());
-      robot_info.setPackageName(node["package_name"].as<std::string>());
-      robot_info.setExecutable(node["executable"].as<std::string>());
+      config.setName(node["robot_name"].as<std::string>());
+      config.setPackageName(node["package_name"].as<std::string>());
+      config.setExecutable(node["executable"].as<std::string>());
     }
     catch (YAML::InvalidNode e)
     {
@@ -195,7 +178,7 @@ struct convert<robot_manager::RobotInfo>
 
     try
     {
-      robot_info.setDescription(node["description"].as<std::string>());
+      config.setDescription(node["description"].as<std::string>());
     }
     catch (YAML::InvalidNode e)
     {
@@ -203,7 +186,7 @@ struct convert<robot_manager::RobotInfo>
 
     try
     {
-      robot_info.setReliability(node["reliability"].as<float>());
+      config.resetReliability(node["reliability"].as<float>());
     }
     catch (YAML::InvalidNode e)
     {

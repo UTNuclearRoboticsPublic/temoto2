@@ -10,14 +10,14 @@
 #include "rmp/config_synchronizer.h"
 #include "temoto_2/ConfigSync.h"
 #include <moveit/move_group_interface/move_group_interface.h>
-#include <vector>
-#include <map>
 #include "robot_manager/robot.h"
-#include "robot_manager/robot_info.h"
+#include "robot_manager/robot_config.h"
 
 #include "leap_motion_controller/Set.h"
 
 #include <mutex>
+#include <vector>
+#include <map>
 
 
 namespace robot_manager
@@ -79,11 +79,11 @@ private:
 
   void syncCb(const temoto_2::ConfigSync& msg);
 
-  void advertiseLocalRobotInfos();
+  void advertiseConfigs(RobotConfigs configs);
 
-  RobotInfos parseRobotInfos(const YAML::Node& config);
+  RobotConfigs parseRobotConfigs(const YAML::Node& config);
 
-  RobotInfoPtr findRobot(const std::string& robot_name, const RobotInfos& robot_infos);
+  RobotConfigPtr findRobot(const std::string& robot_name, const RobotConfigs& robot_infos);
 
   bool getVizInfoCb(temoto_2::RobotGetVizInfo::Request& req,
                        temoto_2::RobotGetVizInfo::Response& res);
@@ -92,20 +92,19 @@ private:
 
   void statusInfoCb(temoto_2::ResourceStatus& srv);
 
-  void loadLocalRobot(RobotInfoPtr info_ptr);
+  void loadLocalRobot(RobotConfigPtr info_ptr);
 
   void rosExecute(const std::string& ros_namespace, const std::string& package_name,
                   const std::string& executable, const std::string& args,
                   temoto_2::LoadProcess::Response& res);
 
-  void waitForRobotDescription(const RobotInfoPtr robot_info, temoto_id::ID resource_id);
 
   typedef std::shared_ptr<Robot> RobotPtr;
   typedef std::map<temoto_id::ID, RobotPtr> Robots;
   RobotPtr active_robot_;
   Robots loaded_robots_;
-  RobotInfos local_robot_infos_;
-  RobotInfos remote_robot_infos_;
+  RobotConfigs local_configs_;
+  RobotConfigs remote_configs_;
 
   std::string mode_;
   geometry_msgs::PoseStamped default_target_pose_;

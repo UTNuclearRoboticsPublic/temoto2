@@ -26,7 +26,7 @@ RobotManager::RobotManager()
                                                     &RobotManager::unloadCb);
   resource_manager_.registerStatusCb(&RobotManager::statusInfoCb);
 
-  // Ask remote robot managers to send their robot infos
+  // Ask remote robot managers to send their robot config
   config_syncer_.requestRemoteConfigs();
 
   // Fire up additional servers for performing various actions on a robot.
@@ -41,24 +41,24 @@ RobotManager::RobotManager()
   server_set_mode_ = nh_.advertiseService(robot_manager::srv_name::SERVER_SET_MODE,
                                             &RobotManager::setModeCb, this);
 
-  // Read the robot information for this manager. 
+  // Read the robot config for this manager. 
   std::string yaml_filename = ros::package::getPath(ROS_PACKAGE_NAME) + "/conf/" +
                               common::getTemotoNamespace() + ".yaml";
   // \TODO: check
   std::ifstream in(yaml_filename);
-  YAML::Node config = YAML::Load(in);
-  if (config["Robots"])
+  YAML::Node yaml_config = YAML::Load(in);
+  if (yaml_config["Robots"])
   {
-    local_robot_infos_ = parseRobotInfos(config);
+    local_configs_ = parseRobotConfigs(yaml_config);
 
     // Debug what was added
-    for (auto& info_ptr : local_robot_infos_)
+    for (auto& config : local_configs_)
     {
-      TEMOTO_DEBUG("%s Added robot: '%s'.", prefix.c_str(), info_ptr->getName().c_str());
+      TEMOTO_DEBUG("%s Added robot: '%s'.", prefix.c_str(), config->getName().c_str());
     }
 
     // Advertise the parsed local robots
-    advertiseLocalRobotInfos();
+    advertiseConfigs(local_configs_);
   }
   else
   {
@@ -103,57 +103,30 @@ void RobotManager::rosExecute(const std::string& ros_ns, const std::string& pack
   res = load_proc_srvc.response;
 }
 
-void loadUrdf(const )
-{
-  rosExecute("temoto_2", "urdf_loader.py", "");
 
-}
 
-// Wait for move group. Poll parameter server until robot_description becomes available.
-// \TODO: add 30 sec timeout protection.
-void RobotManager::waitForRobotDescription(const RobotInfoPtr robot_info, temoto_id::ID res_id)
-{
-  while (!nh_.hasParam('/' + robot_info->getRobotNamespace() + "/robot_description"))
-  {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-    TEMOTO_DEBUG("%s Waiting for move group to be ready ...", prefix.c_str());
-    if (resource_manager_.hasFailed(res_id))
-    {
-      throw error::ErrorStackUtil(
-          robot_error::SERVICE_STATUS_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
-          prefix + "Loading interrupted. A FAILED status was received from process manager.");
-    }
-    ros::Duration(0.2).sleep();
-  }
-}
-
-void RobotManager::loadLocalRobot(RobotInfoPtr info_ptr)
+void RobotManager::loadLocalRobot(RobotConfigPtr config)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-  if (!info_ptr)
+  if (!config)
   {
     throw error::ErrorStackUtil(robot_error::NULL_PTR, error::Subsystem::ROBOT_MANAGER,
-                                error::Urgency::MEDIUM, prefix + " info_ptr == NULL");
+                                error::Urgency::MEDIUM, prefix + " config == NULL");
   }
 
   temoto_2::LoadProcess::Response load_proc_res;
   try
   {
-    // Load robot's main launch file
-    // It should bring up joint_state/robot publishers and hw specific nodes
-    rosExecute(info_ptr->getName(), info_ptr->getPackageName(), info_ptr->getExecutable(), "", load_proc_res);
-    waitForRobotDescription(info_ptr, load_proc_res.rmp.resource_id);
-
-    active_robot_ = std::make_shared<Robot>(info_ptr);
+    active_robot_ = std::make_shared<Robot>(config);
     loaded_robots_.emplace(load_proc_res.rmp.resource_id, active_robot_);
-    info_ptr->adjustReliability(1.0);
-    TEMOTO_DEBUG("%s Robot '%s' loaded.", prefix.c_str(), info_ptr->getName().c_str());
+    config->adjustReliability(1.0);
+    TEMOTO_DEBUG("%s Robot '%s' loaded.", prefix.c_str(), config->getName().c_str());
   }
   catch (error::ErrorStackUtil& e)
   {
     if (e.getStack().front().code == robot_error::SERVICE_STATUS_FAIL)
     {
-      info_ptr->adjustReliability(0.0);
+      config->adjustReliability(0.0);
     }
     
     std::stringstream ss;
@@ -170,12 +143,12 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
   TEMOTO_INFO("%s Starting to load robot '%s'...", prefix.c_str(), req.robot_name.c_str());
 
   // Find the suitable robot and fill the process manager service request
-  auto info_ptr = findRobot(req.robot_name, local_robot_infos_);
-  if (info_ptr)
+  auto config = findRobot(req.robot_name, local_configs_);
+  if (config)
   {
     try
     {
-      loadLocalRobot(info_ptr);
+      loadLocalRobot(config);
       res.rmp.code = rmp::status_codes::FAILED;
       res.rmp.message = "Robot sucessfully loaded.";
     }
@@ -193,8 +166,8 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
   }
 
   // Try to find suitable candidate from remote managers
-  info_ptr = findRobot(req.robot_name, remote_robot_infos_);
-  if (info_ptr)
+  config = findRobot(req.robot_name, remote_configs_);
+  if (config)
   {
     temoto_2::RobotLoad load_robot_srvc;
     load_robot_srvc.request.robot_name = req.robot_name;
@@ -203,13 +176,13 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
 
     if (resource_manager_.call<temoto_2::RobotLoad>(
             robot_manager::srv_name::MANAGER, robot_manager::srv_name::SERVER_LOAD, load_robot_srvc,
-            info_ptr->getTemotoNamespace()))
+            config->getTemotoNamespace()))
     {
       TEMOTO_DEBUG("%s Call to remote RobotManager was sucessful.", prefix.c_str());
       res.rmp = load_robot_srvc.response.rmp;
       try
       {
-        active_robot_ = std::make_shared<Robot>(info_ptr);
+        active_robot_ = std::make_shared<Robot>(config);
         loaded_robots_.emplace(load_robot_srvc.response.rmp.resource_id, active_robot_);
       }
       catch (...)
@@ -263,78 +236,78 @@ void RobotManager::syncCb(const temoto_2::ConfigSync& msg)
 
   if (msg.action == rmp::sync_action::REQUEST_CONFIG)
   {
-    advertiseLocalRobotInfos();
+    advertiseConfigs(local_configs_);
     return;
   }
 
   if (msg.action == rmp::sync_action::ADVERTISE_CONFIG)
   {
     // Convert the config string to YAML tree and parse
-    YAML::Node config = YAML::Load(msg.config);
-    std::vector<RobotInfoPtr> robot_infos = parseRobotInfos(config);
+    YAML::Node yaml_config = YAML::Load(msg.config);
+    RobotConfigs configs = parseRobotConfigs(yaml_config);
 
     //TODO hold remote stuff in a map or something keyed by namespace
-    for (auto& info_ptr : robot_infos)
+    for (auto& config : configs)
     {
-      info_ptr->setTemotoNamespace(msg.temoto_namespace);
+      config->setTemotoNamespace(msg.temoto_namespace);
     }
 
-    for (auto& info_ptr : robot_infos)
+    for (auto& config : configs)
     {
-      // Check if robot info has to be added or updated
-      auto it = std::find_if(remote_robot_infos_.begin(), remote_robot_infos_.end(),
-          [&](const RobotInfoPtr& ri) { return *ri == *info_ptr; });
-      if (it != remote_robot_infos_.end())
+      // Check if robot config has to be added or updated
+      auto it = std::find_if(remote_configs_.begin(), remote_configs_.end(),
+          [&](const RobotConfigPtr& ri) { return *ri == *config; });
+      if (it != remote_configs_.end())
       {
         TEMOTO_DEBUG("%s Updating remote robot '%s' at '%s'.", prefix.c_str(),
-            info_ptr->getName().c_str(), info_ptr->getTemotoNamespace().c_str());
-        *it = info_ptr; // overwrite found entry
+            config->getName().c_str(), config->getTemotoNamespace().c_str());
+        *it = config; // overwrite found entry
       }
       else
       {
         TEMOTO_DEBUG("%s Adding remote robot '%s' at '%s'.", prefix.c_str(),
-            info_ptr->getName().c_str(), info_ptr->getTemotoNamespace().c_str());
-        remote_robot_infos_.push_back(info_ptr);
+            config->getName().c_str(), config->getTemotoNamespace().c_str());
+        remote_configs_.push_back(config);
       }
     }
   }
 }
 
-void RobotManager::advertiseLocalRobotInfos()
+void RobotManager::advertiseConfigs(RobotConfigs configs)
 {
     // publish all local robots
-    YAML::Node config;
-    for(auto& info_ptr : local_robot_infos_) 
+    YAML::Node yaml_config;
+    for(auto& config : configs) 
     {
-        config["Robots"].push_back(*info_ptr);
+        yaml_config["Robots"].push_back(*config);
     }
     
     // send to other managers if there is anything to send
-    if(config.size())
+    if(yaml_config.size())
     {
-      config_syncer_.advertise(config);
+      config_syncer_.advertise(yaml_config);
     }
 }
 
-RobotInfos RobotManager::parseRobotInfos(const YAML::Node& config)
+RobotConfigs RobotManager::parseRobotConfigs(const YAML::Node& yaml_config)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-  RobotInfos robot_infos;
+  RobotConfigs configs;
 
 //  TEMOTO_DEBUG("%s CONFIG NODE:%d %s", prefix.c_str(), config.Type(), Dump(config).c_str());
-  if (!config.IsMap())
+  if (!yaml_config.IsMap())
   {
     // TODO Throw
     TEMOTO_WARN("%s Unable to parse 'Robots' key from config.", prefix.c_str());
-    return robot_infos;
+    return configs;
   }
 
-  YAML::Node robots_node = config["Robots"];
+  YAML::Node robots_node = yaml_config["Robots"];
   if (!robots_node.IsSequence())
   {
     TEMOTO_WARN("%s The given config does not contain sequence of robots.", prefix.c_str());
     // TODO Throw
-    return robot_infos;
+    return configs;
   }
 
   TEMOTO_DEBUG("%s Parsing %lu robots.", prefix.c_str(), robots_node.size());
@@ -344,7 +317,7 @@ RobotInfos RobotManager::parseRobotInfos(const YAML::Node& config)
   {
     if (!node_it->IsMap())
     {
-      TEMOTO_ERROR("%s Unable to parse the robot info. Parameters in YAML have to be specified in "
+      TEMOTO_ERROR("%s Unable to parse the robot config. Parameters in YAML have to be specified in "
                    "key-value pairs.",
                    prefix.c_str());
       continue;
@@ -352,26 +325,26 @@ RobotInfos RobotManager::parseRobotInfos(const YAML::Node& config)
 
     try
     {
-      RobotInfo robot_info = node_it->as<RobotInfo>();
-      if (std::count_if(robot_infos.begin(), robot_infos.end(),
-                        [&](const RobotInfoPtr& ri) { return *ri == robot_info; }) == 0)
+      RobotConfig config = node_it->as<RobotConfig>();
+      if (std::count_if(configs.begin(), configs.end(),
+                        [&](const RobotConfigPtr& ri) { return *ri == config; }) == 0)
       {
-        // OK, this is unique info, add it to the robot_infos.
-        robot_infos.emplace_back(std::make_shared<RobotInfo>(robot_info));
+        // OK, this is unique config, add it to the configs.
+        configs.emplace_back(std::make_shared<RobotConfig>(config));
       }
       else
       {
         TEMOTO_WARN("%s Ignoring duplicate of robot '%s'.", prefix.c_str(),
-                    robot_info.getName().c_str());
+                    config.getName().c_str());
       }
     }
-    catch (YAML::TypedBadConversion<RobotInfo> e)
+    catch (YAML::TypedBadConversion<RobotConfig> e)
     {
-      TEMOTO_WARN("%s Failed to parse RobotInfo from config.", prefix.c_str());
+      TEMOTO_WARN("%s Failed to parse RobotConfig from config.", prefix.c_str());
       continue;
     }
   }
-  return robot_infos;
+  return configs;
 }
 
 bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan::Response& res)
@@ -401,7 +374,7 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
     else
     {
       // This robot is present in a remote robotmanager, forward the planning command to there.
-      std::string topic = "/" + active_robot_->getRobotInfo()->getTemotoNamespace() + "/" +
+      std::string topic = "/" + active_robot_->getConfig()->getTemotoNamespace() + "/" +
                           robot_manager::srv_name::SERVER_PLAN;
       ros::ServiceClient client_plan = nh_.serviceClient<temoto_2::RobotPlan>(topic);
       temoto_2::RobotPlan fwd_plan_srvc;
@@ -447,7 +420,7 @@ bool RobotManager::execCb(temoto_2::RobotExecute::Request& req,
     else
     {
       // This robot is present in a remote robotmanager, forward the command to there.
-      std::string topic = "/" + active_robot_->getRobotInfo()->getTemotoNamespace() + "/" +
+      std::string topic = "/" + active_robot_->getConfig()->getTemotoNamespace() + "/" +
                           robot_manager::srv_name::SERVER_EXECUTE;
       ros::ServiceClient client_exec = nh_.serviceClient<temoto_2::RobotExecute>(topic);
       temoto_2::RobotExecute fwd_exec_srvc;
@@ -555,7 +528,7 @@ bool RobotManager::setModeCb(temoto_2::RobotSetMode::Request& req,
     else
     {
       // This robot is present in a remote robotmanager, forward the command to there.
-      std::string topic = "/" + active_robot_->getRobotInfo()->getTemotoNamespace() + "/" +
+      std::string topic = "/" + active_robot_->getConfig()->getTemotoNamespace() + "/" +
         robot_manager::srv_name::SERVER_SET_MODE;
       ros::ServiceClient client_mode = nh_.serviceClient<temoto_2::RobotSetMode>(topic);
       temoto_2::RobotSetMode fwd_mode_srvc;
@@ -639,25 +612,25 @@ void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)
       auto it = loaded_robots_.find(srv.request.resource_id);
       if (it != loaded_robots_.end())
       {
-        RobotInfoPtr info_ptr = it->second->getRobotInfo();
-        info_ptr->adjustReliability(0.0);
-        YAML::Node config;
-        config["Robots"].push_back(*info_ptr);
-        config_syncer_.advertise(config);
+        RobotConfigPtr config = it->second->getConfig();
+        config->adjustReliability(0.0);
+        YAML::Node yaml_config;
+        yaml_config["Robots"].push_back(*config);
+        config_syncer_.advertise(yaml_config);
       }
     }
   }
 
-RobotInfoPtr RobotManager::findRobot(const std::string& robot_name, const RobotInfos& robot_infos)
+RobotConfigPtr RobotManager::findRobot(const std::string& robot_name, const RobotConfigs& configs)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   
   // Local list of devices that follow the requirements
-  RobotInfos candidates;
+  RobotConfigs candidates;
 
   // Find the robot that matches the "name" criteria
-  auto it = std::copy_if(robot_infos.begin(), robot_infos.end(), std::back_inserter(candidates),
-                         [&](const RobotInfoPtr& s) { return s->getName() == robot_name; });
+  auto it = std::copy_if(configs.begin(), configs.end(), std::back_inserter(candidates),
+                         [&](const RobotConfigPtr& s) { return s->getName() == robot_name; });
 
   // If the list is empty, leave the req empty
   if (candidates.empty())
@@ -666,8 +639,8 @@ RobotInfoPtr RobotManager::findRobot(const std::string& robot_name, const RobotI
   }
 
   std::sort(candidates.begin(), candidates.end(),
-            [](RobotInfoPtr& pkg_ptr1, RobotInfoPtr& pkg_ptr2) {
-              return pkg_ptr1->getReliability() > pkg_ptr2->getReliability();
+            [](RobotConfigPtr& rc1, RobotConfigPtr& rc2) {
+              return rc1->getReliability() > rc2->getReliability();
             });
 
   // Get the name of the package and first launchable
