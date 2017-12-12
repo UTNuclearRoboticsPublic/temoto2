@@ -187,9 +187,28 @@ void ErrorHandler::append( ErrorStack est )
     error_publisher_.publish( error_stack_msg );
 }
 
+void ErrorHandler::forwardAndAppend(ErrorStack errorStack, std::string prefix)
+{
+  temoto_2::Error error;
+
+  error.subsystem = static_cast<int>(subsystem_);
+  error.code = FORWARDING_CODE;
+  error.prefix = prefix;
+  error.stamp = ros::Time::now();
+
+  // Print the message out if the verbose mode is enabled
+  if (VERBOSE)
+  {
+    TEMOTO_ERROR_STREAM(prefix << " " << "Forwarding.");
+  }
+
+  errorStack.push_back(error);
+  append(errorStack);
+}
+
 void ErrorHandler::append( ErrorStackUtil err_stck_util )
 {
-    append( err_stck_util.getStack() );
+  append( err_stck_util.getStack() );
 }
 
 ErrorStack ErrorHandler::read()

@@ -8,10 +8,11 @@ namespace context_manager
 {
 ContextManager::ContextManager() : resource_manager_(srv_name::MANAGER, this)
 {
-  log_class_ = "";
-  log_subsys_ = "context_manager";
+  class_name_ = __func__;
+  subsystem_name_ = "context_manager";
+  subsystem_code_ = error::Subsystem::CONTEXT_MANAGER;
   log_group_ = "context_manager";
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  error_handler_ = error::ErrorHandler(subsystem_code_, log_group_);
   
   /*
    * Start the servers
@@ -27,13 +28,16 @@ ContextManager::ContextManager() : resource_manager_(srv_name::MANAGER, this)
                                                     , &ContextManager::loadSpeechCb
                                                     , &ContextManager::unloadSpeechCb);
 
+  // "Add object" server
+  add_object_server_ = nh_.advertiseService(srv_name::SERVER_ADD_OBJECT, &ContextManager::addObjectCb, this);
+
   TEMOTO_INFO("Context Manager is ready.");
 }
 
 void ContextManager::loadGestureCb(temoto_2::LoadGesture::Request& req,
-                                 temoto_2::LoadGesture::Response& res)
+                                   temoto_2::LoadGesture::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
   TEMOTO_INFO("%s Gesture requested.", prefix.c_str());
   TEMOTO_DEBUG("%s Using hardcoded specifiers[0]", prefix.c_str());
 
@@ -65,14 +69,14 @@ void ContextManager::loadGestureCb(temoto_2::LoadGesture::Request& req,
 void ContextManager::unloadGestureCb(temoto_2::LoadGesture::Request& req,
                                    temoto_2::LoadGesture::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
   TEMOTO_DEBUG("%s Gesture unloaded.", prefix.c_str());
 }
 
 void ContextManager::loadSpeechCb(temoto_2::LoadSpeech::Request& req,
-                                temoto_2::LoadSpeech::Response& res)
+                                  temoto_2::LoadSpeech::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
   TEMOTO_INFO("%s Speech requested.", prefix.c_str());
   TEMOTO_DEBUG("%s Using hardcoded specifiers[0]", prefix.c_str());
 
@@ -102,11 +106,21 @@ void ContextManager::loadSpeechCb(temoto_2::LoadSpeech::Request& req,
 }
 
 void ContextManager::unloadSpeechCb(temoto_2::LoadSpeech::Request& req,
-                                  temoto_2::LoadSpeech::Response& res)
+                                    temoto_2::LoadSpeech::Response& res)
 {
   std::string prefix = "[ContextManager::unloadSpeechCb]:";
   TEMOTO_INFO("%s Speech unloaded.", prefix.c_str());
 }
+
+bool ContextManager::addObjectCb(temoto_2::AddObject::Request& req, temoto_2::AddObject::Response& res)
+{
+  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
+  TEMOTO_DEBUG_STREAM(prefix << "received a request to add an object: \n" << req.object);
+
+  return true;
+
+}
+
 
 }  // namespace context_manager
 

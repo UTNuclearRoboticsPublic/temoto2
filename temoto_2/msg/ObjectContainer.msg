@@ -7,7 +7,7 @@
 string name
 
 # REQUIRED - How this object can be detected
-uint8 detection_methods
+uint8[] detection_methods
 
 # Supported types for object detection are: 
 uint8 ARTAG = 1     # Requires the "tag_id" field to be filled
@@ -23,8 +23,8 @@ int16 tag_id
 geometry_msgs/Pose obj_relative_pose
 
 # Describes the shape primitive (e.g., box, cylinder, cone, sphere)
-# shape_msgs/SolidPrimitive primitive
-# shape_msgs/Mesh[] mesh
+shape_msgs/SolidPrimitive primitive
+shape_msgs/Mesh mesh
 
 ##########################
 #   DYNAMIC PROPERTIES   #

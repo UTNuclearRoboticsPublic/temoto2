@@ -5,6 +5,7 @@
 
 #include "TTP/base_task/task_errors.h"
 #include "TTP/base_task/base_task.h"
+#include "common/base_subsystem.h"
 #include "common/temoto_id.h"
 #include "common/console_colors.h"
 #include "common/interface_errors.h"
@@ -19,7 +20,7 @@
 #include <vector>
 
 template <class OwnerTask>
-class ContextManagerInterface
+class ContextManagerInterface : public BaseSubsystem
 {
 public:
 
@@ -27,12 +28,14 @@ public:
   typedef void (OwnerTask::*SpeechCallbackType)(std_msgs::String);
 
 
-  ContextManagerInterface(){}
+  ContextManagerInterface()
+  {
+    class_name_ = __func__;
+  }
 
   void initialize(TTP::BaseTask* task)
   {
-    log_class_= "";
-    log_subsys_ = "context_manager_interface";
+    initializeBase(task);
     log_group_ = "interfaces." + task->getPackageName();
     name_ = task->getName() + "/context_manager_interface";
 
@@ -40,13 +43,14 @@ public:
     resource_manager_ = std::unique_ptr<rmp::ResourceManager<ContextManagerInterface>>(new rmp::ResourceManager<ContextManagerInterface>(name_, this));
 
     // ensure that resource_manager was created
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
     validateInterface(prefix);
 
     // register status callback function
     resource_manager_->registerStatusCb(&ContextManagerInterface::statusInfoCb);
 
-    client_add_object_ = nh_.serviceClient<temoto_2::AddObject>(context_manager::srv_name::SERVER_ADD_OBJECT);
+    // Add object service client
+    add_object_client_ = nh_.serviceClient<temoto_2::AddObject>(context_manager::srv_name::SERVER_ADD_OBJECT);
   }
 
   void getSpeech(std::vector<temoto_2::SpeechSpecifier> speech_specifiers, SpeechCallbackType callback, OwnerTask* obj)
@@ -55,7 +59,7 @@ public:
     task_speech_obj_ = obj;
 
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
     validateInterface(prefix);
 
     // Contact the "Context Manager", pass the speech specifier and if successful, get
@@ -67,25 +71,23 @@ public:
     // Call the server
     try
     {
-      resource_manager_->template call<temoto_2::LoadSpeech>(
-          context_manager::srv_name::MANAGER, context_manager::srv_name::SPEECH_SERVER, srv_msg);
+      resource_manager_->template call<temoto_2::LoadSpeech>(context_manager::srv_name::MANAGER
+                                                            , context_manager::srv_name::SPEECH_SERVER
+                                                            , srv_msg);
       allocated_speeches_.push_back(srv_msg);
     }
     catch (...)
     {
-      throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL
-                                  , error::Subsystem::TASK
-                                  , error::Urgency::MEDIUM, prefix + " Failed to call service"
-                                  , ros::Time::now());
+      error_handler_.createAndThrow( taskErr::SERVICE_REQ_FAIL
+                                   , prefix
+                                   , "Failed to call service");
     }
 
     // Check if the request was satisfied
     // TODO: in future, catch code==0 exeption from RMP and rethrow from here
     if (srv_msg.response.rmp.code != 0)
     {
-      throw error::ErrorStackUtil(
-          taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK, error::Urgency::MEDIUM,
-          prefix + " Service request failed: " + srv_msg.response.rmp.message, ros::Time::now());
+      error_handler_.forwardAndThrow(srv_msg.response.rmp.errorStack, prefix);
     }
 
     // Subscribe to the topic that was provided by the "Context Manager"
@@ -99,7 +101,7 @@ public:
     task_gesture_obj_ = obj;
 
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
     validateInterface(prefix);
 
     // Contact the "Context Manager", pass the gesture specifier and if successful, get
@@ -116,20 +118,16 @@ public:
     }
     catch (...)
     {
-      throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL
-                                  , error::Subsystem::TASK
-                                  , error::Urgency::MEDIUM
-                                  , prefix + " Failed to call service"
-                                  , ros::Time::now());
+      error_handler_.createAndThrow( taskErr::SERVICE_REQ_FAIL
+                                   , prefix
+                                   , "Failed to call the server");
     }
 
     // Check if the request was satisfied
     // TODO: in future, catch code==0 exeption from RMP and rethrow from here
     if (srv_msg.response.rmp.code != 0)
     {
-      throw error::ErrorStackUtil(
-          taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK, error::Urgency::MEDIUM,
-          prefix + " Service request failed: " + srv_msg.response.rmp.message, ros::Time::now());
+      error_handler_.forwardAndThrow(srv_msg.response.rmp.errorStack, prefix);
     }
 
     // Subscribe to the topic that was provided by the "Context Manager"
@@ -140,30 +138,47 @@ public:
 
   void addWorldObject(temoto_2::ObjectContainer object)
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
 
     // Check if this message contains the basic parameters
+    // Does it have a name
     if (object.name == "")
     {
-      throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL
-                                  , error::Subsystem::TASK
-                                  , error::Urgency::MEDIUM
-                                  , prefix + " The object is missing a name");
+      error_handler_.createAndThrow( taskErr::SERVICE_REQ_FAIL
+                                   , prefix
+                                   , "The object is missing a name");
+    }
+
+    // Are the detection methods specified
+    if (object.detection_methods.empty())
+    {
+      error_handler_.createAndThrow( taskErr::SERVICE_REQ_FAIL
+                                   , prefix
+                                   , "Detection method unspecified");
     }
 
     temoto_2::AddObject add_obj_srvmsg;
     add_obj_srvmsg.request.object = object;
 
-    if (false)
+    // Call the server
+    if (!add_object_client_.call(add_obj_srvmsg))
     {
+       error_handler_.createAndThrow( taskErr::SERVICE_REQ_FAIL
+                                    , prefix
+                                    , "Failed to call the server");
+    }
 
+    // Check the response code
+    if (add_obj_srvmsg.response.rmp.code != 0)
+    {
+      error_handler_.forwardAndThrow(add_obj_srvmsg.response.rmp.errorStack, prefix);
     }
   }
 
   bool stopAllocatedServices()
   {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
     validateInterface(prefix);
 
     try
@@ -175,19 +190,15 @@ public:
     }
     catch (...)
     {
-      throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL
-                                  , error::Subsystem::AGENT
-                                  , error::Urgency::HIGH
-                                  , prefix + " Failed to unload resources"
-                                  , ros::Time::now());
+      error_handler_.createAndThrow( taskErr::SERVICE_REQ_FAIL
+                                   , prefix
+                                   , "Failed to unload resources");
     }
   }
 
-
-
   void statusInfoCb(temoto_2::ResourceStatus& srv)
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
     validateInterface(prefix);
 
     TEMOTO_DEBUG("%s status info was received", prefix.c_str());
@@ -280,7 +291,7 @@ public:
 
   const std::string& getName() const
   {
-    return log_subsys_;
+    return subsystem_name_;
   }
 
 private:
@@ -296,13 +307,12 @@ private:
   std::unique_ptr<rmp::ResourceManager<ContextManagerInterface>> resource_manager_;
 
   std::string name_; 
-  std::string log_class_, log_subsys_, log_group_;
   TTP::BaseTask* task_;
 
   ros::NodeHandle nh_;
   ros::Subscriber gesture_subscriber_;
   ros::Subscriber speech_subscriber_;
-  ros::ServiceClient client_add_object_;
+  ros::ServiceClient add_object_client_;
 
   std::vector<temoto_2::LoadGesture> allocated_gestures_;
   std::vector<temoto_2::LoadSpeech> allocated_speeches_;

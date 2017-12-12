@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   geometry_msgs
+  shape_msgs
   class_loader
   cmake_modules
 	message_generation
@@ -27,63 +28,64 @@ find_package(MeTA REQUIRED)
 
 # THE FOLLOWING FILES CANNOT BE PLACED UNDER SUBDIRS!
 add_message_files(FILES 
-    Error.msg
-    ErrorStack.msg
-    StopTaskMsg.msg
+  Error.msg
+  ErrorStack.msg
+  StopTaskMsg.msg
 
-    # Resource Management
-    RMPRequest.msg
-    RMPResponse.msg
+  # Resource Management
+  RMPRequest.msg
+  RMPResponse.msg
 
-    # Context Manager
-    SpeechSpecifier.msg
-    GestureSpecifier.msg
-    ObjectContainer.msg
+  # Context Manager
+  SpeechSpecifier.msg
+  GestureSpecifier.msg
+  ObjectContainer.msg
 
-    # Configuration Synchronizer
-    ConfigSync.msg
+  # Configuration Synchronizer
+  ConfigSync.msg
 
-    # Task manager
-    TTP/task_manager/IndexTasks.msg
+  # Task manager
+  TTP/task_manager/IndexTasks.msg
 )
 
 add_service_files(
   FILES
-    # Resouce Management
-    RMP/UnloadResource.srv
-    RMP/ResourceStatus.srv
+  # Resouce Management
+  RMP/UnloadResource.srv
+  RMP/ResourceStatus.srv
 
-    # Process Manager
-    process_manager/LoadProcess.srv
+  # Process Manager
+  process_manager/LoadProcess.srv
 
-	  # Sensor Manager
-    sensor_manager/ListDevices.srv
-    sensor_manager/LoadSensor.srv
+  # Sensor Manager
+  sensor_manager/ListDevices.srv
+  sensor_manager/LoadSensor.srv
 
-    # Context Manager
-    context_manager/LoadGesture.srv
-    context_manager/LoadSpeech.srv
-    context_manager/AddObject.srv
+  # Context Manager
+  context_manager/LoadGesture.srv
+  context_manager/LoadSpeech.srv
+  context_manager/AddObject.srv
 
-    # Output Manager
-    output_manager/rviz_manager/LoadRvizPlugin.srv
+  # Output Manager
+  output_manager/rviz_manager/LoadRvizPlugin.srv
 
-    # Robot Manager
-    robot_manager/RobotLoad.srv
-    robot_manager/RobotPlan.srv
-    robot_manager/RobotExecute.srv
-    robot_manager/RobotSetTarget.srv
-    robot_manager/RobotGetRvizConfig.srv
-  
-    # Task manager
-    TTP/task_manager/StopTask.srv
-    #TTP/task_manager/IndexTasks.srv
+  # Robot Manager
+  robot_manager/RobotLoad.srv
+  robot_manager/RobotPlan.srv
+  robot_manager/RobotExecute.srv
+  robot_manager/RobotSetTarget.srv
+  robot_manager/RobotGetRvizConfig.srv
+
+  # Task manager
+  TTP/task_manager/StopTask.srv
+  #TTP/task_manager/IndexTasks.srv
 )
 
 generate_messages(
   DEPENDENCIES
   std_msgs
   geometry_msgs
+  shape_msgs
 )
 
 catkin_package(
@@ -112,7 +114,8 @@ include_directories(
 # CONTEXT MANAGER
 # # # # # # # # # # # #
 add_executable(context_manager src/context_manager/context_manager_node.cpp
-				                       src/context_manager/context_manager.cpp)
+				                       src/context_manager/context_manager.cpp
+                               src/temoto_error/temoto_error.cpp)
 
 add_dependencies(context_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(context_manager ${catkin_LIBRARIES} )

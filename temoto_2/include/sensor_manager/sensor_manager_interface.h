@@ -2,6 +2,7 @@
 #define SENSOR_MANAGER_INTERFACE_H
 
 #include "core/common.h"
+#include "common/base_subsystem.h"
 #include "TTP/base_task/task_errors.h"
 #include "TTP/base_task/base_task.h"
 #include "sensor_manager/sensor_manager_services.h"
@@ -11,7 +12,7 @@
 
 
 
-class SensorManagerInterface
+class SensorManagerInterface : BaseSubsystem
 {
 public:
   /**
@@ -19,12 +20,12 @@ public:
    */
   SensorManagerInterface()
   {
+    class_name_ = __func__;
   }
 
   void initialize(TTP::BaseTask* task)
   {
-    log_class_= "";
-    log_subsys_ = "sensor_manager_interface";
+    initializeBase(task);
     log_group_ = "interfaces." + task->getPackageName();
     name_ = task->getName() + "/sensor_manager_interface";
 
@@ -39,7 +40,7 @@ public:
    */
   std::string startSensor(std::string sensor_type)
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
     validateInterface(prefix);
 
     try
@@ -63,7 +64,7 @@ public:
                           std::string ros_program_name)
   {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
     validateInterface(prefix);
 
     // Fill out the "StartSensorRequest" request
@@ -105,7 +106,7 @@ public:
   void stopSensor(std::string sensor_type, std::string package_name, std::string ros_program_name)
   {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
     validateInterface(prefix);
 
     // Find all instances where request part matches of what was given and unload each resource
@@ -139,7 +140,7 @@ public:
 
   void statusInfoCb(temoto_2::ResourceStatus& srv)
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
     validateInterface(prefix);
 
     TEMOTO_DEBUG("%s status info was received", prefix.c_str());
@@ -199,7 +200,6 @@ public:
 
 private:
   std::string name_;
-  std::string log_class_, log_subsys_, log_group_;
   error::ErrorHandler error_handler_;
   std::vector<temoto_2::LoadSensor> allocated_sensors_;
   std::unique_ptr<rmp::ResourceManager<SensorManagerInterface>> resource_manager_;

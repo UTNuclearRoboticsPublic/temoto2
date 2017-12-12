@@ -47,8 +47,7 @@ public:
      * @brief Task default constructor.
      */
     BaseTask() : task_package_name_("task_unknown")
-    {
-    }
+    {}
 
     /**
      * @brief startTask

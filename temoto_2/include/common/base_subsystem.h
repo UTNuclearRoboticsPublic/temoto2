@@ -18,11 +18,11 @@ public:
 
 protected:
 
-  error::Subsystem subsystem_code_;
-  error::ErrorHandler error_handler_;
   std::string subsystem_name_;
-  std::string class_name_;
+  error::Subsystem subsystem_code_;
   std::string log_group_;
+  error::ErrorHandler error_handler_;
+  std::string class_name_;
 
   /**
    * @brief This function is used when the BaseSubsystem cannot be initialized

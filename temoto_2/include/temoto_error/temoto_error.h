@@ -20,13 +20,13 @@ const bool VERBOSE = true;
  */
 enum class Subsystem : int
 {
-    AGENT,
-    CONTEXT_MANAGER,
-    HEALTH_MONITOR,
-    SENSOR_MANAGER,
-    ROBOT_MANAGER,
-    OUTPUT_MANAGER,
-    TASK
+  AGENT,
+  CONTEXT_MANAGER,
+  HEALTH_MONITOR,
+  SENSOR_MANAGER,
+  ROBOT_MANAGER,
+  OUTPUT_MANAGER,
+  TASK
 };
 
 /**
@@ -34,9 +34,9 @@ enum class Subsystem : int
  */
 enum class Urgency : int
 {
-    LOW,        // Does not affect the performance of the system directly
-    MEDIUM,     // Does not affect the performance of the system directly, but needs to be resolved
-    HIGH        // Affects the performance of the system, needs to be resolved immediately
+  LOW,        // Does not affect the performance of the system directly
+  MEDIUM,     // Does not affect the performance of the system directly, but needs to be resolved
+  HIGH        // Affects the performance of the system, needs to be resolved immediately
 };
 
 /**
@@ -151,6 +151,8 @@ public:
    * @param errorStack
    */
   void append( ErrorStack errorStack );
+
+  void forwardAndAppend(ErrorStack errorStack, std::string prefix);
 
   /**
    * @brief append
