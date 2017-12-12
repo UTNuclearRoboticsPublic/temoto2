@@ -98,7 +98,7 @@ private:
                   const std::string& executable, const std::string& args,
                   temoto_2::LoadProcess::Response& res);
 
-  void waitForMoveGroup(const RobotInfoPtr robot_info, temoto_id::ID resource_id);
+  void waitForRobotDescription(const RobotInfoPtr robot_info, temoto_id::ID resource_id);
 
   typedef std::shared_ptr<Robot> RobotPtr;
   typedef std::map<temoto_id::ID, RobotPtr> Robots;

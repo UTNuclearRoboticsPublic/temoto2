@@ -50,11 +50,14 @@ RobotManager::RobotManager()
   if (config["Robots"])
   {
     local_robot_infos_ = parseRobotInfos(config);
+
+    // Debug what was added
     for (auto& info_ptr : local_robot_infos_)
     {
       TEMOTO_DEBUG("%s Added robot: '%s'.", prefix.c_str(), info_ptr->getName().c_str());
     }
-    // notify other managers about our robots
+
+    // Advertise the parsed local robots
     advertiseLocalRobotInfos();
   }
   else
@@ -67,26 +70,7 @@ RobotManager::RobotManager()
   TEMOTO_INFO("Robot manager is ready.");
 }
 
-// Wait for move group. Poll parameter server until robot_description becomes available.
-// \TODO: add 30 sec timeout protection.
-void RobotManager::waitForMoveGroup(const RobotInfoPtr robot_info, temoto_id::ID res_id)
-{
-  while (!nh_.hasParam('/' + robot_info->getRobotNamespace() + "/robot_description"))
-  {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-    TEMOTO_DEBUG("%s Waiting for move group to be ready ...", prefix.c_str());
-    if (resource_manager_.hasFailed(res_id))
-    {
-      throw error::ErrorStackUtil(
-          robot_error::SERVICE_STATUS_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
-          prefix + "Loading interrupted due to FAILED status response from process manager.");
-    }
-    ros::Duration(0.2).sleep();
-  }
 
-  // Wait a little longer, in case there is anythin else to load
-  // ros::Duration(0.5).sleep();
-}
 
 void RobotManager::rosExecute(const std::string& ros_ns, const std::string& package_name,
                               const std::string& executable, const std::string& args,
@@ -119,9 +103,28 @@ void RobotManager::rosExecute(const std::string& ros_ns, const std::string& pack
   res = load_proc_srvc.response;
 }
 
-void loadUrdf(const std::string& package_name, const std::string urdf_filename)
+void loadUrdf(const )
 {
+  rosExecute("temoto_2", "urdf_loader.py", "");
 
+}
+
+// Wait for move group. Poll parameter server until robot_description becomes available.
+// \TODO: add 30 sec timeout protection.
+void RobotManager::waitForRobotDescription(const RobotInfoPtr robot_info, temoto_id::ID res_id)
+{
+  while (!nh_.hasParam('/' + robot_info->getRobotNamespace() + "/robot_description"))
+  {
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    TEMOTO_DEBUG("%s Waiting for move group to be ready ...", prefix.c_str());
+    if (resource_manager_.hasFailed(res_id))
+    {
+      throw error::ErrorStackUtil(
+          robot_error::SERVICE_STATUS_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
+          prefix + "Loading interrupted. A FAILED status was received from process manager.");
+    }
+    ros::Duration(0.2).sleep();
+  }
 }
 
 void RobotManager::loadLocalRobot(RobotInfoPtr info_ptr)
@@ -137,9 +140,9 @@ void RobotManager::loadLocalRobot(RobotInfoPtr info_ptr)
   try
   {
     // Load robot's main launch file
-    // It should bring up URDF, and joint_state/robot publishers and hw specific nodes
+    // It should bring up joint_state/robot publishers and hw specific nodes
     rosExecute(info_ptr->getName(), info_ptr->getPackageName(), info_ptr->getExecutable(), "", load_proc_res);
-    waitForMoveGroup(info_ptr, load_proc_res.rmp.resource_id);
+    waitForRobotDescription(info_ptr, load_proc_res.rmp.resource_id);
 
     active_robot_ = std::make_shared<Robot>(info_ptr);
     loaded_robots_.emplace(load_proc_res.rmp.resource_id, active_robot_);

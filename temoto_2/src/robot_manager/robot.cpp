@@ -12,13 +12,54 @@ Robot::Robot(RobotInfoPtr robot_info_ptr)
   if (isLocal())
   {
   // TODO: this is temporary solution for default ur[X]_moveit_config groups
-    addPlanningGroup("manipulator");
+    //addPlanningGroup("manipulator");
   }
 }
 
 Robot::~Robot()
 {
     TEMOTO_DEBUG("Robot destructed");
+}
+
+void Robot::load()
+{
+
+  if (features_.size())
+  {
+    TEMOTO_ERROR("Loading failed! Robot has to have at least one of the following features (URDF, manipulation, "
+                 "navigation or gripper).");
+    // \TODO:: throw
+    return;
+  }
+
+  // if manipulation
+  //   hasUrdf() has to return true.
+  //   joint states
+  //   robot state
+  //
+  // if navigation
+  //   vel_cmd
+
+}
+
+// Load robot's urdf
+void Robot::loadUrdf()
+{
+
+}
+
+// Load MoveIt! move group and move group interfaces
+void Robot::loadManipulation()
+{
+
+  // for each planning group, add 
+  addPlanningGroup("manipulator")
+}
+
+// Load Move Base
+void Robot::loadNavigation()
+{
+
 }
 
 void Robot::addPlanningGroup(const std::string& planning_group_name)
@@ -52,8 +93,6 @@ void Robot::plan(const std::string& planning_group_name, geometry_msgs::PoseStam
   {
     group_it->second->setStartStateToCurrentState();
     group_it->second->setPoseTarget(target_pose);
-    int* bbb = new int(35); 
-    char* c = (char*)bbb;
     is_plan_valid_ = static_cast<bool>( group_it->second->plan(last_plan) );
     TEMOTO_DEBUG("%s Plan %s", prefix.c_str(), is_plan_valid_ ? "FOUND" : "FAILED");
   }
@@ -91,13 +130,6 @@ void Robot::execute(const std::string& planning_group_name)
   }
 }
 
-std::string Robot::getName() const
-{
-  if(robot_info_ptr_)
-  {
-    return robot_info_ptr_->getName();
-  }
-}
 
 bool Robot::isLocal() const
 {
@@ -116,17 +148,17 @@ std::string Robot::getVizInfo()
 
   // RViz options
 
-  if (capabilities_.find(capability::URDF) != capabilities_.end())
+  if (hasFeature(feature::URDF))
   {
     rviz["urdf"]["robot_description"] = "/" + act_rob_ns + "/robot_description";
   }
 
-  if (capabilities_.find(capability::MANIPULATION) != capabilities_.end())
+  if (hasFeature(feature::MANIPULATION))
   {
     rviz["manipulation"]["move_group_ns"] = '/' + act_rob_ns;
   }
 
-  if (capabilities_.find(capability::NAVIGATION) != capabilities_.end())
+  if (hasFeature(feature::NAVIGATION))
   {
     rviz["navigation"]["move_base_ns"] = '/' + act_rob_ns;
   }
