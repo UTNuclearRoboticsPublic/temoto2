@@ -94,10 +94,6 @@ private:
 
   void loadLocalRobot(RobotConfigPtr info_ptr);
 
-  void rosExecute(const std::string& ros_namespace, const std::string& package_name,
-                  const std::string& executable, const std::string& args,
-                  temoto_2::LoadProcess::Response& res);
-
 
   typedef std::shared_ptr<Robot> RobotPtr;
   typedef std::map<temoto_id::ID, RobotPtr> Robots;

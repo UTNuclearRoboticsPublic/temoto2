@@ -1,10 +1,11 @@
 #include "robot_manager/robot.h"
 #include "core/common.h"
 
+
 namespace robot_manager
 {
-Robot::Robot(RobotConfigPtr config)
-  : config_(config), is_plan_valid_(false)
+Robot::Robot(RobotConfigPtr config, rmp::ResourceManager<RobotManager>& resource_manager)
+  : config_(config), resource_manager_(resource_manager), is_plan_valid_(false) 
 {
   log_class_ = "Robot";
   log_subsys_ = "robot_manager";
@@ -62,8 +63,8 @@ void Robot::loadHardware()
 
     // Load robot's main launch file
     // It should bring up joint_state/robot publishers and hw specific nodes
-
-//    rosExecute(config->getName(), config->getPackageName(), config->getExecutable(), "", load_proc_res);
+  temoto_2::LoadProcess::Response load_proc_res;
+  rosExecute(config_->getPackageName(), config_->getExecutable(), "", load_proc_res);
 
  // rosExecute("temoto_2", "urdf_loader.py", "");
 }
@@ -71,8 +72,9 @@ void Robot::loadHardware()
 // Load robot's urdf
 void Robot::loadUrdf()
 {
-
- // rosExecute("temoto_2", "urdf_loader.py", "");
+  temoto_2::LoadProcess::Response load_proc_res;
+  std::string urdf_path = config_->getUrdfPath();
+  rosExecute("temoto_2", "urdf_loader.py", urdf_path, load_proc_res);
 }
 
 // Load MoveIt! move group and move group interfaces
@@ -112,6 +114,37 @@ void Robot::waitForHardware()
 //    ros::Duration(0.2).sleep();
 //  }
 }
+
+void Robot::rosExecute(const std::string& package_name, const std::string& executable,
+                       const std::string& args, temoto_2::LoadProcess::Response& res)
+{
+  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  temoto_2::LoadProcess load_proc_srvc;
+  load_proc_srvc.request.package_name = package_name;
+  load_proc_srvc.request.ros_namespace = config_->getName(); //Execute in robot namespace
+  load_proc_srvc.request.action = process_manager::action::ROS_EXECUTE;
+  load_proc_srvc.request.executable = executable;
+
+  if (!resource_manager_.call<temoto_2::LoadProcess>(
+          process_manager::srv_name::MANAGER, process_manager::srv_name::SERVER, load_proc_srvc))
+  {
+    res = load_proc_srvc.response;
+//    throw error::ErrorStackUtil(robot_error::SERVICE_REQ_FAIL, error::Subsystem::ROBOT_MANAGER,
+//                                error::Urgency::MEDIUM,
+//                                prefix + " Failed to make a service call to ProcessManager.");
+  }
+
+  if (load_proc_srvc.response.rmp.code == rmp::status_codes::FAILED)
+  {
+    res = load_proc_srvc.response;
+//    throw error::ErrorStackUtil(robot_error::SERVICE_STATUS_FAIL, error::Subsystem::ROBOT_MANAGER,
+//                                error::Urgency::MEDIUM,
+//                                prefix + " ProcessManager failed to execute '" + executable +
+//                                    "': " + load_proc_srvc.response.rmp.message);
+  }
+  res = load_proc_srvc.response;
+}
+
 
 void Robot::addPlanningGroup(const std::string& planning_group_name)
 {

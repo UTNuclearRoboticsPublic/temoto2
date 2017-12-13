@@ -8,6 +8,8 @@
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <moveit/planning_interface/planning_interface.h>
 #include "common/temoto_id.h"
+#include "process_manager/process_manager_services.h"
+#include "rmp/resource_manager.h"
 #include "robot_manager/robot_config.h"
 
 namespace robot_manager
@@ -20,10 +22,12 @@ const std::string NAVIGATION = "navigation";
 const std::string GRIPPER = "gripper";
 }
 
+class RobotManager;
+
 class Robot
 {
 public:
-  Robot(RobotConfigPtr config_);
+  Robot(RobotConfigPtr config_, rmp::ResourceManager<RobotManager>& resource_manager);
   virtual ~Robot();
   void addPlanningGroup(const std::string& planning_group_name);
   void removePlanningGroup(const std::string& planning_group_name);
@@ -59,12 +63,18 @@ private:
   void loadManipulation();
   void loadNavigation();
   void loadGripper();
-  
+
+  void rosExecute(const std::string& package_name, const std::string& executable,
+                  const std::string& args, temoto_2::LoadProcess::Response& res);
+
   // General
   std::string log_class_, log_subsys_, log_group_;
 
   // Robot configuration
   RobotConfigPtr config_;
+
+  // Resource Manager
+  rmp::ResourceManager<RobotManager>& resource_manager_;
 
   // Enabled features for this robot
   std::set<std::string> features_;

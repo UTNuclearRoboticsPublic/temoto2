@@ -20,7 +20,7 @@ public:
    * @brief RobotConfig
    */
 
-  RobotConfig(std::string robot_name = "A noname robot");
+  RobotConfig(YAML::Node yaml_config);
   
 
 
@@ -43,28 +43,18 @@ public:
   }
 
   /// Get name
-  std::string getName() const
-  {
-    return robot_name_;
-  }
+  std::string getName() const;
 
   // Get robot package name
-  std::string getPackageName() const
-  {
-    return package_name_;
-  }
+  std::string getPackageName() const;
 
   // Get executable
-  std::string getExecutable() const
-  {
-    return executable_;
-  }
+  std::string getExecutable() const;
 
   // Get description
-  std::string getDescription() const
-  {
-    return description_;
-  }
+  std::string getDescription() const;
+
+  std::string getUrdfPath() const;
 
   float getReliability() const
   {
@@ -81,6 +71,11 @@ public:
     reliability_.resetReliability(reliability);
   }
 
+  YAML::Node getYAMLConfig() const
+  {
+    return yaml_config_;
+  }
+
 
   /* * * * * * * * * * * *
    *     SETTERS
@@ -93,11 +88,6 @@ public:
   void setName(std::string name)
   {
     robot_name_ = name;
-  }
-
-  void setTopic(std::string topic)
-  {
-    topic_ = topic;
   }
 
   void setPackageName(std::string package_name)
@@ -123,8 +113,9 @@ private:
   std::string log_group_ = "robot_manager";
 
   std::string temoto_namespace_;
+  YAML::Node yaml_config_;
+  
   std::string robot_name_;
-  std::string topic_;
   std::string package_name_;
   std::string executable_;
   std::string description_;
@@ -142,59 +133,59 @@ static bool operator==(const RobotConfig& r1, const RobotConfig& r2)
 
 } // robot_manager namespace
 
-namespace YAML
-{
-template <>
-struct convert<robot_manager::RobotConfig>
-{
-  static Node encode(const robot_manager::RobotConfig& config)
-  {
-    Node node;
-    node["robot_name"] = config.getName();
-    node["package_name"] = config.getPackageName();
-    node["executable"] = config.getExecutable();
-    node["description"] = config.getDescription();
-    node["reliability"] = config.getReliability();
-    return node;
-  }
-
-  static bool decode(const Node& node, robot_manager::RobotConfig& config)
-  {
-    if (!node.IsMap() || node.size() < 3)
-    {
-      return false;
-    }
-
-    try
-    {
-      config.setName(node["robot_name"].as<std::string>());
-      config.setPackageName(node["package_name"].as<std::string>());
-      config.setExecutable(node["executable"].as<std::string>());
-    }
-    catch (YAML::InvalidNode e)
-    {
-      return false;
-    }
-
-    try
-    {
-      config.setDescription(node["description"].as<std::string>());
-    }
-    catch (YAML::InvalidNode e)
-    {
-    }
-
-    try
-    {
-      config.resetReliability(node["reliability"].as<float>());
-    }
-    catch (YAML::InvalidNode e)
-    {
-    }
-
-    return true;
-  }
-};
-
-}
+//namespace YAML
+//{
+//template <>
+//struct convert<robot_manager::RobotConfig>
+//{
+//  static Node encode(const robot_manager::RobotConfig& config)
+//  {
+//    Node node;
+//    node["robot_name"] = config.getName();
+//    node["package_name"] = config.getPackageName();
+//    node["executable"] = config.getExecutable();
+//    node["description"] = config.getDescription();
+//    node["reliability"] = config.getReliability();
+//    return node;
+//  }
+//
+//  static bool decode(const Node& node, robot_manager::RobotConfig& config)
+//  {
+//    if (!node.IsMap() || node.size() < 3)
+//    {
+//      return false;
+//    }
+//
+//    try
+//    {
+//      config.setName(node["robot_name"].as<std::string>());
+//      config.setPackageName(node["package_name"].as<std::string>());
+//      config.setExecutable(node["executable"].as<std::string>());
+//    }
+//    catch (YAML::InvalidNode e)
+//    {
+//      return false;
+//    }
+//
+//    try
+//    {
+//      config.setDescription(node["description"].as<std::string>());
+//    }
+//    catch (YAML::InvalidNode e)
+//    {
+//    }
+//
+//    try
+//    {
+//      config.resetReliability(node["reliability"].as<float>());
+//    }
+//    catch (YAML::InvalidNode e)
+//    {
+//    }
+//
+//    return true;
+//  }
+//};
+//
+//}
 #endif

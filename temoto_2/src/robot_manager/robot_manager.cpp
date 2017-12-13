@@ -72,37 +72,6 @@ RobotManager::RobotManager()
 
 
 
-void RobotManager::rosExecute(const std::string& ros_ns, const std::string& package_name,
-                              const std::string& executable, const std::string& args,
-                              temoto_2::LoadProcess::Response& res)
-{
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-  temoto_2::LoadProcess load_proc_srvc;
-  load_proc_srvc.request.package_name = package_name;
-  load_proc_srvc.request.ros_namespace = ros_ns;
-  load_proc_srvc.request.action = process_manager::action::ROS_EXECUTE;
-  load_proc_srvc.request.executable = executable;
-
-  if (!resource_manager_.call<temoto_2::LoadProcess>(
-          process_manager::srv_name::MANAGER, process_manager::srv_name::SERVER, load_proc_srvc))
-  {
-    res = load_proc_srvc.response;
-    throw error::ErrorStackUtil(robot_error::SERVICE_REQ_FAIL, error::Subsystem::ROBOT_MANAGER,
-                                error::Urgency::MEDIUM,
-                                prefix + " Failed to make a service call to ProcessManager.");
-  }
-
-  if (load_proc_srvc.response.rmp.code == rmp::status_codes::FAILED)
-  {
-    res = load_proc_srvc.response;
-    throw error::ErrorStackUtil(robot_error::SERVICE_STATUS_FAIL, error::Subsystem::ROBOT_MANAGER,
-                                error::Urgency::MEDIUM,
-                                prefix + " ProcessManager failed to execute '" + executable +
-                                    "': " + load_proc_srvc.response.rmp.message);
-  }
-  res = load_proc_srvc.response;
-}
-
 
 
 void RobotManager::loadLocalRobot(RobotConfigPtr config)
@@ -117,7 +86,7 @@ void RobotManager::loadLocalRobot(RobotConfigPtr config)
   temoto_2::LoadProcess::Response load_proc_res;
   try
   {
-    active_robot_ = std::make_shared<Robot>(config);
+    active_robot_ = std::make_shared<Robot>(config, resource_manager_);
     loaded_robots_.emplace(load_proc_res.rmp.resource_id, active_robot_);
     config->adjustReliability(1.0);
     TEMOTO_DEBUG("%s Robot '%s' loaded.", prefix.c_str(), config->getName().c_str());
@@ -182,7 +151,7 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
       res.rmp = load_robot_srvc.response.rmp;
       try
       {
-        active_robot_ = std::make_shared<Robot>(config);
+        active_robot_ = std::make_shared<Robot>(config, resource_manager_);
         loaded_robots_.emplace(load_robot_srvc.response.rmp.resource_id, active_robot_);
       }
       catch (...)
@@ -279,7 +248,7 @@ void RobotManager::advertiseConfigs(RobotConfigs configs)
     YAML::Node yaml_config;
     for(auto& config : configs) 
     {
-        yaml_config["Robots"].push_back(*config);
+        yaml_config["Robots"].push_back(config->getYAMLConfig());
     }
     
     // send to other managers if there is anything to send
@@ -325,7 +294,7 @@ RobotConfigs RobotManager::parseRobotConfigs(const YAML::Node& yaml_config)
 
     try
     {
-      RobotConfig config = node_it->as<RobotConfig>();
+      RobotConfig config = RobotConfig(*node_it);
       if (std::count_if(configs.begin(), configs.end(),
                         [&](const RobotConfigPtr& ri) { return *ri == config; }) == 0)
       {
@@ -338,7 +307,7 @@ RobotConfigs RobotManager::parseRobotConfigs(const YAML::Node& yaml_config)
                     config.getName().c_str());
       }
     }
-    catch (YAML::TypedBadConversion<RobotConfig> e)
+    catch (...)
     {
       TEMOTO_WARN("%s Failed to parse RobotConfig from config.", prefix.c_str());
       continue;
@@ -615,7 +584,7 @@ void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)
         RobotConfigPtr config = it->second->getConfig();
         config->adjustReliability(0.0);
         YAML::Node yaml_config;
-        yaml_config["Robots"].push_back(*config);
+        yaml_config["Robots"].push_back(config->getYAMLConfig());
         config_syncer_.advertise(yaml_config);
       }
     }
