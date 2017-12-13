@@ -1,6 +1,7 @@
 #include "robot_manager/robot_config.h"
 #include "common/tools.h"
 #include <string>
+#include <vector>
 
 namespace robot_manager
 {
@@ -92,6 +93,33 @@ std::string RobotConfig::getUrdfPath() const
     urdf_path = "unknown_ros_executable";
   }
   return urdf_path;
+}
+
+std::string RobotConfig::getMoveitPackage() const
+{
+  try
+  {
+    return yaml_config_["manipulation"]["moveit_package"].as<std::string>();
+  }
+  catch (YAML::InvalidNode e)
+  {
+    TEMOTO_ERROR("CONFIG: manipulation: moveit_package NOT FOUND");
+  }
+  return "unknown_moveit_package";
+}
+
+std::vector<std::string> RobotConfig::getMoveitPlanningGroups() const
+{
+  std::vector<std::string> groups;
+  try
+  {
+    groups.emplace_back(yaml_config_["manipulation"]["planning_groups"].as<std::string>());
+  }
+  catch (YAML::InvalidNode e)
+  {
+    TEMOTO_ERROR("CONFIG: manipulation: planning_groups NOT FOUND");
+  }
+  return groups;
 }
 
 std::string RobotConfig::toString() const

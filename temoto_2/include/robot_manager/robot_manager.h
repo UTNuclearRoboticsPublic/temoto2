@@ -22,6 +22,9 @@
 
 namespace robot_manager
 {
+// Forward declaration
+class Robot;
+
 class RobotManager
 {
 public:

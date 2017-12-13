@@ -35,22 +35,22 @@ void Robot::load()
     loadHardware();
     waitForHardware();
 
-    if (hasFeature(feature::URDF))
+    if (hasFeature(FeatureType::URDF))
     {
       loadUrdf();
     }
     
-    if (hasFeature(feature::MANIPULATION))
+    if (hasFeature(FeatureType::MANIPULATION))
     {
       loadManipulation();
     }
 
-    if (hasFeature(feature::NAVIGATION))
+    if (hasFeature(FeatureType::NAVIGATION))
     {
       loadNavigation();
     }
 
-    if (hasFeature(feature::GRIPPER))
+    if (hasFeature(FeatureType::GRIPPER))
     {
       loadGripper();
     }
@@ -75,14 +75,22 @@ void Robot::loadUrdf()
   temoto_2::LoadProcess::Response load_proc_res;
   std::string urdf_path = config_->getUrdfPath();
   rosExecute("temoto_2", "urdf_loader.py", urdf_path, load_proc_res);
+  rid_urdf_ = load_proc_res.rmp.resource_id;
 }
 
 // Load MoveIt! move group and move group interfaces
 void Robot::loadManipulation()
 {
+  temoto_2::LoadProcess::Response load_proc_res;
+  std::string moveit_package = config_->getMoveitPackage();
+  rosExecute(moveit_package, "move_group.launch", "", load_proc_res);
+  rid_manipulation_ = load_proc_res.rmp.resource_id;
 
-  // for each planning group, add 
-  addPlanningGroup("manipulator");
+  // Add planning groups, described in configuration
+  for (auto group : config_->getMoveitPlanningGroups())
+  {
+    addPlanningGroup(group);
+  }
 }
 
 // Load Move Base
@@ -232,17 +240,17 @@ std::string Robot::getVizInfo()
 
   // RViz options
 
-  if (hasFeature(feature::URDF))
+  if (hasFeature(FeatureType::URDF))
   {
     rviz["urdf"]["robot_description"] = "/" + act_rob_ns + "/robot_description";
   }
 
-  if (hasFeature(feature::MANIPULATION))
+  if (hasFeature(FeatureType::MANIPULATION))
   {
     rviz["manipulation"]["move_group_ns"] = '/' + act_rob_ns;
   }
 
-  if (hasFeature(feature::NAVIGATION))
+  if (hasFeature(FeatureType::NAVIGATION))
   {
     rviz["navigation"]["move_base_ns"] = '/' + act_rob_ns;
   }

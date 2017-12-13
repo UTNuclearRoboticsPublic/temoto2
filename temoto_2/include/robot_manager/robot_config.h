@@ -56,6 +56,10 @@ public:
 
   std::string getUrdfPath() const;
 
+  std::string getMoveitPackage() const;
+
+  std::vector<std::string> getMoveitPlanningGroups() const;
+
   float getReliability() const
   {
     return reliability_.getReliability();

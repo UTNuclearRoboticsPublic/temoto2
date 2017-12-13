@@ -11,17 +11,13 @@
 #include "process_manager/process_manager_services.h"
 #include "rmp/resource_manager.h"
 #include "robot_manager/robot_config.h"
+#include "robot_manager/robot_manager.h"
+#include "robot_manager/robot_feature.h"
 
 namespace robot_manager
 {
-namespace feature
-{
-const std::string URDF = "urdf";
-const std::string MANIPULATION = "manipulation";
-const std::string NAVIGATION = "navigation";
-const std::string GRIPPER = "gripper";
-}
 
+// Forward declaration
 class RobotManager;
 
 class Robot
@@ -47,9 +43,16 @@ public:
 
   bool isLocal() const;
 
-  inline bool hasFeature(const std::string& feature) const
+  inline bool hasFeature(FeatureType type) const
   {
-    return features_.find(feature) != features_.end();
+    for (auto& feature : features_)
+    {
+      if (feature.getType() == type)
+      {
+        return true;
+      }
+    }
+    return false;
   }
 
   // return all the information required to visualize this robot
@@ -67,6 +70,12 @@ private:
   void rosExecute(const std::string& package_name, const std::string& executable,
                   const std::string& args, temoto_2::LoadProcess::Response& res);
 
+  // Resource IDs for robot's features
+  temoto_id::ID rid_urdf_;
+  temoto_id::ID rid_manipulation_;
+  temoto_id::ID rid_navigation_;
+  temoto_id::ID rid_gripper_;
+
   // General
   std::string log_class_, log_subsys_, log_group_;
 
@@ -77,7 +86,7 @@ private:
   rmp::ResourceManager<RobotManager>& resource_manager_;
 
   // Enabled features for this robot
-  std::set<std::string> features_;
+  std::set<RobotFeature> features_;
 
   // Manipulation related
   bool is_plan_valid_;
