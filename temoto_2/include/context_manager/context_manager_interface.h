@@ -50,7 +50,7 @@ public:
     resource_manager_->registerStatusCb(&ContextManagerInterface::statusInfoCb);
 
     // Add object service client
-    add_object_client_ = nh_.serviceClient<temoto_2::AddObject>(context_manager::srv_name::SERVER_ADD_OBJECT);
+    add_object_client_ = nh_.serviceClient<temoto_2::AddObjects>(context_manager::srv_name::SERVER_ADD_OBJECTS);
   }
 
   void getSpeech(std::vector<temoto_2::SpeechSpecifier> speech_specifiers, SpeechCallbackType callback, OwnerTask* obj)
@@ -136,29 +136,32 @@ public:
     gesture_subscriber_ = nh_.subscribe(srv_msg.response.topic, 1000, task_gesture_cb_, task_gesture_obj_);
   }
 
-  void addWorldObject(temoto_2::ObjectContainer object)
+  void addWorldObjects(const std::vector<temoto_2::ObjectContainer>& objects)
   {
     std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
 
     // Check if this message contains the basic parameters
     // Does it have a name
-    if (object.name == "")
+    for (auto& object : objects)
     {
-      error_handler_.createAndThrow( taskErr::SERVICE_REQ_FAIL
-                                   , prefix
-                                   , "The object is missing a name");
+      if (object.name == "")
+      {
+        error_handler_.createAndThrow( taskErr::SERVICE_REQ_FAIL
+                                     , prefix
+                                     , "The object is missing a name");
+      }
+
+      // Are the detection methods specified
+      if (object.detection_methods.empty())
+      {
+        error_handler_.createAndThrow( taskErr::SERVICE_REQ_FAIL
+                                     , prefix
+                                     , "Detection method unspecified");
+      }
     }
 
-    // Are the detection methods specified
-    if (object.detection_methods.empty())
-    {
-      error_handler_.createAndThrow( taskErr::SERVICE_REQ_FAIL
-                                   , prefix
-                                   , "Detection method unspecified");
-    }
-
-    temoto_2::AddObject add_obj_srvmsg;
-    add_obj_srvmsg.request.object = object;
+    temoto_2::AddObjects add_obj_srvmsg;
+    add_obj_srvmsg.request.objects = objects;
 
     // Call the server
     if (!add_object_client_.call(add_obj_srvmsg))
@@ -174,6 +177,15 @@ public:
       error_handler_.forwardAndThrow(add_obj_srvmsg.response.rmp.errorStack, prefix);
     }
   }
+
+  void addWorldObjects(const temoto_2::ObjectContainer& object)
+  {
+    std::vector<temoto_2::ObjectContainer> objects;
+    objects.push_back(object);
+    addWorldObjects(objects);
+  }
+
+
 
   bool stopAllocatedServices()
   {

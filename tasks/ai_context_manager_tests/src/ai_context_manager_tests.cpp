@@ -104,7 +104,7 @@ void startInterface_0()
     cylinder.primitive = primitive;
 
     // Add a new object to the context manager
-    cmi_.addWorldObject(cylinder);
+    cmi_.addWorldObjects(cylinder);
 
     // Pass the name of the object to the output
     what_0_word_out = cylinder.name;

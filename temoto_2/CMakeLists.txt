@@ -64,7 +64,7 @@ add_service_files(
   # Context Manager
   context_manager/LoadGesture.srv
   context_manager/LoadSpeech.srv
-  context_manager/AddObject.srv
+  context_manager/AddObjects.srv
 
   # Output Manager
   output_manager/rviz_manager/LoadRvizPlugin.srv
@@ -115,10 +115,11 @@ include_directories(
 # # # # # # # # # # # #
 add_executable(context_manager src/context_manager/context_manager_node.cpp
 				                       src/context_manager/context_manager.cpp
+                               src/context_manager/context_manager_containers.cpp
                                src/temoto_error/temoto_error.cpp)
 
 add_dependencies(context_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(context_manager ${catkin_LIBRARIES} )
+target_link_libraries(context_manager ${catkin_LIBRARIES} yaml-cpp )
 
 # # # # # # # # # # # #
 # SENSOR MANAGER

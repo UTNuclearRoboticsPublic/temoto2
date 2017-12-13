@@ -3,10 +3,17 @@
  */
 
 #include "context_manager/context_manager.h"
+#include "ros/package.h"
+#include <algorithm>
+#include <utility>
+#include <yaml-cpp/yaml.h>
+#include <fstream>
 
 namespace context_manager
 {
-ContextManager::ContextManager() : resource_manager_(srv_name::MANAGER, this)
+ContextManager::ContextManager()
+  : resource_manager_(srv_name::MANAGER, this)
+  , object_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &ContextManager::objectSyncCb, this)
 {
   class_name_ = __func__;
   subsystem_name_ = "context_manager";
@@ -29,9 +36,90 @@ ContextManager::ContextManager() : resource_manager_(srv_name::MANAGER, this)
                                                     , &ContextManager::unloadSpeechCb);
 
   // "Add object" server
-  add_object_server_ = nh_.advertiseService(srv_name::SERVER_ADD_OBJECT, &ContextManager::addObjectCb, this);
-
+  add_objects_server_ = nh_.advertiseService(srv_name::SERVER_ADD_OBJECTS, &ContextManager::addObjectsCb, this);
+  
+  // Request remote objects
+  object_syncer_.requestRemoteConfigs();
+  
   TEMOTO_INFO("Context Manager is ready.");
+}
+
+void ContextManager::objectSyncCb(const temoto_2::ConfigSync& msg, const Objects& payload)
+{
+  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
+
+  if (msg.action == rmp::sync_action::REQUEST_CONFIG)
+  {
+    advertiseAllObjects();
+    return;
+  }
+
+  // Add or update objects
+  if (msg.action == rmp::sync_action::ADVERTISE_CONFIG)
+  {
+    TEMOTO_DEBUG("%s Received a payload", prefix.c_str());
+    addOrUpdateObjects(payload, true);
+  }
+}
+
+void ContextManager::addOrUpdateObjects(const Objects& objects_to_add, bool from_other_manager)
+{
+  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
+
+  for (auto& object : objects_to_add)
+  {
+    // Check if the object has to be added or updated
+    auto it = std::find_if(objects_.begin(), objects_.end(),
+        [&](const ObjectPtr& o_ptr) { return *o_ptr == object; });
+
+    // Update the object
+    if (it != objects_.end())
+    {
+      TEMOTO_DEBUG("%s Updating object: '%s'", prefix.c_str(), object.name.c_str());
+      *it = std::make_shared<temoto_2::ObjectContainer>(object);
+    }
+
+    // Add new object
+    else
+    {
+      TEMOTO_DEBUG("%s Adding new object: '%s'", prefix.c_str(), object.name.c_str());
+      objects_.push_back(std::make_shared<temoto_2::ObjectContainer>(object));
+    }
+  }
+
+  // If this object was added by own namespace, then advertise this config to other managers
+  if (!from_other_manager)
+  {
+    TEMOTO_DEBUG("%s Advertising the objects to other namespaces", prefix.c_str());
+    object_syncer_.advertise(objects_to_add);
+  }
+}
+
+void ContextManager::advertiseAllObjects()
+{
+  // Publish all objects
+  Objects objects_payload;
+
+  for(auto& object : objects_)
+  {
+    objects_payload.push_back(*object);
+  }
+
+  // Send to other managers if there is anything to send
+  if(objects_payload.size())
+  {
+    object_syncer_.advertise(objects_payload);
+  }
+}
+
+bool ContextManager::addObjectsCb(temoto_2::AddObjects::Request& req, temoto_2::AddObjects::Response& res)
+{
+  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
+  TEMOTO_DEBUG_STREAM(prefix << "received a request to add an object: \n" << req.objects[0]);
+
+  addOrUpdateObjects(req.objects, false);
+
+  return true;
 }
 
 void ContextManager::loadGestureCb(temoto_2::LoadGesture::Request& req,
@@ -112,14 +200,6 @@ void ContextManager::unloadSpeechCb(temoto_2::LoadSpeech::Request& req,
   TEMOTO_INFO("%s Speech unloaded.", prefix.c_str());
 }
 
-bool ContextManager::addObjectCb(temoto_2::AddObject::Request& req, temoto_2::AddObject::Response& res)
-{
-  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-  TEMOTO_DEBUG_STREAM(prefix << "received a request to add an object: \n" << req.object);
-
-  return true;
-
-}
 
 
 }  // namespace context_manager

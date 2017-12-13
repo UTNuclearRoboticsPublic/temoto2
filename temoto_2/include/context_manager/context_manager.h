@@ -4,6 +4,7 @@
 #include "core/common.h"
 #include "common/temoto_id.h"
 #include "common/base_subsystem.h"
+#include "context_manager_containers.h"
 #include "context_manager/context_manager_services.h"
 #include "sensor_manager/sensor_manager_services.h"
 #include "rmp/resource_manager.h"
@@ -11,6 +12,7 @@
 
 namespace context_manager
 {
+
 class ContextManager : public BaseSubsystem
 {
 public:
@@ -22,6 +24,13 @@ public:
   }
 
 private:
+
+  void objectSyncCb(const temoto_2::ConfigSync& msg, const Objects& payload);
+
+  void advertiseAllObjects();
+
+  void addOrUpdateObjects(const Objects& objects_to_add, bool from_other_manager);
+
   /**
    * @brief Service that sets up a gesture publisher
    * @param A gesture specifier message
@@ -61,18 +70,20 @@ private:
    * @param req
    * @param res
    */
-  bool addObjectCb(temoto_2::AddObject::Request& req, temoto_2::AddObject::Response& res);
+  bool addObjectsCb(temoto_2::AddObjects::Request& req, temoto_2::AddObjects::Response& res);
 
   // Resource manager for handling servers and clients
   rmp::ResourceManager<ContextManager> resource_manager_;
 
   ros::NodeHandle nh_;
 
-  ros::ServiceServer add_object_server_;
+  ros::ServiceServer add_objects_server_;
+
+  ObjectPtrs objects_;
 
   // Configuration syncer that manages external resource descriptions and synchronizes them
   // between all other (context) managers
-  // rmp::ConfigSynchronizer<ContextManager> config_syncer_;
+  rmp::ConfigSynchronizer<ContextManager, Objects> object_syncer_;
 };
 }
 

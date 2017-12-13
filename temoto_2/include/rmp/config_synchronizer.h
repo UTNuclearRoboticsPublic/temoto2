@@ -16,6 +16,8 @@ namespace rmp
 namespace sync_action
 {
 const std::string ADVERTISE_CONFIG = "advertise_config";
+const std::string ADD_CONFIG = "add_config";
+const std::string REMOVE_CONFIG = "remove_config";
 const std::string REQUEST_CONFIG = "request_config";
 }
 
@@ -26,9 +28,14 @@ class ConfigSynchronizer
 public:
   typedef void (Owner::*OwnerCbType)(const temoto_2::ConfigSync&, const PayloadType& payload);
 
-  ConfigSynchronizer(const std::string& name, const std::string& sync_topic, OwnerCbType sync_cb,
-                     Owner* owner)
-    : name_(name), sync_topic_(sync_topic), sync_cb_(sync_cb), owner_(owner)
+  ConfigSynchronizer( const std::string& name
+                    , const std::string& sync_topic
+                    , OwnerCbType sync_cb
+                    , Owner* owner)
+    : name_(name)
+    , sync_topic_(sync_topic)
+    , sync_cb_(sync_cb)
+    , owner_(owner)
   {
     log_class_ = "rmp/ConfigSync";
     log_subsys_ = name;
@@ -80,6 +87,9 @@ public:
     sync_sub_.shutdown();
   }
 
+  /**
+   * @brief requestRemoteConfigs
+   */
   void requestRemoteConfigs()
   {
     temoto_2::ConfigSync msg;
@@ -88,6 +98,10 @@ public:
     sync_pub_.publish(msg);
   }
 
+  /**
+   * @brief Advertise payload to others
+   * @param payload
+   */
   void advertise(const PayloadType& payload)
   {
     try
