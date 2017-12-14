@@ -2,7 +2,13 @@
 
 namespace robot_manager
 {
-RobotFeature::RobotFeature(FeatureType type) : type_(type)
+RobotFeature::RobotFeature(const FeatureType type) : RobotFeature(type, "", "")
+{
+}
+
+RobotFeature::RobotFeature(const FeatureType type, const std::string package_name, const std::string executable,
+                           std::string args)
+  : type_(type), package_name_(package_name), executable_(executable), args_(args)
 {
 }
 
@@ -19,12 +25,19 @@ std::string RobotFeature::getName() const
     case FeatureType::GRIPPER:
       return "gripper";
     default:
-      return "Unknown_Feature_Type";
+      return "unknown_feature_type";
   }
 }
 
-bool RobotFeature::operator<(const RobotFeature& feature) const
+void RobotFeature::setResourceId(temoto_id::ID resource_id)
 {
-  return (getName() < feature.getName());
+  resource_id_ = resource_id;
 }
+
+bool operator==(const RobotFeature& rf1, const RobotFeature& rf2)
+{
+  return (rf1.getType() == rf2.getType() && rf1.getPackageName() == rf2.getPackageName() &&
+          rf1.getExecutable() == rf2.getExecutable() && rf1.getArgs() == rf2.getArgs());
+}
+
 }

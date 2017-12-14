@@ -16,8 +16,9 @@ Robots:
 - robot_name: "ur5"
   description: "Heavy duty piece made by Universal Robotics"
   reliability: 0.5
-  package_name: "task_robot"
-  executable: "ur5.launch"
+  hardware:
+    package_name: "task_robot"
+    executable: "ur5.launch"
   urdf:
     package_name: "ur_description"
     executable: "urdf/ur5_joint_limited_robot.urdf.xacro"

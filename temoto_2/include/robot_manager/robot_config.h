@@ -9,6 +9,7 @@
 #include "common/temoto_log_macros.h"
 #include <yaml-cpp/yaml.h>
 #include "common/reliability.h"
+#include "robot_manager/robot_feature.h"
 
 namespace robot_manager
 {
@@ -39,31 +40,47 @@ public:
   // Get the robot's namespace
   std::string getRobotNamespace() const
   {
-    return temoto_namespace_ + '/' + robot_name_;
+    return temoto_namespace_ + '/' + name_;
   }
 
-  /// Get name
-  std::string getName() const;
+  void parseName();
+  void parseHardware();
 
-  // Get robot package name
-  std::string getPackageName() const;
+  void parseTemotoNamespace();
+  void parseDescription();
+  void parseReliability();
 
-  // Get executable
-  std::string getExecutable() const;
+  void parseUrdf();
+  void parseManipulation();
+  void parseNavigation();
+  void parseGripper();
 
-  // Get description
-  std::string getDescription() const;
+  std::string getName() const
+  {
+    return name_;
+  }
 
-  std::string getUrdfPath() const;
+  std::string getDescription() const
+  {
+    return description_;
+  }
 
-  std::string getMoveitPackage() const;
-
-  std::vector<std::string> getMoveitPlanningGroups() const;
+  const std::vector<std::string>& getPlanningGroups() const
+  {
+    return planning_groups_;
+  }
 
   float getReliability() const
   {
     return reliability_.getReliability();
-  };
+  }
+
+  const RobotFeatures& getRobotFeatures() const
+  {
+    return features_;
+  }
+
+  const RobotFeature& getRobotFeature(FeatureType type);
 
   void adjustReliability(float reliability)
   {
@@ -80,33 +97,9 @@ public:
     return yaml_config_;
   }
 
-
-  /* * * * * * * * * * * *
-   *     SETTERS
-   * * * * * * * * * * * */
   void setTemotoNamespace(std::string temoto_namespace)
   {
     temoto_namespace_ = temoto_namespace;
-  }
-
-  void setName(std::string name)
-  {
-    robot_name_ = name;
-  }
-
-  void setPackageName(std::string package_name)
-  {
-    package_name_ = package_name;
-  }
-
-  void setExecutable(std::string executable)
-  {
-    executable_ = executable;
-  }
-
-  void setDescription(std::string description)
-  {
-    description_ = description;
   }
 
 
@@ -118,10 +111,10 @@ private:
 
   std::string temoto_namespace_;
   YAML::Node yaml_config_;
+  RobotFeatures features_;
+  std::vector<std::string> planning_groups_;
   
-  std::string robot_name_;
-  std::string package_name_;
-  std::string executable_;
+  std::string name_;
   std::string description_;
   Reliability reliability_;
 };
@@ -132,7 +125,9 @@ typedef std::vector<RobotConfigPtr> RobotConfigs;
 static bool operator==(const RobotConfig& r1, const RobotConfig& r2)
 {
   return (r1.getTemotoNamespace() == r2.getTemotoNamespace() && r1.getName() == r2.getName() &&
-          r1.getExecutable() == r2.getExecutable() && r1.getPackageName() == r2.getPackageName());
+          r1.getDescription() == r2.getDescription() &&
+          r1.getPlanningGroups() == r2.getPlanningGroups() &&
+          r1.getRobotFeatures() == r2.getRobotFeatures());
 }
 
 } // robot_manager namespace

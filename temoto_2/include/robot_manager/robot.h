@@ -45,14 +45,9 @@ public:
 
   inline bool hasFeature(FeatureType type) const
   {
-    for (auto& feature : features_)
-    {
-      if (feature.getType() == type)
-      {
-        return true;
-      }
-    }
-    return false;
+    auto it = find_if(features_.begin(), features_.end(),
+            [&](const RobotFeature& feature) -> bool { return feature.getType() == type; });
+    return it != features_.end();
   }
 
   // return all the information required to visualize this robot
@@ -70,11 +65,7 @@ private:
   void rosExecute(const std::string& package_name, const std::string& executable,
                   const std::string& args, temoto_2::LoadProcess::Response& res);
 
-  // Resource IDs for robot's features
-  temoto_id::ID rid_urdf_;
-  temoto_id::ID rid_manipulation_;
-  temoto_id::ID rid_navigation_;
-  temoto_id::ID rid_gripper_;
+  void loadFeature(const RobotFeature& feature);
 
   // General
   std::string log_class_, log_subsys_, log_group_;
@@ -86,7 +77,7 @@ private:
   rmp::ResourceManager<RobotManager>& resource_manager_;
 
   // Enabled features for this robot
-  std::set<RobotFeature> features_;
+  std::vector<RobotFeature> features_;
 
   // Manipulation related
   bool is_plan_valid_;

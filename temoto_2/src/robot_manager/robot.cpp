@@ -21,76 +21,45 @@ Robot::~Robot()
     TEMOTO_DEBUG("Robot destructed");
 }
 
+
+
 void Robot::load()
 {
-    if (features_.size())
-    {
-      TEMOTO_ERROR("Loading failed! Robot has to have at least one of the following features "
-                   "(URDF, manipulation, "
-                   "navigation or gripper).");
-      // \TODO:: throw
-      return;
-    }
+  if (features_.size() > 1)
+  {
+    TEMOTO_ERROR(
+        "Loading failed! Robot has to have hardware and at least one of the following features "
+        "(urdf, manipulation, navigation or gripper).");
+    // \TODO:: throw
+    return;
+  }
 
-    loadHardware();
-    waitForHardware();
-
-    if (hasFeature(FeatureType::URDF))
-    {
-      loadUrdf();
-    }
-    
-    if (hasFeature(FeatureType::MANIPULATION))
-    {
-      loadManipulation();
-    }
-
-    if (hasFeature(FeatureType::NAVIGATION))
-    {
-      loadNavigation();
-    }
-
-    if (hasFeature(FeatureType::GRIPPER))
-    {
-      loadGripper();
-    }
+  // Load robot's main launch file
+  // It should bring up joint_state/robot publishers and hw specific nodes
+  loadFeature(config_->getRobotFeature(FeatureType::HARDWARE));
+  waitForHardware();
 
 }
 
 // Load robot's hardware
 void Robot::loadHardware()
 {
-
-    // Load robot's main launch file
-    // It should bring up joint_state/robot publishers and hw specific nodes
-  temoto_2::LoadProcess::Response load_proc_res;
-  rosExecute(config_->getPackageName(), config_->getExecutable(), "", load_proc_res);
-
- // rosExecute("temoto_2", "urdf_loader.py", "");
 }
 
 // Load robot's urdf
 void Robot::loadUrdf()
 {
-  temoto_2::LoadProcess::Response load_proc_res;
-  std::string urdf_path = config_->getUrdfPath();
-  rosExecute("temoto_2", "urdf_loader.py", urdf_path, load_proc_res);
-  rid_urdf_ = load_proc_res.rmp.resource_id;
 }
 
 // Load MoveIt! move group and move group interfaces
 void Robot::loadManipulation()
 {
-  temoto_2::LoadProcess::Response load_proc_res;
-  std::string moveit_package = config_->getMoveitPackage();
-  rosExecute(moveit_package, "move_group.launch", "", load_proc_res);
-  rid_manipulation_ = load_proc_res.rmp.resource_id;
 
   // Add planning groups, described in configuration
-  for (auto group : config_->getMoveitPlanningGroups())
-  {
-    addPlanningGroup(group);
-  }
+//  for (auto group : config_->getMoveitPlanningGroups())
+//  {
+//    addPlanningGroup(group);
+//  }
 }
 
 // Load Move Base
@@ -121,6 +90,16 @@ void Robot::waitForHardware()
 //    }
 //    ros::Duration(0.2).sleep();
 //  }
+}
+
+
+void Robot::loadFeature(const RobotFeature& feature)
+{
+  temoto_2::LoadProcess::Response res;
+  rosExecute(feature.getPackageName(), feature.getExecutable(), feature.getArgs(), res);
+ // feature.setResourceId(res.rmp.resource_id);
+ // //\TODO: IMPLEMENT setResourceId in robot_config_
+  //\TODO: forward error
 }
 
 void Robot::rosExecute(const std::string& package_name, const std::string& executable,
