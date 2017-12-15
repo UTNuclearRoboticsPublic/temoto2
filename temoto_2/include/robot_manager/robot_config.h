@@ -80,7 +80,7 @@ public:
     return features_;
   }
 
-  const RobotFeature& getRobotFeature(FeatureType type);
+  RobotFeature& getRobotFeature(FeatureType type);
 
   void adjustReliability(float reliability)
   {

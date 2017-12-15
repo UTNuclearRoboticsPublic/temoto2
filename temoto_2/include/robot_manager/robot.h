@@ -62,13 +62,17 @@ private:
   void loadNavigation();
   void loadGripper();
 
-  void rosExecute(const std::string& package_name, const std::string& executable,
-                  const std::string& args, temoto_2::LoadProcess::Response& res);
+  temoto_id::ID rosExecute(const std::string& package_name, const std::string& executable,
+                  const std::string& args);
 
-  void loadFeature(const RobotFeature& feature);
+  void waitForParam(const std::string& param, temoto_id::ID interrupt_res_id);
+  void waitForTopic(const std::string& topic, temoto_id::ID interrupt_res_id);
+
+  bool isTopicAvailable(const std::string& topic);
 
   // General
   std::string log_class_, log_subsys_, log_group_;
+  ros::NodeHandle nh_;
 
   // Robot configuration
   RobotConfigPtr config_;

@@ -21,11 +21,6 @@ class RobotFeature
 public:
   RobotFeature(const FeatureType type);
   RobotFeature(const FeatureType type, const std::string package_name, const std::string executable, const std::string args = "");
-  FeatureType type_;
-  std::string package_name_;
-  std::string executable_;
-  std::string args_;
-  temoto_id::ID resource_id_;
 
   std::string getName() const;
 
@@ -49,7 +44,24 @@ public:
     return args_;
   }
 
+  bool isLoaded() const 
+  {
+    return is_loaded_;
+  }
+
   void setResourceId(temoto_id::ID resource_id);
+  void setLoaded(bool loaded)
+  {
+    is_loaded_ = loaded;
+  }
+
+private:
+  FeatureType type_;
+  std::string package_name_;
+  std::string executable_;
+  std::string args_;
+  temoto_id::ID resource_id_;
+  bool is_loaded_;
 
 };
 

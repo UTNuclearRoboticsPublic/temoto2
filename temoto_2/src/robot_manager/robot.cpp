@@ -36,19 +36,82 @@ void Robot::load()
 
   // Load robot's main launch file
   // It should bring up joint_state/robot publishers and hw specific nodes
-  loadFeature(config_->getRobotFeature(FeatureType::HARDWARE));
-  waitForHardware();
-
+  loadHardware();
+  loadUrdf();
 }
 
 // Load robot's hardware
 void Robot::loadHardware()
 {
+  RobotFeature& ftr = config_->getRobotFeature(FeatureType::HARDWARE);
+  temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable(), ftr.getArgs());
+  ftr.setResourceId(res_id);
+
+  // Wait for robot/joint states become available.
+  //std::string cmd_vel_topic = '/' + config->getRobotNamespace() + "/cmd_vel";
+  std::string joint_states_topic = '/' + config_->getRobotNamespace() + "/joint_states";
+  waitForParam(joint_states_topic, res_id);
+  ftr.setLoaded(true);
+
+// Wait for hardware. Poll parameter server until robot_description becomes available.
+}
+
+void Robot::waitForParam(const std::string& param, temoto_id::ID interrupt_res_id)
+{
+//\TODO: add 30 sec timeout protection.
+
+  while (!nh_.hasParam(param))
+  {
+    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    TEMOTO_DEBUG("%s Waiting for %s ...", prefix.c_str(), param.c_str());
+    if (resource_manager_.hasFailed(interrupt_res_id))
+    {
+      //throw error::ErrorStackUtil(
+      //    robot_error::SERVICE_STATUS_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
+      //    prefix + "Loading interrupted. A FAILED status was received from process manager.");
+    }
+    ros::Duration(0.2).sleep();
+  }
+}
+
+void Robot::waitForTopic(const std::string& topic, temoto_id::ID interrupt_res_id)
+{
+  //\TODO: add 30 sec timeout protection.
+  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  while (!isTopicAvailable(topic))
+  {
+    TEMOTO_DEBUG("%s Waiting for %s ...", prefix.c_str(), topic.c_str());
+    if (resource_manager_.hasFailed(interrupt_res_id))
+    {
+     // throw error::ErrorStackUtil(
+     //     robot_error::SERVICE_STATUS_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
+     //     prefix + "Loading interrupted. A FAILED status was received from process manager.");
+    }
+    ros::Duration(0.2).sleep();
+  }
+  TEMOTO_DEBUG("%s Topic '%s' was found.", prefix.c_str(), topic.c_str());
+}
+
+bool Robot::isTopicAvailable(const std::string& topic)
+{
+  ros::master::V_TopicInfo master_topics;
+  ros::master::getTopics(master_topics);
+
+  auto it = std::find_if(
+      master_topics.begin(), master_topics.end(),
+      [&](ros::master::TopicInfo& master_topic) -> bool { return master_topic.name == topic; });
+  return it != master_topics.end();
 }
 
 // Load robot's urdf
 void Robot::loadUrdf()
 {
+  RobotFeature& ftr = config_->getRobotFeature(FeatureType::URDF);
+  std::string urdf_path = '/' + ftr.getPackageName() + '/' + ftr.getExecutable();
+  temoto_id::ID res_id = rosExecute("temoto_2", "urdf_loader.py", urdf_path);
+  ftr.setResourceId(res_id);
+
+  std::string robot_desc_param = '/' + config_->getRobotNamespace() + "/robot_description";
 }
 
 // Load MoveIt! move group and move group interfaces
@@ -74,36 +137,9 @@ void Robot::loadGripper()
 
 }
 
-// Wait for hardware. Poll parameter server until robot_description becomes available.
-// \TODO: add 30 sec timeout protection.
-void Robot::waitForHardware()
-{
-//  while (!nh_.hasParam('/' + config->getRobotNamespace() + "/robot_description"))
-//  {
-//    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-//    TEMOTO_DEBUG("%s Waiting for move group to be ready ...", prefix.c_str());
-//    if (resource_manager_.hasFailed(res_id))
-//    {
-//      throw error::ErrorStackUtil(
-//          robot_error::SERVICE_STATUS_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
-//          prefix + "Loading interrupted. A FAILED status was received from process manager.");
-//    }
-//    ros::Duration(0.2).sleep();
-//  }
-}
 
-
-void Robot::loadFeature(const RobotFeature& feature)
-{
-  temoto_2::LoadProcess::Response res;
-  rosExecute(feature.getPackageName(), feature.getExecutable(), feature.getArgs(), res);
- // feature.setResourceId(res.rmp.resource_id);
- // //\TODO: IMPLEMENT setResourceId in robot_config_
-  //\TODO: forward error
-}
-
-void Robot::rosExecute(const std::string& package_name, const std::string& executable,
-                       const std::string& args, temoto_2::LoadProcess::Response& res)
+temoto_id::ID Robot::rosExecute(const std::string& package_name, const std::string& executable,
+                       const std::string& args)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   temoto_2::LoadProcess load_proc_srvc;
@@ -115,21 +151,22 @@ void Robot::rosExecute(const std::string& package_name, const std::string& execu
   if (!resource_manager_.call<temoto_2::LoadProcess>(
           process_manager::srv_name::MANAGER, process_manager::srv_name::SERVER, load_proc_srvc))
   {
-    res = load_proc_srvc.response;
-//    throw error::ErrorStackUtil(robot_error::SERVICE_REQ_FAIL, error::Subsystem::ROBOT_MANAGER,
-//                                error::Urgency::MEDIUM,
-//                                prefix + " Failed to make a service call to ProcessManager.");
+    //    throw error::ErrorStackUtil(robot_error::SERVICE_REQ_FAIL,
+    //    error::Subsystem::ROBOT_MANAGER,
+    //                                error::Urgency::MEDIUM,
+    //                                prefix + " Failed to make a service call to ProcessManager.");
+    if (load_proc_srvc.response.rmp.code == rmp::status_codes::FAILED)
+    {
+      //    throw error::ErrorStackUtil(robot_error::SERVICE_STATUS_FAIL,
+      //    error::Subsystem::ROBOT_MANAGER,
+      //                                error::Urgency::MEDIUM,
+      //                                prefix + " ProcessManager failed to execute '" + executable
+      //                                +
+      //                                    "': " + load_proc_srvc.response.rmp.message);
+      return load_proc_srvc.response.rmp.resource_id;
+    }
   }
-
-  if (load_proc_srvc.response.rmp.code == rmp::status_codes::FAILED)
-  {
-    res = load_proc_srvc.response;
-//    throw error::ErrorStackUtil(robot_error::SERVICE_STATUS_FAIL, error::Subsystem::ROBOT_MANAGER,
-//                                error::Urgency::MEDIUM,
-//                                prefix + " ProcessManager failed to execute '" + executable +
-//                                    "': " + load_proc_srvc.response.rmp.message);
-  }
-  res = load_proc_srvc.response;
+  return temoto_id::UNASSIGNED_ID;
 }
 
 

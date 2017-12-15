@@ -8,7 +8,7 @@ RobotFeature::RobotFeature(const FeatureType type) : RobotFeature(type, "", "")
 
 RobotFeature::RobotFeature(const FeatureType type, const std::string package_name, const std::string executable,
                            std::string args)
-  : type_(type), package_name_(package_name), executable_(executable), args_(args)
+  : type_(type), package_name_(package_name), executable_(executable), args_(args), is_loaded_(false)
 {
 }
 

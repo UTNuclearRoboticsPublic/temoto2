@@ -7,12 +7,11 @@ namespace robot_manager
 {
 RobotConfig::RobotConfig(YAML::Node yaml_config) : yaml_config_(yaml_config)
 {
-  // Parse compulsory information.
+  // Parse mandatory information.
   try
   {
     parseName();
     parseHardware();
-    parseTemotoNamespace();
   }
   catch (...)
   {
@@ -22,6 +21,7 @@ RobotConfig::RobotConfig(YAML::Node yaml_config) : yaml_config_(yaml_config)
   }
 
   // Parse additional information
+  parseTemotoNamespace();
   parseDescription();
   parseReliability();
 
@@ -53,7 +53,7 @@ void RobotConfig::parseTemotoNamespace()
   {
     temoto_namespace_ = yaml_config_["temoto_namespace"].as<std::string>();
   }
-  catch (YAML::InvalidNode e)
+  catch (...)
   {
     // Assign local namespace, when not available in yaml
     temoto_namespace_ = common::getTemotoNamespace();
@@ -92,7 +92,7 @@ void RobotConfig::parseHardware()
     std::string executable = yaml_config_["hardware"]["executable"].as<std::string>();
     features_.emplace_back(FeatureType::HARDWARE, package_name, executable);
   }
-  catch (YAML::InvalidNode e)
+  catch (...)
   {
     TEMOTO_ERROR("CONFIG: hardware: (executable or package_path) NOT FOUND");
     //\TODO: throw
@@ -114,7 +114,7 @@ void RobotConfig::parseUrdf()
     //}
     features_.emplace_back(FeatureType::URDF, package_name, executable);
   }
-  catch (YAML::InvalidNode e)
+  catch (...)
   {
     TEMOTO_ERROR("CONFIG: urdf:{package_name or executable} NOT FOUND");
   }
@@ -124,7 +124,7 @@ void RobotConfig::parseManipulation()
 {
   try
   {
-    std::string package_name = yaml_config_["manipulation"]["moveit_package"].as<std::string>();
+    std::string package_name = yaml_config_["manipulation"]["moveit_config_package"].as<std::string>();
     std::vector<std::string> groups;
     try
     {
@@ -134,17 +134,17 @@ void RobotConfig::parseManipulation()
         groups.emplace_back(it->as<std::string>());
       }
     }
-    catch (YAML::InvalidNode e)
+    catch (YAML::Exception& e)
     {
-      TEMOTO_ERROR("CONFIG: manipulation: planning_groups NOT FOUND");
+      TEMOTO_ERROR("CONFIG: manipulation: planning_groups NOT FOUND: %s", e.what());
     }
     
     planning_groups_ = groups;
     features_.emplace_back(FeatureType::MANIPULATION, package_name, "move_group.launch");
   }
-  catch (YAML::InvalidNode e)
+  catch (YAML::Exception& e)
   {
-    TEMOTO_WARN("CONFIG: manipulation: moveit_package NOT FOUND");
+    //TEMOTO_WARN("CONFIG: manipulation: moveit_package NOT FOUND: %s", e.what());
   }
 }
 
@@ -156,9 +156,9 @@ void RobotConfig::parseNavigation()
     std::string executable = yaml_config_["navigation"]["executable"].as<std::string>();
     features_.emplace_back(FeatureType::NAVIGATION, package_name, executable);
   }
-  catch (YAML::InvalidNode e)
+  catch (YAML::Exception e)
   {
-    TEMOTO_ERROR("CONFIG: navigation: (executable or package_path) NOT FOUND");
+    //TEMOTO_ERROR("CONFIG: navigation: (executable or package_path) NOT FOUND");
     //\TODO: throw
   }
 }
@@ -168,13 +168,13 @@ void RobotConfig::parseGripper()
   //\TODO: IMPLEMENT GRIPPER
 }
 
-const RobotFeature& RobotConfig::getRobotFeature(FeatureType type)
+RobotFeature& RobotConfig::getRobotFeature(FeatureType type)
 {
   auto it = std::find_if(features_.begin(), features_.end(),
                     [&](RobotFeature& f) -> bool { return f.getType() == type; });
-  if (it != features_.end())
+  if (it == features_.end())
   {
-    throw "TODO EXCEPTION";
+    throw "TODO: EXCEPTION FEATURE NOT FOUND";
   }
   return *it;
 }
