@@ -11,8 +11,8 @@ uint8[] detection_methods
 
 # Supported types for object detection are: 
 uint8 ARTAG = 1     # Requires the "tag_id" field to be filled
-uint8 TEMPLATE = 2  # Requires the "mesh" field to be filled
-uint8 SEGMENT = 3   # Requires the "primitive" field to be filled
+uint8 SEGMENT = 2   # Requires the "primitive" field to be filled
+uint8 TEMPLATE = 3  # Requires the "mesh" field to be filled
 
 # REQUIRED IF this object can be detected by a tag
 int16 tag_id

@@ -34,7 +34,7 @@ public:
     }
     
 private:
-  bool indexSensors(const std::string& yaml_filename);
+  //bool indexSensors(const std::string& yaml_filename);
   /**
    * @brief Callback to a service that lists all available packages that
    * are with a requested "type". For example "list all HANDtracking devices"
@@ -91,7 +91,6 @@ private:
   SensorInfoPtr findSensor(std::string type, std::string name, std::string executable, const std::vector<SensorInfoPtr>& sensors);
 
   std::string log_class_, log_subsys_, log_group_;
-  ros::NodeHandle nh_;
 //  ros::ServiceServer list_devices_server_;
   rmp::ResourceManager<SensorManager> resource_manager_;
   rmp::ConfigSynchronizer<SensorManager, PayloadType> config_syncer_;

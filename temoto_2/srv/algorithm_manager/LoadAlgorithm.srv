@@ -1,0 +1,28 @@
+# Remote Management Request
+temoto_2/RMPRequest rmp
+
+# Type of the requested sensor (required).
+string algorithm_type
+
+# Name of the ROS package where algorithm is located. (optional)
+# If the package name is left undefined
+# then the first known entry under the specified type is executed
+string package_name
+
+# name of the executable (optional)
+# When undefined, first defined entry is used.
+string executable
+
+---
+
+# Remote Management Response
+temoto_2/RMPResponse rmp
+
+# name of the package
+string package_name
+
+# name of the executable/launchable/runnable
+string executable
+
+# return the name of the topic
+string topic

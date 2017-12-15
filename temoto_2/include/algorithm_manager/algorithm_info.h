@@ -13,7 +13,7 @@
 
 typedef std::pair<std::string, std::string> StringPair;
 
-namespace context_manager
+namespace algorithm_manager
 {
 
 class AlgorithmInfo
@@ -156,10 +156,6 @@ public:
   void setReliability(float reliability = 0.8);
 
 private:
-
-  std::string log_class_ = "AlgorithmInfo";
-  std::string log_subsys_ = "context_manager";
-  std::string log_group_ = "context_manager";
   
   std::string temoto_namespace_;
   std::string algorithm_name_;
@@ -192,17 +188,19 @@ typedef std::vector<AlgorithmInfoPtr> AlgorithmInfoPtrs;
 
 static bool operator==(const AlgorithmInfo& s1, const AlgorithmInfo& s2)
 {
-  return (s1.getTemotoNamespace() == s2.getTemotoNamespace() && s1.getTopic() == s2.getTopic() &&
-          s1.getExecutable() == s2.getExecutable() && s1.getPackageName() == s2.getPackageName());
+  return (s1.getTemotoNamespace() == s2.getTemotoNamespace() &&
+          s1.getTopic() == s2.getTopic() &&
+          s1.getExecutable() == s2.getExecutable() &&
+          s1.getPackageName() == s2.getPackageName());
 }
-} // namespace context_manager
+} // namespace algorithm_manager
 
 namespace YAML
 {
 template <>
-struct convert<context_manager::AlgorithmInfo>
+struct convert<algorithm_manager::AlgorithmInfo>
 {
-  static Node encode(const context_manager::AlgorithmInfo& algorithm)
+  static Node encode(const algorithm_manager::AlgorithmInfo& algorithm)
   {
     Node node;
     node["algorithm_name"] = algorithm.getName();
@@ -230,7 +228,7 @@ struct convert<context_manager::AlgorithmInfo>
     return node;
   }
 
-  static bool decode(const Node& node, context_manager::AlgorithmInfo& algorithm)
+  static bool decode(const Node& node, algorithm_manager::AlgorithmInfo& algorithm)
   {
     if (!node.IsMap() || node.size() < 5)
     {

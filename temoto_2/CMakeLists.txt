@@ -61,7 +61,11 @@ add_service_files(
   sensor_manager/ListDevices.srv
   sensor_manager/LoadSensor.srv
 
+  # Algorithm Manager
+  algorithm_manager/LoadAlgorithm.srv
+
   # Context Manager
+  context_manager/LoadTracker.srv
   context_manager/LoadGesture.srv
   context_manager/LoadSpeech.srv
   context_manager/AddObjects.srv
@@ -129,6 +133,16 @@ add_executable(sensor_manager src/sensor_manager/sensor_manager.cpp
 	                            src/sensor_manager/sensor_info.cpp)
 add_dependencies(sensor_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(sensor_manager ${catkin_LIBRARIES} yaml-cpp )
+
+# # # # # # # # # # # #
+# ALGORITHM MANAGER
+# # # # # # # # # # # #
+add_executable(algorithm_manager src/algorithm_manager/algorithm_manager.cpp 
+	                               src/algorithm_manager/algorithm_manager_node.cpp
+	                               src/algorithm_manager/algorithm_info.cpp
+                                 src/temoto_error/temoto_error.cpp)
+add_dependencies(algorithm_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(algorithm_manager ${catkin_LIBRARIES} yaml-cpp )
 
 # # # # # # # # # # # #
 # OUTPUT MANAGER
@@ -207,10 +221,10 @@ add_executable(language_input src/tools/language_input.cpp
 add_dependencies(language_input ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(language_input ${catkin_LIBRARIES} )
 
-add_executable(algorithm_info_tests src/tools/algorithm_info_tests.cpp
-                                    src/context_manager/algorithm_info.cpp)
-add_dependencies(algorithm_info_tests ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(algorithm_info_tests ${catkin_LIBRARIES} yaml-cpp)
+#add_executable(algorithm_info_tests src/tools/algorithm_info_tests.cpp
+#                                    src/algorithm_manager/algorithm_info.cpp)
+#add_dependencies(algorithm_info_tests ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+#target_link_libraries(algorithm_info_tests ${catkin_LIBRARIES} yaml-cpp)
 
 #add_executable(blinker_publisher src/tools/blinker_publisher.cpp)
 #add_dependencies(blinker_publisher ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})

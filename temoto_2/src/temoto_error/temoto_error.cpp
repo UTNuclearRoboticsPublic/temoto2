@@ -150,6 +150,27 @@ void ErrorHandler::createAndThrow(int code, std::string prefix, std::string mess
   throw est;
 }
 
+ErrorStack ErrorHandler::createAndReturn(int code, std::string prefix, std::string message)
+{
+  ErrorStack est;
+  temoto_2::Error error;
+
+  error.subsystem = static_cast<int>(subsystem_);
+  error.code = code;
+  error.prefix = prefix;
+  error.message = message;
+  error.stamp = ros::Time::now();
+
+  // Print the message out if the verbose mode is enabled
+  if (VERBOSE)
+  {
+    TEMOTO_ERROR_STREAM(prefix << " " << message);
+  }
+
+  est.push_back(error);
+  return est;
+}
+
 void ErrorHandler::forwardAndThrow(ErrorStack& est, std::string prefix)
 {
   temoto_2::Error error;
@@ -199,11 +220,31 @@ void ErrorHandler::forwardAndAppend(ErrorStack errorStack, std::string prefix)
   // Print the message out if the verbose mode is enabled
   if (VERBOSE)
   {
-    TEMOTO_ERROR_STREAM(prefix << " " << "Forwarding.");
+    TEMOTO_ERROR_STREAM(prefix << " Forwarding.");
   }
 
   errorStack.push_back(error);
   append(errorStack);
+}
+
+ErrorStack ErrorHandler::forwardAndReturn(ErrorStack errorStack, std::string prefix)
+{
+  temoto_2::Error error;
+
+  error.subsystem = static_cast<int>(subsystem_);
+  error.code = FORWARDING_CODE;
+  error.prefix = prefix;
+  error.stamp = ros::Time::now();
+
+  // Print the message out if the verbose mode is enabled
+  if (VERBOSE)
+  {
+    TEMOTO_ERROR_STREAM(prefix << " Forwarding.");
+  }
+
+  errorStack.push_back(error);
+
+  return errorStack;
 }
 
 void ErrorHandler::append( ErrorStackUtil err_stck_util )

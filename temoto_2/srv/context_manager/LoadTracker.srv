@@ -1,0 +1,14 @@
+# Object description method
+uint8 detection_method
+
+# Supported types for object detection are: 
+uint8 ARTAG = 1     # Requires the "tag_id" field to be filled
+#uint8 SEGMENT = 2   # Requires the "primitive" field to be filled
+#uint8 TEMPLATE = 3  # Requires the "mesh" field to be filled
+
+---
+
+temoto_2/RMPResponse rmp
+
+# Topic where raw tracking data is published
+string tracker_topic

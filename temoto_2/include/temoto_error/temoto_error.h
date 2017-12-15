@@ -24,6 +24,7 @@ enum class Subsystem : int
   CONTEXT_MANAGER,
   HEALTH_MONITOR,
   SENSOR_MANAGER,
+  ALGORITHM_MANAGER,
   ROBOT_MANAGER,
   OUTPUT_MANAGER,
   TASK
@@ -144,6 +145,8 @@ public:
 
   void createAndThrow(int code, std::string prefix, std::string message);
 
+  ErrorStack createAndReturn(int code, std::string prefix, std::string message);
+
   void forwardAndThrow(ErrorStack& est, std::string prefix);
 
   /**
@@ -153,6 +156,8 @@ public:
   void append( ErrorStack errorStack );
 
   void forwardAndAppend(ErrorStack errorStack, std::string prefix);
+
+  ErrorStack forwardAndReturn(ErrorStack errorStack, std::string prefix);
 
   /**
    * @brief append

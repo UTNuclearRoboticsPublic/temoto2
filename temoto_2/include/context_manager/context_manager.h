@@ -73,7 +73,12 @@ private:
   bool addObjectsCb(temoto_2::AddObjects::Request& req, temoto_2::AddObjects::Response& res);
 
   // Resource manager for handling servers and clients
-  rmp::ResourceManager<ContextManager> resource_manager_;
+  rmp::ResourceManager<ContextManager> resource_manager_1_;
+
+  // Resource manager for handling servers and clients.
+  // TODO: The second manager is used for making RMP calls within the same manager. If the same
+  // resouce manager is used for calling servers managed by the same manager, the calls will lock
+  rmp::ResourceManager<ContextManager> resource_manager_2_;
 
   ros::NodeHandle nh_;
 

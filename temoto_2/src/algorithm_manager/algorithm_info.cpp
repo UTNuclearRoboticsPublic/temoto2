@@ -1,15 +1,12 @@
-#include "context_manager/algorithm_info.h"
+#include "algorithm_manager/algorithm_info.h"
 #include "ros/ros.h"
 #include "common/tools.h"
 
-namespace context_manager
+namespace algorithm_manager
 {
 AlgorithmInfo::AlgorithmInfo(std::string algorithm_name)
 {
   setReliability(0.8);
-  {
-
-}
 
   //set the algorithm to current namespace
   temoto_namespace_ = ::common::getTemotoNamespace();

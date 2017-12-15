@@ -1,7 +1,3 @@
-/*
- * TODO: * (?) Implement piping: raw_data -> filter_1 -> filter_n -> end_user
- */
-
 #include "context_manager/context_manager.h"
 #include "ros/package.h"
 #include <algorithm>
@@ -12,7 +8,8 @@
 namespace context_manager
 {
 ContextManager::ContextManager()
-  : resource_manager_(srv_name::MANAGER, this)
+  : resource_manager_1_(srv_name::MANAGER, this)
+  , resource_manager_2_(srv_name::MANAGER_2, this)
   , object_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &ContextManager::objectSyncCb, this)
 {
   class_name_ = __func__;
@@ -26,14 +23,20 @@ ContextManager::ContextManager()
    */
 
   // Hand tracking service
-  resource_manager_.addServer<temoto_2::LoadGesture>(srv_name::GESTURE_SERVER
+  resource_manager_1_.addServer<temoto_2::LoadGesture>(srv_name::GESTURE_SERVER
                                                      , &ContextManager::loadGestureCb
                                                      , &ContextManager::unloadGestureCb);
 
   // Speech recognition service
-  resource_manager_.addServer<temoto_2::LoadSpeech>(srv_name::SPEECH_SERVER
+  resource_manager_1_.addServer<temoto_2::LoadSpeech>(srv_name::SPEECH_SERVER
                                                     , &ContextManager::loadSpeechCb
                                                     , &ContextManager::unloadSpeechCb);
+
+  // Speech recognition service
+//  resource_manager_2_.addServer<temoto_2::LoadTracker>(srv_name::TRACKER_SERVER
+//                                                    , &ContextManager::loadTrackerCb
+//                                                    , &ContextManager::unloadTrackerCb);
+
 
   // "Add object" server
   add_objects_server_ = nh_.advertiseService(srv_name::SERVER_ADD_OBJECTS, &ContextManager::addObjectsCb, this);
@@ -115,7 +118,7 @@ void ContextManager::advertiseAllObjects()
 bool ContextManager::addObjectsCb(temoto_2::AddObjects::Request& req, temoto_2::AddObjects::Response& res)
 {
   std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-  TEMOTO_DEBUG_STREAM(prefix << "received a request to add an object: \n" << req.objects[0]);
+  TEMOTO_DEBUG_STREAM(prefix << "received a request to add %d objects: \n" << req.objects.size());
 
   addOrUpdateObjects(req.objects, false);
 
@@ -135,7 +138,7 @@ void ContextManager::loadGestureCb(temoto_2::LoadGesture::Request& req,
   // Call the sensor manager to arrange us a gesture sensor
   try
   {
-    resource_manager_.call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
+    resource_manager_1_.call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
                                                  sensor_manager::srv_name::SERVER, msg);
   }
   catch (...)
@@ -174,7 +177,7 @@ void ContextManager::loadSpeechCb(temoto_2::LoadSpeech::Request& req,
   // Call the sensor manager to arrange us a speech sensor
   try
   {
-    resource_manager_.call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
+    resource_manager_1_.call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
                                                  sensor_manager::srv_name::SERVER, msg);
   }
   catch (...)
