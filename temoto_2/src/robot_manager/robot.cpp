@@ -1,5 +1,6 @@
 #include "robot_manager/robot.h"
 #include "core/common.h"
+#include "ros/package.h"
 
 
 namespace robot_manager
@@ -45,12 +46,13 @@ void Robot::loadHardware()
 {
   RobotFeature& ftr = config_->getRobotFeature(FeatureType::HARDWARE);
   temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable(), ftr.getArgs());
+  TEMOTO_DEBUG("HARDWARE resource id: %d", res_id);
   ftr.setResourceId(res_id);
 
   // Wait for robot/joint states become available.
   //std::string cmd_vel_topic = '/' + config->getRobotNamespace() + "/cmd_vel";
   std::string joint_states_topic = '/' + config_->getRobotNamespace() + "/joint_states";
-  waitForParam(joint_states_topic, res_id);
+  waitForTopic(joint_states_topic, res_id);
   ftr.setLoaded(true);
 
 // Wait for hardware. Poll parameter server until robot_description becomes available.
@@ -106,12 +108,16 @@ bool Robot::isTopicAvailable(const std::string& topic)
 // Load robot's urdf
 void Robot::loadUrdf()
 {
+
   RobotFeature& ftr = config_->getRobotFeature(FeatureType::URDF);
-  std::string urdf_path = '/' + ftr.getPackageName() + '/' + ftr.getExecutable();
+  std::string urdf_path = '/' + ros::package::getPath(ftr.getPackageName()) + '/' + ftr.getExecutable();
   temoto_id::ID res_id = rosExecute("temoto_2", "urdf_loader.py", urdf_path);
+  TEMOTO_DEBUG("URDF resource id: %d", res_id);
   ftr.setResourceId(res_id);
 
   std::string robot_desc_param = '/' + config_->getRobotNamespace() + "/robot_description";
+  waitForParam(robot_desc_param, res_id);
+  ftr.setLoaded(true);
 }
 
 // Load MoveIt! move group and move group interfaces
@@ -147,15 +153,16 @@ temoto_id::ID Robot::rosExecute(const std::string& package_name, const std::stri
   load_proc_srvc.request.ros_namespace = config_->getName(); //Execute in robot namespace
   load_proc_srvc.request.action = process_manager::action::ROS_EXECUTE;
   load_proc_srvc.request.executable = executable;
+  load_proc_srvc.request.args = args;
 
-  if (!resource_manager_.call<temoto_2::LoadProcess>(
+  if (resource_manager_.call<temoto_2::LoadProcess>(
           process_manager::srv_name::MANAGER, process_manager::srv_name::SERVER, load_proc_srvc))
   {
     //    throw error::ErrorStackUtil(robot_error::SERVICE_REQ_FAIL,
     //    error::Subsystem::ROBOT_MANAGER,
     //                                error::Urgency::MEDIUM,
     //                                prefix + " Failed to make a service call to ProcessManager.");
-    if (load_proc_srvc.response.rmp.code == rmp::status_codes::FAILED)
+    if (load_proc_srvc.response.rmp.code != rmp::status_codes::FAILED)
     {
       //    throw error::ErrorStackUtil(robot_error::SERVICE_STATUS_FAIL,
       //    error::Subsystem::ROBOT_MANAGER,
@@ -163,8 +170,8 @@ temoto_id::ID Robot::rosExecute(const std::string& package_name, const std::stri
       //                                prefix + " ProcessManager failed to execute '" + executable
       //                                +
       //                                    "': " + load_proc_srvc.response.rmp.message);
-      return load_proc_srvc.response.rmp.resource_id;
     }
+    return load_proc_srvc.response.rmp.resource_id;
   }
   return temoto_id::UNASSIGNED_ID;
 }

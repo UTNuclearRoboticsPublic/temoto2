@@ -14,7 +14,7 @@ rospy.on_shutdown(myhook)
 def loader():
     rospy.init_node('urdf_loader', anonymous=True)
 
-    print("Parsing xacro")
+    print("Parsing xacro: ", sys.argv)
     sys.stdout = xacro_out = StringIO()
     xacro.main()
 

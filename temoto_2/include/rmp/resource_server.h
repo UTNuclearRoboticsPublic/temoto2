@@ -106,6 +106,8 @@ public:
 
       // register owner as a nonamed client
       std::string client_name = "";
+
+      RMP_DEBUG("%s adding internal resource to serverquery int_id: '%d'.", prefix.c_str(), int_resource_id);
       queries_.back().addInternalResource(client_name, int_resource_id);
 
       // set this server active in resource manager
