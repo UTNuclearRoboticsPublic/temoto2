@@ -50,8 +50,6 @@ public:
             ros::VoidPtr(), &this->unload_cb_queue_);
     unload_server_ = nh_.advertiseService(unload_service_opts);
 
-    last_generated_id = temoto_id::UNASSIGNED_ID;
-
     // start separate threaded spinners for our callback queues
     status_spinner_.start();
     unload_spinner_.start();
@@ -148,17 +146,9 @@ public:
       }
     }
 
-    if (!active_server_)
-    {
-      // generate new if for owner as the call was not initiated from any servers callback
-      msg.response.rmp.resource_id = generateInternalID();
-    }
-    else
-    {
-      // called from servers callback. use the same internal ID for client to make then binding
-      msg.response.rmp.resource_id = last_generated_id;
-    }
-
+    // generate new if for owner as the call was not initiated from any servers callback
+    msg.response.rmp.resource_id = generateInternalID();
+    
     // make the call to server
     bool ret = client_ptr->call(msg);
 
@@ -168,7 +158,7 @@ public:
     {
       RMP_DEBUG("%s called from servers callback, registering internal client",
                       prefix.c_str());
-      active_server_->registerInternalResource(client_ptr->getName(), msg.response.rmp.resource_id);
+      active_server_->registerInternalResource(msg.response.rmp.resource_id);
     }
 
     clients_mutex_.unlock();
@@ -261,7 +251,8 @@ public:
     waitForLock(servers_mutex_);
     for (const auto& server : servers_)
     {
-      auto ext_resources = server->getExternalResources(srv.request.resource_id);
+      // get ext ID's and Topic pairs which correspond to the external resource ID
+      auto ext_resources = server->getExternalResourcesByExternalId(srv.request.resource_id);
       ResourceInfo info;
       info.srv = srv;  // initialize with given values
       info.srv.request.temoto_namespace = ::common::getTemotoNamespace();
@@ -330,19 +321,19 @@ public:
     RMP_DEBUG("%s Got status request: ", prefix.c_str());
     ROS_INFO_STREAM(req);
 
-    // based on incoming external id, find the assigned internal ids
-    // and for each internal id, find the external ids and do forwarding
+    // based on incoming external id, find the assigned internal client side ids
+    // for each internal client side id find the external ids and do forwarding
 
     if (req.status_code == status_codes::FAILED)
     {
       // reqister failed resource
       
-      //      ROS_INFO("START DEBUGGING CLIENTS");
-      //      for (auto& client : clients_)
-      //      {
-      //        client->debug();
-      //      }
-      //      ROS_INFO("END DEBUGGING CLIENTS");
+            ROS_INFO("START DEBUGGING CLIENTS");
+            for (auto& client : clients_)
+            {
+              client->debug();
+            }
+            ROS_INFO("END DEBUGGING CLIENTS");
 
       // Go through clients and locate the one from
       // which the request arrived
@@ -391,7 +382,7 @@ public:
         }
 
         // forward status info to whoever is related with the given internal resource
-        sendStatus(srv);
+        sendStatusByInternalId(srv);
       }
     }  // if code == FAILED
     return true;
@@ -417,8 +408,8 @@ public:
   temoto_id::ID generateInternalID()
   {
     std::lock_guard<std::mutex> lock(id_manager_mutex_);
-    last_generated_id = internal_id_manager_.generateID();
-    return last_generated_id;
+    return internal_id_manager_.generateID();
+;
   }
 
   const std::string getActiveServerName() const
@@ -462,7 +453,6 @@ private:
   Owner* owner_;
   temoto_id::IDManager internal_id_manager_;
   std::shared_ptr<BaseResourceServer<Owner>> active_server_;
-  temoto_id::ID last_generated_id;
   void (Owner::*status_callback_)(temoto_2::ResourceStatus&);
 
   ros::AsyncSpinner status_spinner_;

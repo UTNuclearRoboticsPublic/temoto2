@@ -55,16 +55,16 @@ public:
     RMP_DEBUG("%s ResourceServer destroyed.", prefix.c_str());
   }
 
-  void registerInternalResource(std::string client_name, temoto_id::ID resource_id)
+  void registerInternalResource(temoto_id::ID internal_resource_id)
   {
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
-    RMP_DEBUG("%s Trying to register id %d.", prefix.c_str(), resource_id);
+    RMP_DEBUG("%s Trying to register client side id in resource query %d.", prefix.c_str(), internal_resource_id);
     if (!queries_.size())
     {
       RMP_ERROR("%s Failed because queries_ is empty.", prefix.c_str());
       return;
     }
-    queries_.back().addInternalResource(client_name, resource_id);
+    queries_.back().addInternalResource(internal_resource_id);
   }
 
   bool wrappedLoadCallback(typename ServiceType::Request& req, typename ServiceType::Response& res)
@@ -80,7 +80,10 @@ public:
     }
 
     // generate new external id for the resource
-    temoto_id::ID ext_resource_id = res_id_manager_.generateID();
+    //temoto_id::ID ext_resource_id = res_id_manager_.generateID();
+    temoto_id::ID ext_resource_id = this->resource_manager_.generateInternalID();
+    res.rmp.resource_id = ext_resource_id;
+
     RMP_DEBUG("%s Generated external id: '%d'.", prefix.c_str(), ext_resource_id);
 
     // lock the queries
@@ -95,20 +98,13 @@ public:
     if (found_query == queries_.end())
     {
       // generate new internal id, and give it to owners callback.
-      // with this owner can send status messages later when necessary
-      temoto_id::ID int_resource_id = this->resource_manager_.generateInternalID();
-      res.rmp.resource_id = int_resource_id;
-      RMP_DEBUG("%s New query, internal id: '%d'.", prefix.c_str(), int_resource_id);
+      // with this id, owner can send status messages later when necessary
+      //temoto_id::ID int_resource_id = this->resource_manager_.generateInternalID();
+      RMP_DEBUG("%s New query, server generated new id: '%d'.", prefix.c_str(), ext_resource_id);
 
       // equal message not found from queries_, add new query
       queries_.emplace_back(req, owner_);
       queries_.back().addExternalResource(ext_resource_id, req.rmp.status_topic);
-
-      // register owner as a nonamed client
-      std::string client_name = "";
-
-      RMP_DEBUG("%s adding internal resource to serverquery int_id: '%d'.", prefix.c_str(), int_resource_id);
-      queries_.back().addInternalResource(client_name, int_resource_id);
 
       // set this server active in resource manager
       // when a client call is made from callback, the binding between active server
@@ -130,7 +126,7 @@ public:
       // verify that our query is still on the list
       auto q_it = std::find_if(queries_.begin(), queries_.end(),
                                [&](const ServerQuery<ServiceType, Owner>& q) -> bool {
-                                 return q.internalResourceExists(int_resource_id);
+                                 return q.externalResourceExists(ext_resource_id);
                                });
       if (q_it != queries_.end())
       {
@@ -192,7 +188,7 @@ public:
 
       // Query found, try to remove client from it.
       size_t resources_left = found_query_it->removeExternalResource(req.resource_id);
-      if (resources_left <= 0)
+      if (resources_left == 0)
       {
         // last resource removed, execute owner's unload callback and remove the query from our list
         typename ServiceType::Request orig_req = found_query_it->getMsg().request;
@@ -200,20 +196,10 @@ public:
         (owner_->*unload_callback_)(orig_req, orig_res);
         /// TODO: Do or do not something with the response part?
 
-        // Send unload command to all internal clients...
-        for (auto& map_el : found_query_it->getInternalResources())
+        // Send unload command to all linked internal clients...
+        for (auto& set_el : found_query_it->getInternalResources())
         {
-          //
-          if (map_el.first == "")
-          {
-            // do not unload owner's resources automatically.
-            // resources that were loaded outside of load callback are not RMP responsibility
-            continue;
-          }
-          for (auto& set_el : map_el.second)
-          {
-            this->resource_manager_.unloadClientResource(set_el);
-          }
+          this->resource_manager_.unloadClientResource(set_el);
         }
 
         // Finally, remove the found query.
@@ -223,6 +209,7 @@ public:
     queries_mutex_.unlock();
   }
 
+  // go over queries_ and look for the linked resource_id
   bool internalResourceExists(temoto_id::ID resource_id) const
   {
     auto found_q = find_if(queries_.begin(), queries_.end(),
@@ -232,8 +219,18 @@ public:
     return found_q != queries_.end();
   }
 
+  bool externalResourceExists(temoto_id::ID external_resource_id) const
+  {
+    auto found_q = find_if(queries_.begin(), queries_.end(),
+                           [&](const ServerQuery<ServiceType, Owner>& q) -> bool {
+                             return q.externalResourceExists(external_resource_id);
+                           });
+    return found_q != queries_.end();
+  }
+
+  // concatenate pairs of <external_resource_id, status_topic> of the query where internal id is found.
   std::vector<std::pair<temoto_id::ID, std::string>>
-  getExternalResources(temoto_id::ID internal_resource_id)
+  getExternalResourcesByInternalId(temoto_id::ID internal_resource_id)
   {
     waitForLock(queries_mutex_);
 
@@ -246,6 +243,29 @@ public:
         {
           ext_resources.push_back(resource);
         }
+        break; // no need to look any further
+      }
+    }
+    queries_mutex_.unlock();
+    return ext_resources;
+  }
+  
+  // concatenate pairs of <external_resource_id, status_topic> of the query where external id is found.
+  std::vector<std::pair<temoto_id::ID, std::string>>
+  getExternalResourcesByExternalId(temoto_id::ID external_resource_id)
+  {
+    waitForLock(queries_mutex_);
+
+    std::vector<std::pair<temoto_id::ID, std::string>> ext_resources;
+    for (const auto& q : queries_)
+    {
+      if (q.externalResourceExists(external_resource_id))
+      {
+        for (auto resource : q.getExternalResources())
+        {
+          ext_resources.push_back(resource);
+        }
+        break;  // no need to look any further
       }
     }
     queries_mutex_.unlock();
@@ -290,7 +310,6 @@ private:
   ros::CallbackQueue load_cb_queue_;
   ros::AsyncSpinner load_spinner_;
 
-  temoto_id::IDManager res_id_manager_;
   std::vector<ServerQuery<ServiceType, Owner>> queries_;
 
   // mutexes

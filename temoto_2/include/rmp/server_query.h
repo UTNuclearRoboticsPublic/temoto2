@@ -33,47 +33,36 @@ public:
   }
 
   // remove the external client from this query and return how many are still connected
-  size_t removeExternalResource(temoto_id::ID resource_id)
+  size_t removeExternalResource(temoto_id::ID external_resource_id)
   {
     /// Try to erase resource_id from external client map.
-    external_resources_.erase(resource_id);
+    external_resources_.erase(external_resource_id);
     return external_resources_.size();
   }
 
-  // Check if external client with given resource_id is attached to this query.
-  bool externalResourceExists(temoto_id::ID resource_id) const
+  // Check if external connection with given resource_id is attached to this query.
+  bool externalResourceExists(temoto_id::ID external_resource_id) const
   {
-    return external_resources_.find(resource_id) != external_resources_.end();
+    return external_resources_.find(external_resource_id) != external_resources_.end();
   }
 
   // Check if external client with given resource_id is attached to this query.
-  bool internalResourceExists(temoto_id::ID resource_id) const
+  bool internalResourceExists(temoto_id::ID internal_resource_id) const
   {
-    auto found_r = find_if(internal_resources_.begin(), internal_resources_.end(),
-                           [&](const std::pair<std::string, std::set<temoto_id::ID>>& p) -> bool {
-                             return p.second.find(resource_id) != p.second.end();
-                           });
-    return found_r != internal_resources_.end();
+    return internal_resources_.find(internal_resource_id) != internal_resources_.end();
   }
 
-  void addInternalResource(std::string client_name, temoto_id::ID resource_id)
+  void addInternalResource(temoto_id::ID internal_resource_id)
   {
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
-    // try to insert to map
-    std::set<temoto_id::ID> s;
-    s.insert(resource_id);
-    auto ret = internal_resources_.emplace(client_name, s);
 
+    auto ret = internal_resources_.emplace(internal_resource_id);
     if (ret.second == false)
     {
-      // client already exists, add current id to its set
-      auto ins_ret = ret.first->second.insert(resource_id);
-
-      if (ins_ret.second == false)
-      {
-        RMP_ERROR("%s An extreme badness has happened. Somebody tried to bind same "
-                                   "resource twice to a resource_server.", prefix.c_str());
-      }
+      // resource already exists, something that should never happen...
+      RMP_ERROR("%s An extreme badness has happened. Somebody tried to bind same "
+                "resource twice to a resource_server.",
+                prefix.c_str());
     }
   }
 
@@ -82,7 +71,7 @@ public:
     return msg_;
   }
 
-  const std::map<std::string, std::set<temoto_id::ID>>& getInternalResources() const
+  const std::set<temoto_id::ID>& getInternalResources() const
   {
     return internal_resources_;
   }
@@ -106,8 +95,11 @@ private:
 
   Owner* owner_;
 
-  // unique client name is mapped to a set of resource ids
-  std::map<std::string, std::set<temoto_id::ID>> internal_resources_;
+  temoto_id::ID internal_resource_id;
+
+  // ID's of internally linked clients. Those are added automatically when call()
+  // function is called from owner's load callback.
+  std::set<temoto_id::ID> linked_resources_;
 
   // represent external clients by external_resource_id and status_topic
   std::map<temoto_id::ID, std::string> external_resources_;
