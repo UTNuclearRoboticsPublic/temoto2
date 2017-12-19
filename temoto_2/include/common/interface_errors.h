@@ -1,6 +1,6 @@
 #ifndef INTERFACE_ERROR_H
 #define INTERFACE_ERROR_H
-#include "base_error/base_error.h"
+#include "temoto_error/temoto_error.h"
 namespace interface_error
 {
     enum interface_error : int

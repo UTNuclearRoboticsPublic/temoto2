@@ -8,9 +8,12 @@
 #include "rmp/config_synchronizer.h"
 #include "temoto_2/ConfigSync.h"
 
+#include "std_msgs/String.h"
+
 namespace sensor_manager
 {
 
+typedef std_msgs::String PayloadType;
 
 class SensorManager
 {
@@ -31,7 +34,7 @@ public:
     }
     
 private:
-  bool indexSensors(const std::string& yaml_filename);
+  //bool indexSensors(const std::string& yaml_filename);
   /**
    * @brief Callback to a service that lists all available packages that
    * are with a requested "type". For example "list all HANDtracking devices"
@@ -41,7 +44,7 @@ private:
    */
   bool listDevicesCb(temoto_2::ListDevices::Request& req, temoto_2::ListDevices::Response& res);
 
-  void syncCb(const temoto_2::ConfigSync& msg);
+  void syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload);
 
   /*
    * Callback to a service that executes/runs a requested device
@@ -88,10 +91,9 @@ private:
   SensorInfoPtr findSensor(std::string type, std::string name, std::string executable, const std::vector<SensorInfoPtr>& sensors);
 
   std::string log_class_, log_subsys_, log_group_;
-  ros::NodeHandle nh_;
 //  ros::ServiceServer list_devices_server_;
   rmp::ResourceManager<SensorManager> resource_manager_;
-  rmp::ConfigSynchronizer<SensorManager> config_syncer_;
+  rmp::ConfigSynchronizer<SensorManager, PayloadType> config_syncer_;
 
   /**
    * @brief List of all locally defined sensors.

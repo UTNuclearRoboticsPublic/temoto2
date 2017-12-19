@@ -7,14 +7,14 @@
 #ifndef BASE_TASK_H
 #define BASE_TASK_H
 
-#include <string>
-#include "TTP/task_descriptor.h"
-#include "base_error/base_error.h"
-#include <boost/any.hpp>
+#include "ros/ros.h"
+#include "common/base_subsystem.h"
 #include "common/temoto_id.h"
 #include "common/tools.h"
+#include "TTP/task_descriptor.h"
 #include "temoto_2/StopTaskMsg.h"
-#include "ros/ros.h"
+#include <boost/any.hpp>
+#include <string>
 
 /*
  *basic log management, everything put under temoto_2.tasks for easier level control
@@ -37,7 +37,7 @@
 namespace TTP
 {
 
-class BaseTask
+class BaseTask : public BaseSubsystem
 {
 friend class TaskManager;
 
@@ -47,8 +47,7 @@ public:
      * @brief Task default constructor.
      */
     BaseTask() : task_package_name_("task_unknown")
-    {
-    }
+    {}
 
     /**
      * @brief startTask

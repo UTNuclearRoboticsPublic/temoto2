@@ -2,11 +2,13 @@
 #define CONFIG_SYNCHRONIZER_H
 
 #include "ros/ros.h"
+#include <ros/serialization.h>
 #include "rmp/log_macros.h"
 #include <string>
 #include <sstream>
 #include "temoto_2/ConfigSync.h"
-#include <yaml-cpp/yaml.h>
+
+namespace ser = ros::serialization;
 
 namespace rmp
 {
@@ -14,19 +16,26 @@ namespace rmp
 namespace sync_action
 {
 const std::string ADVERTISE_CONFIG = "advertise_config";
+const std::string ADD_CONFIG = "add_config";
+const std::string REMOVE_CONFIG = "remove_config";
 const std::string REQUEST_CONFIG = "request_config";
 }
 
 
-template <class Owner>
+template <class Owner, class PayloadType>
 class ConfigSynchronizer
 {
 public:
-  typedef void (Owner::*OwnerCbType)(const temoto_2::ConfigSync&);
+  typedef void (Owner::*OwnerCbType)(const temoto_2::ConfigSync&, const PayloadType& payload);
 
-  ConfigSynchronizer(const std::string& name, const std::string& sync_topic, OwnerCbType sync_cb,
-                     Owner* owner)
-    : name_(name), sync_topic_(sync_topic), sync_cb_(sync_cb), owner_(owner)
+  ConfigSynchronizer( const std::string& name
+                    , const std::string& sync_topic
+                    , OwnerCbType sync_cb
+                    , Owner* owner)
+    : name_(name)
+    , sync_topic_(sync_topic)
+    , sync_cb_(sync_cb)
+    , owner_(owner)
   {
     log_class_ = "rmp/ConfigSync";
     log_subsys_ = name;
@@ -78,23 +87,53 @@ public:
     sync_sub_.shutdown();
   }
 
+  /**
+   * @brief requestRemoteConfigs
+   */
   void requestRemoteConfigs()
   {
     temoto_2::ConfigSync msg;
     msg.temoto_namespace = common::getTemotoNamespace();
     msg.action = sync_action::REQUEST_CONFIG;
-    msg.config = "";
     sync_pub_.publish(msg);
   }
 
-  void advertise(const YAML::Node& config)
+  /**
+   * @brief Advertise payload to others
+   * @param payload
+   */
+  void advertise(const PayloadType& payload)
   {
-    temoto_2::ConfigSync msg;
-    msg.temoto_namespace = common::getTemotoNamespace();
-    msg.action = sync_action::ADVERTISE_CONFIG;
-    
-    msg.config = Dump(config);
-    sync_pub_.publish(msg);
+    try
+    {
+      temoto_2::ConfigSync msg;
+      msg.temoto_namespace = common::getTemotoNamespace();
+      msg.action = sync_action::ADVERTISE_CONFIG;
+
+      // Serialize the payload
+      uint32_t payload_size = ros::serialization::serializationLength(payload);
+      boost::shared_array<uint8_t> buffer(new uint8_t[payload_size]);
+      ser::OStream stream(buffer.get(), payload_size);
+      ser::serialize(stream, payload);
+
+      // Create a byte array
+      std::vector<uint8_t> payload_byte_array;
+
+      // Fill out the byte array
+      for (int i=0; i<payload_size; i++)
+      {
+        payload_byte_array.push_back(buffer.get()[i]);
+      }
+
+      msg.payload = payload_byte_array;
+      sync_pub_.publish(msg);
+    }
+
+    catch (...)
+    {
+      RMP_ERROR("Siit lendas laiali @ advertise");
+    }
+
   }
 
 private:
@@ -107,7 +146,34 @@ private:
       return;
     }
 
-    (owner_->*sync_cb_)(msg);
+    try
+    {
+      // Create empty payload msg
+      PayloadType payload;
+
+      // Deserialize the payload if the action type is ADVERTISE
+      if (msg.action == sync_action::ADVERTISE_CONFIG)
+      {
+        uint32_t payload_size = msg.payload.size();
+        boost::shared_array<uint8_t> buffer(new uint8_t[payload_size]);
+
+        // Fill buffer with the serialized payload
+        for (int i=0; i<payload_size; i++)
+        {
+          (buffer.get())[i] = msg.payload[i];
+        }
+
+        // Convert the serialized payload to msg
+        ser::IStream stream(buffer.get(), payload_size);
+        ser::deserialize(stream, payload);
+      }
+
+      (owner_->*sync_cb_)(msg, payload);
+    }
+    catch (...)
+    {
+      RMP_ERROR("Siit lendas laiali @ syncCb");
+    }
   }
 
   std::string name_;

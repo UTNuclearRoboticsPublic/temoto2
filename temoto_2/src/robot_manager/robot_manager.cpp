@@ -199,7 +199,7 @@ void RobotManager::unloadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLo
   TEMOTO_DEBUG("%s ROBOT '%s' unloaded.", prefix.c_str(), req.robot_name.c_str());
 }
 
-void RobotManager::syncCb(const temoto_2::ConfigSync& msg)
+void RobotManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload)
 {
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
@@ -212,7 +212,7 @@ void RobotManager::syncCb(const temoto_2::ConfigSync& msg)
   if (msg.action == rmp::sync_action::ADVERTISE_CONFIG)
   {
     // Convert the config string to YAML tree and parse
-    YAML::Node yaml_config = YAML::Load(msg.config);
+    YAML::Node yaml_config = YAML::Load(payload.data);
     RobotConfigs configs = parseRobotConfigs(yaml_config);
 
     //TODO hold remote stuff in a map or something keyed by namespace
@@ -254,7 +254,9 @@ void RobotManager::advertiseConfigs(RobotConfigs configs)
     // send to other managers if there is anything to send
     if(yaml_config.size())
     {
-      config_syncer_.advertise(yaml_config);
+      PayloadType payload;
+      payload.data = YAML::Dump(yaml_config);
+      config_syncer_.advertise(payload);
     }
 }
 
@@ -451,11 +453,11 @@ bool RobotManager::setTargetCb(temoto_2::RobotSetTarget::Request& req,
 
     hand_srv_msg_.request.gesture_specifiers.push_back(gesture_specifier);
     if (resource_manager_.call<temoto_2::LoadGesture>(
-            human_context::srv_name::MANAGER, human_context::srv_name::GESTURE_SERVER, hand_srv_msg_))
+            context_manager::srv_name::MANAGER, context_manager::srv_name::GESTURE_SERVER, hand_srv_msg_))
     {
       TEMOTO_DEBUG("%s Call to ContextManager was sucessful.", prefix.c_str());
       res.code = 0;
-      res.message = "Robot manager got a 'hand' topic from human_context.";
+      res.message = "Robot manager got a 'hand' topic from context_manager.";
       TEMOTO_DEBUG("%s Subscribing to '%s'", prefix.c_str(), hand_srv_msg_.response.topic.c_str());
       target_pose_sub_ = nh_.subscribe(hand_srv_msg_.response.topic, 1, &RobotManager::targetPoseCb, this);
 
@@ -558,8 +560,8 @@ void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)
       resource_manager_.unloadClientResource(hand_srv_msg_.response.rmp.resource_id);
 
       //retry with previous request
-      if (resource_manager_.call<temoto_2::LoadGesture>(human_context::srv_name::MANAGER,
-                                                        human_context::srv_name::GESTURE_SERVER,
+      if (resource_manager_.call<temoto_2::LoadGesture>(context_manager::srv_name::MANAGER,
+                                                        context_manager::srv_name::GESTURE_SERVER,
                                                         hand_srv_msg_))
       {
         TEMOTO_DEBUG("%s Call to ContextManager was sucessful.", prefix.c_str());
@@ -585,7 +587,9 @@ void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)
         config->adjustReliability(0.0);
         YAML::Node yaml_config;
         yaml_config["Robots"].push_back(config->getYAMLConfig());
-        config_syncer_.advertise(yaml_config);
+        PayloadType payload;
+        payload.data = YAML::Dump(yaml_config);
+        config_syncer_.advertise(payload);
       }
     }
   }

@@ -11,7 +11,7 @@
 
 // Task specific includes
 #include "ros/ros.h"
-#include "context_manager/human_context/human_context_interface.h"
+#include "context_manager/context_manager_interface.h"
 #include "sensor_manager/sensor_manager_interface.h"
 #include <visualization_msgs/Marker.h>
 
@@ -25,7 +25,7 @@ public:
  * Inherited methods that have to be implemented /START
  * * * * * * * * * * * * * * * * * * * * * * * * */
 
-TaskStart() : hci_(this)
+TaskStart()
 {
     // Do something here if needed
     TASK_INFO("TaskStart constructed");
@@ -196,8 +196,8 @@ void startInterface_2()
 
     try
     {
-        // Initialize the human context interface
-        hci_.initialize();
+        // Initialize the context manager interface
+        cmi_.initialize(this);
 
         TASK_INFO(" Starting the hand tracker");
 
@@ -213,7 +213,7 @@ void startInterface_2()
         marker_pub_ = n_.advertise<visualization_msgs::Marker>("/temoto_task_markers", 1);
 
         // Register the gesture request and bind a callback
-        hci_.getGesture(gesture_specifiers, &TaskStart::gestureCallback, this);
+        cmi_.getGesture(gesture_specifiers, &TaskStart::gestureCallback, this);
 
         // Pass the camera topic to the output
         what_0_word_out = what_0_word_in;
@@ -299,8 +299,8 @@ ros::NodeHandle n_;
 // Create sensor manager interface object for accessing sensor manager
 SensorManagerInterface smi_;
 
-// Create human context interface object for human context manager
-HumanContextInterface <TaskStart> hci_;
+// Create context manager interface object for context manager manager
+ContextManagerInterface <TaskStart> cmi_;
 
 // Marker publisher
 ros::Publisher marker_pub_;

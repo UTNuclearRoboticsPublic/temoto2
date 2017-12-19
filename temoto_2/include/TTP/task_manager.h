@@ -1,8 +1,9 @@
 #ifndef TASK_HANDLER_H
 #define TASK_HANDLER_H
 
-#include "base_error/base_error.h"
+#include "temoto_error/temoto_error.h"
 #include "common/temoto_id.h"
+#include "common/base_subsystem.h"
 #include "TTP/task_descriptor.h"
 #include "TTP/task_tree.h"
 #include "TTP/base_task/base_task.h"
@@ -23,184 +24,165 @@
 namespace TTP
 {
 
-class TaskManager
+class TaskManager : public BaseSubsystem
 {
 public:
 
-    /**
-     * @brief error_handler_
-     */
-    error::ErrorHandler error_handler_;
 
-    /**
-     * @brief TaskManager
-     * @param system_prefix
-     * @param nlp_enabled
-     */
-    TaskManager(std::string system_prefix, bool nlp_enabled);
+  TaskManager( std::string subsystem_name
+             , error::Subsystem subsystem_code
+             , bool nlp_enabled);
 
-    /**
-     * @brief findTask
-     * @param task_to_find
-     * @param tasks
-     * @return
-     */
-    std::vector <TaskDescriptor> findTask(std::string task_to_find,  const std::vector <TaskDescriptor>& tasks);
+  TaskManager(BaseSubsystem& b, bool nlp_enabled);
 
-    /**
-     * @brief findTaskLocal
-     * @param task_to_find
-     * @return
-     */
-    std::vector <TaskDescriptor> findTaskLocal(std::string task_to_find);
+  /**
+   * @brief findTask
+   * @param task_to_find
+   * @param tasks
+   * @return
+   */
+  std::vector <TaskDescriptor> findTask(std::string task_to_find,  const std::vector <TaskDescriptor>& tasks);
 
-    /**
-     * @brief findTask
-     * @param task_to_find
-     * @param base_path
-     * @param search_depth
-     * @return
-     */
-    std::vector <TaskDescriptor> findTaskFilesys(std::string task_to_find, boost::filesystem::directory_entry base_path, int search_depth);
+  /**
+   * @brief findTaskLocal
+   * @param task_to_find
+   * @return
+   */
+  std::vector <TaskDescriptor> findTaskLocal(std::string task_to_find);
 
-    /**
-     * @brief indexTasks
-     * @param base_path
-     * @param search_depth
-     */
-    void indexTasks (boost::filesystem::directory_entry base_path, int search_depth);
+  /**
+   * @brief findTask
+   * @param task_to_find
+   * @param base_path
+   * @param search_depth
+   * @return
+   */
+  std::vector <TaskDescriptor> findTaskFilesys(std::string task_to_find, boost::filesystem::directory_entry base_path, int search_depth);
 
-    /**
-     * @brief getIndexedTasks
-     * @return
-     */
-    std::vector <TaskDescriptor>& getIndexedTasks();
+  /**
+   * @brief indexTasks
+   * @param base_path
+   * @param search_depth
+   */
+  void indexTasks (boost::filesystem::directory_entry base_path, int search_depth);
 
-    void connectTaskTree(TaskTreeNode& node, std::vector<Subject> parent_subjects, unsigned int depth = 0);
+  /**
+   * @brief getIndexedTasks
+   * @return
+   */
+  std::vector <TaskDescriptor>& getIndexedTasks();
 
-    void loadAndInitializeTaskTree(TaskTreeNode& node);
+  void connectTaskTree(TaskTreeNode& node, std::vector<Subject> parent_subjects, unsigned int depth = 0);
 
-    void makeFlowGraph(TaskTreeNode& node, tbb::flow::graph& flow_graph);
+  void loadAndInitializeTaskTree(TaskTreeNode& node);
 
-    void connectFlowGraph(TaskTreeNode& node);
+  void makeFlowGraph(TaskTreeNode& node, tbb::flow::graph& flow_graph);
 
-    void executeVerbalInstruction (std::string& verbal_instruction);
+  void connectFlowGraph(TaskTreeNode& node);
 
-    void executeSFT (TaskTree sft);
+  void executeVerbalInstruction (std::string& verbal_instruction);
 
-    /**
-     * @brief loadTask
-     * @param task_descriptor
-     */
-    void loadTask(TaskDescriptor& task_descriptor);
+  void executeSFT (TaskTree sft);
 
-    /**
-     * @brief unloadTaskLib
-     * @param task_descriptor
-     */
-    void unloadTaskLib(std::string path_to_lib);
+  /**
+   * @brief loadTask
+   * @param task_descriptor
+   */
+  void loadTask(TaskDescriptor& task_descriptor);
 
-    /**
-     * @brief instantiateTask
-     * @param node
-     */
-    void instantiateTask(TaskTreeNode& node);
+  /**
+   * @brief unloadTaskLib
+   * @param task_descriptor
+   */
+  void unloadTaskLib(std::string path_to_lib);
 
-    /**
-     * @brief stopTask
-     * @param action
-     * @param what
-     */
-    void stopTask(std::string action = "", std::string what = "");
+  /**
+   * @brief instantiateTask
+   * @param node
+   */
+  void instantiateTask(TaskTreeNode& node);
 
-
+  /**
+   * @brief stopTask
+   * @param action
+   * @param what
+   */
+  void stopTask(std::string action = "", std::string what = "");
 
 private:
 
-    const std::string class_name_ = "TaskManager";
+  const std::string description_file_ = "descriptor.xml";
 
-    const std::string log_group_ = "temoto_core";
+  bool action_executioner_busy_ = false;
 
-    const std::string description_file_ = "descriptor.xml";
+  bool nlp_enabled_;
 
-    bool action_executioner_busy_ = false;
+  std::vector<std::pair<boost::shared_ptr<TaskDescriptor>, boost::shared_ptr<BaseTask>>> asynchronous_tasks_;
 
-    /**
-     * @brief system_prefix_
-     */
-    std::string system_prefix_;
+  std::vector<std::string> synchronous_task_libs_;
 
-    bool nlp_enabled_;
+  TTP::MetaLP* language_processor_;
 
-    std::vector<std::pair<boost::shared_ptr<TaskDescriptor>, boost::shared_ptr<BaseTask>>> asynchronous_tasks_;
+  ros::Subscriber human_chatter_subscriber_;
 
-    std::vector<std::string> synchronous_task_libs_;
+  /**
+   * @brief n_
+   */
+  ros::NodeHandle nh_;
 
-    TTP::MetaLP* language_processor_;
-
-    ros::Subscriber human_chatter_subscriber_;
-
-    /**
-     * @brief n_
-     */
-    ros::NodeHandle nh_;
-
-    /**
-     * @brief id_manager_
-     */
-    TemotoID::IDManager id_manager_;
+  /**
+   * @brief id_manager_
+   */
+  TemotoID::IDManager id_manager_;
 
 
-    ros::ServiceServer stop_task_server_;
+  ros::ServiceServer stop_task_server_;
 
-    /**
-     * @brief index_tasks_subscriber_
-     */
-    ros::Subscriber index_tasks_subscriber_;
+  /**
+   * @brief index_tasks_subscriber_
+   */
+  ros::Subscriber index_tasks_subscriber_;
 
-    /**
-     * @brief join_task_server_
-     */
-    ros::Subscriber stop_task_subscriber_;
+  /**
+   * @brief join_task_server_
+   */
+  ros::Subscriber stop_task_subscriber_;
 
-    /**
-     * @brief tasks_indexed_
-     */
-    std::vector <TaskDescriptor> tasks_indexed_;
+  /**
+   * @brief tasks_indexed_
+   */
+  std::vector <TaskDescriptor> tasks_indexed_;
 
-    /**
-     * @brief class_loader_
-     */
-    class_loader::MultiLibraryClassLoader* class_loader_;
+  /**
+   * @brief class_loader_
+   */
+  class_loader::MultiLibraryClassLoader* class_loader_;
 
-    std::map<std::string, class_loader::ClassLoader*> class_loaders_;
+  std::map<std::string, class_loader::ClassLoader*> class_loaders_;
 
-    /**
-     * @brief langProcessor_
-     */
+  void initCore();
 
+  /**
+   * @brief stopTaskCallback
+   * @param req
+   * @param res
+   * @return
+   */
+  bool stopTaskCallback (temoto_2::StopTask::Request& req,
+                         temoto_2::StopTask::Response& res);
 
-    /**
-     * @brief stopTaskCallback
-     * @param req
-     * @param res
-     * @return
-     */
-    bool stopTaskCallback (temoto_2::StopTask::Request& req,
-                           temoto_2::StopTask::Response& res);
+  /**
+   * @brief indexTasksCallback
+   * @param index_msg
+   * @return
+   */
+  void indexTasksCallback (temoto_2::IndexTasks index_msg);
 
-    /**
-     * @brief indexTasksCallback
-     * @param index_msg
-     * @return
-     */
-    void indexTasksCallback (temoto_2::IndexTasks index_msg);
-
-    /**
-     * @brief humanChatterCb
-     * @param chat
-     */
-    void humanChatterCb (std_msgs::String chat);
+  /**
+   * @brief humanChatterCb
+   * @param chat
+   */
+  void humanChatterCb (std_msgs::String chat);
 
 };
 

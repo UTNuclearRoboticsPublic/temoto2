@@ -5,13 +5,14 @@
 #include "common/temoto_id.h"
 #include "robot_manager/robot_manager_services.h"
 #include "process_manager/process_manager_services.h"
-#include "context_manager/human_context/human_context_services.h"
+#include "context_manager/context_manager_services.h"
 #include "rmp/resource_manager.h"
 #include "rmp/config_synchronizer.h"
 #include "temoto_2/ConfigSync.h"
 #include <moveit/move_group_interface/move_group_interface.h>
 #include "robot_manager/robot.h"
 #include "robot_manager/robot_config.h"
+#include "std_msgs/String.h"
 
 #include "leap_motion_controller/Set.h"
 
@@ -24,6 +25,8 @@ namespace robot_manager
 {
 // Forward declaration
 class Robot;
+
+typedef std_msgs::String PayloadType;
 
 class RobotManager
 {
@@ -80,7 +83,7 @@ private:
 
   bool setModeCb(temoto_2::RobotSetMode::Request& req, temoto_2::RobotSetMode::Response& res);
 
-  void syncCb(const temoto_2::ConfigSync& msg);
+  void syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload);
 
   void advertiseConfigs(RobotConfigs configs);
 
@@ -127,7 +130,7 @@ private:
   temoto_2::LoadGesture hand_srv_msg_;
   
   // Keeps robot_infos in sync with other managers
-  rmp::ConfigSynchronizer<RobotManager> config_syncer_;
+  rmp::ConfigSynchronizer<RobotManager, PayloadType> config_syncer_;
 
   // Resource manager for contacting process manager
   rmp::ResourceManager<RobotManager> resource_manager_;

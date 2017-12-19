@@ -38,7 +38,7 @@ TaskTree MetaLP::processText(std::string input_text)
     {
         // Throw error
         error::ErrorStackUtil error_stack_util( TTPErr::NLP_INV_ARG,
-                                                error::Subsystem::CORE,
+                                                error::Subsystem::AGENT,
                                                 error::Urgency::LOW,
                                                 prefix + " Received an empty string",
                                                 ros::Time::now() );
@@ -91,7 +91,7 @@ TaskTree MetaLP::processText(std::string input_text)
                 std::cout << prefix << "No tasks were found\n";
                 // Throw error
                 error::ErrorStackUtil error_stack_util( TTPErr::NLP_BAD_INPUT,
-                                                        error::Subsystem::CORE,
+                                                        error::Subsystem::AGENT,
                                                         error::Urgency::LOW,
                                                         prefix + " Could not make any sense of input text",
                                                         ros::Time::now() );

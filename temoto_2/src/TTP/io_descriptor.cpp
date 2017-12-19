@@ -6,22 +6,26 @@
 namespace TTP
 {
 
+// Constructor
 Subject::Subject(std::string type, std::string word)
     : type_(type)
 {
     words_.push_back(word);
 }
 
+// Mark incomplete
 void Subject::markIncomplete()
 {
     is_complete_ = false;
 }
 
+// Mark complete
 void Subject::markComplete()
 {
     is_complete_ = true;
 }
 
+// Add data - float type
 void Subject::addData(std::string datatype, float data)
 {
     // Name of the method, used for making debugging a bit simpler
@@ -31,7 +35,7 @@ void Subject::addData(std::string datatype, float data)
     if (std::find(valid_datatypes.begin(), valid_datatypes.end(), datatype) == valid_datatypes.end())
     {
         throw error::ErrorStackUtil (TTPErr::DESC_INVALID_ARG
-                                     , error::Subsystem::CORE
+                                     , error::Subsystem::AGENT
                                      , error::Urgency::LOW
                                      , prefix + " Invalid datatype: '" + datatype + "'."
                                      , ros::Time::now() );
@@ -40,7 +44,7 @@ void Subject::addData(std::string datatype, float data)
     if (datatype != "number")
     {
         throw error::ErrorStackUtil (TTPErr::DESC_INVALID_ARG
-                                     , error::Subsystem::CORE
+                                     , error::Subsystem::AGENT
                                      , error::Urgency::LOW
                                      , prefix + " Numerical data '" + std::to_string(data) +
                                      "' cannot be tagged with a non-numerical datatype '" + datatype + "'."
@@ -50,6 +54,7 @@ void Subject::addData(std::string datatype, float data)
     data_.emplace_back(datatype, boost::any_cast<float>(data));
 }
 
+// Add data - string type
 void Subject::addData(std::string datatype, std::string data)
 {
     // Name of the method, used for making debugging a bit simpler
@@ -59,7 +64,7 @@ void Subject::addData(std::string datatype, std::string data)
     if (std::find(valid_datatypes.begin(), valid_datatypes.end(), datatype) == valid_datatypes.end())
     {
         throw error::ErrorStackUtil (TTPErr::DESC_INVALID_ARG
-                                     , error::Subsystem::CORE
+                                     , error::Subsystem::AGENT
                                      , error::Urgency::LOW
                                      , prefix + " Invalid datatype: '" + datatype + "'."
                                      , ros::Time::now() );
@@ -68,7 +73,7 @@ void Subject::addData(std::string datatype, std::string data)
     if (datatype == "number")
     {
         throw error::ErrorStackUtil (TTPErr::DESC_INVALID_ARG
-                                     , error::Subsystem::CORE
+                                     , error::Subsystem::AGENT
                                      , error::Urgency::LOW
                                      , prefix + " A string is not a numerical datatype."
                                      , ros::Time::now() );
@@ -270,4 +275,4 @@ std::ostream& operator<<( std::ostream& stream, const Data& data)
     return stream;
 }
 
-}
+}// END of TPP namespace

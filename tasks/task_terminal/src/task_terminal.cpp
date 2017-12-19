@@ -15,7 +15,7 @@
 // Task specific includes
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-#include "context_manager/human_context/human_context_interface.h"
+#include "context_manager/context_manager_interface.h"
 
 // experimental testing in speech callback
 #include <boost/algorithm/string.hpp>
@@ -29,7 +29,7 @@ public:
  * Inherited methods that have to be implemented /START
  * * * * * * * * * * * * * * * * * * * * * * * * */
 
-TaskTerminal() : hci_(this)
+TaskTerminal()
 {
     class_name_ = "TaskTerminal";
 
@@ -75,8 +75,8 @@ void startInterface_0()
 
     try
     {
-        // Initialize human context interface
-        hci_.initialize();
+        // Initialize context manager interface
+        cmi_.initialize(this);
 
         // Advertise the topic where core listens for commands
         core_pub_ = nh_.advertise<std_msgs::String>("human_chatter", 1);
@@ -90,7 +90,7 @@ void startInterface_0()
         speech_specifiers.push_back(speech_specifier);
 
         // Get speech and register callback
-        hci_.getSpeech(speech_specifiers, &TaskTerminal::speech_callback, this);
+        cmi_.getSpeech(speech_specifiers, &TaskTerminal::speech_callback, this);
     }
 
     catch( error::ErrorStackUtil& e )
@@ -144,7 +144,7 @@ private:
     std::string class_name_;
 
     // Human context interface object
-    HumanContextInterface <TaskTerminal> hci_;
+    ContextManagerInterface <TaskTerminal> cmi_;
     ros::Publisher core_pub_;
     ros::NodeHandle nh_;
 

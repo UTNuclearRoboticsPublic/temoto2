@@ -1,6 +1,8 @@
 #ifndef TEMOTO_LOG_MACROS_H
 #define TEMOTO_LOG_MACROS_H
 
+#include "common/tools.h"
+
 #define TEMOTO_CONSOLE_PREFIX ROSCONSOLE_ROOT_LOGGER_NAME "."+::common::getTemotoNamespace()+"."+this->log_group_
 #define TEMOTO_DEBUG(...) ROS_LOG(::ros::console::levels::Debug, TEMOTO_CONSOLE_PREFIX, __VA_ARGS__)
 #define TEMOTO_INFO(...) ROS_LOG(::ros::console::levels::Info, TEMOTO_CONSOLE_PREFIX, __VA_ARGS__)
