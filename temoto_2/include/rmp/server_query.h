@@ -20,11 +20,13 @@ public:
   {
   } 
   // special constructor for resource server
-  ServerQuery(const typename ServiceMsgType::Request& req, Owner* owner) : owner_(owner), failed_(false)
+  ServerQuery(const typename ServiceMsgType::Request& req, temoto_id::ID internal_id, Owner* owner)
+    : owner_(owner), failed_(false)
   {
     log_class_ = "rmp/ServerQuery";
     log_subsys_ = owner_->getName();
     msg_.request = req;  // response part is set after executing owners callback
+    msg_.response.rmp.resource_id = internal_id;
   }
 
   void addExternalResource(temoto_id::ID external_resource_id, const std::string& status_topic)
@@ -41,26 +43,33 @@ public:
   }
 
   // Check if external connection with given resource_id is attached to this query.
-  bool externalResourceExists(temoto_id::ID external_resource_id) const
+  bool hasExternalResource(temoto_id::ID external_resource_id) const
   {
     return external_resources_.find(external_resource_id) != external_resources_.end();
   }
 
-  // Check if external client with given resource_id is attached to this query.
-  bool internalResourceExists(temoto_id::ID internal_resource_id) const
+  // check if given internal resource id belongs to this query
+  bool hasInternalResource(temoto_id::ID internal_resource_id) const
   {
-    return internal_resources_.find(internal_resource_id) != internal_resources_.end();
+    return linked_resources_.find(internal_resource_id) != linked_resources_.end() ||
+           getInternalId() == internal_resource_id;
   }
 
-  void addInternalResource(temoto_id::ID internal_resource_id)
+  // Check if external client with given resource_id is attached to this query.
+  bool isLinkedTo(temoto_id::ID internal_resource_id) const
+  {
+    return linked_resources_.find(internal_resource_id) != linked_resources_.end();
+  }
+
+  void linkTo(temoto_id::ID internal_resource_id)
   {
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
 
-    auto ret = internal_resources_.emplace(internal_resource_id);
+    auto ret = linked_resources_.emplace(internal_resource_id);
     if (ret.second == false)
     {
       // resource already exists, something that should never happen...
-      RMP_ERROR("%s An extreme badness has happened. Somebody tried to bind same "
+      RMP_ERROR("%s An extreme badness has happened. Somebody tried to link the same "
                 "resource twice to a resource_server.",
                 prefix.c_str());
     }
@@ -71,9 +80,14 @@ public:
     return msg_;
   }
 
-  const std::set<temoto_id::ID>& getInternalResources() const
+  temoto_id::ID getInternalId() const
   {
-    return internal_resources_;
+    return msg_.response.rmp.resource_id;
+  }
+
+  const std::set<temoto_id::ID>& getLinkedResources() const
+  {
+    return linked_resources_;
   }
 
   const std::map<temoto_id::ID, std::string>& getExternalResources() const
@@ -94,8 +108,6 @@ private:
   std::string log_class_, log_subsys_;
 
   Owner* owner_;
-
-  temoto_id::ID internal_resource_id;
 
   // ID's of internally linked clients. Those are added automatically when call()
   // function is called from owner's load callback.

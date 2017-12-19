@@ -147,7 +147,7 @@ public:
     }
 
     // generate new if for owner as the call was not initiated from any servers callback
-    msg.response.rmp.resource_id = generateInternalID();
+    msg.response.rmp.resource_id = generateID();
     
     // make the call to server
     bool ret = client_ptr->call(msg);
@@ -158,7 +158,7 @@ public:
     {
       RMP_DEBUG("%s called from servers callback, registering internal client",
                       prefix.c_str());
-      active_server_->registerInternalResource(msg.response.rmp.resource_id);
+      active_server_->linkInternalResource(msg.response.rmp.resource_id);
     }
 
     clients_mutex_.unlock();
@@ -382,7 +382,7 @@ public:
         }
 
         // forward status info to whoever is related with the given internal resource
-        sendStatusByInternalId(srv);
+        sendStatus(srv);
       }
     }  // if code == FAILED
     return true;
@@ -405,10 +405,10 @@ public:
     return ext_resources;
   }
 
-  temoto_id::ID generateInternalID()
+  temoto_id::ID generateID()
   {
     std::lock_guard<std::mutex> lock(id_manager_mutex_);
-    return internal_id_manager_.generateID();
+    return id_manager_.generateID();
 ;
   }
 
@@ -451,7 +451,7 @@ private:
   std::vector<std::shared_ptr<BaseResourceClient<Owner>>> clients_;
   std::string name_;
   Owner* owner_;
-  temoto_id::IDManager internal_id_manager_;
+  temoto_id::IDManager id_manager_;
   std::shared_ptr<BaseResourceServer<Owner>> active_server_;
   void (Owner::*status_callback_)(temoto_2::ResourceStatus&);
 
