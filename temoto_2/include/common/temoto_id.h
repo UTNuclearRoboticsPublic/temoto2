@@ -13,7 +13,8 @@ class IDManager
 public:
   IDManager()
   {
-  //  current_ID_ = rand() % 10000;
+    // generate random seed for more reliable testing
+    current_ID_ = rand() % 1000;
   }
   /**
    * @brief checkID

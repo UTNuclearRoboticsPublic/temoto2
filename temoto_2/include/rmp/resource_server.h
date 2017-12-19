@@ -98,6 +98,7 @@ public:
       // generate new internal id, and give it to owners callback.
       // with this id, owner can send status messages later when necessary
       temoto_id::ID int_resource_id = this->resource_manager_.generateID();
+      res.rmp.resource_id = int_resource_id;
       RMP_DEBUG("%s New query, server generated new internal id: '%d'.", prefix.c_str(), int_resource_id);
 
       // equal message not found from queries_, add new query
@@ -129,6 +130,8 @@ public:
       if (q_it != queries_.end())
       {
         // update the query with the response message filled in the callback
+        // make sure the internal_resource_id for that query is not changed.
+        res.rmp.resource_id = int_resource_id;
         q_it->setMsgResponse(res);
 
         // prepare the response for the client
@@ -244,7 +247,7 @@ public:
     std::vector<std::pair<temoto_id::ID, std::string>> ext_resources;
     for (const auto& q : queries_)
     {
-      if (q.getInternalId() == internal_resource_id)
+      if (q.hasInternalResource(internal_resource_id))
       {
         for (auto resource : q.getExternalResources())
         {

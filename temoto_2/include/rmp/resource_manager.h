@@ -239,6 +239,7 @@ public:
   void sendStatus(temoto_2::ResourceStatus& srv)
   {
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    RMP_DEBUG("%s Sending status to internal resource: %ld", prefix.c_str(), srv.request.resource_id);
 
     // For storing service and status topic temporarily.
     struct ResourceInfo
@@ -252,7 +253,7 @@ public:
     for (const auto& server : servers_)
     {
       // get ext ID's and Topic pairs which correspond to the external resource ID
-      auto ext_resources = server->getExternalResourcesByExternalId(srv.request.resource_id);
+      auto ext_resources = server->getExternalResourcesByInternalId(srv.request.resource_id);
       ResourceInfo info;
       info.srv = srv;  // initialize with given values
       info.srv.request.temoto_namespace = ::common::getTemotoNamespace();
