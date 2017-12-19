@@ -1,5 +1,13 @@
+# Ignore libraries created for tasks under lib/
 *.so
 lib/
+
+# Ignore vim temp files
 *.swp
+
+# Ignore docs
 */doc/html
 */doc/manifest.yaml
+
+# Ignore QtCreator crap
+*.user
