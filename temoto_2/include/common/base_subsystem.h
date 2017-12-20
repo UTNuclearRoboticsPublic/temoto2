@@ -2,6 +2,8 @@
 #define BASE_SUBSYSTEM_H
 
 #include "temoto_error/temoto_error.h"
+#include <string>
+
 
 class BaseSubsystem
 {
@@ -35,6 +37,11 @@ protected:
     subsystem_code_ = b->subsystem_code_;
     log_group_ = b->log_group_;
     error_handler_ = error::ErrorHandler(subsystem_code_, log_group_);
+  }
+
+  std::string generateLogPrefix(std::string func_name)
+  {
+    return common::generateLogPrefix(subsystem_name_, class_name_, func_name);
   }
 };
 

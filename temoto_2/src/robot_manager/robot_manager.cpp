@@ -16,10 +16,15 @@ RobotManager::RobotManager()
   , config_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &RobotManager::syncCb, this)
   , mode_(modes::AUTO)
 {
-  log_class_ = "";
-  log_subsys_ = "robot_manager";
-  log_group_ = "robot_manager";
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  class_name_ = __func__;
+  subsystem_name_ = "context_manager";
+  subsystem_code_ = error::Subsystem::ROBOT_MANAGER;
+  log_group_ = "context_manager";
+  error_handler_ = error::ErrorHandler(subsystem_code_, log_group_);
+
+  log_class_ = class_name_;
+  log_subsys_ = subsystem_name_;
+  std::string prefix = generateLogPrefix(__func__);
 
   // Start the server for loading/unloading robots as resources
   resource_manager_.addServer<temoto_2::RobotLoad>(srv_name::SERVER_LOAD, &RobotManager::loadCb,
@@ -86,7 +91,7 @@ void RobotManager::loadLocalRobot(RobotConfigPtr config)
   temoto_2::LoadProcess::Response load_proc_res;
   try
   {
-    active_robot_ = std::make_shared<Robot>(config, resource_manager_);
+    active_robot_ = std::make_shared<Robot>(config, resource_manager_, *this);
     loaded_robots_.emplace(load_proc_res.rmp.resource_id, active_robot_);
     config->adjustReliability(1.0);
     TEMOTO_DEBUG("%s Robot '%s' loaded.", prefix.c_str(), config->getName().c_str());
@@ -151,7 +156,7 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
       res.rmp = load_robot_srvc.response.rmp;
       try
       {
-        active_robot_ = std::make_shared<Robot>(config, resource_manager_);
+        active_robot_ = std::make_shared<Robot>(config, resource_manager_, *this);
         loaded_robots_.emplace(load_robot_srvc.response.rmp.resource_id, active_robot_);
       }
       catch (...)

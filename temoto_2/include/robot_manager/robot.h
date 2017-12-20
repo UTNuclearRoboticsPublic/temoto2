@@ -8,6 +8,7 @@
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <moveit/planning_interface/planning_interface.h>
 #include "common/temoto_id.h"
+#include "common/base_subsystem.h"
 #include "process_manager/process_manager_services.h"
 #include "rmp/resource_manager.h"
 #include "robot_manager/robot_config.h"
@@ -20,10 +21,10 @@ namespace robot_manager
 // Forward declaration
 class RobotManager;
 
-class Robot
+class Robot : public BaseSubsystem
 {
 public:
-  Robot(RobotConfigPtr config_, rmp::ResourceManager<RobotManager>& resource_manager);
+  Robot(RobotConfigPtr config_, rmp::ResourceManager<RobotManager>& resource_manager, BaseSubsystem& b);
   virtual ~Robot();
   void addPlanningGroup(const std::string& planning_group_name);
   void removePlanningGroup(const std::string& planning_group_name);

@@ -3,6 +3,7 @@
 
 #include "core/common.h"
 #include "common/temoto_id.h"
+#include "common/base_subsystem.h"
 #include "robot_manager/robot_manager_services.h"
 #include "process_manager/process_manager_services.h"
 #include "context_manager/context_manager_services.h"
@@ -28,7 +29,7 @@ class Robot;
 
 typedef std_msgs::String PayloadType;
 
-class RobotManager
+class RobotManager : public BaseSubsystem
 {
 public:
   RobotManager();

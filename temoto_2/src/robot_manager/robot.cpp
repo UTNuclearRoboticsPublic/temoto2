@@ -5,12 +5,11 @@
 
 namespace robot_manager
 {
-Robot::Robot(RobotConfigPtr config, rmp::ResourceManager<RobotManager>& resource_manager)
-  : config_(config), resource_manager_(resource_manager), is_plan_valid_(false) 
+Robot::Robot(RobotConfigPtr config, rmp::ResourceManager<RobotManager>& resource_manager, BaseSubsystem& b)
+  : config_(config), resource_manager_(resource_manager), is_plan_valid_(false), BaseSubsystem(b)
 {
-  log_class_ = "Robot";
-  log_subsys_ = "robot_manager";
-  log_group_ = "robot_manager";
+  class_name_ = "Robot";
+
   if (isLocal())
   {
     load();
@@ -85,6 +84,7 @@ void Robot::waitForTopic(const std::string& topic, temoto_id::ID interrupt_res_i
     TEMOTO_DEBUG("%s Waiting for %s ...", prefix.c_str(), topic.c_str());
     if (resource_manager_.hasFailed(interrupt_res_id))
     {
+
      // throw error::ErrorStackUtil(
      //     robot_error::SERVICE_STATUS_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
      //     prefix + "Loading interrupted. A FAILED status was received from process manager.");
@@ -108,7 +108,6 @@ bool Robot::isTopicAvailable(const std::string& topic)
 // Load robot's urdf
 void Robot::loadUrdf()
 {
-
   RobotFeature& ftr = config_->getRobotFeature(FeatureType::URDF);
   std::string urdf_path = '/' + ros::package::getPath(ftr.getPackageName()) + '/' + ftr.getExecutable();
   temoto_id::ID res_id = rosExecute("temoto_2", "urdf_loader.py", urdf_path);
