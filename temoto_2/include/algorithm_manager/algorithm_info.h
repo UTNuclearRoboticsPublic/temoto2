@@ -52,21 +52,23 @@ public:
     return algorithm_name_;
   }
 
-  std::string getTopic() const
+  // Get input topics
+  const std::vector<StringPair>& getTopicsIn() const
   {
-    return topic_;
+    return input_topics_;
   }
 
-  // Get input topics
-  std::vector<StringPair> getTopicsIn() const
-  {
-    return topics_in_;
-  }
+  // Get topic by type
+  std::string getTopicByType(const std::string& type, const std::vector<StringPair>& topics);
+
+  std::string getInputTopic(const std::string& type);
+
+  std::string getOutputTopic(const std::string& type);
 
   // Get output topics
-  std::vector<StringPair> getTopicsOut() const
+  const std::vector<StringPair>& getTopicsOut() const
   {
-    return topics_out_;
+    return output_topics_;
   }
 
   // Get algorithm type
@@ -112,19 +114,14 @@ public:
     algorithm_name_ = name;
   }
 
-  void setTopic(std::string topic)
-  {
-    topic_ = topic;
-  }
-
   void addTopicIn(StringPair topic)
   {
-    topics_in_.push_back(topic);
+    input_topics_.push_back(topic);
   }
 
   void addTopicOut(StringPair topic)
   {
-    topics_out_.push_back(topic);
+    output_topics_.push_back(topic);
   }
 
   void setType(std::string algorithm_type)
@@ -159,13 +156,12 @@ private:
   
   std::string temoto_namespace_;
   std::string algorithm_name_;
-  std::string topic_;
   std::string algorithm_type_;
   std::string package_name_;
   std::string executable_;
   std::string description_;
-  std::vector<StringPair> topics_in_;
-  std::vector<StringPair> topics_out_;
+  std::vector<StringPair> input_topics_;
+  std::vector<StringPair> output_topics_;
 
   /**
    * @brief Reliability ratings of the algorithm.
@@ -188,10 +184,65 @@ typedef std::vector<AlgorithmInfoPtr> AlgorithmInfoPtrs;
 
 static bool operator==(const AlgorithmInfo& s1, const AlgorithmInfo& s2)
 {
-  return (s1.getTemotoNamespace() == s2.getTemotoNamespace() &&
-          s1.getTopic() == s2.getTopic() &&
-          s1.getExecutable() == s2.getExecutable() &&
-          s1.getPackageName() == s2.getPackageName());
+  // Check the namespace, executable and name of the packate
+  if (s1.getTemotoNamespace() != s2.getTemotoNamespace() ||
+      s1.getExecutable() != s2.getExecutable() ||
+      s1.getPackageName() != s2.getPackageName())
+  {
+    return false;
+  }
+
+  // Check the size of input and output topics
+  if (s1.getTopicsIn().size() != s2.getTopicsIn().size() ||
+      s1.getTopicsOut().size() != s2.getTopicsOut().size())
+  {
+    return false;
+  }
+
+  // Check the input topics
+  auto input_topics_2_copy = s2.getTopicsIn();
+  for (auto& input_topic_1 : s1.getTopicsIn())
+  {
+    bool topic_found = false;
+    for (auto it=input_topics_2_copy.begin(); it!=input_topics_2_copy.end(); it++)
+    {
+      if (input_topic_1.first == it->first)
+      {
+        topic_found = true;
+        input_topics_2_copy.erase(it);
+        break;
+      }
+    }
+
+    if (!topic_found)
+    {
+      return false;
+    }
+  }
+
+  // Check the output topics
+  auto output_topics_2_copy = s2.getTopicsOut();
+  for (auto& output_topic_1 : s1.getTopicsOut())
+  {
+    bool topic_found = false;
+    for (auto it=output_topics_2_copy.begin(); it!=output_topics_2_copy.end(); it++)
+    {
+      if (output_topic_1.first == it->first)
+      {
+        topic_found = true;
+        output_topics_2_copy.erase(it);
+        break;
+      }
+    }
+
+    if (!topic_found)
+    {
+      return false;
+    }
+  }
+
+  // The algorithm infos are equal
+  return true;
 }
 } // namespace algorithm_manager
 
@@ -207,23 +258,22 @@ struct convert<algorithm_manager::AlgorithmInfo>
     node["algorithm_type"] = algorithm.getType();
     node["package_name"] = algorithm.getPackageName();
     node["executable"] = algorithm.getExecutable();
-    node["topic"] = algorithm.getTopic();
     node["description"] = algorithm.getDescription();
     node["reliability"] = algorithm.getReliability();
 
-    Node topics_in_node;
+    Node input_topics_node;
     for (auto& topics : algorithm.getTopicsIn())
     {
-      topics_in_node[topics.first] = topics.second;
+      input_topics_node[topics.first] = topics.second;
     }
-    node["topics_in"] = topics_in_node;
+    node["input_topics"] = input_topics_node;
 
-    Node topics_out_node;
+    Node output_topics_node;
     for (auto& topics : algorithm.getTopicsOut())
     {
-      topics_out_node[topics.first] = topics.second;
+      output_topics_node[topics.first] = topics.second;
     }
-    node["topics_out"] = topics_out_node;
+    node["output_topics"] = output_topics_node;
 
     return node;
   }
@@ -252,22 +302,19 @@ struct convert<algorithm_manager::AlgorithmInfo>
       code = 4;
       algorithm.setExecutable(node["executable"].as<std::string>());
 
+      // Get the input_topics
       code = 5;
-      algorithm.setTopic(node["topic"].as<std::string>());
-
-      // Get the topics_in
-      code = 6;
-      Node topics_in_node = node["topics_in"];
-      for (YAML::const_iterator node_it = topics_in_node.begin(); node_it != topics_in_node.end(); ++node_it)
+      Node input_topics_node = node["input_topics"];
+      for (YAML::const_iterator node_it = input_topics_node.begin(); node_it != input_topics_node.end(); ++node_it)
       {
         algorithm.addTopicIn({node_it->first.as<std::string>(),
                               node_it->second.as<std::string>()});
       }
 
-      // Get the topics_out
-      code = 7;
-      Node topics_out_node = node["topics_out"];
-      for (YAML::const_iterator node_it = topics_out_node.begin(); node_it != topics_out_node.end(); ++node_it)
+      // Get the output_topics
+      code = 6;
+      Node output_topics_node = node["output_topics"];
+      for (YAML::const_iterator node_it = output_topics_node.begin(); node_it != output_topics_node.end(); ++node_it)
       {
         algorithm.addTopicOut({node_it->first.as<std::string>(),
                                node_it->second.as<std::string>()});
@@ -279,12 +326,12 @@ struct convert<algorithm_manager::AlgorithmInfo>
       // print out the error message
       switch(code)
       {
-        case 6:
-          std::cout << "Something is wrong with the 'topics_in'\n";
+        case 5:
+          std::cout << "Something is wrong with the 'input_topics'\n";
           break;
 
-        case 7:
-          std::cout << "Something is wrong with the 'topics_out'\n";
+        case 6:
+          std::cout << "Something is wrong with the 'output_topics'\n";
           break;
       }
 

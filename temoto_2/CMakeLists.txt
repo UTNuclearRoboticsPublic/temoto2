@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   geometry_msgs
   shape_msgs
+  diagnostic_msgs
   class_loader
   cmake_modules
 	message_generation
@@ -90,12 +91,15 @@ generate_messages(
   std_msgs
   geometry_msgs
   shape_msgs
+  diagnostic_msgs
+  temoto_2
 )
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES yaml-cpp
-  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs message_runtime human_msgs
+  # LIBRARIES temoto_2
+  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs message_runtime human_msgs diagnostic_msgs
   DEPENDS 
     TinyXML
     EIGEN3

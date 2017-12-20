@@ -1,3 +1,12 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *                            TODO:
+ *
+ * 1) Currently algorithm info requires that all topic types are
+ *    unique. For example there cannot be two camera topics that
+ *    have the same type ...
+ *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 #include "ros/package.h"
 #include "core/common.h"
 #include "algorithm_manager/algorithm_manager.h"
@@ -191,14 +200,56 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
              , req.executable.c_str());
 
   // Try to find suitable candidate from local algorithms
-  auto algorithm_ptr = findAlgorithm(req.algorithm_type, req.package_name, req.executable, local_algorithms_);
+  auto algorithm_ptr = findAlgorithm(req, local_algorithms_);
   if (algorithm_ptr)
   {
-    // Local algorithm found, make a call to the local resource manager
+    // Local algorithm found, prepare the message and make a call to the local resource manager
     temoto_2::LoadProcess load_process_msg;
     load_process_msg.request.action = process_manager::action::ROS_EXECUTE;
     load_process_msg.request.package_name = algorithm_ptr->getPackageName();
     load_process_msg.request.executable = algorithm_ptr->getExecutable();
+
+    // Remap the input topics if requested
+    for (auto& req_topic : req.input_topics)
+    {
+      // And return the input topics via response
+      diagnostic_msgs::KeyValue res_input_topic;
+      res_input_topic.key = req_topic.key;
+      std::string default_topic = algorithm_ptr->getInputTopic(req_topic.key);
+
+      if (req_topic.value != "")
+      {
+        res_input_topic.value = common::getAbsolutePath(req_topic.value);
+        std::string remap_arg = default_topic + ":=" + req_topic.value;
+        load_process_msg.request.args += remap_arg + " ";
+      }
+      else
+      {
+        res_input_topic.value = common::getAbsolutePath(default_topic);
+      }
+    }
+
+    // Remap the output topics if requested
+    for (auto& req_topic : req.output_topics)
+    {
+      // And return the input topics via response
+      diagnostic_msgs::KeyValue res_output_topic;
+      res_output_topic.key = req_topic.key;
+      std::string default_topic = algorithm_ptr->getOutputTopic(req_topic.key);
+
+      if (req_topic.value != "")
+      {
+        res_output_topic.value = common::getAbsolutePath(req_topic.value);
+        std::string remap_arg = default_topic + ":=" + req_topic.value;
+        load_process_msg.request.args += remap_arg + " ";
+      }
+      else
+      {
+        res_output_topic.value = common::getAbsolutePath(default_topic);
+      }
+    }
+
+    TEMOTO_DEBUG("%s Sending arguments: '%s'.", prefix.c_str(), load_process_msg.request.args.c_str());
 
     TEMOTO_INFO("%s Found a suitable local algorithm: '%s', '%s', '%s', reliability %.3f"
               , prefix.c_str()
@@ -230,7 +281,6 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
 
       // Fill out the response about which particular algorithm was chosen
       res.package_name = algorithm_ptr->getPackageName();
-      res.topic = algorithm_ptr->getTopic();
       res.executable = algorithm_ptr->getExecutable();
       res.rmp = load_process_msg.response.rmp;
 
@@ -255,13 +305,16 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
     return;
   }
 
+  TEMOTO_DEBUG("%s Could not find the requested algorithm form local algorithms. "
+               "Trying to find the algorithm from known remote algorithms", prefix.c_str());
+
   // try remote algorithms
   for (auto& ra : remote_algorithms_)
   {
     TEMOTO_INFO("%s Looking from: \n%s",prefix.c_str(), ra->toString().c_str());
   }
 
-  algorithm_ptr = findAlgorithm(req.algorithm_type, req.package_name, req.executable, remote_algorithms_);
+  algorithm_ptr = findAlgorithm(req, remote_algorithms_);
   if (algorithm_ptr)
   {
     // remote algorithm candidate was found, forward the request to the remote algorithm manager
@@ -333,12 +386,11 @@ void AlgorithmManager::unloadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
 /*
  * Find algorithm
  */
-AlgorithmInfoPtr AlgorithmManager::findAlgorithm(std::string type
-                                               , std::string package_name
-                                               , std::string executable
+AlgorithmInfoPtr AlgorithmManager::findAlgorithm(temoto_2::LoadAlgorithm::Request req
                                                , const AlgorithmInfoPtrs& algorithm_infos)
 {
   std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
+
   // Local list of devices that follow the requirements
   std::vector<AlgorithmInfoPtr> candidates;
 
@@ -348,7 +400,7 @@ AlgorithmInfoPtr AlgorithmManager::findAlgorithm(std::string type
                        , std::back_inserter(candidates)
                        , [&](const AlgorithmInfoPtr& s)
                          {
-                           return s->getType() == type;
+                           return s->getType() == req.algorithm_type;
                          });
   
   // The requested type of algorithm is not available
@@ -359,24 +411,102 @@ AlgorithmInfoPtr AlgorithmManager::findAlgorithm(std::string type
  
   // If package_name is specified, remove all non-matching candidates
   auto it_end = candidates.end();
-  if (package_name != "")
+  if (req.package_name != "")
   {
     it_end = std::remove_if(candidates.begin()
                           , candidates.end()
                           , [&](AlgorithmInfoPtr s)
                             {
-                              return s->getPackageName() != package_name;
+                              return s->getPackageName() != req.package_name;
                             });
   }
 
   // If executable is specified, remove all non-matching candidates
-  if (executable != "")
+  if (req.executable != "")
   {
     it_end = std::remove_if(candidates.begin()
                           , it_end
                           , [&](AlgorithmInfoPtr s)
                             {
-                              return s->getExecutable() != executable;
+                              return s->getExecutable() != req.executable;
+                            });
+  }
+
+  // If input topics are specified ...
+  if (!req.input_topics.empty())
+  {
+    it_end = std::remove_if(candidates.begin()
+                          , it_end
+                          , [&](AlgorithmInfoPtr s)
+                            {
+                              if (s->getTopicsIn().size() != req.input_topics.size())
+                                return false;
+
+                              // Make a copy of the input topics
+                              std::vector<StringPair> input_topics_copy = s->getTopicsIn();
+
+                              // Start looking for the requested topic types
+                              for (auto& topic : req.input_topics)
+                              {
+                                bool found = false;
+                                for (auto it=input_topics_copy.begin(); it != input_topics_copy.end(); it++)
+                                {
+                                  // If the topic was found then remove it from the copy list
+                                  if (topic.key == it->first)
+                                  {
+                                    found = true;
+                                    input_topics_copy.erase(it);
+                                    break;
+                                  }
+                                }
+
+                                // If this topic type was not found then return with false
+                                if (!found)
+                                {
+                                  return false;
+                                }
+                              }
+                              
+                              return true;
+                            });
+  }
+
+  // If output topics are specified ...
+  if (!req.output_topics.empty())
+  {
+    it_end = std::remove_if(candidates.begin()
+                          , it_end
+                          , [&](AlgorithmInfoPtr s)
+                            {
+                              if (s->getTopicsOut().size() != req.output_topics.size())
+                                return false;
+
+                              // Make a copy of the input topics
+                              std::vector<StringPair> output_topics_copy = s->getTopicsOut();
+
+                              // Start looking for the requested topic types
+                              for (auto& topic : req.output_topics)
+                              {
+                                bool found = false;
+                                for (auto it=output_topics_copy.begin(); it != output_topics_copy.end(); it++)
+                                {
+                                  // If the topic was found then remove it from the copy list
+                                  if (topic.key == it->first)
+                                  {
+                                    found = true;
+                                    output_topics_copy.erase(it);
+                                    break;
+                                  }
+                                }
+
+                                // If this topic type was not found then return with false
+                                if (!found)
+                                {
+                                  return false;
+                                }
+                              }
+
+                              return true;
                             });
   }
 
@@ -458,7 +588,7 @@ AlgorithmInfoPtrs AlgorithmManager::parseAlgorithms(const YAML::Node& config)
     }
     catch (YAML::TypedBadConversion<AlgorithmInfo> e)
     {
-      TEMOTO_WARN("%s Failed to parse AlgorithmInfo from config.", prefix.c_str());
+      TEMOTO_WARN("%s Failed to parse AlgorithmInfo from config: %s", prefix.c_str(), e.what());
       continue;
     }
   }

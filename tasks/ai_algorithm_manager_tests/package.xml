@@ -1,33 +1,31 @@
 <?xml version="1.0"?>
 <package>
-  <name>temoto_2</name>
-  <version>2.0.1</version>
-  <description>The temoto_2 package</description>
+  <name>ai_algorithm_manager_tests</name>
+  <version>0.0.0</version>
+  <description>The ai_algorithm_manager_tests package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="robert@todo.todo">Robert Valner</maintainer>
+  <maintainer email="robert@todo.todo">robert</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
   <!-- Commonly used license strings: -->
   <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>LICENCE</license>
+  <license>TODO</license>
 
 
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <url type="website">https://github.com/UTNuclearRobotics/temoto2</url>
-  <url type="repository">https://github.com/UTNuclearRobotics/temoto2</url>
+  <!-- <url type="website">http://wiki.ros.org/ai_algorithm_manager_tests</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
   <!-- Authors do not have to be maintainers, but could be -->
   <!-- Example: -->
-  <author email="rober@todo.todo">Robert Valner</author>
-  <author email="veix123@gmail.com">Veiko Vunder</author>
+  <!-- <author email="jane.doe@example.com">Jane Doe</author> -->
 
 
   <!-- The *_depend tags are used to specify dependencies -->
@@ -42,35 +40,21 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>class_loader</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>rospy</build_depend>
   <build_depend>std_msgs</build_depend>
-  <build_depend>geometry_msgs</build_depend>
-  <build_depend>shape_msgs</build_depend>
-  <build_depend>diagnostic_msgs</build_depend>
-  <build_depend>human_msgs</build_depend>
-  <build_depend>leap_motion_controller</build_depend>
-  <build_depend>cmake_modules</build_depend>
-	<build_depend>message_generation</build_depend>
-  <build_depend>rviz_plugin_manager</build_depend>
-  <build_depend>yaml-cpp</build_depend>
-
-  <run_depend>tinyxml</run_depend>
+  <build_depend>temoto_2</build_depend>
+  <run_depend>class_loader</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>std_msgs</run_depend>
-  <run_depend>geometry_msgs</run_depend>
-  <run_depend>shape_msgs</run_depend>
-  <run_depend>diagnostic_msgs</run_depend>
-  <run_depend>human_msgs</run_depend>
-  <run_depend>leap_motion_controller</run_depend>
-	<run_depend>message_runtime</run_depend>
-  <run_depend>rviz_plugin_manager</run_depend>
-  <run_depend>yaml-cpp</run_depend>
+  <run_depend>temoto_2</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
-    <rosdoc config="rosdoc.yaml"/>
+    <!-- Other tools can request additional information be placed here -->
+
   </export>
 </package>

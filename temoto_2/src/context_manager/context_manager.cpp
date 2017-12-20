@@ -32,7 +32,7 @@ ContextManager::ContextManager()
                                                     , &ContextManager::loadSpeechCb
                                                     , &ContextManager::unloadSpeechCb);
 
-  // Speech recognition service
+//  // Speech recognition service
 //  resource_manager_2_.addServer<temoto_2::LoadTracker>(srv_name::TRACKER_SERVER
 //                                                    , &ContextManager::loadTrackerCb
 //                                                    , &ContextManager::unloadTrackerCb);

@@ -119,14 +119,14 @@ void ErrorStackUtil::forward ( std::string from_where )
 
 ErrorHandler::ErrorHandler()
 {
-  error_publisher_ = n_.advertise<temoto_2::ErrorStack>("temoto_error_messages", 100);
+  error_publisher_ = n_.advertise<temoto_2::ErrorStack>("/temoto_2/temoto_error_messages", 100);
 }
 
 ErrorHandler::ErrorHandler(Subsystem subsystem, std::string log_group)
  : subsystem_(subsystem)
  , log_group_(log_group)
 {
-  error_publisher_ = n_.advertise<temoto_2::ErrorStack>("temoto_error_messages", 100);
+  error_publisher_ = n_.advertise<temoto_2::ErrorStack>("/temoto_2/temoto_error_messages", 100);
 }
 
 void ErrorHandler::createAndThrow(int code, std::string prefix, std::string message)
@@ -195,19 +195,6 @@ bool ErrorHandler::gotUnreadErrors() const
     return this->newErrors_;
 }
 
-void ErrorHandler::append( ErrorStack est )
-{
-    // Set the "newErrors" flag and append
-    this->newErrors_ = true;
-    this->errorStack_.insert(std::end(this->errorStack_), std::begin(est), std::end(est));
-
-    // Create an ErrorStack message and publish it
-    temoto_2::ErrorStack error_stack_msg;
-    error_stack_msg.errorStack = est;
-
-    error_publisher_.publish( error_stack_msg );
-}
-
 void ErrorHandler::forwardAndAppend(ErrorStack errorStack, std::string prefix)
 {
   temoto_2::Error error;
@@ -245,6 +232,19 @@ ErrorStack ErrorHandler::forwardAndReturn(ErrorStack errorStack, std::string pre
   errorStack.push_back(error);
 
   return errorStack;
+}
+
+void ErrorHandler::append( ErrorStack est )
+{
+    // Set the "newErrors" flag and append
+    this->newErrors_ = true;
+    this->errorStack_.insert(std::end(this->errorStack_), std::begin(est), std::end(est));
+
+    // Create an ErrorStack message and publish it
+    temoto_2::ErrorStack error_stack_msg;
+    error_stack_msg.errorStack = est;
+
+    error_publisher_.publish( error_stack_msg );
 }
 
 void ErrorHandler::append( ErrorStackUtil err_stck_util )

@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     ros::Publisher chatter_pub = n.advertise<std_msgs::String>("/terminal_text", 1000);
 
     // Subscribe to error messages
-    ros::Subscriber error_subscriber = n.subscribe( "temoto_error_messages", 100, displayErrorMessages);
+    ros::Subscriber error_subscriber = n.subscribe( "/temoto_2/temoto_error_messages", 100, displayErrorMessages);
 
     std::cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * *" << std::endl;
     std::cout << "*                                                     *" << std::endl;

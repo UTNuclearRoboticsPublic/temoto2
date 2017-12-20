@@ -31,6 +31,8 @@ private:
 
   void addOrUpdateObjects(const Objects& objects_to_add, bool from_other_manager);
 
+  //void loadTrackerCb(temoto_2::LoadGesture::Request& req, temoto_2::LoadGesture::Response& res);
+
   /**
    * @brief Service that sets up a gesture publisher
    * @param A gesture specifier message
@@ -55,8 +57,8 @@ private:
    * @param LoadGesture response message
    * @return
    */
-
   void unloadGestureCb(temoto_2::LoadGesture::Request& req, temoto_2::LoadGesture::Response& res);
+
   /**
    * @brief Unload Callback for speech
    * @param LoadSpeech request message

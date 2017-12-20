@@ -12,7 +12,7 @@ namespace context_manager
 {
 	namespace srv_name
 	{
-    const std::string MANAGER = "context_manager_1";
+    const std::string MANAGER = "context_manager";
     const std::string SYNC_TOPIC = "/temoto_2/"+MANAGER+"/sync_1";
     const std::string GESTURE_SERVER = "load_gesture";
     const std::string SPEECH_SERVER = "load_speech";
