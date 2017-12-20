@@ -110,9 +110,10 @@ public:
                                                                  , algorithm_manager::srv_name::SERVER
                                                                  , srv_msg))
     {
-      error_handler_.createAndThrow(taskErr::SERVICE_REQ_FAIL
-                                  , prefix
-                                  , "Failed to call the service");
+      error_handler_.forwardAndThrow(srv_msg.response.rmp.errorStack, prefix);
+//      error_handler_.createAndThrow(taskErr::SERVICE_REQ_FAIL
+//                                  , prefix
+//                                  , "Failed to call the service");
     }
 
     // If the request was fulfilled, then add the srv to the list of allocated algorithms

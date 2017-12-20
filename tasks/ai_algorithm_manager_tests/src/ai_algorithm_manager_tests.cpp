@@ -94,7 +94,7 @@ void startInterface_0()
     TASK_INFO_STREAM(prefix << " Starting the algorithm manager task");
 
     // Start the test algorithm
-    ami_.startAlgorithm("Algorithm_0");
+    ami_.startAlgorithm("test");
 
     // Pass the camera topic to the output
     what_0_word_out = what_0_word_in;

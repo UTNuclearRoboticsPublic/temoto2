@@ -160,6 +160,11 @@ public:
                       prefix.c_str());
       active_server_->linkInternalResource(msg.response.rmp.resource_id);
     }
+    if (!ret)
+    {
+      // Remove the client
+      clients_.erase(client_it);
+    }
 
     clients_mutex_.unlock();
 

@@ -1445,6 +1445,9 @@ void TaskManager::stopTask(std::string action, std::string what)
 
             // Remove the task
             asynchronous_tasks_.erase(task_it);
+
+            std::cout << "ASGQERHERH\n";
+            unloadTaskLib(task_it->first->getLibPath());
             task_stopped = true;
         }
     }

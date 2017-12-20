@@ -394,25 +394,30 @@ AlgorithmInfoPtr AlgorithmManager::findAlgorithm(temoto_2::LoadAlgorithm::Reques
   // Local list of devices that follow the requirements
   std::vector<AlgorithmInfoPtr> candidates;
 
+  TEMOTO_ERROR_STREAM(prefix << "required type: " << req.algorithm_type);
+
   // Find the devices that follow the "type" criteria
   auto it = std::copy_if(algorithm_infos.begin()
                        , algorithm_infos.end()
                        , std::back_inserter(candidates)
                        , [&](const AlgorithmInfoPtr& s)
                          {
+                           TEMOTO_WARN_STREAM(prefix << "alginfotype: " << s->getType());
                            return s->getType() == req.algorithm_type;
                          });
   
   // The requested type of algorithm is not available
   if (candidates.empty())
   {
+    TEMOTO_ERROR_STREAM(prefix << "type does not match");
     return NULL;
   }
- 
+
   // If package_name is specified, remove all non-matching candidates
   auto it_end = candidates.end();
   if (req.package_name != "")
   {
+    TEMOTO_ERROR_STREAM(prefix << "pkg name requested");
     it_end = std::remove_if(candidates.begin()
                           , candidates.end()
                           , [&](AlgorithmInfoPtr s)
@@ -424,6 +429,7 @@ AlgorithmInfoPtr AlgorithmManager::findAlgorithm(temoto_2::LoadAlgorithm::Reques
   // If executable is specified, remove all non-matching candidates
   if (req.executable != "")
   {
+    TEMOTO_ERROR_STREAM(prefix << "executable requested");
     it_end = std::remove_if(candidates.begin()
                           , it_end
                           , [&](AlgorithmInfoPtr s)
@@ -435,6 +441,7 @@ AlgorithmInfoPtr AlgorithmManager::findAlgorithm(temoto_2::LoadAlgorithm::Reques
   // If input topics are specified ...
   if (!req.input_topics.empty())
   {
+    TEMOTO_ERROR_STREAM(prefix << "input topics requested");
     it_end = std::remove_if(candidates.begin()
                           , it_end
                           , [&](AlgorithmInfoPtr s)
@@ -474,6 +481,7 @@ AlgorithmInfoPtr AlgorithmManager::findAlgorithm(temoto_2::LoadAlgorithm::Reques
   // If output topics are specified ...
   if (!req.output_topics.empty())
   {
+    TEMOTO_ERROR_STREAM(prefix << "output topics requested");
     it_end = std::remove_if(candidates.begin()
                           , it_end
                           , [&](AlgorithmInfoPtr s)
@@ -520,6 +528,7 @@ AlgorithmInfoPtr AlgorithmManager::findAlgorithm(temoto_2::LoadAlgorithm::Reques
 
   if (candidates.begin() == it_end)
   {
+    TEMOTO_ERROR_STREAM(prefix << "no candidates found");
     // Algorithm with the requested criteria was not found.
     return NULL;
   }

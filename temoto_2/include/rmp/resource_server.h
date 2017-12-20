@@ -129,15 +129,22 @@ public:
                                });
       if (q_it != queries_.end())
       {
-        // update the query with the response message filled in the callback
-        // make sure the internal_resource_id for that query is not changed.
-        res.rmp.resource_id = int_resource_id;
-        q_it->setMsgResponse(res);
+        if (res.rmp.code == status_codes::FAILED)
+        {
+          RMP_ERROR_STREAM(prefix << " The query was unsuccessful since it did not"
+                                  << " fulfil the requirements set by the service");
+          queries_.erase(q_it);
+        }
+        else
+        {
+          // update the query with the response message filled in the callback
+          // make sure the internal_resource_id for that query is not changed.
+          res.rmp.resource_id = int_resource_id;
+          q_it->setMsgResponse(res);
 
-        // prepare the response for the client
-        res.rmp.resource_id = ext_resource_id;
-        //res.rmp.code = status_codes::OK;
-        //res.rmp.message = "New resource sucessfully loaded.";
+          // prepare the response for the client
+          res.rmp.resource_id = ext_resource_id;
+        }
       }
       else
       {
@@ -145,6 +152,7 @@ public:
         res.rmp.message += " Could not create resource.";
         RMP_ERROR("%s Query got missing during owners callback, oh well...", prefix.c_str());
       }
+
     }
     else
     {

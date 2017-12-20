@@ -74,7 +74,7 @@ public:
       msg.request.rmp.temoto_namespace = temoto_namespace;
       RMP_DEBUG("%s New query, performing external call to %s", prefix.c_str(),
                service_client_.getService().c_str());
-      if (service_client_.call(msg))
+      if (service_client_.call(msg) && msg.response.rmp.code != status_codes::FAILED)
       {
         RMP_DEBUG("%s Service call was sucessful. ext id: %ld", prefix.c_str(),
                  msg.response.rmp.resource_id);
