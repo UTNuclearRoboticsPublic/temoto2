@@ -21,7 +21,6 @@ public:
   TaskRobotViz()// : rmi_(this)
   {
     TASK_INFO("Task Robot constructed");
-    omi_ = new OutputManagerInterface();
   }
 
   bool startTask(TTP::TaskInterface task_interface)
@@ -30,7 +29,7 @@ public:
     input_subjects = task_interface.input_subjects_;
 
     // initialize output manager
-    omi_->initialize(this);
+    omi_.initialize(this);
 
     switch (task_interface.id_)
     {
@@ -60,7 +59,7 @@ public:
     {
       // Show the ur5 robot model
       std::set<std::string> viz_options {"robot_model"};
-      omi_->showRobot("ur5", viz_options);
+      omi_.showRobot("ur5", viz_options);
     }
     catch (error::ErrorStackUtil& e)
     {
@@ -76,7 +75,7 @@ public:
     {
       // Show the ur5 robot model
       std::set<std::string> viz_options {"navigation"};
-      omi_->showRobot(viz_options);
+      omi_.showRobot(viz_options);
     }
     catch (error::ErrorStackUtil& e)
     {
@@ -92,7 +91,7 @@ public:
     {
       // Show the ur5 robot model
       std::set<std::string> viz_options {"manipulation"};
-      omi_->showRobot(viz_options);
+      omi_.showRobot(viz_options);
     }
     catch (error::ErrorStackUtil& e)
     {
@@ -108,7 +107,7 @@ public:
     {
       // Show the ur5 robot model
       std::set<std::string> viz_options {"footprint"};
-      omi_->showRobot(viz_options);
+      omi_.showRobot(viz_options);
     }
     catch (error::ErrorStackUtil& e)
     {
@@ -130,13 +129,12 @@ public:
   ~TaskRobotViz()
   {
     // in order to not upset moveit, we have to unload output manager interface first!!!
-    delete omi_;
     TASK_INFO("[TaskRobotViz::~TaskRobotViz] TaskRobotViz destructed");
   }
 
 private:
   // Create interfaces for accessing temoto devices
-  OutputManagerInterface* omi_;
+  output_manager::OutputManagerInterface<TaskRobotViz> omi_;
   std::string task_alias_;
 };
 

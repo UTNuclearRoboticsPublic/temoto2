@@ -8,9 +8,13 @@
 #include <stdio.h> //pid_t TODO: check where pid_t actually is
 #include <mutex>
 
+#include "common/base_subsystem.h"
+
+
+
 namespace process_manager
 {
-	class ProcessManager
+	class ProcessManager : BaseSubsystem
 	{
 		public:
 

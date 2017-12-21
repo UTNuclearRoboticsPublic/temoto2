@@ -136,7 +136,7 @@ private:
 ros::NodeHandle n_;
 
 // Create context manager interface object for context manager manager
-ContextManagerInterface <ContextManagerTests> cmi_;
+context_manager::ContextManagerInterface <ContextManagerTests> cmi_;
 
 std::string task_alias;
 

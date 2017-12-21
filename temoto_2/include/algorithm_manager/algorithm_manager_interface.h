@@ -11,7 +11,7 @@
 #include <memory> //unique_ptr
 
 
-
+template <class OwnerTask>
 class SensorManagerInterface : BaseSubsystem
 {
 public:
@@ -27,6 +27,7 @@ public:
   {
     initializeBase(task);
     log_group_ = "interfaces." + task->getPackageName();
+
     name_ = task->getName() + "/sensor_manager_interface";
 
     resource_manager_ = std::unique_ptr<rmp::ResourceManager<SensorManagerInterface>>(new rmp::ResourceManager<SensorManagerInterface>(name_, this));
@@ -200,7 +201,6 @@ public:
 
 private:
   std::string name_;
-  error::ErrorHandler error_handler_;
   std::vector<temoto_2::LoadSensor> allocated_sensors_;
   std::unique_ptr<rmp::ResourceManager<SensorManagerInterface>> resource_manager_;
 

@@ -18,10 +18,9 @@
 class TaskRobot : public TTP::BaseTask
 {
 public:
-  TaskRobot()// : rmi_(this)
+  TaskRobot()
   {
     TASK_INFO("Task Robot constructed");
-    rmi_ = new RobotManagerInterface<TaskRobot>(this);
   }
 
   bool startTask(TTP::TaskInterface task_interface)
@@ -31,7 +30,7 @@ public:
     input_subjects = task_interface.input_subjects_;
 
     // initialize robot manager interface
-    rmi_->initialize();
+    rmi_.initialize(this);
 
     switch (task_interface.id_)
     {
@@ -68,7 +67,7 @@ public:
     try
     {
       // Load the ur5 robot
-      rmi_->loadRobot("ur5");
+      rmi_.loadRobot("ur5");
 
       // DO NOT EXIT THIS FUNCTION
       //ros::waitForShutdown();
@@ -88,7 +87,7 @@ public:
     {
      // geometry_msgs::PoseStamped target_pose;
       //rmi_.plan(target_pose);
-      rmi_->plan();
+      rmi_.plan();
     }
     catch (error::ErrorStackUtil& e)
     {
@@ -105,7 +104,7 @@ public:
     try
     {
       geometry_msgs::Pose pose;
-      rmi_->execute();
+      rmi_.execute();
     }
     catch (error::ErrorStackUtil& e)
     {
@@ -121,7 +120,7 @@ public:
     TASK_DEBUG("%s SET TARGET TO HAND", prefix.c_str());
     try
     {
-      rmi_->setTarget("hand");
+      rmi_.setTarget("hand");
     }
     catch (error::ErrorStackUtil& e)
     {
@@ -143,13 +142,12 @@ public:
   ~TaskRobot()
   {
     // in order to not upset moveit, we have to unload output manager interface first!!!
-    delete rmi_;
     TASK_INFO("[TaskRobot::~TaskRobot] TaskRobot destructed");
   }
 
 private:
   // Create interfaces for accessing temoto managers
-  RobotManagerInterface<TaskRobot>* rmi_;
+  robot_manager::RobotManagerInterface<TaskRobot> rmi_;
 
   std::string task_alias_;
 };

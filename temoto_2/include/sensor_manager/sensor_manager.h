@@ -9,13 +9,15 @@
 #include "temoto_2/ConfigSync.h"
 
 #include "std_msgs/String.h"
+#include "common/temoto_id.h"
+#include "common/base_subsystem.h"
 
 namespace sensor_manager
 {
 
 typedef std_msgs::String PayloadType;
 
-class SensorManager
+class SensorManager : BaseSubsystem
 {
 public:
     /**

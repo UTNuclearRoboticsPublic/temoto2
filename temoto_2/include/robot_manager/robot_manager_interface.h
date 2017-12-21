@@ -7,28 +7,33 @@
 #include "TTP/base_task/base_task.h"
 #include "common/temoto_id.h"
 #include "common/console_colors.h"
-#include "common/interface_errors.h"
+#include "common/base_subsystem.h"
 
+#include "robot_manager/robot_manager_errors.h"
 #include "robot_manager/robot_manager_services.h"
 #include "rmp/resource_manager.h"
 
 #include <vector>
 #include <string>
 
+namespace robot_manager
+{
+
 template <class OwnerTask>
-class RobotManagerInterface
+class RobotManagerInterface : public BaseSubsystem
 {
 public:
-  RobotManagerInterface(TTP::BaseTask* task) : task_(task)
+  RobotManagerInterface()
   {
+    class_name_ = __func__;
   }
 
-  void initialize()
+  void initialize(TTP::BaseTask* task)
   {
-    log_class_ = "";
-    log_subsys_ = "robot_manager_interface";
-    log_group_ = "interfaces." + task_->getPackageName();
-    name_ = task_->getName() + "/robot_manager_interface";
+    initializeBase(task);
+    log_group_ = "interfaces." + task->getPackageName();
+    
+    name_ = task->getName() + "/robot_manager_interface";
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
     // create resource manager
@@ -161,10 +166,8 @@ public:
   {
     if(!resource_manager_)
     {
-      TEMOTO_ERROR("%s Interface is not initalized.", log_prefix.c_str());
-      throw error::ErrorStackUtil(
-          interface_error::NOT_INITIALIZED, error::Subsystem::TASK, error::Urgency::MEDIUM,
-          log_prefix + " Interface is not initialized.", ros::Time::now());
+      error_handler_.createAndThrow(ErrorCode::NOT_INITIALIZED, TEMOTO_LOG_PREFIX,
+                                    "Interface is not initalized.");
     }
   }
 
@@ -188,7 +191,6 @@ public:
 private:
   std::string name_;
   std::string log_class_, log_subsys_, log_group_;
-  TTP::BaseTask* task_;
 
   ros::NodeHandle nh_;
   ros::ServiceClient client_load_;
@@ -200,4 +202,5 @@ private:
   std::unique_ptr<rmp::ResourceManager<RobotManagerInterface>> resource_manager_;
 };
 
+} // namespace
 #endif

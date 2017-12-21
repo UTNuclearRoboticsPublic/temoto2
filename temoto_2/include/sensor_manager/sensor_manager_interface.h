@@ -6,13 +6,15 @@
 #include "TTP/base_task/task_errors.h"
 #include "TTP/base_task/base_task.h"
 #include "sensor_manager/sensor_manager_services.h"
+#include "sensor_manager/sensor_manager_errors.h"
 #include "rmp/resource_manager.h"
-#include "common/interface_errors.h"
 #include <memory> //unique_ptr
 
+namespace sensor_manager
+{
 
-
-class SensorManagerInterface : BaseSubsystem
+template <class OwnerTask>
+class SensorManagerInterface : public BaseSubsystem
 {
 public:
   /**
@@ -200,7 +202,6 @@ public:
 
 private:
   std::string name_;
-  error::ErrorHandler error_handler_;
   std::vector<temoto_2::LoadSensor> allocated_sensors_;
   std::unique_ptr<rmp::ResourceManager<SensorManagerInterface>> resource_manager_;
 
@@ -212,12 +213,12 @@ private:
   {
     if(!resource_manager_)
     {
-      TEMOTO_ERROR("%s Interface is not initalized.", log_prefix.c_str());
-      throw error::ErrorStackUtil(
-          interface_error::NOT_INITIALIZED, error::Subsystem::TASK, error::Urgency::MEDIUM,
-          log_prefix + " Interface is not initialized.", ros::Time::now());
+      error_handler_.createAndThrow(ErrorCode::NOT_INITIALIZED, TEMOTO_LOG_PREFIX,
+                                    "Interface is not initalized.");
     }
   }
 };
+
+} // namespace
 
 #endif

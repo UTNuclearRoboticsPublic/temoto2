@@ -8,7 +8,6 @@
 #include "common/base_subsystem.h"
 #include "common/temoto_id.h"
 #include "common/console_colors.h"
-#include "common/interface_errors.h"
 
 #include "std_msgs/Float32.h"
 #include "std_msgs/String.h"
@@ -16,8 +15,12 @@
 #include "leap_motion_controller/Set.h"
 
 #include "context_manager/context_manager_services.h"
+#include "context_manager/context_manager_errors.h"
 #include "rmp/resource_manager.h"
 #include <vector>
+
+namespace context_manager
+{
 
 template <class OwnerTask>
 class ContextManagerInterface : public BaseSubsystem
@@ -337,14 +340,11 @@ private:
   {
     if(!resource_manager_)
     {
-      TEMOTO_ERROR("%s Interface is not initalized.", log_prefix.c_str());
-      throw error::ErrorStackUtil (interface_error::NOT_INITIALIZED
-                                   , error::Subsystem::TASK
-                                   , error::Urgency::MEDIUM
-                                   , log_prefix + " Interface is not initialized."
-                                   , ros::Time::now());
+      error_handler_.createAndThrow(ErrorCode::NOT_INITIALIZED, TEMOTO_LOG_PREFIX,
+                                    "Interface is not initalized.");
     }
   }
 };
 
+} // namespace
 #endif

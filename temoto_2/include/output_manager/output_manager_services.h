@@ -1,16 +1,17 @@
-#ifndef RVIZ_MANAGER_SERVICES_H
-#define RVIZ_MANAGER_SERVICES_H
+#ifndef OUTPUT_MANAGER_SERVICES_H
+#define OUTPUT_MANAGER_SERVICES_H
 
 #include <string>
 #include "rmp/resource_manager_services.h"
 #include "temoto_2/LoadRvizPlugin.h"
 
-namespace rviz_manager
+namespace output_manager
 {
 	namespace srv_name
 	{
-		const std::string MANAGER = "rviz_manager";
-		const std::string SERVER = "load_rviz_plugin";
+		//const std::string MANAGER = "output_manager";
+		const std::string RVIZ_MANAGER = "rviz_manager";
+		const std::string RVIZ_SERVER = "load_rviz_plugin";
 	}
 }
 

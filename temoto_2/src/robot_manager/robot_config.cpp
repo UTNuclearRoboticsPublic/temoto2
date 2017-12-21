@@ -5,8 +5,9 @@
 
 namespace robot_manager
 {
-RobotConfig::RobotConfig(YAML::Node yaml_config) : yaml_config_(yaml_config)
+RobotConfig::RobotConfig(YAML::Node yaml_config, BaseSubsystem& b) : yaml_config_(yaml_config), BaseSubsystem(b)
 {
+  class_name_ = "RobotConfig";
   // Parse mandatory information.
   try
   {

@@ -4,6 +4,7 @@
 #include "core/common.h"
 #include "common/request_container.h"
 #include "common/temoto_id.h"
+#include "common/base_subsystem.h"
 #include "temoto_2/LoadRvizPlugin.h"
 #include "rviz_plugin_manager/PluginLoad.h"
 #include "rviz_plugin_manager/PluginUnload.h"
@@ -11,16 +12,18 @@
 #include "rviz_plugin_manager/PluginSetConfig.h"
 #include "output_manager/output_manager_errors.h"
 #include "output_manager/rviz_manager/plugin_info.h"
-#include "output_manager/rviz_manager/rviz_manager_services.h"
+#include "output_manager/output_manager_services.h"
 #include "process_manager/process_manager_services.h"
 #include "context_manager/context_manager_services.h"
 #include "rmp/resource_manager.h"
 
+
 //#include "temoto_2/stopAllocatedServices.h"
 
-namespace rviz_manager
+namespace output_manager
 {
-class RvizManager
+
+class RvizManager : BaseSubsystem
 {
 public:
   /**

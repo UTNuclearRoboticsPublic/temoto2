@@ -194,7 +194,7 @@ std::vector<TTP::Subject> getSolution()
 private:
 
 // Create sensor manager interface object for accessing sensor manager
-OutputManagerInterface omi_;
+output_manager::OutputManagerInterface<TaskShow> omi_;
 
 // Class name
 std::string class_name_ = "TaskShow";

@@ -144,7 +144,7 @@ private:
     std::string class_name_;
 
     // Human context interface object
-    ContextManagerInterface <TaskTerminal> cmi_;
+    context_manager::ContextManagerInterface <TaskTerminal> cmi_;
     ros::Publisher core_pub_;
     ros::NodeHandle nh_;
 

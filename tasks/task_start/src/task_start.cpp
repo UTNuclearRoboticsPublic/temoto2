@@ -297,10 +297,10 @@ private:
 ros::NodeHandle n_;
 
 // Create sensor manager interface object for accessing sensor manager
-SensorManagerInterface smi_;
+sensor_manager::SensorManagerInterface<TaskStart> smi_;
 
 // Create context manager interface object for context manager manager
-ContextManagerInterface <TaskStart> cmi_;
+context_manager::ContextManagerInterface<TaskStart> cmi_;
 
 // Marker publisher
 ros::Publisher marker_pub_;

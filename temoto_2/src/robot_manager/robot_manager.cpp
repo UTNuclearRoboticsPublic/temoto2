@@ -17,11 +17,12 @@ RobotManager::RobotManager()
   , mode_(modes::AUTO)
 {
   class_name_ = __func__;
-  subsystem_name_ = "context_manager";
+  subsystem_name_ = "robot_manager";
   subsystem_code_ = error::Subsystem::ROBOT_MANAGER;
-  log_group_ = "context_manager";
+  log_group_ = "robot_manager";
   error_handler_ = error::ErrorHandler(subsystem_code_, log_group_);
 
+  //\TODO:Remove, deprecated
   log_class_ = class_name_;
   log_subsys_ = subsystem_name_;
   std::string prefix = generateLogPrefix(__func__);
@@ -84,7 +85,7 @@ void RobotManager::loadLocalRobot(RobotConfigPtr config)
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   if (!config)
   {
-    throw error::ErrorStackUtil(robot_error::NULL_PTR, error::Subsystem::ROBOT_MANAGER,
+    throw error::ErrorStackUtil(ErrorCode::NULL_PTR, error::Subsystem::ROBOT_MANAGER,
                                 error::Urgency::MEDIUM, prefix + " config == NULL");
   }
 
@@ -98,7 +99,7 @@ void RobotManager::loadLocalRobot(RobotConfigPtr config)
   }
   catch (error::ErrorStackUtil& e)
   {
-    if (e.getStack().front().code == robot_error::SERVICE_STATUS_FAIL)
+    if (e.getStack().front().code == ErrorCode::SERVICE_STATUS_FAIL)
     {
       config->adjustReliability(0.0);
     }
@@ -301,7 +302,7 @@ RobotConfigs RobotManager::parseRobotConfigs(const YAML::Node& yaml_config)
 
     try
     {
-      RobotConfig config = RobotConfig(*node_it);
+      RobotConfig config(*node_it, *this);
       if (std::count_if(configs.begin(), configs.end(),
                         [&](const RobotConfigPtr& ri) { return *ri == config; }) == 0)
       {
