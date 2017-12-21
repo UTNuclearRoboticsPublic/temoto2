@@ -11,10 +11,143 @@
 #include "algorithm_manager/algorithm_manager_services.h"
 #include "rmp/resource_manager.h"
 #include <memory>   // unique_ptr
-#include <ctype.h>  // pair
 
 typedef std::pair<std::string, std::string> StringPair;
+class AlgorithmManagerInterface;
 
+/**
+ * @brief The AlgorithmTopics class
+ */
+class AlgorithmTopics
+{
+friend class AlgorithmManagerInterface;
+public:
+
+  void addInputTopic(const std::string& type, const std::string& topic)
+  {
+    input_topics_.emplace_back(std::make_pair(type, topic));
+  }
+
+  void addInputTopicType(const std::string& type)
+  {
+    addInputTopic(type, "");
+  }
+
+  void addOutputTopic(std::string type, std::string topic)
+  {
+    output_topics_.emplace_back(std::make_pair(type, topic));
+  }
+
+  void addOutputTopicType(const std::string& type)
+  {
+    addOutputTopic(type, "");
+  }
+
+  std::vector<StringPair> getInputTopics() const
+  {
+    return input_topics_;
+  }
+
+  std::vector<StringPair> getOutputTopics() const
+  {
+    return output_topics_;
+  }
+
+  // Get input topic
+  std::string getInputTopic(const std::string& type) const
+  {
+    return getTopicByType(type, input_topics_);
+  }
+
+  // Get output topic
+  std::string getOutputTopic(const std::string& type) const
+  {
+    return getTopicByType(type, output_topics_);
+  }
+
+private:
+  std::vector<StringPair> input_topics_;
+  std::vector<StringPair> output_topics_;
+
+  // Get topic by type
+  std::string getTopicByType(const std::string& type, const std::vector<StringPair>& topics) const
+  {
+    // Loop over the topics and check the type match. Return the topic if the types amatch
+    for(auto&topic : topics)
+    {
+      if(topic.first == type)
+      {
+        return topic.second;
+      }
+    }
+
+    return std::string();
+  }
+};
+
+/**
+ * @brief The AlgorithmTopicsReq class
+ */
+class AlgorithmTopicsReq : public AlgorithmTopics
+{
+  /* DELIBERATELY EMPTY */
+};
+
+/**
+ * @brief The AlgorithmTopicsRes class
+ */
+class AlgorithmTopicsRes : public AlgorithmTopics
+{
+  /* DELIBERATELY EMPTY */
+};
+
+/**
+ * @brief operator <<
+ * @param v_kv
+ * @param v_sp
+ * @return
+ */
+std::vector<diagnostic_msgs::KeyValue>& operator<<(std::vector<diagnostic_msgs::KeyValue>& v_kv,
+                                                  const std::vector<StringPair>& v_sp)
+{
+  for (auto& sp : v_sp)
+  {
+    diagnostic_msgs::KeyValue kv;
+    kv.key = sp.first;
+    kv.value = sp.second;
+    v_kv.push_back(std::move(kv));
+  }
+
+  return v_kv;
+}
+
+/**
+ * @brief operator <<
+ * @param v_sp
+ * @param v_kv
+ * @return
+ */
+std::vector<StringPair>& operator<<(std::vector<StringPair>& v_sp,
+                                    const std::vector<diagnostic_msgs::KeyValue>& v_kv)
+{
+  for (auto& kv : v_kv)
+  {
+    StringPair sp{kv.key, kv.value};
+    v_sp.push_back(std::move(sp));
+  }
+
+  return v_sp;
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ *              ALGORITHM MANAGER INTERFACE
+ *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+/**
+ * @brief The AlgorithmManagerInterface class
+ */
 class AlgorithmManagerInterface : BaseSubsystem
 {
 public:
@@ -40,7 +173,7 @@ public:
    * @brief startAlgorithm
    * @param algorithm_type
    */
-  void startAlgorithm(std::string algorithm_type)
+  AlgorithmTopicsRes startAlgorithm(const std::string& algorithm_type)
   {
     std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
 
@@ -53,7 +186,7 @@ public:
       error_handler_.forwardAndThrow(e, prefix);
     }
 
-    startAlgorithm(algorithm_type, "", "", std::vector<StringPair>(), std::vector<StringPair>());
+    return std::move(startAlgorithm(algorithm_type, "", "", AlgorithmTopicsReq()));
   }
 
   /**
@@ -63,9 +196,8 @@ public:
    * @param output_topics
    * @return
    */
-  void startAlgorithm(std::string algorithm_type
-                    , std::vector<StringPair>& input_topics
-                    , std::vector<StringPair>& output_topics)
+  AlgorithmTopicsRes startAlgorithm(const std::string& algorithm_type
+                                  , const AlgorithmTopicsReq& topics)
   {
     std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
 
@@ -78,7 +210,7 @@ public:
       error_handler_.forwardAndThrow(e, prefix);
     }
 
-    startAlgorithm(algorithm_type, "", "", input_topics, output_topics);
+    return std::move(startAlgorithm(algorithm_type, "", "", topics));
   }
 
   /**
@@ -87,11 +219,10 @@ public:
    * @param package_name
    * @param ros_program_name
    */
-  void startAlgorithm(std::string algorithm_type
-                    , std::string package_name
-                    , std::string ros_program_name
-                    , const std::vector<StringPair>& input_topics
-                    , const std::vector<StringPair>& output_topics)
+  AlgorithmTopicsRes startAlgorithm(const std::string& algorithm_type
+                                  , const std::string& package_name
+                                  , const std::string& ros_program_name
+                                  , const AlgorithmTopicsReq& topics)
   {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
@@ -102,8 +233,8 @@ public:
     srv_msg.request.algorithm_type = algorithm_type;
     srv_msg.request.package_name = package_name;
     srv_msg.request.executable = ros_program_name;
-    srv_msg.request.input_topics = pairToKeyValue(input_topics);
-    srv_msg.request.output_topics = pairToKeyValue(output_topics);
+    srv_msg.request.input_topics << topics.getInputTopics();
+    srv_msg.request.output_topics << topics.getOutputTopics();
 
     // Call the server
     if (!resource_manager_->template call<temoto_2::LoadAlgorithm>(algorithm_manager::srv_name::MANAGER
@@ -111,15 +242,17 @@ public:
                                                                  , srv_msg))
     {
       error_handler_.forwardAndThrow(srv_msg.response.rmp.errorStack, prefix);
-//      error_handler_.createAndThrow(taskErr::SERVICE_REQ_FAIL
-//                                  , prefix
-//                                  , "Failed to call the service");
     }
 
     // If the request was fulfilled, then add the srv to the list of allocated algorithms
     if (srv_msg.response.rmp.code == 0)
     {
       allocated_algorithms_.push_back(srv_msg);
+      AlgorithmTopicsRes responded_topics;
+      responded_topics.input_topics_ << srv_msg.response.input_topics;
+      responded_topics.output_topics_ << srv_msg.response.output_topics;
+
+      return std::move(responded_topics);
     }
     else
     {
@@ -261,23 +394,6 @@ private:
                                   , prefix
                                   , " Interface is not initialized.");
     }
-  }
-
-  // A function that converts string pair vectors into key-value vectors
-  std::vector<diagnostic_msgs::KeyValue> pairToKeyValue(const std::vector<StringPair>& stringpair_vec)
-  {
-    std::vector<diagnostic_msgs::KeyValue> keyvalue_vec;
-
-    for (auto& stringpair : stringpair_vec)
-    {
-      diagnostic_msgs::KeyValue keyvalue;
-      keyvalue.key = stringpair.first;
-      keyvalue.value = stringpair.second;
-
-      keyvalue_vec.push_back(std::move(keyvalue));
-    }
-
-    return std::move(keyvalue_vec);
   }
 };
 

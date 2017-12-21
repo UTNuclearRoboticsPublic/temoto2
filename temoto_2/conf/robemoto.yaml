@@ -5,12 +5,16 @@ Sensors:
   package_name: "temoto_2"
   executable:  "test_2.launch"
   topic:  "/terminal_text"
+  output_topics:
+    data: "/terminal_text"
 
 - sensor_name: "Google Speech"
   sensor_type: "speech"
   package_name: "google_speech_to_text"
   executable:  "en-US.launch"
   topic:  "stt/spoken_text"
+  output_topics:
+    data: "stt/spoken_text"
 
 Algorithms:
 - algorithm_name: "AR Tag detector"
@@ -19,7 +23,7 @@ Algorithms:
   executable:  "test_2.launch"
   input_topics:
     camera_info: "/camera_info"
-    camera_data: "/usb_cam/raw"
+    data: "/usb_cam/raw"
   output_topics:
     visualization: "visualization_marker"
     markers: "ar_pose_marker"
@@ -29,11 +33,11 @@ Algorithms:
   package_name: "temoto_tests"
   executable:  "algorithm_0"
   input_topics:
-    topic_0: "algorithm_0_sub_0"
-    topic_1: "algorithm_0_sub_1"
+    type_0: "algorithm_0_sub_0"
+    type_1: "algorithm_0_sub_1"
   output_topics:
-    topic_0: "algorithm_0_pub_0"
-    topic_1: "algorithm_0_pub_0"
+    type_0: "algorithm_0_pub_0"
+    type_1: "algorithm_0_pub_0"
 
 Robots:
 - robot_name: "ur5"

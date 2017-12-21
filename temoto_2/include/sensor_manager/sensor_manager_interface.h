@@ -1,16 +1,18 @@
 #ifndef SENSOR_MANAGER_INTERFACE_H
 #define SENSOR_MANAGER_INTERFACE_H
 
-#include "core/common.h"
 #include "common/base_subsystem.h"
+#include "common/interface_errors.h"
+#include "common/tools.h"
+#include "common/temoto_log_macros.h"
+
 #include "TTP/base_task/task_errors.h"
 #include "TTP/base_task/base_task.h"
 #include "sensor_manager/sensor_manager_services.h"
 #include "rmp/resource_manager.h"
-#include "common/interface_errors.h"
 #include <memory> //unique_ptr
 
-
+typedef std::pair<std::string, std::string> StringPair;
 
 class SensorManagerInterface : BaseSubsystem
 {

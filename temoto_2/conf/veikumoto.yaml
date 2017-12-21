@@ -5,15 +5,23 @@ Sensors:
   package_name: "leap_motion_controller"
   executable:  "leap_motion"
   topic:  "/leap_motion_output"
+  output_topics:
+    data: "/leap_motion_output"
  
 - sensor_name: "Camera 0"
   sensor_type: "camera"
   package_name: "task_show"
   executable:  "camera0.launch"
   topic:  "usb_cam/image_raw"
+  output_topics:
+    camera_info: "usb_cam/camera_info"
+    data: "usb_cam/image_raw"
 
 - sensor_name: "Camera 1"
   sensor_type: "camera"
   package_name: "task_show"
   executable:  "camera1.launch"
   topic:  "usb_cam/image_raw"
+  output_topics:
+    camera_info: "usb_cam/camera_info"
+    data: "usb_cam/image_raw"

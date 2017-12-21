@@ -184,7 +184,7 @@ typedef std::vector<AlgorithmInfoPtr> AlgorithmInfoPtrs;
 
 static bool operator==(const AlgorithmInfo& s1, const AlgorithmInfo& s2)
 {
-  // Check the namespace, executable and name of the packate
+  // Check the namespace, executable and name of the package
   if (s1.getTemotoNamespace() != s2.getTemotoNamespace() ||
       s1.getExecutable() != s2.getExecutable() ||
       s1.getPackageName() != s2.getPackageName())

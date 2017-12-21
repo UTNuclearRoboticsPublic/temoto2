@@ -1446,7 +1446,7 @@ void TaskManager::stopTask(std::string action, std::string what)
             // Remove the task
             asynchronous_tasks_.erase(task_it);
 
-            std::cout << "ASGQERHERH\n";
+            // TODO: the library should not be unloaded here. It should be done in the unloadTasks method
             unloadTaskLib(task_it->first->getLibPath());
             task_stopped = true;
         }

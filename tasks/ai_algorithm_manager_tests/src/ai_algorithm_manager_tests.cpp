@@ -94,7 +94,12 @@ void startInterface_0()
     TASK_INFO_STREAM(prefix << " Starting the algorithm manager task");
 
     // Start the test algorithm
-    ami_.startAlgorithm("test");
+    AlgorithmTopicsReq requested_topics;
+    requested_topics.addInputTopic("type_0","in_remapped_topic_0");
+    requested_topics.addInputTopicType("type_1");
+    requested_topics.addOutputTopic("type_0","/out_remapped_topic_0");
+
+    AlgorithmTopicsRes responded_topics = ami_.startAlgorithm("test", requested_topics);
 
     // Pass the camera topic to the output
     what_0_word_out = what_0_word_in;

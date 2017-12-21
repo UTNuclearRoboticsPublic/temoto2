@@ -199,6 +199,8 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
              , req.package_name.c_str()
              , req.executable.c_str());
 
+  TEMOTO_DEBUG_STREAM("\n IN MORE DETAIL: \n" << req << "\n");
+
   // Try to find suitable candidate from local algorithms
   auto algorithm_ptr = findAlgorithm(req, local_algorithms_);
   if (algorithm_ptr)
@@ -227,6 +229,9 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
       {
         res_input_topic.value = common::getAbsolutePath(default_topic);
       }
+
+      // Add the topic to the response message
+      res.input_topics.push_back(res_input_topic);
     }
 
     // Remap the output topics if requested
@@ -247,6 +252,9 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
       {
         res_output_topic.value = common::getAbsolutePath(default_topic);
       }
+
+      // Add the topic to the response message
+      res.output_topics.push_back(res_output_topic);
     }
 
     TEMOTO_DEBUG("%s Sending arguments: '%s'.", prefix.c_str(), load_process_msg.request.args.c_str());
@@ -322,6 +330,8 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
     load_algorithm_msg.request.algorithm_type = algorithm_ptr->getType();
     load_algorithm_msg.request.package_name = algorithm_ptr->getPackageName();
     load_algorithm_msg.request.executable = algorithm_ptr->getExecutable();
+    load_algorithm_msg.request.input_topics = req.input_topics;
+    load_algorithm_msg.request.output_topics = req.output_topics;
 
     TEMOTO_INFO("AlgorithmManager is forwarding request: '%s', '%s', '%s', reliability %.3f"
               , algorithm_ptr->getType().c_str()
@@ -348,7 +358,7 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
     // Check if the request was successful
     if (load_algorithm_msg.response.rmp.code == 0)
     {
-      TEMOTO_DEBUG("%s Call to remote AlgorithmManager was sucessful.", prefix.c_str());
+      TEMOTO_DEBUG("%s Call to remote Algorithm Manager was sucessful.", prefix.c_str());
       res = load_algorithm_msg.response;
       allocated_algorithms_.emplace(res.rmp.resource_id, algorithm_ptr);
     }
@@ -394,22 +404,18 @@ AlgorithmInfoPtr AlgorithmManager::findAlgorithm(temoto_2::LoadAlgorithm::Reques
   // Local list of devices that follow the requirements
   std::vector<AlgorithmInfoPtr> candidates;
 
-  TEMOTO_ERROR_STREAM(prefix << "required type: " << req.algorithm_type);
-
   // Find the devices that follow the "type" criteria
   auto it = std::copy_if(algorithm_infos.begin()
                        , algorithm_infos.end()
                        , std::back_inserter(candidates)
                        , [&](const AlgorithmInfoPtr& s)
                          {
-                           TEMOTO_WARN_STREAM(prefix << "alginfotype: " << s->getType());
                            return s->getType() == req.algorithm_type;
                          });
   
   // The requested type of algorithm is not available
   if (candidates.empty())
   {
-    TEMOTO_ERROR_STREAM(prefix << "type does not match");
     return NULL;
   }
 
@@ -417,7 +423,6 @@ AlgorithmInfoPtr AlgorithmManager::findAlgorithm(temoto_2::LoadAlgorithm::Reques
   auto it_end = candidates.end();
   if (req.package_name != "")
   {
-    TEMOTO_ERROR_STREAM(prefix << "pkg name requested");
     it_end = std::remove_if(candidates.begin()
                           , candidates.end()
                           , [&](AlgorithmInfoPtr s)
@@ -429,7 +434,6 @@ AlgorithmInfoPtr AlgorithmManager::findAlgorithm(temoto_2::LoadAlgorithm::Reques
   // If executable is specified, remove all non-matching candidates
   if (req.executable != "")
   {
-    TEMOTO_ERROR_STREAM(prefix << "executable requested");
     it_end = std::remove_if(candidates.begin()
                           , it_end
                           , [&](AlgorithmInfoPtr s)
@@ -441,53 +445,49 @@ AlgorithmInfoPtr AlgorithmManager::findAlgorithm(temoto_2::LoadAlgorithm::Reques
   // If input topics are specified ...
   if (!req.input_topics.empty())
   {
-    TEMOTO_ERROR_STREAM(prefix << "input topics requested");
-    it_end = std::remove_if(candidates.begin()
-                          , it_end
-                          , [&](AlgorithmInfoPtr s)
-                            {
-                              if (s->getTopicsIn().size() != req.input_topics.size())
-                                return false;
+    it_end = std::remove_if(candidates.begin(), it_end,
+                           [&](AlgorithmInfoPtr s)
+                           {
+                             if (s->getTopicsIn().size() != req.input_topics.size())
+                               return true;
 
-                              // Make a copy of the input topics
-                              std::vector<StringPair> input_topics_copy = s->getTopicsIn();
+                             // Make a copy of the input topics
+                             std::vector<StringPair> input_topics_copy = s->getTopicsIn();
 
-                              // Start looking for the requested topic types
-                              for (auto& topic : req.input_topics)
-                              {
-                                bool found = false;
-                                for (auto it=input_topics_copy.begin(); it != input_topics_copy.end(); it++)
-                                {
-                                  // If the topic was found then remove it from the copy list
-                                  if (topic.key == it->first)
-                                  {
-                                    found = true;
-                                    input_topics_copy.erase(it);
-                                    break;
-                                  }
-                                }
+                             // Start looking for the requested topic types
+                             for (auto& topic : req.input_topics)
+                             {
+                               bool found = false;
+                               for (auto it=input_topics_copy.begin(); it != input_topics_copy.end(); it++)
+                               {
+                                 // If the topic was found then remove it from the copy list
+                                 if (topic.key == it->first)
+                                 {
+                                   found = true;
+                                   input_topics_copy.erase(it);
+                                   break;
+                                 }
+                               }
 
-                                // If this topic type was not found then return with false
-                                if (!found)
-                                {
-                                  return false;
-                                }
-                              }
-                              
-                              return true;
-                            });
+                               // If this topic type was not found then return with false
+                               if (!found)
+                               {
+                                 return true;
+                               }
+                             }
+
+                             return false;
+                           });
   }
 
   // If output topics are specified ...
   if (!req.output_topics.empty())
   {
-    TEMOTO_ERROR_STREAM(prefix << "output topics requested");
-    it_end = std::remove_if(candidates.begin()
-                          , it_end
-                          , [&](AlgorithmInfoPtr s)
+    it_end = std::remove_if(candidates.begin(), it_end,
+                            [&](AlgorithmInfoPtr s)
                             {
-                              if (s->getTopicsOut().size() != req.output_topics.size())
-                                return false;
+                              if (s->getTopicsOut().size() < req.output_topics.size())
+                                return true;
 
                               // Make a copy of the input topics
                               std::vector<StringPair> output_topics_copy = s->getTopicsOut();
@@ -510,11 +510,11 @@ AlgorithmInfoPtr AlgorithmManager::findAlgorithm(temoto_2::LoadAlgorithm::Reques
                                 // If this topic type was not found then return with false
                                 if (!found)
                                 {
-                                  return false;
+                                  return true;
                                 }
                               }
 
-                              return true;
+                              return false;
                             });
   }
 

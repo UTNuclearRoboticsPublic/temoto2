@@ -16,6 +16,7 @@
 #include "ros/package.h"
 #include "core/common.h"
 #include "sensor_manager/sensor_manager.h"
+#include "sensor_manager/sensor_manager_errors.h"
 #include <algorithm>
 #include <utility>
 #include <yaml-cpp/yaml.h>
@@ -27,10 +28,13 @@ SensorManager::SensorManager()
   : resource_manager_(srv_name::MANAGER, this)
   , config_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &SensorManager::syncCb, this)
 {
-  log_class_ = "";
-  log_subsys_ = "sensor_manager";
+  class_name_ = __func__;
+  subsystem_name_ = "sensor_manager";
+  subsystem_code_ = error::Subsystem::SENSOR_MANAGER;
   log_group_ = "sensor_manager";
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
+  error_handler_ = error::ErrorHandler(subsystem_code_, log_group_);
+
+  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, "");
 
   // Start the server
   resource_manager_.addServer<temoto_2::LoadSensor>(srv_name::SERVER, &SensorManager::startSensorCb,
@@ -72,7 +76,7 @@ SensorManager::~SensorManager()
 
 void SensorManager::statusCb(temoto_2::ResourceStatus& srv)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
   TEMOTO_DEBUG("%s Status received.", prefix.c_str());
   // adjust package reliability when someone reported that it has failed.
   if (srv.request.status_code == rmp::status_codes::FAILED)
@@ -111,7 +115,7 @@ bool SensorManager::listDevicesCb(temoto_2::ListDevices::Request& req,
 
 void SensorManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
 
   if (msg.action == rmp::sync_action::REQUEST_CONFIG)
   {
@@ -176,12 +180,14 @@ void SensorManager::advertiseLocalSensors()
 void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
                                   temoto_2::LoadSensor::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
   TEMOTO_DEBUG("%s received a request to start '%s': '%s', '%s'", prefix.c_str(),
                req.sensor_type.c_str(), req.package_name.c_str(), req.executable.c_str());
 
+  TEMOTO_DEBUG_STREAM("\n IN MORE DETAIL: \n" << req << "\n");
+
   // Try to find suitable candidate from local sensors
-  auto sensor_ptr = findSensor(req.sensor_type, req.package_name, req.executable, local_sensors_);
+  auto sensor_ptr = findSensor(req, local_sensors_);
   if (sensor_ptr)
   {
     // local sensor found, make a call to the local resource manager
@@ -190,34 +196,68 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
     load_process_msg.request.package_name = sensor_ptr->getPackageName();
     load_process_msg.request.executable = sensor_ptr->getExecutable();
 
+    // Remap the output topics if requested
+    for (auto& req_topic : req.output_topics)
+    {
+      // And return the input topics via response
+      diagnostic_msgs::KeyValue res_output_topic;
+      res_output_topic.key = req_topic.key;
+      std::string default_topic = sensor_ptr->getOutputTopic(req_topic.key);
+
+      if (req_topic.value != "")
+      {
+        res_output_topic.value = common::getAbsolutePath(req_topic.value);
+        std::string remap_arg = default_topic + ":=" + req_topic.value;
+        load_process_msg.request.args += remap_arg + " ";
+      }
+      else
+      {
+        res_output_topic.value = common::getAbsolutePath(default_topic);
+      }
+
+      // Add the topic to the response message
+      res.output_topics.push_back(res_output_topic);
+    }
+
     TEMOTO_INFO("SensorManager found a suitable local sensor: '%s', '%s', '%s', reliability %.3f",
                 load_process_msg.request.action.c_str(),
                 load_process_msg.request.package_name.c_str(),
                 load_process_msg.request.executable.c_str(), sensor_ptr->getReliability());
 
-    if (resource_manager_.call<temoto_2::LoadProcess>(process_manager::srv_name::MANAGER,
+    if (!resource_manager_.call<temoto_2::LoadProcess>(process_manager::srv_name::MANAGER,
                                                       process_manager::srv_name::SERVER,
                                                       load_process_msg))
     {
-      TEMOTO_DEBUG("%s Call to ProcessManager was sucessful.", prefix.c_str());
-
-      // fill in the response about which particular sensor was chosen
-      res.package_name = sensor_ptr->getPackageName();
-      res.topic = common::getAbsolutePath(sensor_ptr->getTopic());
-      res.executable = sensor_ptr->getExecutable();
-      res.rmp = load_process_msg.response.rmp;
-    }
-    else
-    {
-      // TODO: Client needs a proper response
-      TEMOTO_ERROR("%s Failed to call the ProcessManager.", prefix.c_str());
+      // Respond with an error message
+      res.rmp.code = 1;
+      res.rmp.message = "Failed to call the ProcessManager.";
+      res.rmp.errorStack = error_handler_.createAndReturn(ErrorCode::SERVICE_REQ_FAIL
+                                                        , prefix
+                                                        , res.rmp.message);
       return;
     }
 
     // Increase or decrease the reliability depending on the return code
-    // and send the update to other managers.
-    (res.rmp.code == 0) ? sensor_ptr->adjustReliability(1.0) : sensor_ptr->adjustReliability(0.0);
-    allocated_sensors_.emplace(res.rmp.resource_id, sensor_ptr);
+    if (res.rmp.code == 0)
+    {
+      sensor_ptr->adjustReliability(1.0);
+
+      // Fill out the response about which particular sensor was chosen
+      res.package_name = sensor_ptr->getPackageName();
+      res.executable = sensor_ptr->getExecutable();
+      res.topic = sensor_ptr->getTopic(); // TODO: DEPRECATED !!!
+      res.rmp = load_process_msg.response.rmp;
+
+      // Add the allocated sensor to the respective structure
+      allocated_sensors_.emplace(res.rmp.resource_id, sensor_ptr);
+    }
+    else
+    {
+      sensor_ptr->adjustReliability(0.0);
+      res.rmp = load_process_msg.response.rmp;
+      res.rmp.errorStack = error_handler_.forwardAndReturn(load_process_msg.response.rmp.errorStack, prefix);
+    }
+
     YAML::Node config;
     config["Sensors"].push_back(*sensor_ptr);
 
@@ -233,7 +273,7 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
     TEMOTO_INFO("Looking from: \n%s", rs->toString().c_str());
   }
 
-  sensor_ptr = findSensor(req.sensor_type, req.package_name, req.executable, remote_sensors_);
+  sensor_ptr = findSensor(req, remote_sensors_);
   if (sensor_ptr)
   {
     // remote sensor candidate was found, forward the request to the remote sensor manager
@@ -241,57 +281,75 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
     load_sensor_msg.request.sensor_type = sensor_ptr->getType();
     load_sensor_msg.request.package_name = sensor_ptr->getPackageName();
     load_sensor_msg.request.executable = sensor_ptr->getExecutable();
+    load_sensor_msg.request.output_topics = req.output_topics;
+
     TEMOTO_INFO("SensorManager is forwarding request: '%s', '%s', '%s', reliability %.3f",
                 sensor_ptr->getType().c_str(), sensor_ptr->getPackageName().c_str(),
                 sensor_ptr->getExecutable().c_str(), sensor_ptr->getReliability());
 
-    if (resource_manager_.call<temoto_2::LoadSensor>(
+    if (!resource_manager_.call<temoto_2::LoadSensor>(
             sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, load_sensor_msg,
             sensor_ptr->getTemotoNamespace()))
     {
-      TEMOTO_DEBUG("%s Call to remote SensorManager was sucessful.", prefix.c_str());
+      // Respond with an error message
+      res.rmp.code = 1;
+      res.rmp.message = "Failed to call the remote Sensor Manager of "
+                      + std::string(sensor_ptr->getTemotoNamespace());
+      res.rmp.errorStack = error_handler_.createAndReturn(ErrorCode::SERVICE_REQ_FAIL
+                                                        , prefix
+                                                        , res.rmp.message);
+      return;
+    }
+
+    // Check if the request was successful
+    if (load_sensor_msg.response.rmp.code == 0)
+    {
+      TEMOTO_DEBUG("%s Call to remote Sensor Manager was sucessful.", prefix.c_str());
       res = load_sensor_msg.response;
       allocated_sensors_.emplace(res.rmp.resource_id, sensor_ptr);
     }
     else
     {
-      // TODO: Client needs a proper response
-      TEMOTO_ERROR("%s Failed to call the remote SensorManager.", prefix.c_str());
-      return;
+      res.rmp = load_sensor_msg.response.rmp;
+      res.rmp.errorStack = error_handler_.forwardAndReturn(res.rmp.errorStack, prefix);
     }
     return;
   }
 
-  // no suitable local nor remote sensor was found
-  res.package_name = req.package_name;
-  res.executable = "";
-  res.topic = "";
+  // No suitable local nor remote sensor was found
   res.rmp.code = 1;
   res.rmp.message = "SensorManager did not find a suitable sensor.";
-  TEMOTO_ERROR("%s %s", prefix.c_str(), res.rmp.message.c_str());
+  res.rmp.errorStack = error_handler_.createAndReturn(ErrorCode::RESOURCE_LOAD_FAIL
+                                                    , prefix
+                                                    , res.rmp.message);
 }
 
 // TODO: rename "stopSensorCb" to "unloadSensorCb"
 void SensorManager::stopSensorCb(temoto_2::LoadSensor::Request& req,
                                  temoto_2::LoadSensor::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
   TEMOTO_DEBUG("%s received a request to stop sensor with id '%ld'", prefix.c_str(),
                res.rmp.resource_id);
   allocated_sensors_.erase(res.rmp.resource_id);
   return;
 }
 
-SensorInfoPtr SensorManager::findSensor(std::string type, std::string package_name,
-                                        std::string executable, const SensorInfoPtrs& sensor_infos)
+SensorInfoPtr SensorManager::findSensor(temoto_2::LoadSensor::Request& req
+                                      , const SensorInfoPtrs& sensor_infos)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
   // Local list of devices that follow the requirements
   std::vector<SensorInfoPtr> candidates;
 
   // Find the devices that follow the "type" criteria
-  auto it = std::copy_if(sensor_infos.begin(), sensor_infos.end(), std::back_inserter(candidates),
-                         [&](const SensorInfoPtr& s) { return s->getType() == type; });
+  auto it = std::copy_if(sensor_infos.begin()
+                       , sensor_infos.end()
+                       , std::back_inserter(candidates)
+                       , [&](const SensorInfoPtr& s)
+                         {
+                           return s->getType() == req.sensor_type;
+                         });
   
   // The requested type of sensor is not available
   if (candidates.empty())
@@ -301,19 +359,61 @@ SensorInfoPtr SensorManager::findSensor(std::string type, std::string package_na
  
   // If package_name is specified, remove all non-matching candidates
   auto it_end = candidates.end();
-  if (package_name != "")
+  if (req.package_name != "")
   {
-    it_end = std::remove_if(candidates.begin(), candidates.end(), [&](SensorInfoPtr s) {
-      return s->getPackageName() != package_name;
-    });
+    it_end = std::remove_if(candidates.begin(), candidates.end(),
+                            [&](SensorInfoPtr s)
+                            {
+                              return s->getPackageName() != req.package_name;
+                            });
   }
 
   // If executable is specified, remove all non-matching candidates
-  if (executable != "")
+  if (req.executable != "")
   {
-    it_end = std::remove_if(candidates.begin(), it_end, [&](SensorInfoPtr s) {
-      return s->getExecutable() != executable;
-    });
+    it_end = std::remove_if(candidates.begin(), it_end,
+                            [&](SensorInfoPtr s)
+                            {
+                              return s->getExecutable() != req.executable;
+                            });
+  }
+
+  // If output topics are specified ...
+  if (!req.output_topics.empty())
+  {
+    it_end = std::remove_if(candidates.begin(), it_end,
+                            [&](SensorInfoPtr s)
+                            {
+                              if (s->getTopicsOut().size() < req.output_topics.size())
+                                return true;
+
+                              // Make a copy of the input topics
+                              std::vector<StringPair> output_topics_copy = s->getTopicsOut();
+
+                              // Start looking for the requested topic types
+                              for (auto& topic : req.output_topics)
+                              {
+                                bool found = false;
+                                for (auto it=output_topics_copy.begin(); it != output_topics_copy.end(); it++)
+                                {
+                                  // If the topic was found then remove it from the copy list
+                                  if (topic.key == it->first)
+                                  {
+                                    found = true;
+                                    output_topics_copy.erase(it);
+                                    break;
+                                  }
+                                }
+
+                                // If this topic type was not found then return with false
+                                if (!found)
+                                {
+                                  return true;
+                                }
+                              }
+
+                              return false;
+                            });
   }
 
   // Sort remaining candidates based on their reliability.
@@ -334,7 +434,7 @@ SensorInfoPtr SensorManager::findSensor(std::string type, std::string package_na
 
 SensorInfoPtrs SensorManager::parseSensors(const YAML::Node& config)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
   std::vector<SensorInfoPtr> sensors;
 
 //  TEMOTO_DEBUG("%s CONFIG NODE:%d %s", prefix.c_str(), config.Type(), Dump(config).c_str());
