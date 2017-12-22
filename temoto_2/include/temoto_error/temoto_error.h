@@ -11,7 +11,6 @@
 
 namespace error
 {
-const int FORWARDING_CODE = 0;
 
 /**
  * @brief Enum that stores the subsystem codes
@@ -29,6 +28,66 @@ enum class Subsystem : int
 };
 
 /**
+ * @brief Enum that stores the error codes
+ */
+enum class Code : int
+{
+  FORWARDING,  // Indicate the forwarding type
+
+  // Generic
+  NULL_PTR,       // Pointer is null
+  UNINITIALIZED,  // Object is not initialized
+
+  // Service related
+  SERVICE_REQ_FAIL,     // Service request failed
+  SERVICE_STATUS_FAIL,  // Service responded with FAILED status
+
+  // Resource management
+  RESOURCE_LOAD_FAIL,    // Failed to load resource
+  RESOURCE_UNLOAD_FAIL,  // Failed to unload resource
+
+  // Core
+  DESC_OPEN_FAIL,       // Failed to open the xml file
+  DESC_NO_ROOT,         // Missing root element
+  DESC_NO_ATTR,         // Attribute missing
+  DESC_INVALID_ARG,     // Invalid/Corrupt arguments
+  CLASS_LOADER_FAIL,    // Classloader failed to do its job
+  FIND_TASK_FAIL,       // Failed to find tasks
+  UNSPECIFIED_TASK,     // The task is unspecified
+  NAMELESS_TASK_CLASS,  // The task is missing a class name
+  NO_TASK_CLASS,        // Task handler could not find the task class
+
+  // TTP
+  BAD_ANY_CAST,       // Bad any cast
+  NLP_INV_ARG,        // Invalid argument in Natural Language Processor
+  NLP_BAD_INPUT,      // NLP was not able to make any sense from provided input text
+  NLP_NO_TASK,        // Suitable task was not found
+  NLP_DISABLED,       // NLP was tried to be used while it was disabled
+  SUBJECT_NOT_FOUND,  // Subject was not found
+
+  // Output manager
+  RVIZ_OPEN_FAIL,          // Failed to open rviz
+  PLUGIN_LOAD_FAIL,        // Failed to load rviz plugin
+  PLUGIN_UNLOAD_FAIL,      // Failed to unload rviz plugin
+  PLUGIN_GET_CONFIG_FAIL,  // Failed to get rviz plugin config
+  PLUGIN_SET_CONFIG_FAIL,  // Failed to set rviz plugin config
+  CONFIG_OPEN_FAIL,        // Failed to open the plugin config file
+
+  // Process manager
+  PROCESS_SPAWN_FAIL,  // Failed to spawn new process
+  PROCESS_KILL_FAIL,    // Failed to kill a process
+
+  UNHANDLED_EXCEPTION  // Unhandled exception
+};
+
+// Some random idea how to store error descriptions
+static const std::map<Code, std::string> descriptions = {
+  {Code::FORWARDING, "Forwarding" },
+  {Code::PROCESS_KILL_FAIL, "Node kill failed heavily, it was hit by extreme badness" }
+};
+
+
+/**
  * @brief ErrorStack
  */
 typedef std::vector<temoto_2::Error> ErrorStack;
@@ -39,7 +98,7 @@ typedef std::vector<temoto_2::Error> ErrorStack;
 
 #define FORWARD_ERROR(error_stack) error_handler_.forward(error_stack, TEMOTO_LOG_PREFIX)
 
-#define ERROR_SEND()
+#define SEND_ERROR(error_stack) error_handler_.send(error_stack)
 
 /**
  * @brief The ErrorHandler class
@@ -57,7 +116,7 @@ public:
    * @param prefix Prefix describing where the error was created.
    * @param message A brief description of what went wrong.
    */
-  ErrorStack create(int code, const std::string& prefix, const std::string& message);
+  ErrorStack create(Code code, const std::string& prefix, const std::string& message);
 
   /**
    * @brief Appends the existing error stack with a prefix.

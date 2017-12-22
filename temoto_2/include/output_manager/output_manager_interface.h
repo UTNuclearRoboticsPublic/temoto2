@@ -1,10 +1,6 @@
-#include "core/common.h"
-
 #include "common/temoto_id.h"
 #include "common/base_subsystem.h"
-#include "TTP/base_task/task_errors.h"
 #include "TTP/base_task/base_task.h"
-#include "output_manager/output_manager_errors.h"
 #include "output_manager/output_manager_services.h"
 #include "robot_manager/robot_manager_services.h"
 #include "rmp/resource_manager.h"
@@ -67,7 +63,7 @@ public:
     if (!resource_manager_->template call<temoto_2::LoadRvizPlugin>(
             srv_name::RVIZ_MANAGER, srv_name::RVIZ_SERVER, load_srv))
     {
-      throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Failed to call service");
+      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service");
     }
 
     if (load_srv.response.rmp.code == 0)
@@ -76,7 +72,7 @@ public:
     }
     else
     {
-      throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Unsuccessful call to rviz_manager");
+      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Unsuccessful call to rviz_manager");
     }
   }
 
@@ -110,7 +106,7 @@ public:
       }
       else if (cur_plugin_it == plugins_.begin())
       {
-        throw CREATE_ERROR(taskErr::RESOURCE_UNLOAD_FAIL, "Unable to unload resource that is not loaded.");
+        throw CREATE_ERROR(error::Code::RESOURCE_UNLOAD_FAIL, "Unable to unload resource that is not loaded.");
       }
     }
   }
@@ -193,7 +189,7 @@ public:
     catch (std::ifstream::failure e)
     {
       // Rethrow the exception
-      throw CREATE_ERROR(ErrorCode::FILE_OPEN_FAIL, "Failed to open the display config file");
+      throw CREATE_ERROR(error::Code::CONFIG_OPEN_FAIL, "Failed to open the display config file");
     }
   }
 
@@ -223,7 +219,7 @@ public:
   //        if (!resource_manager_->template call<temoto_2::LoadSensor>(
   //                sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, *sens_it))
   //        {
-  //          throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Failed to call service");
+  //          throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service");
   //        }
   //
   //        // If the request was fulfilled, then add the srv to the list of allocated sensors
@@ -234,7 +230,7 @@ public:
   //        }
   //        else
   //        {
-  //          throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Unsuccessful call to sensor manager: ");
+  //          throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Unsuccessful call to sensor manager: ");
   //        }
   //      }
   //      else
@@ -275,7 +271,7 @@ private:
   {
     if (!resource_manager_)
     {
-      throw CREATE_ERROR(ErrorCode::NOT_INITIALIZED, "Interface is not initalized.");
+      throw CREATE_ERROR(error::Code::UNINITIALIZED, "Interface is not initalized.");
     }
   }
 };

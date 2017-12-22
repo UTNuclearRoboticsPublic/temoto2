@@ -1,13 +1,10 @@
 #ifndef SENSOR_MANAGER_INTERFACE_H
 #define SENSOR_MANAGER_INTERFACE_H
 
-#include "core/common.h"
 #include "common/base_subsystem.h"
-#include "TTP/base_task/task_errors.h"
 #include "TTP/base_task/base_task.h"
 #include "sensor_manager/sensor_manager_services.h"
 #include "rmp/resource_manager.h"
-#include "common/interface_errors.h"
 #include <memory> //unique_ptr
 
 
@@ -77,7 +74,7 @@ public:
     if (!resource_manager_->template call<temoto_2::LoadSensor>(
             sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, srv_msg))
     {
-      throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Failed to call service");
+      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service");
     }
 
     // If the request was fulfilled, then add the srv to the list of allocated sensors
@@ -89,7 +86,7 @@ public:
     else
     {
       //\TODO: Forward
-      throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Unsuccessful call to sensor manager");
+      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Unsuccessful call to sensor manager");
     }
   }
 
@@ -127,7 +124,7 @@ public:
       }
       else if (cur_sensor_it == allocated_sensors_.begin())
       {
-        throw CREATE_ERROR(taskErr::RESOURCE_UNLOAD_FAIL, "Unable to unload resource that is not loaded.");
+        throw CREATE_ERROR(error::Code::RESOURCE_UNLOAD_FAIL, "Unable to unload resource that is not loaded.");
       }
     }
   }
@@ -159,7 +156,7 @@ public:
         if (!resource_manager_->template call<temoto_2::LoadSensor>(
                 sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, *sens_it))
         {
-          throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Failed to call service");
+          throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service");
         }
 
         if (sens_it->response.rmp.code == 0)
@@ -169,7 +166,7 @@ public:
         }
         else
         {
-          throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Unsuccessful call to sensor manager: ");
+          throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Unsuccessful call to sensor manager: ");
         }
       }
       else
@@ -200,7 +197,7 @@ private:
   {
     if(!resource_manager_)
     {
-      throw CREATE_ERROR(ErrorCode::NOT_INITIALIZED, "Interface is not initalized.");
+      throw CREATE_ERROR(error::Code::NOT_INITIALIZED, "Interface is not initalized.");
     }
   }
 };

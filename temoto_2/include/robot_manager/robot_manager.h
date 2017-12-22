@@ -1,7 +1,6 @@
 #ifndef ROBOT_MANAGER_H
 #define ROBOT_MANAGER_H
 
-#include "core/common.h"
 #include "common/temoto_id.h"
 #include "common/base_subsystem.h"
 #include "robot_manager/robot_manager_services.h"

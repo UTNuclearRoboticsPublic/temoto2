@@ -16,7 +16,6 @@
 #include "TTP/task_manager.h"
 #include "TTP/task_descriptor_processor.h"
 #include "TTP/task_container.h"
-#include "TTP/TTP_errors.h"
 
 #include <boost/filesystem/operations.hpp>
 #include <algorithm>
@@ -172,7 +171,7 @@ void TaskManager::executeVerbalInstruction (std::string& verbal_instruction)
         // First check if NLP is enabled, if not then throw an error
         if (!nlp_enabled_)
         {
-            throw CREATE_ERROR(TTPErr::NLP_DISABLED, "NLP cannot be used if its disabled.");
+            throw CREATE_ERROR(error::Code::NLP_DISABLED, "NLP cannot be used if its disabled.");
         }
 
         // Convert the verbal instruction into a incomplete semantic frame tree
@@ -268,7 +267,7 @@ void TaskManager::executeSFT (TaskTree sft)
     }
     catch(...)
     {
-        throw CREATE_ERROR(TTPErr::UNHANDLED, "Received an unhandled exception");
+        throw CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Received an unhandled exception");
     }
 
     // Let others know that action execution engine is not busy
@@ -364,13 +363,13 @@ std::vector <TaskDescriptor> TaskManager::findTaskFilesys(std::string task_to_fi
     catch (std::exception& e)
     {
         // Rethrow the exception
-        throw CREATE_ERROR(TTPErr::FIND_TASK_FAIL, e.what());
+        throw CREATE_ERROR(error::Code::FIND_TASK_FAIL, e.what());
     }
 
     catch(...)
     {
         // Rethrow the exception
-        throw CREATE_ERROR(TTPErr::UNHANDLED, "Received an unhandled exception");
+        throw CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Received an unhandled exception");
     }
 }
 
@@ -928,7 +927,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
     if (candidate_tasks.empty())
     {
         // Throw error
-        throw CREATE_ERROR(TTPErr::NLP_NO_TASK, "Couldn't find a suitable task for action: " + node_action);
+        throw CREATE_ERROR(error::Code::NLP_NO_TASK, "Couldn't find a suitable task for action: " + node_action);
     }
 
     // Sort the candidates with decreasing order and pick the first candidate
@@ -1042,7 +1041,7 @@ void TaskManager::loadTask(TaskDescriptor& task_descriptor)
 
     if (classes.empty())
     {
-      throw CREATE_ERROR(TTPErr::CLASS_LOADER_FAIL, "Could not load the class fom path: " + path_to_lib);
+      throw CREATE_ERROR(error::Code::CLASS_LOADER_FAIL, "Could not load the class fom path: " + path_to_lib);
     }
 
     // Add the name of the class
@@ -1053,7 +1052,7 @@ void TaskManager::loadTask(TaskDescriptor& task_descriptor)
   catch(class_loader::ClassLoaderException& e)
   {
     // Rethrow the exception
-    throw CREATE_ERROR(TTPErr::CLASS_LOADER_FAIL, e.what());
+    throw CREATE_ERROR(error::Code::CLASS_LOADER_FAIL, e.what());
   }
 }
 
@@ -1074,7 +1073,7 @@ void TaskManager::instantiateTask(TaskTreeNode& node)
   // First check that the task has a "class name"
   if (task_class_name.empty())
   {
-    throw CREATE_ERROR(TTPErr::NAMELESS_TASK_CLASS, "Task missing a class name.");
+    throw CREATE_ERROR(error::Code::NAMELESS_TASK_CLASS, "Task missing a class name.");
   }
 
 //    // Check if there is a class with this name
@@ -1093,7 +1092,7 @@ void TaskManager::instantiateTask(TaskTreeNode& node)
 //    // If the task was not found, throw an error
 //    if (!task_class_found)
 //    {
-//        throw CREATE_ERROR(TTPErr::NO_TASK_CLASS, "Could not find a task class within loaded classes.");
+//        throw CREATE_ERROR(error::Code::NO_TASK_CLASS, "Could not find a task class within loaded classes.");
 //    }
 
   // If the task was found, create an instance of it
@@ -1125,7 +1124,7 @@ void TaskManager::instantiateTask(TaskTreeNode& node)
   catch(class_loader::ClassLoaderException& e)
   {
     // Rethrow the exception
-    throw CREATE_ERROR(TTPErr::CLASS_LOADER_FAIL, e.what());
+    throw CREATE_ERROR(error::Code::CLASS_LOADER_FAIL, e.what());
   }
 }
 
@@ -1147,7 +1146,7 @@ void TaskManager::unloadTaskLib(std::string path_to_lib)
     catch(class_loader::ClassLoaderException& e)
     {
         // Rethrow the exception
-        throw CREATE_ERROR(TTPErr::CLASS_LOADER_FAIL, e.what());
+        throw CREATE_ERROR(error::Code::CLASS_LOADER_FAIL, e.what());
     }
 }
 
@@ -1300,7 +1299,7 @@ void TaskManager::stopTask(std::string action, std::string what)
             }
             catch(std::string& e)
             {
-              throw CREATE_ERROR(TTPErr::SUBJECT_NOT_FOUND, e);
+              throw CREATE_ERROR(error::Code::SUBJECT_NOT_FOUND, e);
             }
 
 
@@ -1382,7 +1381,7 @@ void TaskManager::stopTask(std::string action, std::string what)
             }
             catch(std::string& e)
             {
-              throw CREATE_ERROR(TTPErr::SUBJECT_NOT_FOUND, e);
+              throw CREATE_ERROR(error::Code::SUBJECT_NOT_FOUND, e);
             }
 
             // Debug
@@ -1397,7 +1396,7 @@ void TaskManager::stopTask(std::string action, std::string what)
     if (!task_stopped)
     {
         // If nothing was specified, then throw error
-        throw CREATE_ERROR(TTPErr::UNSPECIFIED_TASK, "Task 'action' and 'what' unspecified.");
+        throw CREATE_ERROR(error::Code::UNSPECIFIED_TASK, "Task 'action' and 'what' unspecified.");
     }
 }
 

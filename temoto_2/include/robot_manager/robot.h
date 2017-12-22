@@ -1,10 +1,6 @@
 #ifndef ROBOT_H
 #define ROBOT_H
 
-#include <string>
-#include <map>
-#include <vector>
-
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <moveit/planning_interface/planning_interface.h>
 #include "common/temoto_id.h"
@@ -14,6 +10,9 @@
 #include "robot_manager/robot_config.h"
 #include "robot_manager/robot_manager.h"
 #include "robot_manager/robot_feature.h"
+#include <string>
+#include <map>
+#include <vector>
 
 namespace robot_manager
 {

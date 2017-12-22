@@ -23,7 +23,7 @@ public:
     TASK_INFO("Task Robot constructed");
   }
 
-  bool startTask(TTP::TaskInterface task_interface)
+  void startTask(TTP::TaskInterface task_interface)
   {
 
     task_alias_ = task_interface.alias_;
@@ -58,42 +58,25 @@ public:
         setTargetToHand();
         break;
     }
-    return true;
   }
 
   void loadRobot()
   {
     std::string prefix = common::generateLogPrefix("", this->getPackageName(), __func__);
-    try
-    {
-      // Load the ur5 robot
-      rmi_.loadRobot("ur5");
+    // Load the ur5 robot
+    rmi_.loadRobot("ur5");
 
-      // DO NOT EXIT THIS FUNCTION
-      //ros::waitForShutdown();
-    }
-    catch (error::ErrorStackUtil& e)
-    {
-      e.forward(prefix);
-      error_handler_.append(e);
-    }
+    // DO NOT EXIT THIS FUNCTION
+    //ros::waitForShutdown();
   }
 
   void plan()
   {
     std::string prefix = common::generateLogPrefix("", this->getPackageName(), __func__);
     TASK_DEBUG("%s PLANNING", prefix.c_str());
-    try
-    {
-     // geometry_msgs::PoseStamped target_pose;
-      //rmi_.plan(target_pose);
-      rmi_.plan();
-    }
-    catch (error::ErrorStackUtil& e)
-    {
-      e.forward(prefix);
-      error_handler_.append(e);
-    }
+    // geometry_msgs::PoseStamped target_pose;
+    //rmi_.plan(target_pose);
+    rmi_.plan();
     TASK_DEBUG("%s DONE PLANNING", prefix.c_str());
   }
 
@@ -101,16 +84,8 @@ public:
   {
     std::string prefix = common::generateLogPrefix("", this->getPackageName(), __func__);
     TASK_DEBUG("%s EXECUTING", prefix.c_str());
-    try
-    {
-      geometry_msgs::Pose pose;
-      rmi_.execute();
-    }
-    catch (error::ErrorStackUtil& e)
-    {
-      e.forward(prefix);
-      error_handler_.append(e);
-    }
+    geometry_msgs::Pose pose;
+    rmi_.execute();
     TASK_DEBUG("%s DONE EXECUTING", prefix.c_str());
   }
 
@@ -118,15 +93,7 @@ public:
   {
     std::string prefix = common::generateLogPrefix("", this->getPackageName(), __func__);
     TASK_DEBUG("%s SET TARGET TO HAND", prefix.c_str());
-    try
-    {
-      rmi_.setTarget("hand");
-    }
-    catch (error::ErrorStackUtil& e)
-    {
-      e.forward(prefix);
-      error_handler_.append(e);
-    }
+    rmi_.setTarget("hand");
     TASK_DEBUG("%s DONE SET TARGET TO HAND", prefix.c_str());
   }
 

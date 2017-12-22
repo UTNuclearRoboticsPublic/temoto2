@@ -1,7 +1,6 @@
 #include "common/tools.h"
 #include "TTP/language_processors/meta/meta_lp.h"
 #include "TTP/language_processors/meta/branch_finder.h"
-#include "TTP/TTP_errors.h"
 
 #include "meta/analyzers/tokenizers/icu_tokenizer.h"
 #include "meta/sequence/sequence.h"
@@ -38,7 +37,7 @@ TaskTree MetaLP::processText(std::string input_text)
     if (input_text.empty())
     {
         // Throw error
-        throw CREATE_ERROR(TTPErr::NLP_INV_ARG, "Received an empty string");
+        throw CREATE_ERROR(error::Code::NLP_INV_ARG, "Received an empty string");
     }
 
     meta::sequence::sequence seq;
@@ -87,7 +86,7 @@ TaskTree MetaLP::processText(std::string input_text)
             {
                 std::cout << prefix << "No tasks were found\n";
                 // Throw error
-                throw CREATE_ERROR(TTPErr::NLP_BAD_INPUT, "Could not make any sense of input text.");
+                throw CREATE_ERROR(error::Code::NLP_BAD_INPUT, "Could not make any sense of input text.");
             }
         }
         else

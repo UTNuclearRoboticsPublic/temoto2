@@ -1,7 +1,6 @@
 #ifndef RVIZ_MANAGER_H
 #define RVIZ_MANAGER_H
 
-#include "core/common.h"
 #include "common/request_container.h"
 #include "common/temoto_id.h"
 #include "common/base_subsystem.h"
@@ -10,7 +9,6 @@
 #include "rviz_plugin_manager/PluginUnload.h"
 #include "rviz_plugin_manager/PluginGetConfig.h"
 #include "rviz_plugin_manager/PluginSetConfig.h"
-#include "output_manager/output_manager_errors.h"
 #include "output_manager/rviz_manager/plugin_info.h"
 #include "output_manager/output_manager_services.h"
 #include "process_manager/process_manager_services.h"

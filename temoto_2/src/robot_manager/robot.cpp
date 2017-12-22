@@ -1,6 +1,4 @@
 #include "robot_manager/robot.h"
-#include "robot_manager/robot_manager_errors.h"
-#include "core/common.h"
 #include "ros/package.h"
 
 
@@ -83,7 +81,7 @@ void Robot::waitForTopic(const std::string& topic, temoto_id::ID interrupt_res_i
     TEMOTO_DEBUG("%s Waiting for %s ...", prefix.c_str(), topic.c_str());
     if (resource_manager_.hasFailed(interrupt_res_id))
     {
-      throw CREATE_ERROR(ErrorCode::SERVICE_STATUS_FAIL, "oading interrupted. A FAILED status was received from process manager.");
+      throw CREATE_ERROR(error::Code::SERVICE_STATUS_FAIL, "Loading interrupted. A FAILED status was received from process manager.");
     }
     ros::Duration(0.2).sleep();
   }

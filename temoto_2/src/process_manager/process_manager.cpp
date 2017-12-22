@@ -8,7 +8,6 @@
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "core/common.h"
 #include "process_manager/process_manager.h"
 
 #include <stdio.h>

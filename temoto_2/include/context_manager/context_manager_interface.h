@@ -1,11 +1,8 @@
 #ifndef HUMAN_CONTEXT_INTERFACE_H
 #define HUMAN_CONTEXT_INTERFACE_H
 
-#include "core/common.h"
 
-#include "TTP/base_task/task_errors.h"
 #include "TTP/base_task/base_task.h"
-#include "common/base_subsystem.h"
 #include "common/temoto_id.h"
 #include "common/console_colors.h"
 
@@ -15,7 +12,6 @@
 #include "leap_motion_controller/Set.h"
 
 #include "context_manager/context_manager_services.h"
-#include "context_manager/context_manager_errors.h"
 #include "rmp/resource_manager.h"
 #include <vector>
 
@@ -81,7 +77,7 @@ public:
     }
     catch (...)
     {
-      throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Failed to call service");
+      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service");
     }
 
     // Check if the request was satisfied
@@ -119,7 +115,7 @@ public:
     }
     catch (...)
     {
-      throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Failed to call the server");
+      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call the server");
     }
 
     // Check if the request was satisfied
@@ -145,13 +141,13 @@ public:
     {
       if (object.name == "")
       {
-        throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL , "The object is missing a name");
+        throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL , "The object is missing a name");
       }
 
       // Are the detection methods specified
       if (object.detection_methods.empty())
       {
-        throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Direction method unspecified");
+        throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Direction method unspecified");
       }
     }
 
@@ -161,7 +157,7 @@ public:
     // Call the server
     if (!add_object_client_.call(add_obj_srvmsg))
     {
-       throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Failed to call the server");
+       throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call the server");
     }
 
     // Check the response code
@@ -195,7 +191,7 @@ public:
     }
     catch (...)
     {
-      throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Failed to unload resources");
+      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to unload resources");
     }
   }
 
@@ -229,7 +225,7 @@ public:
         if (!resource_manager_->template call<temoto_2::LoadSpeech>(
                 context_manager::srv_name::MANAGER, context_manager::srv_name::SPEECH_SERVER, *speech_it))
         {
-          throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Failed to call service");
+          throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service");
         }
 
         if (speech_it->response.rmp.code == 0)
@@ -255,7 +251,7 @@ public:
         if (!resource_manager_->template call<temoto_2::LoadGesture>(
                 context_manager::srv_name::MANAGER, context_manager::srv_name::GESTURE_SERVER, *gest_it))
         {
-          throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Failed to call service");
+          throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service");
         }
 
         if (gest_it->response.rmp.code == 0)
@@ -318,7 +314,7 @@ private:
   {
     if(!resource_manager_)
     {
-      throw CREATE_ERROR(ErrorCode::NOT_INITIALIZED, "Interface is not initalized.");
+      throw CREATE_ERROR(error::Code::UNINITIALIZED, "Interface is not initalized.");
     }
   }
 };

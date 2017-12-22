@@ -1,15 +1,10 @@
 #ifndef ROBOT_MANAGER_INTERFACE_H
 #define ROBOT_MANAGER_INTERFACE_H
 
-#include "core/common.h"
-
-#include "TTP/base_task/task_errors.h"
 #include "TTP/base_task/base_task.h"
 #include "common/temoto_id.h"
 #include "common/console_colors.h"
-#include "common/base_subsystem.h"
 
-#include "robot_manager/robot_manager_errors.h"
 #include "robot_manager/robot_manager_services.h"
 #include "rmp/resource_manager.h"
 
@@ -76,7 +71,7 @@ public:
     }
     else
     {
-      throw CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, "Service call returned false.");
+      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
     }
   }
 
@@ -90,7 +85,7 @@ public:
 
     if (!client_plan_.call(msg))
     {
-      throw CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, "Service call returned false.");
+      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
     }
     else if (msg.response.code == rmp::status_codes::FAILED)
     {
@@ -107,7 +102,7 @@ public:
     msg.request.use_default_target = false;
     if (!client_plan_.call(msg))
     {
-      throw CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, "Service call returned false.");
+      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
     }
     else if (msg.response.code == rmp::status_codes::FAILED)
     {
@@ -123,7 +118,7 @@ public:
     temoto_2::RobotExecute msg;
     if (!client_exec_.call(msg))
     {
-      throw CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, "Service call returned false.");
+      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
     }
     else if (msg.response.code == rmp::status_codes::FAILED)
     {
@@ -139,7 +134,7 @@ public:
     temoto_2::RobotGetVizInfo msg;
     if (!client_viz_info_.call(msg))
     {
-      throw CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, "Service call returned false.");
+      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
     }
     else if (msg.response.code == rmp::status_codes::FAILED)
     {
@@ -157,7 +152,7 @@ public:
     msg.request.target_type = target_type;
     if (!client_set_target_.call(msg))
     {
-      throw CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, "Service call returned false.");
+      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
     }
     else if (msg.response.code == rmp::status_codes::FAILED)
     {
@@ -173,7 +168,7 @@ public:
   {
     if (!resource_manager_)
     {
-      throw CREATE_ERROR(ErrorCode::NOT_INITIALIZED, "Interface is not initalized.");
+      throw CREATE_ERROR(error::Code::UNINITIALIZED, "Interface is not initalized.");
     }
   }
 

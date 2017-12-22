@@ -1,7 +1,6 @@
 #ifndef CONTEXT_MANAGER_H
 #define CONTEXT_MANAGER_H
 
-#include "core/common.h"
 #include "common/temoto_id.h"
 #include "common/base_subsystem.h"
 #include "context_manager_containers.h"

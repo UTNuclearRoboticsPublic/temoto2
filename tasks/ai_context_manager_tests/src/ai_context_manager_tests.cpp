@@ -30,7 +30,7 @@ ContextManagerTests()
 }
 
 // startTask with arguments
-bool startTask(TTP::TaskInterface task_interface)
+void startTask(TTP::TaskInterface task_interface)
 {
   // TODO: This is a hack for Veiko
   task_alias = task_interface.alias_;
@@ -44,8 +44,6 @@ bool startTask(TTP::TaskInterface task_interface)
           startInterface_0();
       break;
   }
-
-  return true;
   // </ AUTO-GENERATED, DO NOT MODIFY >
 }
 
@@ -86,43 +84,36 @@ void startInterface_0()
   // Name of the method, used for making debugging a bit simpler
   std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
-  try
-  {
-    // Initialize the sensor manager interface
-    cmi_.initialize(this);
+  // Initialize the sensor manager interface
+  cmi_.initialize(this);
 
-    // Create a cylinder object
-    temoto_2::ObjectContainer cylinder;
-    cylinder.name = "small cylinder";
-    cylinder.detection_methods.push_back(temoto_2::ObjectContainer::ARTAG);
-    cylinder.tag_id = 2;
+  // Create a cylinder object
+  temoto_2::ObjectContainer cylinder;
+  cylinder.name = "small cylinder";
+  cylinder.detection_methods.push_back(temoto_2::ObjectContainer::ARTAG);
+  cylinder.tag_id = 2;
 
-    shape_msgs::SolidPrimitive primitive;
-    primitive.type = shape_msgs::SolidPrimitive::CYLINDER;
-    primitive.dimensions.push_back(0.2);  // Height
-    primitive.dimensions.push_back(0.06); // Radius
-    cylinder.primitive = primitive;
+  shape_msgs::SolidPrimitive primitive;
+  primitive.type = shape_msgs::SolidPrimitive::CYLINDER;
+  primitive.dimensions.push_back(0.2);   // Height
+  primitive.dimensions.push_back(0.06);  // Radius
+  cylinder.primitive = primitive;
 
-    // Add a new object to the context manager
-    cmi_.addWorldObjects(cylinder);
+  // Add a new object to the context manager
+  cmi_.addWorldObjects(cylinder);
 
-    // Pass the name of the object to the output
-    what_0_word_out = cylinder.name;
-  }
-  catch( error::ErrorStack& e )
-  {
-    error_handler_.forwardAndAppend(e, prefix);
-  }
+  // Pass the name of the object to the output
+  what_0_word_out = cylinder.name;
 
-// -------------------------------</ USER CODE >-------------------------------
+  // -------------------------------</ USER CODE >-------------------------------
 
-    // < AUTO-GENERATED, DO NOT MODIFY >
+  // < AUTO-GENERATED, DO NOT MODIFY >
 
-    TTP::Subject what_0_out("what", what_0_word_out);
-    what_0_out.markComplete();
-    output_subjects.push_back(what_0_out);
+  TTP::Subject what_0_out("what", what_0_word_out);
+  what_0_out.markComplete();
+  output_subjects.push_back(what_0_out);
 
-    // </ AUTO-GENERATED, DO NOT MODIFY >
+  // </ AUTO-GENERATED, DO NOT MODIFY >
 }
 
 ~ContextManagerTests()

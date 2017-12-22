@@ -34,7 +34,7 @@ TaskStop()
 }
 
 // startTask
-bool startTask(TTP::TaskInterface task_interface)
+void startTask(TTP::TaskInterface task_interface)
 {
 // * AUTO-GENERATED, DO NOT MODIFY *
     input_subjects = task_interface.input_subjects_;
@@ -51,8 +51,6 @@ bool startTask(TTP::TaskInterface task_interface)
         startInterface_1();
     break;
     }
-
-    return true;
 // * AUTO-GENERATED, DO NOT MODIFY *
 }
 
@@ -100,10 +98,9 @@ void startInterface_0()
             // TODO: do something
         }
     }
-    catch( error::ErrorStackUtil& e )
+    catch(error::ErrorStack& error_stack)
     {
-        e.forward( prefix );
-        this->error_handler_.append(e);
+      FORWARD_ERROR(error_stack);
     }
 
 
@@ -139,29 +136,21 @@ void startInterface_1()
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
-    try
+    std::cout << "  TaskStop: Stopping '" << what_0_word_in << "'\n";
+    what_0_word_out = what_0_word_in;
+
+    temoto_2::StopTask stop_task_srv;
+    stop_task_srv.request.what = what_0_word_in;
+
+    // Call the server
+    stop_task_client_.call(stop_task_srv);
+
+    ROS_INFO("[TaskStop::startTask] '/core/stop_task' service respinded: %s", stop_task_srv.response.message.c_str());
+
+    // Check the result
+    if (stop_task_srv.response.code == 0)
     {
-        std::cout << "  TaskStop: Stopping '" << what_0_word_in << "'\n";
-        what_0_word_out = what_0_word_in;
-
-        temoto_2::StopTask stop_task_srv;
-        stop_task_srv.request.what = what_0_word_in;
-
-        // Call the server
-        stop_task_client_.call(stop_task_srv);
-
-        ROS_INFO("[TaskStop::startTask] '/core/stop_task' service respinded: %s", stop_task_srv.response.message.c_str());
-
-        // Check the result
-        if (stop_task_srv.response.code == 0)
-        {
-            //bla
-        }
-    }
-    catch( error::ErrorStackUtil& e )
-    {
-        e.forward( prefix );
-        this->error_handler_.append(e);
+        //bla
     }
 
 // --------------------------------</ USER CODE >-------------------------------

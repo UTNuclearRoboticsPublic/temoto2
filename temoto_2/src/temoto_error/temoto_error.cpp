@@ -14,13 +14,13 @@ ErrorHandler::ErrorHandler(Subsystem subsystem, std::string log_group)
   error_publisher_ = n_.advertise<temoto_2::ErrorStack>("temoto_error_messages", 100);
 }
 
-ErrorStack ErrorHandler::create(int code, const std::string& prefix, const std::string& message)
+ErrorStack ErrorHandler::create(Code code, const std::string& prefix, const std::string& message)
 {
   ErrorStack est;
 
   temoto_2::Error error;
   error.subsystem = static_cast<int>(subsystem_);
-  error.code = code;
+  error.code = static_cast<int>(code);
   error.prefix = prefix;
   error.message = message;
   error.stamp = ros::Time::now();
@@ -38,7 +38,7 @@ ErrorStack ErrorHandler::forward(ErrorStack error_stack, const std::string& pref
 {
   temoto_2::Error error;
   error.subsystem = static_cast<int>(subsystem_);
-  error.code = FORWARDING_CODE;
+  error.code = static_cast<int>(Code::FORWARDING);
   error.prefix = prefix;
   error.stamp = ros::Time::now();
 

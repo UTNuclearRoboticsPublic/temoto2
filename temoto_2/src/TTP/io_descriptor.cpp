@@ -1,5 +1,4 @@
 #include "TTP/io_descriptor.h"
-#include "TTP/TTP_errors.h"
 #include "common/tools.h"
 #include <iostream>
 #include <string>

@@ -18,12 +18,12 @@
 class TaskRobotViz : public TTP::BaseTask
 {
 public:
-  TaskRobotViz()// : rmi_(this)
+  TaskRobotViz()
   {
     TASK_INFO("Task Robot constructed");
   }
 
-  bool startTask(TTP::TaskInterface task_interface)
+  void startTask(TTP::TaskInterface task_interface)
   {
     task_alias_ = task_interface.alias_;
     input_subjects = task_interface.input_subjects_;
@@ -49,73 +49,35 @@ public:
         showFootprint();
         break;
     }
-    return true;
   }
 
+  // Show the ur5 robot model
   void showRobot()
   {
-    std::string prefix = common::generateLogPrefix("", this->getPackageName(), __func__);
-    try
-    {
-      // Show the ur5 robot model
-      std::set<std::string> viz_options {"robot_model"};
-      omi_.showRobot("ur5", viz_options);
-    }
-    catch (error::ErrorStackUtil& e)
-    {
-      e.forward(prefix);
-      error_handler_.append(e);
-    }
+    std::set<std::string> viz_options{ "robot_model" };
+    omi_.showRobot("ur5", viz_options);
   }
 
+  // Show maps and navigation
   void showNavigation()
   {
-    std::string prefix = common::generateLogPrefix("", this->getPackageName(), __func__);
-    try
-    {
-      // Show the ur5 robot model
-      std::set<std::string> viz_options {"navigation"};
-      omi_.showRobot(viz_options);
-    }
-    catch (error::ErrorStackUtil& e)
-    {
-      e.forward(prefix);
-      error_handler_.append(e);
-    }
+    std::set<std::string> viz_options{ "navigation" };
+    omi_.showRobot(viz_options);
   }
 
+  // Show moveit
   void showManipulation()
   {
-    std::string prefix = common::generateLogPrefix("", this->getPackageName(), __func__);
-    try
-    {
-      // Show the ur5 robot model
-      std::set<std::string> viz_options {"manipulation"};
-      omi_.showRobot(viz_options);
-    }
-    catch (error::ErrorStackUtil& e)
-    {
-      e.forward(prefix);
-      error_handler_.append(e);
-    }
+    std::set<std::string> viz_options{ "manipulation" };
+    omi_.showRobot(viz_options);
   }
 
+  // Show the ur5 robot model
   void showFootprint()
   {
-    std::string prefix = common::generateLogPrefix("", this->getPackageName(), __func__);
-    try
-    {
-      // Show the ur5 robot model
-      std::set<std::string> viz_options {"footprint"};
-      omi_.showRobot(viz_options);
-    }
-    catch (error::ErrorStackUtil& e)
-    {
-      e.forward(prefix);
-      error_handler_.append(e);
-    }
+    std::set<std::string> viz_options{ "footprint" };
+    omi_.showRobot(viz_options);
   }
-
 
   std::vector<TTP::Subject> getSolution()
   {

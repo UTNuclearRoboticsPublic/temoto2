@@ -1,7 +1,5 @@
 #include "ros/package.h"
-#include "core/common.h"
 #include "algorithm_manager/algorithm_manager.h"
-#include "algorithm_manager/algorithm_manager_errors.h"
 #include <algorithm>
 #include <utility>
 #include <yaml-cpp/yaml.h>
@@ -215,7 +213,7 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
       // Respond with an error message
       res.rmp.code = 1;
       res.rmp.message = "Failed to call the ProcessManager.";
-      res.rmp.error_stack = CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, res.rmp.message);
+      res.rmp.error_stack = CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, res.rmp.message);
       return;
     }
 
@@ -284,7 +282,7 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
       res.rmp.code = 1;
       res.rmp.message = "Failed to call the remote Algorithm Manager of "
                       + std::string(algorithm_ptr->getTemotoNamespace());
-      res.rmp.error_stack = CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, res.rmp.message);
+      res.rmp.error_stack = CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, res.rmp.message);
       return;
     }
 
@@ -306,7 +304,7 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
   // No suitable local nor remote algorithm was found
   res.rmp.code = 1;
   res.rmp.message = "AlgorithmManager did not find a suitable algorithm.";
-  res.rmp.error_stack = CREATE_ERROR(ErrorCode::RESOURCE_LOAD_FAIL, res.rmp.message);
+  res.rmp.error_stack = CREATE_ERROR(error::Code::RESOURCE_LOAD_FAIL, res.rmp.message);
 }
 
 /*

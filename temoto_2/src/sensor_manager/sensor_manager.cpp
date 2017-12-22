@@ -14,7 +14,6 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "ros/package.h"
-#include "core/common.h"
 #include "sensor_manager/sensor_manager.h"
 #include <algorithm>
 #include <utility>

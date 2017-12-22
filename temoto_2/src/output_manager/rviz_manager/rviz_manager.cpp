@@ -88,18 +88,18 @@ void RvizManager::runRviz()
 
       if (ros::Time::now() >= timeout)
       {
-        throw CREATE_ERROR(ErrorCode::RVIZ_OPEN_FAIL, "Failed to launch rviz plugin manager: Timeout reached.");
+        throw CREATE_ERROR(error::Code::RVIZ_OPEN_FAIL, "Failed to launch rviz plugin manager: Timeout reached.");
       }
       TEMOTO_DEBUG("%s All rviz_plugin_manager services connected.", prefix.c_str());
     }
     else
     {
-      throw CREATE_ERROR(ErrorCode::RVIZ_OPEN_FAIL, "Failed to launch rviz: ");
+      throw CREATE_ERROR(error::Code::RVIZ_OPEN_FAIL, "Failed to launch rviz: ");
     }
   }
   catch (...)
   {
-    throw CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, "Failed to start RViz");
+    throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to start RViz");
   }
 
 }
@@ -124,12 +124,12 @@ bool RvizManager::loadPluginRequest(rviz_plugin_manager::PluginLoad& load_plugin
     }
     else
     {
-      throw CREATE_ERROR(ErrorCode::PLUGIN_LOAD_FAIL, "Failed to load rviz plugin: " + load_plugin_srv.response.message);
+      throw CREATE_ERROR(error::Code::PLUGIN_LOAD_FAIL, "Failed to load rviz plugin: " + load_plugin_srv.response.message);
     }
   }
   else
   {
-    throw CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, "Failed to call service /rviz_plugin_load");
+    throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service /rviz_plugin_load");
   }
 }
 
@@ -153,12 +153,12 @@ bool RvizManager::unloadPluginRequest(rviz_plugin_manager::PluginUnload& unload_
     }
     else
     {
-      throw CREATE_ERROR(ErrorCode::PLUGIN_UNLOAD_FAIL, "Failed to unload rviz plugin: " + unload_plugin_srv.response.message);
+      throw CREATE_ERROR(error::Code::PLUGIN_UNLOAD_FAIL, "Failed to unload rviz plugin: " + unload_plugin_srv.response.message);
     }
   }
   else
   {
-    throw CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, "Failed to call service /rviz_plugin_unload");
+    throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service /rviz_plugin_unload");
   }
 }
 
@@ -183,14 +183,14 @@ bool RvizManager::getPluginConfigRequest(
     }
     else
     {
-      throw CREATE_ERROR(ErrorCode::PLUGIN_GET_CONFIG_FAIL,
+      throw CREATE_ERROR(error::Code::PLUGIN_GET_CONFIG_FAIL,
                          "Failed to get rviz plugin config: " +
                              get_plugin_config_srv.response.message);
     }
   }
   else
   {
-    throw CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, "Failed to call service /rviz_plugin_get_config");
+    throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service /rviz_plugin_get_config");
   }
 }
 
@@ -215,14 +215,14 @@ bool RvizManager::setPluginConfigRequest(
     }
     else
     {
-      throw CREATE_ERROR(ErrorCode::PLUGIN_SET_CONFIG_FAIL,
+      throw CREATE_ERROR(error::Code::PLUGIN_SET_CONFIG_FAIL,
                          "Failed to set rviz plugin config: " +
                              set_plugin_config_srv.response.message);
     }
   }
   else
   {
-    throw CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, "Failed to call service /rviz_plugin_set_config");
+    throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service /rviz_plugin_set_config");
   }
 }
 
@@ -292,7 +292,7 @@ void RvizManager::LoadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
   }
   else
   {
-    throw CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, "Did not find any appropriate display plugins");
+    throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Did not find any appropriate display plugins");
   }
 }
 
@@ -334,7 +334,7 @@ void RvizManager::unloadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
   }
   else
   {
-    throw CREATE_ERROR(ErrorCode::PLUGIN_UNLOAD_FAIL, "No allocated resources were found");
+    throw CREATE_ERROR(error::Code::PLUGIN_UNLOAD_FAIL, "No allocated resources were found");
   }
 }
 
