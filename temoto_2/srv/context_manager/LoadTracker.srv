@@ -6,9 +6,14 @@ uint8 ARTAG = 1     # Requires the "tag_id" field to be filled
 #uint8 SEGMENT = 2   # Requires the "primitive" field to be filled
 #uint8 TEMPLATE = 3  # Requires the "mesh" field to be filled
 
+# RMP
+temoto_2/RMPRequest rmp
+
 ---
 
-temoto_2/RMPResponse rmp
+# Topics where raw tracking data is published. By default the data
+# is published on one topic but there could be exceptions.
+diagnostic_msgs/KeyValue[] output_topics
 
-# Topic where raw tracking data is published
-string tracker_topic
+# RMP
+temoto_2/RMPResponse rmp

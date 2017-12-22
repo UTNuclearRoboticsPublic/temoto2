@@ -4,6 +4,7 @@
 #include "common/base_subsystem.h"
 #include "common/interface_errors.h"
 #include "common/tools.h"
+#include "common/topic_container.h"
 #include "common/temoto_log_macros.h"
 
 #include "TTP/base_task/task_errors.h"
@@ -12,83 +13,10 @@
 #include "rmp/resource_manager.h"
 #include <memory>   // unique_ptr
 
-typedef std::pair<std::string, std::string> StringPair;
-class AlgorithmManagerInterface;
-
-/**
- * @brief The AlgorithmTopics class
- */
-class AlgorithmTopics
-{
-friend class AlgorithmManagerInterface;
-public:
-
-  void addInputTopic(const std::string& type, const std::string& topic)
-  {
-    input_topics_.emplace_back(std::make_pair(type, topic));
-  }
-
-  void addInputTopicType(const std::string& type)
-  {
-    addInputTopic(type, "");
-  }
-
-  void addOutputTopic(std::string type, std::string topic)
-  {
-    output_topics_.emplace_back(std::make_pair(type, topic));
-  }
-
-  void addOutputTopicType(const std::string& type)
-  {
-    addOutputTopic(type, "");
-  }
-
-  std::vector<StringPair> getInputTopics() const
-  {
-    return input_topics_;
-  }
-
-  std::vector<StringPair> getOutputTopics() const
-  {
-    return output_topics_;
-  }
-
-  // Get input topic
-  std::string getInputTopic(const std::string& type) const
-  {
-    return getTopicByType(type, input_topics_);
-  }
-
-  // Get output topic
-  std::string getOutputTopic(const std::string& type) const
-  {
-    return getTopicByType(type, output_topics_);
-  }
-
-private:
-  std::vector<StringPair> input_topics_;
-  std::vector<StringPair> output_topics_;
-
-  // Get topic by type
-  std::string getTopicByType(const std::string& type, const std::vector<StringPair>& topics) const
-  {
-    // Loop over the topics and check the type match. Return the topic if the types amatch
-    for(auto&topic : topics)
-    {
-      if(topic.first == type)
-      {
-        return topic.second;
-      }
-    }
-
-    return std::string();
-  }
-};
-
 /**
  * @brief The AlgorithmTopicsReq class
  */
-class AlgorithmTopicsReq : public AlgorithmTopics
+class AlgorithmTopicsReq : public TopicContainer
 {
   /* DELIBERATELY EMPTY */
 };
@@ -96,52 +24,14 @@ class AlgorithmTopicsReq : public AlgorithmTopics
 /**
  * @brief The AlgorithmTopicsRes class
  */
-class AlgorithmTopicsRes : public AlgorithmTopics
+class AlgorithmTopicsRes : public TopicContainer
 {
   /* DELIBERATELY EMPTY */
 };
 
-/**
- * @brief operator <<
- * @param v_kv
- * @param v_sp
- * @return
- */
-std::vector<diagnostic_msgs::KeyValue>& operator<<(std::vector<diagnostic_msgs::KeyValue>& v_kv,
-                                                  const std::vector<StringPair>& v_sp)
-{
-  for (auto& sp : v_sp)
-  {
-    diagnostic_msgs::KeyValue kv;
-    kv.key = sp.first;
-    kv.value = sp.second;
-    v_kv.push_back(std::move(kv));
-  }
-
-  return v_kv;
-}
-
-/**
- * @brief operator <<
- * @param v_sp
- * @param v_kv
- * @return
- */
-std::vector<StringPair>& operator<<(std::vector<StringPair>& v_sp,
-                                    const std::vector<diagnostic_msgs::KeyValue>& v_kv)
-{
-  for (auto& kv : v_kv)
-  {
-    StringPair sp{kv.key, kv.value};
-    v_sp.push_back(std::move(sp));
-  }
-
-  return v_sp;
-}
-
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *
- *              ALGORITHM MANAGER INTERFACE
+ *                        ALGORITHM MANAGER INTERFACE
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -172,6 +62,7 @@ public:
   /**
    * @brief startAlgorithm
    * @param algorithm_type
+   * @return
    */
   AlgorithmTopicsRes startAlgorithm(const std::string& algorithm_type)
   {
@@ -186,14 +77,13 @@ public:
       error_handler_.forwardAndThrow(e, prefix);
     }
 
-    return std::move(startAlgorithm(algorithm_type, "", "", AlgorithmTopicsReq()));
+    return startAlgorithm(algorithm_type, "", "", AlgorithmTopicsReq());
   }
 
   /**
    * @brief startAlgorithm
    * @param algorithm_type
-   * @param input_topics
-   * @param output_topics
+   * @param topics
    * @return
    */
   AlgorithmTopicsRes startAlgorithm(const std::string& algorithm_type
@@ -210,7 +100,7 @@ public:
       error_handler_.forwardAndThrow(e, prefix);
     }
 
-    return std::move(startAlgorithm(algorithm_type, "", "", topics));
+    return startAlgorithm(algorithm_type, "", "", topics);
   }
 
   /**
@@ -218,6 +108,8 @@ public:
    * @param algorithm_type
    * @param package_name
    * @param ros_program_name
+   * @param topics
+   * @return
    */
   AlgorithmTopicsRes startAlgorithm(const std::string& algorithm_type
                                   , const std::string& package_name
@@ -233,8 +125,8 @@ public:
     srv_msg.request.algorithm_type = algorithm_type;
     srv_msg.request.package_name = package_name;
     srv_msg.request.executable = ros_program_name;
-    srv_msg.request.input_topics << topics.getInputTopics();
-    srv_msg.request.output_topics << topics.getOutputTopics();
+    srv_msg.request.input_topics = topics.inputTopicsAsKeyValues();
+    srv_msg.request.output_topics = topics.outputTopicsAsKeyValues();
 
     // Call the server
     if (!resource_manager_->template call<temoto_2::LoadAlgorithm>(algorithm_manager::srv_name::MANAGER
@@ -249,10 +141,10 @@ public:
     {
       allocated_algorithms_.push_back(srv_msg);
       AlgorithmTopicsRes responded_topics;
-      responded_topics.input_topics_ << srv_msg.response.input_topics;
-      responded_topics.output_topics_ << srv_msg.response.output_topics;
+      responded_topics.setInputTopicsByKeyValue( srv_msg.response.input_topics );
+      responded_topics.setOutputTopicsByKeyValue( srv_msg.response.output_topics );
 
-      return std::move(responded_topics);
+      return responded_topics;
     }
     else
     {

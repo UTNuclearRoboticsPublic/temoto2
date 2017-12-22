@@ -1,14 +1,19 @@
 #ifndef CONTEXT_MANAGER_H
 #define CONTEXT_MANAGER_H
 
-#include "core/common.h"
-#include "common/temoto_id.h"
+#include "common/tools.h"
+#include "common/temoto_log_macros.h"
 #include "common/base_subsystem.h"
+#include "common/topic_container.h"
+
 #include "context_manager_containers.h"
 #include "context_manager/context_manager_services.h"
-#include "sensor_manager/sensor_manager_services.h"
+
 #include "rmp/resource_manager.h"
 #include "rmp/config_synchronizer.h"
+
+#include "sensor_manager/sensor_manager_services.h"
+#include "algorithm_manager/algorithm_manager_services.h"
 
 namespace context_manager
 {
@@ -25,13 +30,19 @@ public:
 
 private:
 
-  void objectSyncCb(const temoto_2::ConfigSync& msg, const Objects& payload);
+  /**
+   * @brief loadTrackerCb
+   * @param req
+   * @param res
+   */
+  void loadTrackerCb(temoto_2::LoadTracker::Request& req, temoto_2::LoadTracker::Response& res);
 
-  void advertiseAllObjects();
-
-  void addOrUpdateObjects(const Objects& objects_to_add, bool from_other_manager);
-
-  //void loadTrackerCb(temoto_2::LoadGesture::Request& req, temoto_2::LoadGesture::Response& res);
+  /**
+   * @brief unloadTrackerCb
+   * @param req
+   * @param res
+   */
+  void unloadTrackerCb(temoto_2::LoadTracker::Request& req, temoto_2::LoadTracker::Response& res);
 
   /**
    * @brief Service that sets up a gesture publisher
@@ -43,6 +54,14 @@ private:
   void loadGestureCb(temoto_2::LoadGesture::Request& req, temoto_2::LoadGesture::Response& res);
 
   /**
+   * @brief Unload Callback for gesture
+   * @param LoadGesture request message
+   * @param LoadGesture response message
+   * @return
+   */
+  void unloadGestureCb(temoto_2::LoadGesture::Request& req, temoto_2::LoadGesture::Response& res);
+
+  /**
    * @brief Service that sets up a speech publisher
    * @param A gesture specifier message
    * @param Returns a topic where the requested gesture messages
@@ -50,14 +69,6 @@ private:
    * @return
    */
   void loadSpeechCb(temoto_2::LoadSpeech::Request& req, temoto_2::LoadSpeech::Response& res);
-
-  /**
-   * @brief Unload Callback for gesture
-   * @param LoadGesture request message
-   * @param LoadGesture response message
-   * @return
-   */
-  void unloadGestureCb(temoto_2::LoadGesture::Request& req, temoto_2::LoadGesture::Response& res);
 
   /**
    * @brief Unload Callback for speech
@@ -74,12 +85,20 @@ private:
    */
   bool addObjectsCb(temoto_2::AddObjects::Request& req, temoto_2::AddObjects::Response& res);
 
+  void objectSyncCb(const temoto_2::ConfigSync& msg, const Objects& payload);
+
+  void advertiseAllObjects();
+
+  void addOrUpdateObjects(const Objects& objects_to_add, bool from_other_manager);
+
   // Resource manager for handling servers and clients
   rmp::ResourceManager<ContextManager> resource_manager_1_;
 
-  // Resource manager for handling servers and clients.
-  // TODO: The second manager is used for making RMP calls within the same manager. If the same
-  // resouce manager is used for calling servers managed by the same manager, the calls will lock
+  /*
+   * Resource manager for handling servers and clients.
+   * TODO: The second manager is used for making RMP calls within the same manager. If the same
+   * resouce manager is used for calling servers managed by the same manager, the calls will lock
+   */
   rmp::ResourceManager<ContextManager> resource_manager_2_;
 
   ros::NodeHandle nh_;

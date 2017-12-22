@@ -100,6 +100,9 @@ void startInterface_0()
     requested_topics.addOutputTopic("type_0","/out_remapped_topic_0");
 
     AlgorithmTopicsRes responded_topics = ami_.startAlgorithm("test", requested_topics);
+    std::cout << responded_topics.getInputTopic("type_0") << std::endl;
+    std::cout << responded_topics.getInputTopic("type_1") << std::endl;
+    std::cout << responded_topics.getOutputTopic("type_0") << std::endl;
 
     // Pass the camera topic to the output
     what_0_word_out = what_0_word_in;

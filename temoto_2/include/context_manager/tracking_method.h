@@ -8,6 +8,7 @@
 #include <memory>                     // shared_ptr
 #include "common/temoto_log_macros.h"
 #include "common/topic_container.h"   // StringPair
+#include "common/reliability.h"
 #include <yaml-cpp/yaml.h>
 
 #include <iostream>                   // TODO: remove
@@ -15,173 +16,48 @@
 namespace algorithm_manager
 {
 
-class AlgorithmInfo
+/**
+ * @brief The FilterCategory enum
+ */
+enum class FilterCategory : int
+{
+  SENSOR,
+  ALGORITHM
+};
+
+/**
+ * @brief The Filter struct
+ */
+struct Filter
+{
+  FilterCategory filter_category_;
+  std::string filter_type_;
+  std::vector<std::string> output_topic_types;
+};
+
+/**
+ * @brief The TrackerInfo class
+ */
+class TrackerInfo
 {
 public:
-  /**
-   * @brief AlgorithmInfo
+
+  /*
+   * TODO STUFF
    */
-
-  AlgorithmInfo(std::string algorithm_name = "A noname algorithm");
-  
-  /**
-   * \brief Adjust reliability
-   * \param reliability the new reliability contribution to the moving average filter. The value has
-   * to be in range [0-1], 0 being not reliable at all and 1.0 is very
-   * reliable.
-   */
-  void adjustReliability(float reliability = 1.0);
-
-
-  std::string toString() const;
-
-  /* * * * * * * * * * * *
-   *     GETTERS
-   * * * * * * * * * * * */
-
-  // Get the temoto namespace where this algorithm is defined
-  std::string getTemotoNamespace() const
-  {
-    return temoto_namespace_;
-  }
-
-  /// Get name
-  std::string getName() const
-  {
-    return algorithm_name_;
-  }
-
-  // Get input topics
-  const std::vector<StringPair>& getTopicsIn() const
-  {
-    return input_topics_;
-  }
-
-  // Get topic by type
-  std::string getTopicByType(const std::string& type, const std::vector<StringPair>& topics);
-
-  std::string getInputTopic(const std::string& type);
-
-  std::string getOutputTopic(const std::string& type);
-
-  // Get output topics
-  const std::vector<StringPair>& getTopicsOut() const
-  {
-    return output_topics_;
-  }
-
-  // Get algorithm type
-  std::string getType() const
-  {
-    return algorithm_type_;
-  }
-
-  // Get algorithm package name
-  std::string getPackageName() const
-  {
-    return package_name_;
-  }
-
-  // Get executable
-  std::string getExecutable() const
-  {
-    return executable_;
-  }
-
-  // Get description
-  std::string getDescription() const
-  {
-    return description_;
-  }
-
-  float getReliability() const
-  {
-    return reliability_;
-  }
-
-
-  /* * * * * * * * * * * *
-   *     SETTERS
-   * * * * * * * * * * * */
-  void setTemotoNamespace(std::string temoto_namespace)
-  {
-    temoto_namespace_ = temoto_namespace;
-  }
-
-  void setName(std::string name)
-  {
-    algorithm_name_ = name;
-  }
-
-  void addTopicIn(StringPair topic)
-  {
-    input_topics_.push_back(topic);
-  }
-
-  void addTopicOut(StringPair topic)
-  {
-    output_topics_.push_back(topic);
-  }
-
-  void setType(std::string algorithm_type)
-  {
-    algorithm_type_ = algorithm_type;
-  }
-
-  void setPackageName(std::string package_name)
-  {
-    package_name_ = package_name;
-  }
-
-  void setExecutable(std::string executable)
-  {
-    executable_ = executable;
-  }
-
-  void setDescription(std::string description)
-  {
-    description_ = description;
-  }
-
-  /**
-   * \brief Set reliability
-   * \param reliability Sets the initial values for the reliability moving average filter.
-   * The value has to be in range [0-1], 0 being not reliable at all and 1.0 is very
-   * reliable.
-   */
-  void setReliability(float reliability = 0.8);
 
 private:
   
+  std::string type_;
+  std::vector<Filter> pipe_;
   std::string temoto_namespace_;
-  std::string algorithm_name_;
-  std::string algorithm_type_;
-  std::string package_name_;
-  std::string executable_;
-  std::string description_;
-  std::vector<StringPair> input_topics_;
-  std::vector<StringPair> output_topics_;
-
-  /**
-   * @brief Reliability ratings of the algorithm.
-   */
-  std::array<float, 100> reliabilities_;
-
-  /**
-   * @brief Reliability moving average.
-   */
-  float reliability_;
-
-  /**
-   * @brief Reliability rating of the algorithm.
-   */
-  unsigned int reliability_idx_;
+  Reliability reliability_;
 };
 
-typedef std::shared_ptr<AlgorithmInfo> AlgorithmInfoPtr;
-typedef std::vector<AlgorithmInfoPtr> AlgorithmInfoPtrs;
+typedef std::shared_ptr<TrackerInfo> TrackerInfoPtr;
+typedef std::vector<TrackerInfoPtr> TrackerInfoPtrs;
 
-static bool operator==(const AlgorithmInfo& s1, const AlgorithmInfo& s2)
+static bool operator==(const TrackerInfo& s1, const TrackerInfo& s2)
 {
   // Check the namespace, executable and name of the package
   if (s1.getTemotoNamespace() != s2.getTemotoNamespace() ||
@@ -248,9 +124,9 @@ static bool operator==(const AlgorithmInfo& s1, const AlgorithmInfo& s2)
 namespace YAML
 {
 template <>
-struct convert<algorithm_manager::AlgorithmInfo>
+struct convert<algorithm_manager::TrackerInfo>
 {
-  static Node encode(const algorithm_manager::AlgorithmInfo& algorithm)
+  static Node encode(const algorithm_manager::TrackerInfo& algorithm)
   {
     Node node;
     node["algorithm_name"] = algorithm.getName();
@@ -277,7 +153,7 @@ struct convert<algorithm_manager::AlgorithmInfo>
     return node;
   }
 
-  static bool decode(const Node& node, algorithm_manager::AlgorithmInfo& algorithm)
+  static bool decode(const Node& node, algorithm_manager::TrackerInfo& algorithm)
   {
     if (!node.IsMap() || node.size() < 5)
     {

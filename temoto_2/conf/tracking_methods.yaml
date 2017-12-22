@@ -1,0 +1,25 @@
+---
+hands:
+- method
+  - filter: "sensor"
+    filter_type: "hand"
+
+- method
+  - filter: "sensor"
+    type: "camera"
+
+  - filter: "algorithm"
+    filter_type: "hand detector"
+    input_topic_types:
+      - data
+  
+artags:
+- method
+  - filter: "sensor"
+    type: "camera"
+
+  - filter: "algorithm"
+    filter_type: "artag"
+    input_topic_types:
+      - camera_info
+      - data

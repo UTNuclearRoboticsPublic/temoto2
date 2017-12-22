@@ -32,10 +32,10 @@ ContextManager::ContextManager()
                                                     , &ContextManager::loadSpeechCb
                                                     , &ContextManager::unloadSpeechCb);
 
-//  // Speech recognition service
-//  resource_manager_2_.addServer<temoto_2::LoadTracker>(srv_name::TRACKER_SERVER
-//                                                    , &ContextManager::loadTrackerCb
-//                                                    , &ContextManager::unloadTrackerCb);
+  // Speech recognition service
+  resource_manager_2_.addServer<temoto_2::LoadTracker>(srv_name::TRACKER_SERVER
+                                                    , &ContextManager::loadTrackerCb
+                                                    , &ContextManager::unloadTrackerCb);
 
 
   // "Add object" server
@@ -47,6 +47,9 @@ ContextManager::ContextManager()
   TEMOTO_INFO("Context Manager is ready.");
 }
 
+/*
+ * Object synchronization callback
+ */
 void ContextManager::objectSyncCb(const temoto_2::ConfigSync& msg, const Objects& payload)
 {
   std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
@@ -65,6 +68,9 @@ void ContextManager::objectSyncCb(const temoto_2::ConfigSync& msg, const Objects
   }
 }
 
+/*
+ * Object update callback
+ */
 void ContextManager::addOrUpdateObjects(const Objects& objects_to_add, bool from_other_manager)
 {
   std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
@@ -98,6 +104,9 @@ void ContextManager::addOrUpdateObjects(const Objects& objects_to_add, bool from
   }
 }
 
+/*
+ * Advertise all objects
+ */
 void ContextManager::advertiseAllObjects()
 {
   // Publish all objects
@@ -115,6 +124,9 @@ void ContextManager::advertiseAllObjects()
   }
 }
 
+/*
+ * Callback for adding objects
+ */
 bool ContextManager::addObjectsCb(temoto_2::AddObjects::Request& req, temoto_2::AddObjects::Response& res)
 {
   std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
@@ -125,6 +137,46 @@ bool ContextManager::addObjectsCb(temoto_2::AddObjects::Request& req, temoto_2::
   return true;
 }
 
+/*
+ * Load tracker callback
+ */
+void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
+                                   temoto_2::LoadTracker::Response& res)
+{
+  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
+  TEMOTO_INFO_STREAM(prefix << "%s Received a request: \n" << req << std::endl);
+
+//  try
+//  {
+//    // Load a calibrated camera
+//    temoto_2::LoadSensor load_sensor_msg;
+
+
+//    resource_manager_2_.call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
+//                                                   sensor_manager::srv_name::SERVER,
+//                                                   load_sensor_msg);
+//  }
+//  catch(error::ErrorStack& e)
+//  {
+//    res.rmp.errorStack = error_handler_.forwardAndReturn(e, prefix);
+//  }
+//  catch(...)
+//  {
+//    res.rmp.errorStack = error_handler_.createAndReturn(999, prefix, "Unhandled exception");
+//  }
+}
+
+/*
+ * Unload tracker callback
+ */
+void ContextManager::unloadTrackerCb(temoto_2::LoadTracker::Request& req, temoto_2::LoadTracker::Response& res)
+{
+  // POOLELI
+}
+
+/*
+ * Load gesture callback
+ */
 void ContextManager::loadGestureCb(temoto_2::LoadGesture::Request& req,
                                    temoto_2::LoadGesture::Response& res)
 {
@@ -139,7 +191,8 @@ void ContextManager::loadGestureCb(temoto_2::LoadGesture::Request& req,
   try
   {
     resource_manager_1_.call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
-                                                 sensor_manager::srv_name::SERVER, msg);
+                                                   sensor_manager::srv_name::SERVER,
+                                                   msg);
   }
   catch (...)
   {

@@ -4,6 +4,7 @@
 #include "common/base_subsystem.h"
 #include "common/interface_errors.h"
 #include "common/tools.h"
+#include "common/topic_container.h"
 #include "common/temoto_log_macros.h"
 
 #include "TTP/base_task/task_errors.h"
@@ -12,12 +13,32 @@
 #include "rmp/resource_manager.h"
 #include <memory> //unique_ptr
 
-typedef std::pair<std::string, std::string> StringPair;
+/**
+ * @brief The AlgorithmTopicsReq class
+ */
+class SensorTopicsReq : public TopicContainer
+{
+  /* DELIBERATELY EMPTY */
+};
+
+/**
+ * @brief The AlgorithmTopicsRes class
+ */
+class SensorTopicsRes : public TopicContainer
+{
+  /* DELIBERATELY EMPTY */
+};
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ *                          SENSOR MANAGER INTERFACE
+ *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 class SensorManagerInterface : BaseSubsystem
 {
 public:
-  /**
+  /**S
    * @brief SensorManagerInterface
    */
   SensorManagerInterface()
@@ -39,31 +60,59 @@ public:
   /**
    * @brief startSensor
    * @param sensor_type
+   * @return
    */
-  std::string startSensor(std::string sensor_type)
+  SensorTopicsRes startSensor(const std::string& sensor_type)
   {
     std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
     validateInterface(prefix);
 
     try
     {
-      return startSensor(sensor_type, "", "");
+      validateInterface(prefix);
     }
-    catch (error::ErrorStackUtil& e)
+    catch (error::ErrorStack& e)
     {
-      e.forward(prefix);
-      error_handler_.append(e);
+      error_handler_.forwardAndThrow(e, prefix);
     }
+
+    return startSensor(sensor_type, "", "", SensorTopicsReq());
   }
 
   /**
    * @brief startSensor
    * @param sensor_type
+   * @param topics
+   * @return
+   */
+  SensorTopicsRes startSensor(const std::string& sensor_type, const SensorTopicsReq& topics)
+  {
+    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
+
+    try
+    {
+      validateInterface(prefix);
+    }
+    catch (error::ErrorStack& e)
+    {
+      error_handler_.forwardAndThrow(e, prefix);
+    }
+
+    return startSensor(sensor_type, "", "", topics);
+  }
+
+  /**
+   * @brief startSensor
+   * @param algorithm_type
    * @param package_name
    * @param ros_program_name
+   * @param topics
+   * @return
    */
-  std::string startSensor(std::string sensor_type, std::string package_name,
-                          std::string ros_program_name)
+  SensorTopicsRes startSensor(const std::string& sensor_type
+                            , const std::string& package_name
+                            , const std::string& ros_program_name
+                            , const SensorTopicsReq& topics)
   {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
@@ -74,28 +123,29 @@ public:
     srv_msg.request.sensor_type = sensor_type;
     srv_msg.request.package_name = package_name;
     srv_msg.request.executable = ros_program_name;
+    srv_msg.request.output_topics = topics.outputTopicsAsKeyValues();
 
     // Call the server
     if (!resource_manager_->template call<temoto_2::LoadSensor>(
-            sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, srv_msg))
+            sensor_manager::srv_name::MANAGER,
+            sensor_manager::srv_name::SERVER,
+            srv_msg))
     {
-      throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK,
-                                  error::Urgency::MEDIUM, prefix + " Failed to call service",
-                                  ros::Time::now());
+      error_handler_.forwardAndThrow(srv_msg.response.rmp.errorStack, prefix);
     }
 
     // If the request was fulfilled, then add the srv to the list of allocated sensors
     if (srv_msg.response.rmp.code == 0)
     {
       allocated_sensors_.push_back(srv_msg);
-      return srv_msg.response.topic;
+      SensorTopicsRes responded_topics;
+      responded_topics.setOutputTopicsByKeyValue( srv_msg.response.output_topics );
+
+      return responded_topics;
     }
     else
     {
-      throw error::ErrorStackUtil(
-          taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK, error::Urgency::MEDIUM,
-          prefix + " Unsuccessful call to sensor manager: " + srv_msg.response.rmp.message,
-          ros::Time::now());
+      error_handler_.forwardAndThrow(srv_msg.response.rmp.errorStack, prefix);
     }
   }
 

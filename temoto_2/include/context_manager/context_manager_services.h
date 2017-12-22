@@ -25,6 +25,12 @@ namespace context_manager
   }
 }
 
+static bool operator==(const temoto_2::LoadTracker::Request& r1,
+                       const temoto_2::LoadTracker::Request& r2)
+{
+    return( r1.detection_method == r2.detection_method);
+}
+
 static bool operator==(const temoto_2::LoadGesture::Request& r1,
 		const temoto_2::LoadGesture::Request& r2)
 {
