@@ -16,21 +16,21 @@ namespace common
 inline std::string generateLogPrefix(std::string subsys_name, std::string class_name,
                                      std::string method_name)
 {
-  std::string prefix = "[";
+  std::string prefixx = "[";
   if (subsys_name.size())
   {
-    prefix += subsys_name + "/";
+    prefixx += subsys_name + "/";
   }
   if (class_name.size())
   {
-    prefix += class_name;
+    prefixx += class_name;
     if (method_name.size())
     {
-      prefix += "::";
+      prefixx += "::";
     }
   }
-  prefix += method_name + "]";
-  return prefix;
+  prefixx += method_name + "]";
+  return prefixx;
 }
 
 inline const std::string getTemotoNamespace()

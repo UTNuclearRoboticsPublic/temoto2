@@ -267,8 +267,6 @@ private:
 
   std::vector<temoto_2::LoadRvizPlugin> plugins_;
 
-  error::ErrorHandler error_handler_;
-
   /**
    * @brief validateInterface()
    * @param sensor_type

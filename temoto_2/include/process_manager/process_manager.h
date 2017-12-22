@@ -50,8 +50,6 @@ namespace process_manager
 			// Resource management protocol
 			rmp::ResourceManager<ProcessManager> resource_manager_;
 
-			//error::ErrorHandler error_handler_;
-
 			// Listens for calls to start or kill processes
 			//ros::ServiceServer spawn_kill_srv_;
 

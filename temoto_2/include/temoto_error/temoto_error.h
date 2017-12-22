@@ -57,14 +57,14 @@ public:
    * @param prefix Prefix describing where the error was created.
    * @param message A brief description of what went wrong.
    */
-  ErrorStack create(int code, std::string prefix, std::string message);
+  ErrorStack create(int code, const std::string& prefix, const std::string& message);
 
   /**
    * @brief Appends the existing error stack with a prefix.
    * @param error_stack Error stack to which the prefix is appended.
    * @param prefix Prefix describing where the error is forwarded.
    */
-  ErrorStack forward(ErrorStack error_stack, std::string prefix);
+  ErrorStack forward(ErrorStack error_stack, const std::string& prefix);
 
   /**
    * @brief Publishes the error_stack

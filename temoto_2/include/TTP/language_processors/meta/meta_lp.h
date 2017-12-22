@@ -6,22 +6,23 @@
 
 #include "meta/parser/sr_parser.h"
 #include "meta/sequence/perceptron.h"
+#include "common/base_subsystem.h"
 
 namespace TTP
 {
 
-class MetaLP
+class MetaLP : BaseSubsystem
 {
 public:
 
     /// Default constructor
-    MetaLP() = default;
+//    MetaLP() = default;
 
     /**
      * @brief Constructor
      * @param Base path to language model files
      */
-    MetaLP(std::string language_models_dir);
+    MetaLP(std::string language_models_dir, BaseSubsystem& b);
 
     /**
      * @brief Looks for any potential tasks from input text and
@@ -32,8 +33,6 @@ public:
     TaskTree processText(std::string input_text);
 
 private:
-
-    const std::string class_name_ = "MetaLP";
 
     meta::sequence::perceptron tagger_;
 

@@ -14,7 +14,7 @@ ErrorHandler::ErrorHandler(Subsystem subsystem, std::string log_group)
   error_publisher_ = n_.advertise<temoto_2::ErrorStack>("temoto_error_messages", 100);
 }
 
-ErrorStack ErrorHandler::create(int code, std::string prefix, std::string message)
+ErrorStack ErrorHandler::create(int code, const std::string& prefix, const std::string& message)
 {
   ErrorStack est;
 
@@ -34,7 +34,7 @@ ErrorStack ErrorHandler::create(int code, std::string prefix, std::string messag
   return est;
 }
 
-ErrorStack ErrorHandler::forward(ErrorStack error_stack, std::string prefix)
+ErrorStack ErrorHandler::forward(ErrorStack error_stack, const std::string& prefix)
 {
   temoto_2::Error error;
   error.subsystem = static_cast<int>(subsystem_);
@@ -71,17 +71,17 @@ std::ostream& operator<<(std::ostream& out, const temoto_2::Error& t)
   return out;
 }
 
-//std::ostream& operator<<(std::ostream& out, const error::ErrorStack& t)
-//{
-//  out << std::endl;
-//  // Start printing out the errors
-//  for (auto& err : t)
-//  {
-//    if (err.code != 0)
-//    {
-//      out << std::endl << " ------- Error Trace --------";
-//    }
-//    out << err;
-//  }
-//  return out;
-//}
+std::ostream& operator<<(std::ostream& out, const error::ErrorStack& t)
+{
+  out << std::endl;
+  // Start printing out the errors
+  for (auto& err : t)
+  {
+    if (err.code != 0)
+    {
+      out << std::endl << " ------- Error Trace --------";
+    }
+    out << err;
+  }
+  return out;
+}

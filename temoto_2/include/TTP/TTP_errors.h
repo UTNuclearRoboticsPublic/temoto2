@@ -23,7 +23,8 @@ namespace TTPErr
         NLP_INV_ARG,        // Invalid argument in Natural Language Processor
         NLP_BAD_INPUT,      // NLP was not able to make any sense from provided input text
         NLP_NO_TASK,        // Suitable task was not found
-        NLP_DISABLED        // NLP was tried to be used while it was disabled
+        NLP_DISABLED,        // NLP was tried to be used while it was disabled
+        SUBJECT_NOT_FOUND    // Subject was not found
     };
 }
 

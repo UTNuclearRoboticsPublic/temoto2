@@ -54,10 +54,9 @@ int main(int argc, char **argv)
 
         std::cout << "---- Task Descriptor Processor test end ----" << std::endl;
     }
-    catch( error::ErrorStackUtil& e )
+    catch(error::ErrorStack& error_stack)
     {
-        // Rethrow the error
-        std::cout << e.getStack();
+      FORWARD_ERROR(error_stack);
     }
 
     std::cout << "Loading tagging model" << std::endl;

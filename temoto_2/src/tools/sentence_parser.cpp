@@ -48,10 +48,9 @@ int main(int argc, char **argv)
         }
 */
     }
-    catch (error::ErrorStackUtil& e)
+    catch (error::ErrorStack& error_stack)
     {
-        // Rethrow or do whatever
-        std::cout << e.getStack();
+      FORWARD_ERROR(error_stack);
     }
 
     TTP::MetaLP language_processor(temoto_path + "/include/TTP/language_processors/meta/models/");
@@ -86,10 +85,9 @@ int main(int argc, char **argv)
             task_manager.executeTaskTree (tt.getRootNode(), flow_graph);
 
         }
-        catch (error::ErrorStackUtil& e)
+        catch (error::ErrorStack& error_stack)
         {
-            // Rethrow or do whatever
-            //std::cout << e.getStack();
+          FORWARD_ERROR(error_stack);
         }
 
         std::cout << "----------------------------------------------------------\n" << std::flush;

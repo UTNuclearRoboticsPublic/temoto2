@@ -119,11 +119,6 @@ public:
      */
     virtual ~BaseTask(){};
 
-    /**
-     * @brief error_handler_
-     */
-    error::ErrorHandler error_handler_;
-
     std::vector<TTP::Subject> input_subjects;
 
     std::vector<TTP::Subject> output_subjects;

@@ -48,10 +48,12 @@ std::vector<std::string> parseString (std::string in_str, char delimiter)
  *  CONSTRUCTOR
  * * * * * * * * */
 
-TaskDescriptorProcessor::TaskDescriptorProcessor(std::string path)
+TaskDescriptorProcessor::TaskDescriptorProcessor(std::string path, BaseSubsystem& b) 
     :
+      BaseSubsystem(b),
       base_path_(path)
 {
+    class_name_ = __func__;
     desc_file_path_ = base_path_ + "/descriptor.xml";
     try
     {
@@ -60,11 +62,9 @@ TaskDescriptorProcessor::TaskDescriptorProcessor(std::string path)
         getRootElement();
     }
 
-    catch( error::ErrorStackUtil& e )
+    catch(error::ErrorStack& error_stack)
     {
-        // Rethrow the error
-        e.forward( "[TaskDescriptorProcessor/Constructor]") ;
-        throw e;
+      FORWARD_ERROR(error_stack);
     }
 }
 
@@ -80,12 +80,7 @@ std::string TaskDescriptorProcessor::getPackageName()
     if( !package_xml.LoadFile( base_path_ + "/package.xml") )
     {
         // Throw error
-        error::ErrorStackUtil error_stack_util( TTPErr::DESC_OPEN_FAIL,
-                                                error::Subsystem::AGENT,
-                                                error::Urgency::LOW,
-                                                "[TaskDescriptorProcessor/getPackageName] " + std::string( package_xml.ErrorDesc() ),
-                                                ros::Time::now() );
-        throw error_stack_util;
+        throw CREATE_ERROR(TTPErr::DESC_OPEN_FAIL, std::string(package_xml.ErrorDesc()));
     }
 
     // Get root element
@@ -93,12 +88,7 @@ std::string TaskDescriptorProcessor::getPackageName()
 
     if( package_el == NULL )
     { 
-        error::ErrorStackUtil error_stack_util( TTPErr::DESC_NO_ROOT,
-                                                error::Subsystem::AGENT,
-                                                error::Urgency::LOW,
-                                                "[TaskDescriptorProcessor/getPackageName] No package element in",
-                                                ros::Time::now() );
-        throw error_stack_util;
+        throw CREATE_ERROR(TTPErr::DESC_NO_ROOT, "Missing element 'package'.");
     }
 
     // Get the name of the package
@@ -106,24 +96,14 @@ std::string TaskDescriptorProcessor::getPackageName()
     if (name_el == NULL)
     {
         // Throw error
-        error::ErrorStackUtil error_stack_util( TTPErr::DESC_NO_ROOT,
-                                                error::Subsystem::AGENT,
-                                                error::Urgency::LOW,
-                                                "[TaskDescriptorProcessor/getPackageName] 'Name' element either missing or broken",
-                                                ros::Time::now() );
-        throw error_stack_util;
+        throw CREATE_ERROR(TTPErr::DESC_NO_ROOT, "Missing element 'name'.");
     }
 
     TiXmlNode* name_content = name_el->FirstChild();
     std::string name_str;
     if(name_content == NULL)
     {
-        error::ErrorStackUtil error_stack_util( TTPErr::DESC_NO_ROOT,
-                                                error::Subsystem::AGENT,
-                                                error::Urgency::LOW,
-                                                "[TaskDescriptorProcessor/getPackageName] Content between the 'Name' tags is missing missing or broken",
-                                                ros::Time::now() );
-        throw error_stack_util;
+        throw CREATE_ERROR(TTPErr::DESC_NO_ROOT, "Content in the 'name' block is missing.");
     }
     else
     {
@@ -147,12 +127,7 @@ void TaskDescriptorProcessor::openTaskDesc()
     if( !desc_file_.LoadFile(desc_file_path_) )
     {
         // Throw error
-        error::ErrorStackUtil error_stack_util( TTPErr::DESC_OPEN_FAIL,
-                                                error::Subsystem::AGENT,
-                                                error::Urgency::LOW,
-                                                "[TaskDescriptorProcessor/openTaskDesc] " + std::string( desc_file_.ErrorDesc() ) + desc_file_path_,
-                                                ros::Time::now() );
-        throw error_stack_util;
+        throw CREATE_ERROR(TTPErr::DESC_OPEN_FAIL, std::string( desc_file_.ErrorDesc() ) + desc_file_path_);
     }
 }
 
@@ -168,12 +143,7 @@ void TaskDescriptorProcessor::getRootElement()
     if( root_element_ == NULL )
     {
         // Throw error
-        error::ErrorStackUtil error_stack_util( TTPErr::DESC_NO_ROOT,
-                                                error::Subsystem::AGENT,
-                                                error::Urgency::LOW,
-                                                "[TaskDescriptorProcessor/getTaskType] No root element in: " + desc_file_path_,
-                                                ros::Time::now() );;
-        throw error_stack_util;
+        throw CREATE_ERROR(TTPErr::DESC_NO_ROOT, "No root element in: " + desc_file_path_);
     }
 }
 
@@ -189,12 +159,7 @@ Action TaskDescriptorProcessor::getTaskAction()
     if (action_attribute == NULL)
     {      
         // Throw error
-        error::ErrorStackUtil error_stack_util( TTPErr::DESC_NO_ATTR,
-                                                error::Subsystem::AGENT,
-                                                error::Urgency::LOW,
-                                                "[TaskDescriptorProcessor/getTaskType] Missing 'action' attribute in: " + desc_file_path_,
-                                                ros::Time::now() );
-        throw error_stack_util;
+        throw CREATE_ERROR(TTPErr::DESC_NO_ATTR, "Missing 'action' attribute in: " + desc_file_path_);
     }
 
     return std::move(std::string(action_attribute));
@@ -277,11 +242,9 @@ TaskDescriptor TaskDescriptorProcessor::getTaskDescriptor()
         task_descriptor.task_lib_path_ = boost::filesystem::canonical(path).string();
     }
 
-    catch( error::ErrorStackUtil& e )
+    catch(error::ErrorStack& error_stack)
     {
-        // Rethrow the error
-        e.forward( prefix );
-        throw e;
+      FORWARD_ERROR(error_stack);
     }
 
     return task_descriptor;
@@ -311,20 +274,13 @@ std::vector<TaskInterface> TaskDescriptorProcessor::getInterfaces()
         if (task_interfaces.empty())
         {
             // Throw error
-            error::ErrorStackUtil error_stack_util(TTPErr::DESC_INVALID_ARG,
-                                                   error::Subsystem::AGENT,
-                                                   error::Urgency::LOW,
-                                                   prefix + "Missing 'interface' elements in: " + desc_file_path_,
-                                                   ros::Time::now() );
-            throw error_stack_util;
+            throw CREATE_ERROR(TTPErr::DESC_INVALID_ARG, "Missing 'interface' elements in: " + desc_file_path_);
         }
 
     }
-    catch( error::ErrorStackUtil& e )
+    catch(error::ErrorStack& error_stack)
     {
-        // Rethrow the error
-        e.forward(prefix);
-        throw e;
+      FORWARD_ERROR(error_stack);
     }
     return std::move(task_interfaces);
 }
@@ -344,12 +300,7 @@ TaskInterface TaskDescriptorProcessor::getInterface(TiXmlElement* interface_elem
     const char* id_attribute = interface_element->Attribute("id");
     if (id_attribute == NULL)
     {
-        error::ErrorStackUtil error_stack_util(TTPErr::DESC_NO_ATTR,
-                                               error::Subsystem::AGENT,
-                                               error::Urgency::LOW,
-                                               prefix + "Missing id attribute in: " + desc_file_path_,
-                                               ros::Time::now() );
-        throw error_stack_util;
+        throw CREATE_ERROR(TTPErr::DESC_NO_ATTR, "Missing id attribute in: " + desc_file_path_);
     }
 
     task_interface.id_ = atoi(id_attribute);
@@ -358,12 +309,7 @@ TaskInterface TaskDescriptorProcessor::getInterface(TiXmlElement* interface_elem
     const char* type_attribute = interface_element->Attribute("type");
     if (type_attribute == NULL)
     {
-        error::ErrorStackUtil error_stack_util(TTPErr::DESC_NO_ATTR,
-                                               error::Subsystem::AGENT,
-                                               error::Urgency::LOW,
-                                               prefix + "Missing type attribute in: " + desc_file_path_,
-                                               ros::Time::now() );
-        throw error_stack_util;
+        throw CREATE_ERROR(TTPErr::DESC_NO_ATTR, "Missing type attribute in: " + desc_file_path_);
     }
 
     task_interface.type_ = std::string(type_attribute);
@@ -376,11 +322,9 @@ TaskInterface TaskDescriptorProcessor::getInterface(TiXmlElement* interface_elem
         //NOT REQUIRED
         task_interface.output_subjects_ = getIOSubjects("out", interface_element);
     }
-    catch( error::ErrorStackUtil& e )
+    catch(error::ErrorStack& error_stack)
     {
-        // Rethrow the error
-        e.forward(prefix);
-        throw e;
+      FORWARD_ERROR(error_stack);
     }
     return std::move(task_interface);
 }
@@ -410,12 +354,7 @@ std::vector<Subject> TaskDescriptorProcessor::getIOSubjects(std::string directio
             }
 
             // Throw error
-            error::ErrorStackUtil error_stack_util(TTPErr::DESC_NO_ATTR,
-                                                   error::Subsystem::AGENT,
-                                                   error::Urgency::LOW,
-                                                   prefix + "Missing '" + direction + "' attribute in: " + desc_file_path_,
-                                                   ros::Time::now() );
-            throw error_stack_util;
+            throw CREATE_ERROR(TTPErr::DESC_NO_ATTR, "Missing '" + direction + "' attribute in: " + desc_file_path_);
         }
 
         // Extract subjects (whats, wheres, numerics)
@@ -428,12 +367,7 @@ std::vector<Subject> TaskDescriptorProcessor::getIOSubjects(std::string directio
             if (std::find(valid_subjects.begin(), valid_subjects.end(), sub_type) == valid_subjects.end())
             {
                 // Throw error
-                error::ErrorStackUtil error_stack_util(TTPErr::DESC_INVALID_ARG,
-                                                       error::Subsystem::AGENT,
-                                                       error::Urgency::LOW,
-                                                       prefix + "Invalid datatype: " + desc_file_path_,
-                                                       ros::Time::now() );
-                throw error_stack_util;
+                throw CREATE_ERROR(TTPErr::DESC_INVALID_ARG, "Invalid datatype: " + desc_file_path_);
             }
 
             // Parse the subject and add it to the IO-Descriptor
@@ -441,11 +375,9 @@ std::vector<Subject> TaskDescriptorProcessor::getIOSubjects(std::string directio
             io_subjects.push_back(subject);
         }
     }
-    catch( error::ErrorStackUtil& e )
+    catch(error::ErrorStack& error_stack)
     {
-        // Rethrow the error
-        e.forward(prefix);
-        throw e;
+      FORWARD_ERROR(error_stack);
     }
 
     return std::move(io_subjects);
@@ -477,12 +409,7 @@ Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
         if (arg_element == NULL)
         {
             // Throw error
-            error::ErrorStackUtil error_stack_util(TTPErr::DESC_NO_ATTR,
-                                                   error::Subsystem::AGENT,
-                                                   error::Urgency::LOW,
-                                                   prefix + "Missing 'arg' attribute in: " + desc_file_path_,
-                                                   ros::Time::now() );
-            throw error_stack_util;
+            throw CREATE_ERROR(TTPErr::DESC_NO_ATTR, "Missing 'arg' attribute in: " + desc_file_path_);
         }
 
         // Get the word attribute. REQUIRED
@@ -490,12 +417,7 @@ Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
         if ( word_attribute == NULL )
         {
             // Throw error
-            error::ErrorStackUtil error_stack_util(TTPErr::DESC_NO_ATTR,
-                                                   error::Subsystem::AGENT,
-                                                   error::Urgency::LOW,
-                                                   prefix + "Missing 'word' attribute in: " + desc_file_path_,
-                                                   ros::Time::now() );
-            throw error_stack_util;
+            throw CREATE_ERROR(TTPErr::DESC_NO_ATTR, "Missing 'word' attribute in: " + desc_file_path_);
         }
 
         subject.words_ = std::move(parseString(std::string(word_attribute), ',')); // TODO: allow ', ' default expressions
@@ -506,12 +428,7 @@ Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
         {
             /*
             // Throw error
-            error::ErrorStackUtil error_stack_util(TTPErr::DESC_NO_ATTR,
-                                                   error::Subsystem::AGENT,
-                                                   error::Urgency::LOW,
-                                                   prefix + "Missing 'pos_tag' attribute in: " + desc_file_path_,
-                                                   ros::Time::now() );
-            throw error_stack_util;
+            throw CREATE_ERROR(TTPErr::DESC_NO_ATTR, "Missing 'pos_tag' attribute in: " + desc_file_path_);
             */
 
             subject.pos_tag_ = std::string(pos_tag_attribute);
@@ -531,11 +448,9 @@ Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
 
         subject.data_ = getData(data_element);
     }
-    catch( error::ErrorStackUtil& e )
+    catch(error::ErrorStack& error_stack)
     {
-        // Rethrow the error
-        e.forward(prefix);
-        throw e;
+      FORWARD_ERROR(error_stack);
     }
 
     return subject;
@@ -564,12 +479,7 @@ std::vector<Data> TaskDescriptorProcessor::getData(TiXmlElement* data_element)
             if ( datatype_attribute == NULL )
             {
                 // Throw error
-                error::ErrorStackUtil error_stack_util(TTPErr::DESC_NO_ATTR,
-                                                       error::Subsystem::AGENT,
-                                                       error::Urgency::LOW,
-                                                       prefix + "Missing 'datatype' attribute in: " + desc_file_path_,
-                                                       ros::Time::now() );
-                throw error_stack_util;
+                throw CREATE_ERROR(TTPErr::DESC_NO_ATTR, "Missing 'datatype' attribute in: " + desc_file_path_);
             }
 
             std::string datatype = std::string(datatype_attribute);
@@ -578,12 +488,7 @@ std::vector<Data> TaskDescriptorProcessor::getData(TiXmlElement* data_element)
             if (std::find(valid_datatypes.begin(), valid_datatypes.end(), datatype) == valid_datatypes.end())
             {
                 // Throw error
-                error::ErrorStackUtil error_stack_util(TTPErr::DESC_INVALID_ARG,
-                                                       error::Subsystem::AGENT,
-                                                       error::Urgency::LOW,
-                                                       prefix + "Invalid datatype: " + desc_file_path_,
-                                                       ros::Time::now() );
-                throw error_stack_util;
+                throw CREATE_ERROR(TTPErr::DESC_INVALID_ARG, "Invalid datatype: " + desc_file_path_);
             }
 
             Data data;
@@ -615,20 +520,13 @@ std::vector<Data> TaskDescriptorProcessor::getData(TiXmlElement* data_element)
             datas.push_back(data);
         }
     }
-    catch( error::ErrorStackUtil& e )
+    catch(error::ErrorStack& error_stack)
     {
-        // Rethrow the error
-        e.forward(prefix);
-        throw e;
+      FORWARD_ERROR(error_stack);
     }
     catch (boost::bad_any_cast& e)
     {
-        error::ErrorStackUtil error_stack_util(TTPErr::BAD_ANY_CAST,
-                                               error::Subsystem::AGENT,
-                                               error::Urgency::LOW,
-                                               prefix + e.what() + ". in: " + desc_file_path_,
-                                               ros::Time::now() );
-        throw error_stack_util;
+        throw CREATE_ERROR(TTPErr::BAD_ANY_CAST, std::string(e.what()) + ". in: " + desc_file_path_);
     }
 
     return datas;

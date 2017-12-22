@@ -26,11 +26,6 @@ namespace output_manager
 class RvizManager : BaseSubsystem
 {
 public:
-  /**
-   * @brief error_handler_
-   */
-  error::ErrorHandler error_handler_;
-
   RvizManager();
 
   RvizManager(std::string path_to_default_conf);

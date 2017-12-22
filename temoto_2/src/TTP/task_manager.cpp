@@ -63,17 +63,9 @@ TaskManager::TaskManager( std::string subsystem_name
     initCore();
   }
 
-  // TODO: util is deprecated
-  catch (error::ErrorStackUtil& e)
+  catch (error::ErrorStack& error_stack)
   {
-    // Rethrow or do whatever
-    // std::cout << e.getStack();
-  }
-
-  catch (error::ErrorStack& e)
-  {
-    // Rethrow or do whatever
-    // std::cout << e.getStack();
+    FORWARD_ERROR(error_stack);
   }
 }
 
@@ -118,7 +110,7 @@ void TaskManager::initCore()
    */
   if (nlp_enabled_)
   {
-    language_processor_ = new MetaLP(temoto_path + "/include/TTP/language_processors/meta/models/");
+    language_processor_ = new MetaLP(temoto_path + "/include/TTP/language_processors/meta/models/", *this);
 
     // Subscribe to human chatter topic. This triggers the callback that processes text
     // messages and trys to find and execute tasks based on the text
@@ -157,11 +149,9 @@ void TaskManager::humanChatterCb (std_msgs::String chat)
         std::cout << BOLDWHITE << "Received: " << chat.data << RESET << std::endl << std::endl;
         executeVerbalInstruction (chat.data);
     }
-    catch (error::ErrorStackUtil& e)
+    catch (error::ErrorStack& error_stack)
     {
-        // Append the error to local ErrorStack
-        e.forward( prefix );
-        error_handler_.append(e);
+      FORWARD_ERROR(error_stack);
     }
 
     std::cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * \n\n";
@@ -182,11 +172,7 @@ void TaskManager::executeVerbalInstruction (std::string& verbal_instruction)
         // First check if NLP is enabled, if not then throw an error
         if (!nlp_enabled_)
         {
-            throw error::ErrorStackUtil( TTPErr::NLP_DISABLED,
-                                         error::Subsystem::AGENT,
-                                         error::Urgency::HIGH,
-                                         prefix + " NLP cannot be used if its disabled",
-                                         ros::Time::now() );
+            throw CREATE_ERROR(TTPErr::NLP_DISABLED, "NLP cannot be used if its disabled.");
         }
 
         // Convert the verbal instruction into a incomplete semantic frame tree
@@ -216,11 +202,9 @@ void TaskManager::executeVerbalInstruction (std::string& verbal_instruction)
         // Execute the SFT
         executeSFT(std::move(sft));
     }
-    catch( error::ErrorStackUtil & e )
+    catch(error::ErrorStack& error_stack)
     {
-        // Rethrow the exception
-        e.forward( prefix );
-        throw e;
+      FORWARD_ERROR(error_stack);
     }
 
     return;
@@ -278,19 +262,13 @@ void TaskManager::executeSFT (TaskTree sft)
 
         TEMOTO_DEBUG_STREAM(prefix << " Finished executing the flow graph");
     }
-    catch( error::ErrorStackUtil & e )
+    catch(error::ErrorStack& error_stack)
     {
-        // Rethrow the exception
-        e.forward( prefix );
-        throw e;
+      FORWARD_ERROR(error_stack);
     }
     catch(...)
     {
-        throw error::ErrorStackUtil( TTPErr::UNHANDLED,
-                                     error::Subsystem::AGENT,
-                                     error::Urgency::HIGH,
-                                     prefix + "Received an unhandled exception",
-                                     ros::Time::now() );
+        throw CREATE_ERROR(TTPErr::UNHANDLED, "Received an unhandled exception");
     }
 
     // Let others know that action execution engine is not busy
@@ -371,15 +349,13 @@ std::vector <TaskDescriptor> TaskManager::findTaskFilesys(std::string task_to_fi
                      * I THINK THIS SHOULD NOT BE CREATED EVERY SINGLE TIME
                      */
                     boost::filesystem::path hackdir ((*itr)); //HACKATON
-                    TaskDescriptorProcessor tdp(hackdir.parent_path().string());
+                    TaskDescriptorProcessor tdp(hackdir.parent_path().string(), *this);
                     tasks_found.push_back(tdp.getTaskDescriptor());
                 }
 
-                catch( error::ErrorStackUtil & e )
+                catch(error::ErrorStack& error_stack)
                 {
-                    // Append the error to local ErrorStack
-                    e.forward( prefix );
-                    error_handler_.append(e);
+                  FORWARD_ERROR(error_stack);
                 }
             }
         }
@@ -388,21 +364,13 @@ std::vector <TaskDescriptor> TaskManager::findTaskFilesys(std::string task_to_fi
     catch (std::exception& e)
     {
         // Rethrow the exception
-        throw error::ErrorStackUtil( TTPErr::FIND_TASK_FAIL,
-                                     error::Subsystem::AGENT,
-                                     error::Urgency::HIGH,
-                                     prefix + e.what(),
-                                     ros::Time::now() );
+        throw CREATE_ERROR(TTPErr::FIND_TASK_FAIL, e.what());
     }
 
     catch(...)
     {
         // Rethrow the exception
-        throw error::ErrorStackUtil( TTPErr::UNHANDLED,
-                                     error::Subsystem::AGENT,
-                                     error::Urgency::HIGH,
-                                     prefix + "Received an unhandled exception",
-                                     ros::Time::now() );
+        throw CREATE_ERROR(TTPErr::UNHANDLED, "Received an unhandled exception");
     }
 }
 
@@ -432,11 +400,9 @@ void TaskManager::indexTasks (boost::filesystem::directory_entry base_path, int 
         // Clear the synchronous task libraries set
         synchronous_task_libs_.clear();
     }
-    catch( error::ErrorStackUtil & e )
+    catch(error::ErrorStack& error_stack)
     {
-        // Rethrow the exception
-        e.forward( prefix );
-        throw e;
+      FORWARD_ERROR(error_stack);
     }
 }
 
@@ -962,12 +928,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
     if (candidate_tasks.empty())
     {
         // Throw error
-        error::ErrorStackUtil error_stack_util(TTPErr::NLP_NO_TASK,
-                                               error::Subsystem::AGENT,
-                                               error::Urgency::MEDIUM,
-                                               prefix + " Couldn't find a suitable task for action: " + node_action,
-                                               ros::Time::now() );
-        throw error_stack_util;
+        throw CREATE_ERROR(TTPErr::NLP_NO_TASK, "Couldn't find a suitable task for action: " + node_action);
     }
 
     // Sort the candidates with decreasing order and pick the first candidate
@@ -1025,10 +986,9 @@ void TaskManager::loadAndInitializeTaskTree(TaskTreeNode& node)
       TEMOTO_DEBUG_STREAM(prefix << " Instatiating the task '" << node_task_descriptor.getAction() << "'");
       instantiateTask(node);
     }
-    catch(error::ErrorStackUtil& e)
+    catch(error::ErrorStack& error_stack)
     {
-      e.forward(prefix);
-      throw e;
+      FORWARD_ERROR(error_stack);
     }
   }
 
@@ -1082,11 +1042,7 @@ void TaskManager::loadTask(TaskDescriptor& task_descriptor)
 
     if (classes.empty())
     {
-      throw error::ErrorStackUtil( TTPErr::CLASS_LOADER_FAIL,
-                                   error::Subsystem::AGENT,
-                                   error::Urgency::HIGH,
-                                   prefix + " Could not load the class fom path: " + path_to_lib,
-                                   ros::Time::now() );
+      throw CREATE_ERROR(TTPErr::CLASS_LOADER_FAIL, "Could not load the class fom path: " + path_to_lib);
     }
 
     // Add the name of the class
@@ -1097,11 +1053,7 @@ void TaskManager::loadTask(TaskDescriptor& task_descriptor)
   catch(class_loader::ClassLoaderException& e)
   {
     // Rethrow the exception
-    throw error::ErrorStackUtil( TTPErr::CLASS_LOADER_FAIL,
-                                 error::Subsystem::AGENT,
-                                 error::Urgency::HIGH,
-                                 prefix + e.what(),
-                                 ros::Time::now() );
+    throw CREATE_ERROR(TTPErr::CLASS_LOADER_FAIL, e.what());
   }
 }
 
@@ -1122,11 +1074,7 @@ void TaskManager::instantiateTask(TaskTreeNode& node)
   // First check that the task has a "class name"
   if (task_class_name.empty())
   {
-    throw error::ErrorStackUtil( TTPErr::NAMELESS_TASK_CLASS,
-                                 error::Subsystem::AGENT,
-                                 error::Urgency::HIGH,
-                                 prefix + "Task missing a class name",
-                                 ros::Time::now() );
+    throw CREATE_ERROR(TTPErr::NAMELESS_TASK_CLASS, "Task missing a class name.");
   }
 
 //    // Check if there is a class with this name
@@ -1145,11 +1093,7 @@ void TaskManager::instantiateTask(TaskTreeNode& node)
 //    // If the task was not found, throw an error
 //    if (!task_class_found)
 //    {
-//        throw error::ErrorStackUtil( TTPErr::NO_TASK_CLASS,
-//                                     error::Subsystem::AGENT,
-//                                     error::Urgency::HIGH,
-//                                     prefix + "Could not find a task class within loaded classes",
-//                                     ros::Time::now() );
+//        throw CREATE_ERROR(TTPErr::NO_TASK_CLASS, "Could not find a task class within loaded classes.");
 //    }
 
   // If the task was found, create an instance of it
@@ -1181,11 +1125,7 @@ void TaskManager::instantiateTask(TaskTreeNode& node)
   catch(class_loader::ClassLoaderException& e)
   {
     // Rethrow the exception
-    throw error::ErrorStackUtil( TTPErr::CLASS_LOADER_FAIL,
-                                 error::Subsystem::AGENT,
-                                 error::Urgency::HIGH,
-                                 prefix + e.what(),
-                                 ros::Time::now() );
+    throw CREATE_ERROR(TTPErr::CLASS_LOADER_FAIL, e.what());
   }
 }
 
@@ -1207,11 +1147,7 @@ void TaskManager::unloadTaskLib(std::string path_to_lib)
     catch(class_loader::ClassLoaderException& e)
     {
         // Rethrow the exception
-        throw error::ErrorStackUtil( TTPErr::CLASS_LOADER_FAIL,
-                                     error::Subsystem::AGENT,
-                                     error::Urgency::HIGH,
-                                     prefix + e.what(),
-                                     ros::Time::now() );
+        throw CREATE_ERROR(TTPErr::CLASS_LOADER_FAIL, e.what());
     }
 }
 
@@ -1298,14 +1234,9 @@ bool TaskManager::stopTaskCallback( temoto_2::StopTask::Request& req,
         res.message = "task stopped";
     }
 
-    catch( error::ErrorStackUtil & e )
+    catch(error::ErrorStack& error_stack)
     {
-        // Append the error to local ErrorStack
-        e.forward( prefix );
-        error_handler_.append(e);
-
-        res.code = 1;
-        res.message = "failed to stop the task";
+      FORWARD_ERROR(error_stack);
     }
 
     return true;
@@ -1358,12 +1289,20 @@ void TaskManager::stopTask(std::string action, std::string what)
 
             // Look for the what
             Subjects subjects = task_it->first->getFirstInputSubjects(); // copy
-            Subject subject = getSubjectByType("what", subjects);
-
-            if (subject.words_.empty() || subject.words_[0] != what)
+            try
             {
+              Subject subject = getSubjectByType("what", subjects);
+
+              if (subject.words_.empty() || subject.words_[0] != what)
+              {
                 continue;
+              }
             }
+            catch(std::string& e)
+            {
+              throw CREATE_ERROR(TTPErr::SUBJECT_NOT_FOUND, e);
+            }
+
 
             // Debug
             TEMOTO_DEBUG_STREAM (prefix << " Found the task, stopping it");
@@ -1432,12 +1371,18 @@ void TaskManager::stopTask(std::string action, std::string what)
         {
             // Look for the what
             Subjects subjects = task_it->first->getFirstInputSubjects(); // copy
-            Subject subject = getSubjectByType("what", subjects);
-
-            if (subject.words_.empty() || subject.words_[0] != what)
+            try
             {
+              Subject subject = getSubjectByType("what", subjects);
+              if (subject.words_.empty() || subject.words_[0] != what)
+              {
                 task_it++;
                 continue;
+              }
+            }
+            catch(std::string& e)
+            {
+              throw CREATE_ERROR(TTPErr::SUBJECT_NOT_FOUND, e);
             }
 
             // Debug
@@ -1452,11 +1397,7 @@ void TaskManager::stopTask(std::string action, std::string what)
     if (!task_stopped)
     {
         // If nothing was specified, then throw error
-        throw error::ErrorStackUtil( TTPErr::UNSPECIFIED_TASK,
-                                     error::Subsystem::AGENT,
-                                     error::Urgency::MEDIUM,
-                                     prefix + " Task 'action' and 'what' unspecified.",
-                                     ros::Time::now() );
+        throw CREATE_ERROR(TTPErr::UNSPECIFIED_TASK, "Task 'action' and 'what' unspecified.");
     }
 }
 
@@ -1485,12 +1426,9 @@ void TaskManager::indexTasksCallback(temoto_2::IndexTasks index_msg)
         indexTasks(dir, 1);
         TEMOTO_DEBUG_STREAM(prefix << "Browsed and indexed the tasks successfully");
     }
-    catch( error::ErrorStackUtil & e )
+    catch(error::ErrorStack& error_stack)
     {
-        // Append the error to local ErrorStack
-        e.forward( prefix );
-        error_handler_.append(e);
-        TEMOTO_ERROR("Failed to index the tasks");
+      FORWARD_ERROR(error_stack);
     }
 }
 
