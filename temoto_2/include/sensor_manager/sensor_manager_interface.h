@@ -49,10 +49,9 @@ public:
     {
       return startSensor(sensor_type, "", "");
     }
-    catch (error::ErrorStackUtil& e)
+    catch (error::ErrorStack& error_stack)
     {
-      e.forward(prefix);
-      error_handler_.append(e);
+      FORWARD_ERROR(error_stack);
     }
   }
 
@@ -79,9 +78,7 @@ public:
     if (!resource_manager_->template call<temoto_2::LoadSensor>(
             sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, srv_msg))
     {
-      throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK,
-                                  error::Urgency::MEDIUM, prefix + " Failed to call service",
-                                  ros::Time::now());
+      throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Failed to call service");
     }
 
     // If the request was fulfilled, then add the srv to the list of allocated sensors
@@ -92,10 +89,7 @@ public:
     }
     else
     {
-      throw error::ErrorStackUtil(
-          taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK, error::Urgency::MEDIUM,
-          prefix + " Unsuccessful call to sensor manager: " + srv_msg.response.rmp.message,
-          ros::Time::now());
+      throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Unsuccessful call to sensor manager: ");
     }
   }
 
@@ -133,9 +127,7 @@ public:
       }
       else if (cur_sensor_it == allocated_sensors_.begin())
       {
-        throw error::ErrorStackUtil(
-            taskErr::RESOURCE_UNLOAD_FAIL, error::Subsystem::TASK, error::Urgency::MEDIUM,
-            prefix + " Unable to unload resource that is not loaded.", ros::Time::now());
+        throw CREATE_ERROR(taskErr::RESOURCE_UNLOAD_FAIL, "Unable to unload resource that is not loaded.");
       }
     }
   }
@@ -167,9 +159,7 @@ public:
         if (!resource_manager_->template call<temoto_2::LoadSensor>(
                 sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, *sens_it))
         {
-          throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK,
-                                      error::Urgency::MEDIUM, prefix + " Failed to call service",
-                                      ros::Time::now());
+          throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Failed to call service");
         }
 
         if (sens_it->response.rmp.code == 0)
@@ -179,10 +169,7 @@ public:
         }
         else
         {
-          throw error::ErrorStackUtil(
-              taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK, error::Urgency::MEDIUM,
-              prefix + " Unsuccessful call to sensor manager: " + sens_it->response.rmp.message,
-              ros::Time::now());
+          throw FORWARD_ERROR(sens_it->response.rmp.error_stack);
         }
       }
       else
@@ -213,8 +200,7 @@ private:
   {
     if(!resource_manager_)
     {
-      error_handler_.createAndThrow(ErrorCode::NOT_INITIALIZED, TEMOTO_LOG_PREFIX,
-                                    "Interface is not initalized.");
+      throw CREATE_ERROR(ErrorCode::NOT_INITIALIZED, "Interface is not initalized.");
     }
   }
 };

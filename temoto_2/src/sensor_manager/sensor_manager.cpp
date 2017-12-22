@@ -331,7 +331,6 @@ SensorInfoPtrs SensorManager::parseSensors(const YAML::Node& config)
 
   if (!config.IsMap())
   {
-    // TODO Throw
     TEMOTO_WARN("Unable to parse 'Sensors' key from config.");
     return sensors;
   }
@@ -340,7 +339,6 @@ SensorInfoPtrs SensorManager::parseSensors(const YAML::Node& config)
   if (!sensors_node.IsSequence())
   {
     TEMOTO_WARN("The given config does not contain sequence of sensors.");
-    // TODO Throw
     return sensors;
   }
 

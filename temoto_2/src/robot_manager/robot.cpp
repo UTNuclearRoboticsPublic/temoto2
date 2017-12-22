@@ -67,9 +67,7 @@ void Robot::waitForParam(const std::string& param, temoto_id::ID interrupt_res_i
     TEMOTO_DEBUG("%s Waiting for %s ...", prefix.c_str(), param.c_str());
     if (resource_manager_.hasFailed(interrupt_res_id))
     {
-      //throw error::ErrorStackUtil(
-      //    robot_error::SERVICE_STATUS_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
-      //    prefix + "Loading interrupted. A FAILED status was received from process manager.");
+      //throw CREATE_ERROR(robot_error::SERVICE_STATUS_FAIL, "Loading interrupted. A FAILED status was received from process manager.");
     }
     ros::Duration(0.2).sleep();
   }
@@ -84,10 +82,7 @@ void Robot::waitForTopic(const std::string& topic, temoto_id::ID interrupt_res_i
     TEMOTO_DEBUG("%s Waiting for %s ...", prefix.c_str(), topic.c_str());
     if (resource_manager_.hasFailed(interrupt_res_id))
     {
-
-     // throw error::ErrorStackUtil(
-     //     robot_error::SERVICE_STATUS_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
-     //     prefix + "Loading interrupted. A FAILED status was received from process manager.");
+      throw CREATE_ERROR(robot_error::SERVICE_STATUS_FAIL, "oading interrupted. A FAILED status was received from process manager.");
     }
     ros::Duration(0.2).sleep();
   }
@@ -157,18 +152,9 @@ temoto_id::ID Robot::rosExecute(const std::string& package_name, const std::stri
   if (resource_manager_.call<temoto_2::LoadProcess>(
           process_manager::srv_name::MANAGER, process_manager::srv_name::SERVER, load_proc_srvc))
   {
-    //    throw error::ErrorStackUtil(robot_error::SERVICE_REQ_FAIL,
-    //    error::Subsystem::ROBOT_MANAGER,
-    //                                error::Urgency::MEDIUM,
-    //                                prefix + " Failed to make a service call to ProcessManager.");
     if (load_proc_srvc.response.rmp.code != rmp::status_codes::FAILED)
     {
-      //    throw error::ErrorStackUtil(robot_error::SERVICE_STATUS_FAIL,
-      //    error::Subsystem::ROBOT_MANAGER,
-      //                                error::Urgency::MEDIUM,
-      //                                prefix + " ProcessManager failed to execute '" + executable
-      //                                +
-      //                                    "': " + load_proc_srvc.response.rmp.message);
+      //TODO: FORWARD error
     }
     return load_proc_srvc.response.rmp.resource_id;
   }

@@ -1,5 +1,5 @@
-#ifndef BASE_ERROR_H
-#define BASE_ERROR_H
+#ifndef TEMOTO_ERROR_H
+#define TEMOTO_ERROR_H
 
 #include <string>
 #include <vector>
@@ -11,9 +11,7 @@
 
 namespace error
 {
-
 const int FORWARDING_CODE = 0;
-const bool VERBOSE = true;
 
 /**
  * @brief Enum that stores the subsystem codes
@@ -31,106 +29,17 @@ enum class Subsystem : int
 };
 
 /**
- * @brief Enum that stores the urgency leveles
- */
-enum class Urgency : int
-{
-  LOW,        // Does not affect the performance of the system directly
-  MEDIUM,     // Does not affect the performance of the system directly, but needs to be resolved
-  HIGH        // Affects the performance of the system, needs to be resolved immediately
-};
-
-/**
  * @brief ErrorStack
  */
-typedef std::vector <temoto_2::Error> ErrorStack;
+typedef std::vector<temoto_2::Error> ErrorStack;
 
-// TODO: Dont use this anymore and change the old error management system
-class ErrorStackUtil
-{
-public:
+#define __TEMOTO_ERROR_HANDLER_VERBOSE__ TRUE
 
-    /**
-     * @brief ErrorStackUtil
-     * @param code
-     * @param subsystem
-     * @param urgency
-     * @param message
-     * @param timeStamp
-     */
-    ErrorStackUtil ( int code,
-                     Subsystem subsystem,
-                     Urgency urgency,
-                     std::string message,
-                     ros::Time timeStamp );
+#define CREATE_ERROR(code, message) error_handler_.create(code, TEMOTO_LOG_PREFIX, message)
 
-    /**
-     * @brief ErrorStackUtil
-     * @param code
-     * @param subsystem
-     * @param urgency
-     * @param message
-     */
-    ErrorStackUtil ( int code,
-                     Subsystem subsystem,
-                     Urgency urgency,
-                     std::string message);
+#define FORWARD_ERROR(error_stack) error_handler_.forward(error_stack, TEMOTO_LOG_PREFIX)
 
-    /**
-     * @brief getStack
-     * @return
-     */
-    ErrorStack getStack ();
-
-    /**
-     * @brief push
-     * @param code
-     * @param subsystem
-     * @param urgency
-     * @param message
-     * @param timeStamp
-     */
-    void push ( int code,
-                Subsystem subsystem,
-                Urgency urgency,
-                std::string message,
-                ros::Time timeStamp );
-
-    /**
-     * @brief apush
-     * @param base_error
-     */
-    void push ( temoto_2::Error base_error );
-
-    /**
-     * @brief forward
-     * @param message
-     */
-    void forward ( std::string from_where );
-
-private:
-
-    /**
-     * @brief error_stack_
-     */
-    ErrorStack error_stack_;
-
-    /**
-     * @brief initBaseError
-     * @param code
-     * @param subsystem
-     * @param urgency
-     * @param message
-     * @param stamp
-     * @return
-     */
-    temoto_2::Error initBaseError ( int code,
-                                        Subsystem subsystem,
-                                        Urgency urgency,
-                                        std::string message,
-                                        ros::Time stamp);
-};
-
+#define ERROR_SEND()
 
 /**
  * @brief The ErrorHandler class
@@ -138,59 +47,32 @@ private:
 class ErrorHandler
 {
 public:
-
   ErrorHandler();
 
   ErrorHandler(Subsystem subsystem, std::string log_group);
 
-  void createAndThrow(int code, std::string prefix, std::string message);
-
-  ErrorStack createAndReturn(int code, std::string prefix, std::string message);
-
-  void forwardAndThrow(ErrorStack& est, std::string prefix);
+  /**
+   * @brief Creates the ErrorStack object.
+   * @param code Code for classifying the error.
+   * @param prefix Prefix describing where the error was created.
+   * @param message A brief description of what went wrong.
+   */
+  ErrorStack create(int code, std::string prefix, std::string message);
 
   /**
-   * @brief Appends the ErrorStack
-   * @param errorStack
+   * @brief Appends the existing error stack with a prefix.
+   * @param error_stack Error stack to which the prefix is appended.
+   * @param prefix Prefix describing where the error is forwarded.
    */
-  void append( ErrorStack errorStack );
-
-  void forwardAndAppend(ErrorStack errorStack, std::string prefix);
-
-  ErrorStack forwardAndReturn(ErrorStack errorStack, std::string prefix);
+  ErrorStack forward(ErrorStack error_stack, std::string prefix);
 
   /**
-   * @brief append
-   * @param err_stk_util
+   * @brief Publishes the error_stack
+   * @param error_stack
    */
-  void append( ErrorStackUtil err_stck_util );
-
-  /**
-   * @brief Returns the ErrorStack and sets the "newErrors" flag to false
-   * @return
-   */
-  ErrorStack read();
-
-  /**
-   * @brief Returns the ErrorStack and does not change the "newErrors" flag
-   * @return
-   */
-  ErrorStack readSilent() const;
-
-  /**
-   * @brief Returns the ErrorStack, sets the "newErrors" flag to false and clears the stack
-   * @return
-   */
-  ErrorStack readAndClear();
-
-  /**
-   * @brief Returns "true" if there are any new unread errors
-   * @return
-   */
-  bool gotUnreadErrors() const;
+  void send(ErrorStack error_stack);
 
 private:
-
   Subsystem subsystem_;
 
   std::string log_group_;
@@ -198,14 +80,9 @@ private:
   ros::NodeHandle n_;
 
   ros::Publisher error_publisher_;
-
-  bool newErrors_ = false;
-
-  ErrorStack errorStack_;
 };
 
-
-} // end of error namespace
+}  // end of error namespace
 
 /**
  * @brief operator <<
@@ -222,13 +99,5 @@ std::ostream& operator<<(std::ostream& out, const temoto_2::Error& t);
  * @return
  */
 std::ostream& operator<<(std::ostream& out, const error::ErrorStack& t);
-
-/**
- * @brief operator <<
- * @param out
- * @param t
- * @return
- */
-std::ostream& operator<<(std::ostream& out, const error::ErrorHandler& t);
 
 #endif

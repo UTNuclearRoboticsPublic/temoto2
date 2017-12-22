@@ -5,7 +5,6 @@
 #include <fstream>
 #include <sstream>
 
-#include "base_error/base_error.h"
 #include "robot_manager/robot_manager_errors.h"
 
 
@@ -85,8 +84,7 @@ void RobotManager::loadLocalRobot(RobotConfigPtr config)
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   if (!config)
   {
-    throw error::ErrorStackUtil(ErrorCode::NULL_PTR, error::Subsystem::ROBOT_MANAGER,
-                                error::Urgency::MEDIUM, prefix + " config == NULL");
+    throw CREATE_ERROR(ErrorCode::NULL_PTR, "config == NULL");
   }
 
   temoto_2::LoadProcess::Response load_proc_res;
@@ -97,18 +95,13 @@ void RobotManager::loadLocalRobot(RobotConfigPtr config)
     config->adjustReliability(1.0);
     TEMOTO_DEBUG("%s Robot '%s' loaded.", prefix.c_str(), config->getName().c_str());
   }
-  catch (error::ErrorStackUtil& e)
+  catch (error::ErrorStack& error_stack)
   {
-    if (e.getStack().front().code == ErrorCode::SERVICE_STATUS_FAIL)
+    if (error_stack.front().code == ErrorCode::SERVICE_STATUS_FAIL)
     {
       config->adjustReliability(0.0);
     }
-    
-    std::stringstream ss;
-    ss << prefix << " Exception occured while loading a robot: " << e.getStack();
-    TEMOTO_ERROR_STREAM(ss.str());
-    e.forward(prefix);
-    throw e;
+    FORWARD_ERROR(error_stack);
   }
 }
 
@@ -127,10 +120,9 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
       res.rmp.code = rmp::status_codes::FAILED;
       res.rmp.message = "Robot sucessfully loaded.";
     }
-    catch (error::ErrorStackUtil& e)
+    catch (error::ErrorStack& error_stack)
     {
-      //TEMOTO_ERROR_STREAM("Failed to load local robot: " << e);
-      return;
+      FORWARD_ERROR(error_stack);
     }
     catch (...)
     {

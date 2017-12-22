@@ -215,9 +215,7 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
       // Respond with an error message
       res.rmp.code = 1;
       res.rmp.message = "Failed to call the ProcessManager.";
-      res.rmp.errorStack = error_handler_.createAndReturn(ErrorCode::SERVICE_REQ_FAIL
-                                                        , prefix
-                                                        , res.rmp.message);
+      res.rmp.error_stack = CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, res.rmp.message);
       return;
     }
 
@@ -241,7 +239,7 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
     {
       algorithm_ptr->adjustReliability(0.0);
       res.rmp = load_process_msg.response.rmp;
-      res.rmp.errorStack = error_handler_.forwardAndReturn(load_process_msg.response.rmp.errorStack, prefix);
+      res.rmp.error_stack = FORWARD_ERROR(load_process_msg.response.rmp.error_stack);
     }
 
     // Let other managers know about the updated reliability
@@ -286,9 +284,7 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
       res.rmp.code = 1;
       res.rmp.message = "Failed to call the remote Algorithm Manager of "
                       + std::string(algorithm_ptr->getTemotoNamespace());
-      res.rmp.errorStack = error_handler_.createAndReturn(ErrorCode::SERVICE_REQ_FAIL
-                                                        , prefix
-                                                        , res.rmp.message);
+      res.rmp.error_stack = CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, res.rmp.message);
       return;
     }
 
@@ -302,7 +298,7 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
     else
     {
       res.rmp = load_algorithm_msg.response.rmp;
-      res.rmp.errorStack = error_handler_.forwardAndReturn(res.rmp.errorStack, prefix);
+      res.rmp.error_stack = FORWARD_ERROR(res.rmp.error_stack);
     }
     return;
   }
@@ -310,9 +306,7 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
   // No suitable local nor remote algorithm was found
   res.rmp.code = 1;
   res.rmp.message = "AlgorithmManager did not find a suitable algorithm.";
-  res.rmp.errorStack = error_handler_.createAndReturn(ErrorCode::RESOURCE_LOAD_FAIL
-                                                    , prefix
-                                                    , res.rmp.message);
+  res.rmp.error_stack = CREATE_ERROR(ErrorCode::RESOURCE_LOAD_FAIL, res.rmp.message);
 }
 
 /*

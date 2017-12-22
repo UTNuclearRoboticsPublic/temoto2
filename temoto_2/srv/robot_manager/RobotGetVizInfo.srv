@@ -8,3 +8,4 @@ string info
 
 int64 code
 string message
+temoto_2/Error[] error_stack

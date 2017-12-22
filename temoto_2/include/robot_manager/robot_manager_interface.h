@@ -64,21 +64,19 @@ public:
 
     // Contact the "Context Manager", pass the gesture specifier and if successful, get
     // the name of the topic
-    temoto_2::RobotLoad load_srv;
-    load_srv.request.robot_name = robot_name;
+    temoto_2::RobotLoad load_srvc;
+    load_srvc.request.robot_name = robot_name;
     if (resource_manager_-> template call<temoto_2::RobotLoad>(
-            robot_manager::srv_name::MANAGER, robot_manager::srv_name::SERVER_LOAD, load_srv))
+            robot_manager::srv_name::MANAGER, robot_manager::srv_name::SERVER_LOAD, load_srvc))
     {
-      TEMOTO_DEBUG("%s Call successful", prefix.c_str());
-      if(load_srv.response.rmp.code == rmp::status_codes::FAILED)
+      if(load_srvc.response.rmp.code == rmp::status_codes::FAILED)
       {
-        TEMOTO_ERROR("%s Failed to load the robot '%s': %s", prefix.c_str(), robot_name.c_str(), load_srv.response.rmp.message.c_str());
+        throw FORWARD_ERROR(load_srvc.response.rmp.error_stack);
       }
-      
     }
     else
     {
-      TEMOTO_ERROR("%s Service call failed", prefix.c_str());
+      throw CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, "Service call returned false.");
     }
   }
 
@@ -90,11 +88,13 @@ public:
     temoto_2::RobotPlan msg;
     msg.request.use_default_target = true;
 
-    if (!client_plan_.call(msg) || msg.response.code != 0)
+    if (!client_plan_.call(msg))
     {
-      throw error::ErrorStackUtil(
-          taskErr::SERVICE_REQ_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
-          prefix + " Service request failed: " + msg.response.message, ros::Time::now());
+      throw CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, "Service call returned false.");
+    }
+    else if (msg.response.code == rmp::status_codes::FAILED)
+    {
+      throw FORWARD_ERROR(msg.response.error_stack);
     }
   }
 
@@ -105,11 +105,13 @@ public:
 
     temoto_2::RobotPlan msg;
     msg.request.use_default_target = false;
-    if (!client_plan_.call(msg) || msg.response.code != 0)
+    if (!client_plan_.call(msg))
     {
-      throw error::ErrorStackUtil(
-          taskErr::SERVICE_REQ_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
-          prefix + " Service request failed: " + msg.response.message, ros::Time::now());
+      throw CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, "Service call returned false.");
+    }
+    else if (msg.response.code == rmp::status_codes::FAILED)
+    {
+      throw FORWARD_ERROR(msg.response.error_stack);
     }
   }
 
@@ -119,11 +121,13 @@ public:
     TEMOTO_DEBUG("%s", prefix.c_str());
 
     temoto_2::RobotExecute msg;
-    if (!client_exec_.call(msg) || msg.response.code != 0)
+    if (!client_exec_.call(msg))
     {
-      throw error::ErrorStackUtil(
-          taskErr::SERVICE_REQ_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
-          prefix + " Service request failed: " + msg.response.message, ros::Time::now());
+      throw CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, "Service call returned false.");
+    }
+    else if (msg.response.code == rmp::status_codes::FAILED)
+    {
+      throw FORWARD_ERROR(msg.response.error_stack);
     }
   }
 
@@ -133,12 +137,13 @@ public:
     TEMOTO_DEBUG("%s", prefix.c_str());
 
     temoto_2::RobotGetVizInfo msg;
-
-    if (!client_viz_info_.call(msg) || msg.response.code != 0)
+    if (!client_viz_info_.call(msg))
     {
-      throw error::ErrorStackUtil(
-          taskErr::SERVICE_REQ_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
-          prefix + " Service request failed: " + msg.response.message, ros::Time::now());
+      throw CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, "Service call returned false.");
+    }
+    else if (msg.response.code == rmp::status_codes::FAILED)
+    {
+      throw FORWARD_ERROR(msg.response.error_stack);
     }
     return msg.response.info;
   }
@@ -150,11 +155,13 @@ public:
 
     temoto_2::RobotSetTarget msg;
     msg.request.target_type = target_type;
-    if (!client_set_target_.call(msg) || msg.response.code != 0)
+    if (!client_set_target_.call(msg))
     {
-      throw error::ErrorStackUtil(
-          taskErr::SERVICE_REQ_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
-          prefix + " Service request failed: " + msg.response.message, ros::Time::now());
+      throw CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, "Service call returned false.");
+    }
+    else if (msg.response.code == rmp::status_codes::FAILED)
+    {
+      throw FORWARD_ERROR(msg.response.error_stack);
     }
   }
 
@@ -164,10 +171,9 @@ public:
    */
   void validateInterface(std::string& log_prefix)
   {
-    if(!resource_manager_)
+    if (!resource_manager_)
     {
-      error_handler_.createAndThrow(ErrorCode::NOT_INITIALIZED, TEMOTO_LOG_PREFIX,
-                                    "Interface is not initalized.");
+      throw CREATE_ERROR(ErrorCode::NOT_INITIALIZED, "Interface is not initalized.");
     }
   }
 

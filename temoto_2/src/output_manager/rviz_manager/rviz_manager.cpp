@@ -88,26 +88,18 @@ void RvizManager::runRviz()
 
       if (ros::Time::now() >= timeout)
       {
-        throw error::ErrorStackUtil(
-            ErrorCode::RVIZ_OPEN_FAIL, error::Subsystem::OUTPUT_MANAGER,
-            error::Urgency::MEDIUM,
-            prefix + " Failed to launch rviz plugin manager: Timeout reached.", ros::Time::now());
+        throw CREATE_ERROR(ErrorCode::RVIZ_OPEN_FAIL, "Failed to launch rviz plugin manager: Timeout reached.");
       }
       TEMOTO_DEBUG("%s All rviz_plugin_manager services connected.", prefix.c_str());
     }
     else
     {
-      throw error::ErrorStackUtil(ErrorCode::RVIZ_OPEN_FAIL,
-                                  error::Subsystem::OUTPUT_MANAGER, error::Urgency::MEDIUM,
-                                  prefix + " Failed to launch rviz: " + msg.response.rmp.message,
-                                  ros::Time::now());
+      throw CREATE_ERROR(ErrorCode::RVIZ_OPEN_FAIL, "Failed to launch rviz: ");
     }
   }
   catch (...)
   {
-    throw error::ErrorStackUtil(ErrorCode::SERVICE_REQ_FAIL,
-                                error::Subsystem::OUTPUT_MANAGER, error::Urgency::MEDIUM,
-                                prefix + " Failed to start RViz", ros::Time::now());
+    throw CREATE_ERROR(ErrorCode::SERVICE_REQ_FAIL, "Failed to start RViz");
   }
 
 }
@@ -132,11 +124,7 @@ bool RvizManager::loadPluginRequest(rviz_plugin_manager::PluginLoad& load_plugin
     }
     else
     {
-      throw error::ErrorStackUtil(
-          ErrorCode::PLUGIN_LOAD_FAIL, error::Subsystem::OUTPUT_MANAGER,
-          error::Urgency::MEDIUM,
-          prefix + " Failed to load rviz plugin: " + load_plugin_srv.response.message,
-          ros::Time::now());
+      throw CREATE_ERROR(ErrorCode::PLUGIN_LOAD_FAIL, "Failed to load rviz plugin: " + load_plugin_srv.response.message);
     }
   }
   else

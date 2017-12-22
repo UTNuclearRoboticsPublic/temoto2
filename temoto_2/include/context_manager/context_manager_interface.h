@@ -81,16 +81,14 @@ public:
     }
     catch (...)
     {
-      error_handler_.createAndThrow( taskErr::SERVICE_REQ_FAIL
-                                   , prefix
-                                   , "Failed to call service");
+      throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Failed to call service");
     }
 
     // Check if the request was satisfied
     // TODO: in future, catch code==0 exeption from RMP and rethrow from here
     if (srv_msg.response.rmp.code != 0)
     {
-      error_handler_.forwardAndThrow(srv_msg.response.rmp.errorStack, prefix);
+      throw FORWARD_ERROR(srv_msg.response.rmp.error_stack);
     }
 
     // Subscribe to the topic that was provided by the "Context Manager"
@@ -121,16 +119,14 @@ public:
     }
     catch (...)
     {
-      error_handler_.createAndThrow( taskErr::SERVICE_REQ_FAIL
-                                   , prefix
-                                   , "Failed to call the server");
+      throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Failed to call the server");
     }
 
     // Check if the request was satisfied
     // TODO: in future, catch code==0 exeption from RMP and rethrow from here
     if (srv_msg.response.rmp.code != 0)
     {
-      error_handler_.forwardAndThrow(srv_msg.response.rmp.errorStack, prefix);
+      throw FORWARD_ERROR(srv_msg.response.rmp.error_stack);
     }
 
     // Subscribe to the topic that was provided by the "Context Manager"
@@ -149,17 +145,13 @@ public:
     {
       if (object.name == "")
       {
-        error_handler_.createAndThrow( taskErr::SERVICE_REQ_FAIL
-                                     , prefix
-                                     , "The object is missing a name");
+        throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL , "The object is missing a name");
       }
 
       // Are the detection methods specified
       if (object.detection_methods.empty())
       {
-        error_handler_.createAndThrow( taskErr::SERVICE_REQ_FAIL
-                                     , prefix
-                                     , "Detection method unspecified");
+        throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Direction method unspecified");
       }
     }
 
@@ -169,15 +161,13 @@ public:
     // Call the server
     if (!add_object_client_.call(add_obj_srvmsg))
     {
-       error_handler_.createAndThrow( taskErr::SERVICE_REQ_FAIL
-                                    , prefix
-                                    , "Failed to call the server");
+       throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Failed to call the server");
     }
 
     // Check the response code
     if (add_obj_srvmsg.response.rmp.code != 0)
     {
-      error_handler_.forwardAndThrow(add_obj_srvmsg.response.rmp.errorStack, prefix);
+      throw FORWARD_ERROR(add_obj_srvmsg.response.rmp.error_stack);
     }
   }
 
@@ -205,9 +195,7 @@ public:
     }
     catch (...)
     {
-      error_handler_.createAndThrow( taskErr::SERVICE_REQ_FAIL
-                                   , prefix
-                                   , "Failed to unload resources");
+      throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Failed to unload resources");
     }
   }
 
@@ -241,9 +229,7 @@ public:
         if (!resource_manager_->template call<temoto_2::LoadSpeech>(
                 context_manager::srv_name::MANAGER, context_manager::srv_name::SPEECH_SERVER, *speech_it))
         {
-          throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK,
-                                      error::Urgency::MEDIUM, prefix + " Failed to call service",
-                                      ros::Time::now());
+          throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Failed to call service");
         }
 
         if (speech_it->response.rmp.code == 0)
@@ -256,10 +242,7 @@ public:
         }
         else
         {
-          throw error::ErrorStackUtil(
-              taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK, error::Urgency::MEDIUM,
-              prefix + " Unsuccessful call to context manager: " + speech_it->response.rmp.message,
-              ros::Time::now());
+          throw FORWARD_ERROR(speech_it->response.rmp.error_stack);
         }
       }
 
@@ -272,9 +255,7 @@ public:
         if (!resource_manager_->template call<temoto_2::LoadGesture>(
                 context_manager::srv_name::MANAGER, context_manager::srv_name::GESTURE_SERVER, *gest_it))
         {
-          throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK,
-                                      error::Urgency::MEDIUM, prefix + " Failed to call service",
-                                      ros::Time::now());
+          throw CREATE_ERROR(taskErr::SERVICE_REQ_FAIL, "Failed to call service");
         }
 
         if (gest_it->response.rmp.code == 0)
@@ -287,10 +268,7 @@ public:
         }
         else
         {
-          throw error::ErrorStackUtil(
-              taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK, error::Urgency::MEDIUM,
-              prefix + " Unsuccessful call to context manager: " + gest_it->response.rmp.message,
-              ros::Time::now());
+          throw FORWARD_ERROR(gest_it->response.rmp.error_stack);
         }
       }
 
@@ -340,8 +318,7 @@ private:
   {
     if(!resource_manager_)
     {
-      error_handler_.createAndThrow(ErrorCode::NOT_INITIALIZED, TEMOTO_LOG_PREFIX,
-                                    "Interface is not initalized.");
+      throw CREATE_ERROR(ErrorCode::NOT_INITIALIZED, "Interface is not initalized.");
     }
   }
 };
