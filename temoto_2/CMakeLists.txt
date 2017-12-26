@@ -118,7 +118,7 @@ include_directories(
 
 # # # # # # # # # # # #
 # CONTEXT MANAGER
-# # # # # # # # # # # #
+# # # # # # # # # # # # 
 add_executable(context_manager src/context_manager/context_manager_node.cpp
 				                       src/context_manager/context_manager.cpp
                                src/context_manager/context_manager_containers.cpp
@@ -215,6 +215,10 @@ add_executable(language_input src/tools/language_input.cpp
                               src/temoto_error/temoto_error.cpp)
 add_dependencies(language_input ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(language_input ${catkin_LIBRARIES} )
+
+add_executable(tracking_pipes_tests src/tools/tracking_pipes_tests.cpp)
+add_dependencies(tracking_pipes_tests ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(tracking_pipes_tests ${catkin_LIBRARIES} yaml-cpp)
 
 #add_executable(algorithm_info_tests src/tools/algorithm_info_tests.cpp
 #                                    src/algorithm_manager/algorithm_info.cpp)

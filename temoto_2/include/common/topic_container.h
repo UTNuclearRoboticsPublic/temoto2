@@ -22,6 +22,12 @@ public:
     addInputTopic(type, "");
   }
 
+  void clearInputTopics()
+  {
+    input_topics_.clear();
+  }
+
+
   void addOutputTopic(std::string type, std::string topic)
   {
     output_topics_.emplace_back(std::make_pair(type, topic));
@@ -31,6 +37,12 @@ public:
   {
     addOutputTopic(type, "");
   }
+
+  void clearOutputTopics()
+  {
+    output_topics_.clear();
+  }
+
 
   std::vector<StringPair> getInputTopics() const
   {

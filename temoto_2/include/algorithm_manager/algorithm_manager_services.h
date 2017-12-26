@@ -1,5 +1,5 @@
-#ifndef SENSOR_MANAGER_SERVICES_H
-#define SENSOR_MANAGER_SERVICES_H
+#ifndef ALGORITHM_MANAGER_SERVICES_H
+#define ALGORITHM_MANAGER_SERVICES_H
 
 #include <string>
 #include "rmp/resource_manager_services.h"

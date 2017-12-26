@@ -16,6 +16,15 @@ Sensors:
   output_topics:
     data: "stt/spoken_text"
 
+- sensor_name: "Sensor_0"
+  sensor_type: "test_sensor_0"
+  package_name: "temoto_tests"
+  executable:  "sensor_0"
+  topic:  "deprecated_stuff"
+  output_topics:
+    type_0: "sensor_0_pub_0"
+    type_1: "sensor_0_pub_1"
+
 Algorithms:
 - algorithm_name: "AR Tag detector"
   algorithm_type: "artag"
@@ -29,7 +38,7 @@ Algorithms:
     markers: "ar_pose_marker"
 
 - algorithm_name: "Algorithm_0"
-  algorithm_type: "test"
+  algorithm_type: "test_algorithm_0"
   package_name: "temoto_tests"
   executable:  "algorithm_0"
   input_topics:
@@ -37,7 +46,7 @@ Algorithms:
     type_1: "algorithm_0_sub_1"
   output_topics:
     type_0: "algorithm_0_pub_0"
-    type_1: "algorithm_0_pub_0"
+    type_1: "algorithm_0_pub_1"
 
 Robots:
 - robot_name: "ur5"

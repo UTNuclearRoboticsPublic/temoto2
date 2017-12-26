@@ -9,6 +9,7 @@
 #include "common/temoto_id.h"
 #include "common/console_colors.h"
 #include "common/interface_errors.h"
+#include "common/topic_container.h"
 
 #include "std_msgs/Float32.h"
 #include "std_msgs/String.h"
@@ -26,7 +27,6 @@ public:
 
   typedef void (OwnerTask::*GestureCallbackType)(leap_motion_controller::Set);
   typedef void (OwnerTask::*SpeechCallbackType)(std_msgs::String);
-
 
   ContextManagerInterface()
   {
@@ -136,6 +136,39 @@ public:
     gesture_subscriber_ = nh_.subscribe(srv_msg.response.topic, 1000, task_gesture_cb_, task_gesture_obj_);
   }
 
+  /**
+   * @brief startTracker
+   * @param tracker_category
+   * @return
+   */
+  TopicContainer startTracker(std::string tracker_category)
+  {
+    temoto_2::LoadTracker load_tracker_msg;
+    load_tracker_msg.request.tracker_category = tracker_category;
+
+    try
+    {
+      resource_manager_->template call<temoto_2::LoadTracker>(context_manager::srv_name::MANAGER_2,
+                                                              context_manager::srv_name::TRACKER_SERVER,
+                                                              load_tracker_msg);
+    }
+    catch (...)
+    {
+      error_handler_.createAndThrow( taskErr::SERVICE_REQ_FAIL
+                                   , "TODO: DEPRECATED"
+                                   , "Failed to call the server");
+    }
+
+    TopicContainer topics_to_return;
+    topics_to_return.setOutputTopicsByKeyValue(load_tracker_msg.response.output_topics);
+
+    return topics_to_return;
+  }
+
+  /**
+   * @brief addWorldObjects
+   * @param objects
+   */
   void addWorldObjects(const std::vector<temoto_2::ObjectContainer>& objects)
   {
     std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
@@ -178,6 +211,10 @@ public:
     }
   }
 
+  /**
+   * @brief addWorldObjects
+   * @param object
+   */
   void addWorldObjects(const temoto_2::ObjectContainer& object)
   {
     std::vector<temoto_2::ObjectContainer> objects;

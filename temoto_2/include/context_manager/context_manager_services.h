@@ -1,5 +1,5 @@
-#ifndef HUMAN_CONTEXT_SERVICES_H
-#define HUMAN_CONTEXT_SERVICES_H
+#ifndef CONTEXT_MANAGER_SERVICES_H
+#define CONTEXT_MANAGER_SERVICES_H
 
 #include <string>
 #include "rmp/resource_manager_services.h"

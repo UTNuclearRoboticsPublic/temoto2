@@ -27,3 +27,11 @@ include_directories( ${catkin_INCLUDE_DIRS})
 add_executable(algorithm_0 src/algorithm_0.cpp)
 add_dependencies(algorithm_0 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(algorithm_0 ${catkin_LIBRARIES} )
+
+# # # # # # # # # # # #
+# SENSOR 0
+# # # # # # # # # # # #
+
+add_executable(sensor_0 src/sensor_0.cpp)
+add_dependencies(sensor_0 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(sensor_0 ${catkin_LIBRARIES} )

@@ -4,9 +4,10 @@
 #include "common/tools.h"
 #include "common/temoto_log_macros.h"
 #include "common/base_subsystem.h"
-#include "common/topic_container.h"
+#include "common/temoto_id.h"
 
-#include "context_manager_containers.h"
+#include "context_manager/context_manager_containers.h"
+#include "context_manager/tracking_method.h"
 #include "context_manager/context_manager_services.h"
 
 #include "rmp/resource_manager.h"
@@ -43,6 +44,12 @@ private:
    * @param res
    */
   void unloadTrackerCb(temoto_2::LoadTracker::Request& req, temoto_2::LoadTracker::Response& res);
+
+  /**
+   * @brief parseTrackers
+   * @param config_path
+   */
+  void parseTrackers(std::string config_path);
 
   /**
    * @brief Service that sets up a gesture publisher
@@ -106,6 +113,10 @@ private:
   ros::ServiceServer add_objects_server_;
 
   ObjectPtrs objects_;
+
+  std::map<std::string, std::vector<context_manager::TrackerInfo>> categorized_trackers_;
+
+  temoto_id::IDManager pipeIDGenerator;
 
   // Configuration syncer that manages external resource descriptions and synchronizes them
   // between all other (context) managers

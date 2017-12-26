@@ -1,19 +1,19 @@
-#ifndef ALGORITHM_INFO_H
-#define ALGORITHM_INFO_H
+#ifndef TRACKING_INFO_H
+#define TRACKING_INFO_H
 
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include <ctype.h>
 #include <memory>                     // shared_ptr
 #include "common/temoto_log_macros.h"
-#include "common/topic_container.h"   // StringPair
-#include "common/reliability.h"
+//#include "common/reliability.h"
 #include <yaml-cpp/yaml.h>
 
 #include <iostream>                   // TODO: remove
 
-namespace algorithm_manager
+namespace context_manager
 {
 
 /**
@@ -30,10 +30,91 @@ enum class FilterCategory : int
  */
 struct Filter
 {
-  FilterCategory filter_category_;
-  std::string filter_type_;
-  std::vector<std::string> output_topic_types;
+  std::string filter_category_;                       // Sensor or algorithm or ...
+  std::string filter_type_;                           // Camera ... or ARtag detector ...
+  std::set<std::string> required_input_topic_types_;  // The types of the topics that this filter requires
+  std::set<std::string> required_output_topic_types_; // The types of the topics that this filter must publish
+
+  /// add input topic type
+  void addInputTopicType(std::string topic_type)
+  {
+    required_input_topic_types_.insert(topic_type);
+  }
+
+  /// add output topic type
+  void addOutputTopicType(std::string topic_type)
+  {
+    required_output_topic_types_.insert(topic_type);
+  }
+
+  /// to string
+  std::string toString() const
+  {
+    std::string str;
+    str += "|_+_filter category: " + filter_category_ + "\n";
+    str += "| |_filter type: " + filter_type_ + "\n";
+
+    // Print out the input topics
+    if (!required_input_topic_types_.empty())
+    {
+      str += "| |_required input topic types: ";
+      for (auto& topic : required_input_topic_types_)
+      {
+        str += topic;
+        if (topic != *std::prev(required_input_topic_types_.end()))
+        {
+          str += ", ";
+        }
+      }
+      str += "\n";
+    }
+
+    // Print out the output topics
+    if (!required_output_topic_types_.empty())
+    {
+      str += "| |_required output topic types: ";
+      for (auto& topic : required_output_topic_types_)
+      {
+        str += topic;
+        if (topic != *std::prev(required_output_topic_types_.end()))
+        {
+          str += ", ";
+        }
+      }
+      str += "\n";
+    }
+
+    return str;
+  }
 };
+
+/**
+ * @brief operator ==
+ * @param f1
+ * @param f2
+ * @return
+ */
+static bool operator==(const Filter& f1, const Filter& f2)
+{
+  // Check the category, type and topic types
+  return f1.filter_category_ == f2.filter_category_ &&
+         f1.filter_type_ == f2.filter_type_ &&
+         f1.required_input_topic_types_ == f2.required_input_topic_types_ &&
+         f1.required_output_topic_types_ == f2.required_output_topic_types_;
+}
+
+/**
+ * @brief operator <<
+ * @param out
+ * @param f
+ * @return
+ */
+static std::ostream& operator<<(std::ostream& out, const Filter& f)
+{
+    out << f.toString();
+
+    return out;
+}
 
 /**
  * @brief The TrackerInfo class
@@ -43,191 +124,205 @@ class TrackerInfo
 public:
 
   /*
-   * TODO STUFF
+   * Getters
    */
+
+  /// Get type
+  std::string getType() const
+  {
+    return type_;
+  }
+
+  /// Get pipe
+  std::vector<Filter> getPipe() const
+  {
+    return pipe_;
+  }
+
+  /// Get pipe size
+  unsigned int getPipeSize() const
+  {
+    return pipe_.size();
+  }
+
+  /*
+   * Setters
+   */
+
+  /// Set the pipe
+  void setPipe(std::vector<Filter> pipe)
+  {
+    pipe_ = pipe;
+  }
+
+  /// Add filter
+  void addFilter(Filter filter)
+  {
+    pipe_.push_back(filter);
+  }
+
+  std::string toString()
+  {
+    std::string str;
+    str += "type: " + std::string("TODO") + "\n";
+
+    for (auto& filter : pipe_)
+    {
+      str += filter.toString();
+
+      if (&filter != &pipe_.back())
+      {
+        str += "| \n";
+      }
+    }
+
+    return str;
+  }
+
+  /**
+   * @brief operator ==
+   * @param t1
+   * @param t2
+   * @return
+   */
+  friend bool operator==(const TrackerInfo& t1, const TrackerInfo& t2)
+  {
+    return t1.type_ == t2.type_ && t1.pipe_ == t2.pipe_;
+  }
 
 private:
   
   std::string type_;
   std::vector<Filter> pipe_;
-  std::string temoto_namespace_;
-  Reliability reliability_;
+  //Reliability reliability_;
 };
 
+
+/**
+ * @brief TrackerInfoPtr
+ */
 typedef std::shared_ptr<TrackerInfo> TrackerInfoPtr;
+
+/**
+ * @brief TrackerInfoPtrs
+ */
 typedef std::vector<TrackerInfoPtr> TrackerInfoPtrs;
 
-static bool operator==(const TrackerInfo& s1, const TrackerInfo& s2)
-{
-  // Check the namespace, executable and name of the package
-  if (s1.getTemotoNamespace() != s2.getTemotoNamespace() ||
-      s1.getExecutable() != s2.getExecutable() ||
-      s1.getPackageName() != s2.getPackageName())
-  {
-    return false;
-  }
+} // namespace context_manager
 
-  // Check the size of input and output topics
-  if (s1.getTopicsIn().size() != s2.getTopicsIn().size() ||
-      s1.getTopicsOut().size() != s2.getTopicsOut().size())
-  {
-    return false;
-  }
-
-  // Check the input topics
-  auto input_topics_2_copy = s2.getTopicsIn();
-  for (auto& input_topic_1 : s1.getTopicsIn())
-  {
-    bool topic_found = false;
-    for (auto it=input_topics_2_copy.begin(); it!=input_topics_2_copy.end(); it++)
-    {
-      if (input_topic_1.first == it->first)
-      {
-        topic_found = true;
-        input_topics_2_copy.erase(it);
-        break;
-      }
-    }
-
-    if (!topic_found)
-    {
-      return false;
-    }
-  }
-
-  // Check the output topics
-  auto output_topics_2_copy = s2.getTopicsOut();
-  for (auto& output_topic_1 : s1.getTopicsOut())
-  {
-    bool topic_found = false;
-    for (auto it=output_topics_2_copy.begin(); it!=output_topics_2_copy.end(); it++)
-    {
-      if (output_topic_1.first == it->first)
-      {
-        topic_found = true;
-        output_topics_2_copy.erase(it);
-        break;
-      }
-    }
-
-    if (!topic_found)
-    {
-      return false;
-    }
-  }
-
-  // The algorithm infos are equal
-  return true;
-}
-} // namespace algorithm_manager
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ *                      YAML PARSER FOR TRACKER INFO CLASS
+ *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 namespace YAML
 {
 template <>
-struct convert<algorithm_manager::TrackerInfo>
+struct convert<context_manager::TrackerInfo>
 {
-  static Node encode(const algorithm_manager::TrackerInfo& algorithm)
+  static Node encode(const context_manager::TrackerInfo& tracker_info)
   {
-    Node node;
-    node["algorithm_name"] = algorithm.getName();
-    node["algorithm_type"] = algorithm.getType();
-    node["package_name"] = algorithm.getPackageName();
-    node["executable"] = algorithm.getExecutable();
-    node["description"] = algorithm.getDescription();
-    node["reliability"] = algorithm.getReliability();
-
-    Node input_topics_node;
-    for (auto& topics : algorithm.getTopicsIn())
+    Node method;
+    std::vector<context_manager::Filter> pipe = tracker_info.getPipe();
+    for (auto& filter : pipe)
     {
-      input_topics_node[topics.first] = topics.second;
-    }
-    node["input_topics"] = input_topics_node;
+      // Encode the filter
+      Node filter_node;
+      filter_node["filter_category"] = filter.filter_category_;
+      filter_node["filter_type"] = filter.filter_type_;
 
-    Node output_topics_node;
-    for (auto& topics : algorithm.getTopicsOut())
-    {
-      output_topics_node[topics.first] = topics.second;
-    }
-    node["output_topics"] = output_topics_node;
+      // Encode the input topic types (if this filter has any)
+      if (filter.required_input_topic_types_.size() != 0)
+      {
+        for (auto& topic_type : filter.required_input_topic_types_)
+        {
+          filter_node["input_topic_types"].push_back(topic_type);
+        }
+      }
 
-    return node;
+      // Encode the output topic types (if this filter has any)
+      if (filter.required_output_topic_types_.size() != 0)
+      {
+        for (auto& topic_type : filter.required_output_topic_types_)
+        {
+          filter_node["output_topic_types"].push_back(topic_type);
+        }
+      }
+
+      // Push the filter
+      method.push_back(filter_node);
+    }
+
+    return method;
   }
 
-  static bool decode(const Node& node, algorithm_manager::TrackerInfo& algorithm)
+  static bool decode(const Node& node, context_manager::TrackerInfo& tracker_info)
   {
-    if (!node.IsMap() || node.size() < 5)
+    // Check if the "node" is a map
+    if (!node.IsMap())
     {
       return false;
     }
 
-    uint8_t code;
+    // Get the pipe (sequence of filters) node
+    YAML::Node filters_node = node["method"];
 
-    // Convert the compulsory fields
-    try
+    // Iterate over each filter
+    for (YAML::const_iterator filter_it = filters_node.begin(); filter_it != filters_node.end(); ++filter_it)
     {
-      code = 1;
-      algorithm.setName(node["algorithm_name"].as<std::string>());
-
-      code = 2;
-      algorithm.setType(node["algorithm_type"].as<std::string>());
-
-      code = 3;
-      algorithm.setPackageName(node["package_name"].as<std::string>());
-
-      code = 4;
-      algorithm.setExecutable(node["executable"].as<std::string>());
-
-      // Get the input_topics
-      code = 5;
-      Node input_topics_node = node["input_topics"];
-      for (YAML::const_iterator node_it = input_topics_node.begin(); node_it != input_topics_node.end(); ++node_it)
+      // Check if the filter is a map
+      if (!filter_it->IsMap())
       {
-        algorithm.addTopicIn({node_it->first.as<std::string>(),
-                              node_it->second.as<std::string>()});
+        return false;
       }
 
-      // Get the output_topics
-      code = 6;
-      Node output_topics_node = node["output_topics"];
-      for (YAML::const_iterator node_it = output_topics_node.begin(); node_it != output_topics_node.end(); ++node_it)
+      // Create an empty filter object and fill it
+      context_manager::Filter filter;
+
+      try
       {
-        algorithm.addTopicOut({node_it->first.as<std::string>(),
-                               node_it->second.as<std::string>()});
+        // TODO: Check if it is even a valid category
+        filter.filter_category_ = (*filter_it)["filter_category"].as<std::string>();
+        filter.filter_type_ = (*filter_it)["filter_type"].as<std::string>();
+      }
+      catch (YAML::InvalidNode e)
+      {
+        // Print out the error message
+        // TODO: throw a proper error
+        std::cout << "The filter node is either missing category or type\n";
+        return false;
       }
 
-    }
-    catch (YAML::InvalidNode e)
-    {
-      // print out the error message
-      switch(code)
+      // Get the input topic types (if there are any)
+      try
       {
-        case 5:
-          std::cout << "Something is wrong with the 'input_topics'\n";
-          break;
-
-        case 6:
-          std::cout << "Something is wrong with the 'output_topics'\n";
-          break;
+        Node input_topics_node = (*filter_it)["input_topic_types"];
+        for (YAML::const_iterator topics_it = input_topics_node.begin(); topics_it != input_topics_node.end(); ++topics_it)
+        {
+          filter.addInputTopicType(topics_it->as<std::string>());
+        }
+      }
+      catch (YAML::InvalidNode e)
+      {
+        // REPORT OR DO SOMETHING
       }
 
-      return false;
-    }
+      // Get the output topic types (if there are any)
+      try
+      {
+        Node output_topics_node = (*filter_it)["output_topic_types"];
+        for (YAML::const_iterator topics_it = output_topics_node.begin(); topics_it != output_topics_node.end(); ++topics_it)
+        {
+          filter.addOutputTopicType(topics_it->as<std::string>());
+        }
+      }
+      catch (YAML::InvalidNode e)
+      {
+        // REPORT OR DO SOMETHING
+      }
 
-    // These fields are optional
-    try
-    {
-      algorithm.setDescription(node["description"].as<std::string>());
-    }
-    catch (YAML::InvalidNode e)
-    {
-    }
-
-    try
-    {
-      algorithm.setReliability(node["reliability"].as<float>());
-    }
-    catch (YAML::InvalidNode e)
-    {
+      tracker_info.addFilter(filter);
     }
 
     return true;

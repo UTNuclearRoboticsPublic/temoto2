@@ -43,6 +43,27 @@ ContextManager::ContextManager()
   
   // Request remote objects
   object_syncer_.requestRemoteConfigs();
+
+  /*
+   * Process the tracking methods that are described in an external YAML file
+   */
+
+  // Path to the trackers YAML file
+  std::string yaml_filename = ros::package::getPath(ROS_PACKAGE_NAME) + "/conf/" +
+                                "tracking_methods.yaml";
+
+  // Parse the trackes
+  parseTrackers(yaml_filename);
+
+  // Print out the trackers
+  for (auto& tracker_category : categorized_trackers_)
+  {
+    std::cout << "CATEGORY: " << tracker_category.first << std::endl;
+    for (auto& tracking_method : tracker_category.second)
+    {
+      std::cout << tracking_method.toString() << std::endl;
+    }
+  }
   
   TEMOTO_INFO("Context Manager is ready.");
 }
@@ -144,26 +165,133 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
                                    temoto_2::LoadTracker::Response& res)
 {
   std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-  TEMOTO_INFO_STREAM(prefix << "%s Received a request: \n" << req << std::endl);
+  TEMOTO_INFO_STREAM(prefix << " Received a request: \n" << req << std::endl);
 
-//  try
-//  {
-//    // Load a calibrated camera
-//    temoto_2::LoadSensor load_sensor_msg;
+  try
+  {
+    // Get the tracking methods of the requested category
+    auto trackers = categorized_trackers_.find(req.tracker_category);
+    std::cout << "D0 \n";
 
+    // Proceed if the requested tracker category exists
+    if (trackers != categorized_trackers_.end())
+    {
+      std::cout << "D1 \n";
+      // Choose a tracker based on a TODO metric
+      const TrackerInfo& tracker = trackers->second.at(0);
 
-//    resource_manager_2_.call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
-//                                                   sensor_manager::srv_name::SERVER,
-//                                                   load_sensor_msg);
-//  }
-//  catch(error::ErrorStack& e)
-//  {
-//    res.rmp.errorStack = error_handler_.forwardAndReturn(e, prefix);
-//  }
-//  catch(...)
-//  {
-//    res.rmp.errorStack = error_handler_.createAndReturn(999, prefix, "Unhandled exception");
-//  }
+      std::cout << "D2 \n";
+      // Create a unique pipe identifier string
+      std::string pipeID = "pipe_" + std::to_string(pipeIDGenerator.generateID())
+                         + "_at_" + common::getTemotoNamespace();
+
+      /*
+       * Build the pipe based on the number of filters. If the pipe
+       * contains only one filter, then there are no constraints on
+       * the ouptut topic types. But if the pipe contains multiple filters
+       * then each preceding filter has to provide the topics that are
+       * required by the proceding filter
+       */
+      TopicContainer required_topics;
+
+      if (tracker.getPipeSize() > 1)
+      {
+        // TODO: If the right hand side of the "req_tops" is directly used in the proceeding
+        // for-loop, then it crashes on the second loop. Not sure why.
+        std::set<std::string> req_tops = tracker.getPipe().at(1).required_input_topic_types_;
+
+        // Loop over requested topics
+        for (auto& topic : req_tops)
+        {
+          required_topics.addOutputTopicType(topic);
+        }
+      }
+
+      // Loop over the pipe
+      std::vector<Filter> pipe = tracker.getPipe();
+
+      for (unsigned int i=0; i<pipe.size(); i++)
+      {
+        /*
+         * If the filter is a sensor
+         */
+        if (pipe.at(i).filter_category_ == "sensor")
+        {
+          // Compose the LoadSensor message
+          temoto_2::LoadSensor load_sensor_msg;
+          load_sensor_msg.request.sensor_type = pipe.at(i).filter_type_;
+          load_sensor_msg.request.output_topics = required_topics.outputTopicsAsKeyValues();
+
+          // Call the Sensor Manager
+          resource_manager_2_.call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
+                                                         sensor_manager::srv_name::SERVER,
+                                                         load_sensor_msg);
+
+          required_topics.setInputTopicsByKeyValue(load_sensor_msg.response.output_topics);
+        }
+
+        /*
+         * If the filter is an algorithm
+         */
+        else if (pipe.at(i).filter_category_ == "algorithm")
+        {
+
+          // Clear out the required output topics
+          required_topics.clearOutputTopics();
+
+          // If it is not the last filter then ...
+          if (i != pipe.size()-1)
+          {
+            // ... get the requirements for the output topics from the proceding filter
+            for (auto& topic : pipe.at(i+1).required_input_topic_types_)
+            {
+              required_topics.addOutputTopic(topic, "/" + pipeID + "/filter_" + std::to_string(i) + "/" + topic);
+            }
+          }
+          else
+          {
+            // ... get the requirements for the output topics from own output topic requirements
+            // TODO: throw if the "required_output_topic_types_" is empty
+            for (auto& topic : pipe.at(i).required_output_topic_types_)
+            {
+              required_topics.addOutputTopic(topic, "/" + pipeID + "/filter_" + std::to_string(i) + "/" + topic);
+            }
+          }
+
+          // Compose the LoadAlgorithm message
+          temoto_2::LoadAlgorithm load_algorithm_msg;
+          load_algorithm_msg.request.algorithm_type = pipe.at(i).filter_type_;
+          load_algorithm_msg.request.input_topics = required_topics.inputTopicsAsKeyValues();
+          load_algorithm_msg.request.output_topics = required_topics.outputTopicsAsKeyValues();
+
+          // Call the Algorithm Manager
+          resource_manager_2_.call<temoto_2::LoadAlgorithm>(algorithm_manager::srv_name::MANAGER,
+                                                            algorithm_manager::srv_name::SERVER,
+                                                            load_algorithm_msg);
+
+          required_topics.setInputTopicsByKeyValue(load_algorithm_msg.response.output_topics);
+        }
+      }
+
+      // Send the output topics of the last filter back via response
+      res.output_topics = required_topics.outputTopicsAsKeyValues();
+    }
+    else
+    {
+      res.rmp.errorStack = error_handler_.createAndReturn(999, prefix, "No trackers found for the requested category");
+    }
+
+  // Catch the errors
+  }
+  catch(error::ErrorStack& e)
+  {
+    res.rmp.errorStack = error_handler_.forwardAndReturn(e, prefix);
+  }
+  catch(...)
+  {
+    res.rmp.errorStack = error_handler_.createAndReturn(999, prefix, "Unhandled exception");
+  }
+
 }
 
 /*
@@ -208,6 +336,62 @@ void ContextManager::loadGestureCb(temoto_2::LoadGesture::Request& req,
   res.rmp.message = "Gesture request was ";
   res.rmp.message = +(msg.response.rmp.code == 0) ? "satisfied." : "not satisfied.";
   // TODO: send a reasonable response message and code
+}
+
+/*
+ * Parse trackers
+ */
+void ContextManager::parseTrackers(std::string config_path)
+{
+  // Read in the config file
+  std::ifstream in(config_path);
+  YAML::Node config = YAML::Load(in);
+
+  // Check if it is a map
+  if (!config.IsMap())
+  {
+    // TODO Throw
+    std::cout << " throw throw throw \n";
+    return;
+  }
+
+  // Iterate over different tracker categories (hand trackers, artag trackers, ...)
+  for (YAML::const_iterator tracker_type_it = config.begin(); tracker_type_it != config.end(); ++tracker_type_it)
+  {
+    // Each category must contain a sequence of tracking methods
+    if (!tracker_type_it->second.IsSequence())
+    {
+      // TODO Throw
+      std::cout << " throw TODO throw TODO \n";
+      return;
+    }
+
+    // Get the category of the tracker
+    std::string tracker_category = tracker_type_it->first.as<std::string>();
+
+    // Iterate over different tracking methods within the given category
+    for (YAML::const_iterator method_it = tracker_type_it->second.begin();
+         method_it != tracker_type_it->second.end();
+         ++method_it)
+    {
+      try
+      {
+        // Convert the tracking method yaml description into TrackerInfo
+        context_manager::TrackerInfo tracker_info = method_it->as<context_manager::TrackerInfo>();
+
+        // Add the tracking method into the map of locally known trackers
+        categorized_trackers_[tracker_category].push_back(tracker_info);
+
+        // TODO: Print via TEMOTO_DEBUG
+        // std::cout << tracker_info.toString() << std::endl;
+      }
+      catch (YAML::InvalidNode e)
+      {
+        // print out the error message
+        std::cout << "Conversion failed: " << e.what() << std::endl;
+      }
+    }
+  }
 }
 
 void ContextManager::unloadGestureCb(temoto_2::LoadGesture::Request& req,
