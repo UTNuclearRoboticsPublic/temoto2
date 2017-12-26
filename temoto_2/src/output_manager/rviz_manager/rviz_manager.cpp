@@ -2,8 +2,9 @@
 
 namespace output_manager
 {
-
-RvizManager::RvizManager() : resource_manager_(srv_name::RVIZ_MANAGER, this)
+RvizManager::RvizManager()
+  : BaseSubsystem("output_manager", error::Subsystem::OUTPUT_MANAGER, __func__)
+  , resource_manager_(srv_name::RVIZ_MANAGER, this)
 {
   class_name_ = __func__;
   subsystem_name_ = "rviz_manager";

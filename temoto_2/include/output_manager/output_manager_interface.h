@@ -60,20 +60,16 @@ public:
     load_srv.request.config = display_config;
 
     // Call the server
-    if (!resource_manager_->template call<temoto_2::LoadRvizPlugin>(
-            srv_name::RVIZ_MANAGER, srv_name::RVIZ_SERVER, load_srv))
+    try
     {
-      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service");
+      resource_manager_->template call<temoto_2::LoadRvizPlugin>(
+          srv_name::RVIZ_MANAGER, srv_name::RVIZ_SERVER, load_srv);
     }
-
-    if (load_srv.response.rmp.code == 0)
+    catch(error::ErrorStack& error_stack)
     {
-      plugins_.push_back(load_srv);
+      throw FORWARD_ERROR(error_stack);
     }
-    else
-    {
-      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Unsuccessful call to rviz_manager");
-    }
+    plugins_.push_back(load_srv);
   }
 
   /**

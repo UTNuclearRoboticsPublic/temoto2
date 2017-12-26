@@ -3,6 +3,7 @@
 
 #include <string>
 #include "common/temoto_id.h"
+#include "common/base_subsystem.h"
 #include "rmp/resource_manager.h"
 #include <vector>
 #include <utility>
@@ -15,7 +16,7 @@ template<class Owner>
 class ResourceManager;
 
 template<class Owner>
-class BaseResourceServer
+class BaseResourceServer : public BaseSubsystem
 {
 	public:
 //		BaseResourceServer()
@@ -25,6 +26,7 @@ class BaseResourceServer
 //		}
 
 		BaseResourceServer(const std::string name, ResourceManager<Owner>& resource_manager) :
+      BaseSubsystem (resource_manager),
 			name_(name),
 			resource_manager_(resource_manager)
 		{

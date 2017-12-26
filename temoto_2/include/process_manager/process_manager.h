@@ -12,7 +12,7 @@
 
 namespace process_manager
 {
-	class ProcessManager : BaseSubsystem
+	class ProcessManager : public BaseSubsystem
 	{
 		public:
 

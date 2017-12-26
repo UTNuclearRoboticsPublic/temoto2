@@ -8,20 +8,15 @@
 namespace robot_manager
 {
 RobotManager::RobotManager()
-  : resource_manager_(srv_name::MANAGER, this)
+  : BaseSubsystem("robot_manager", error::Subsystem::ROBOT_MANAGER, __func__)
+  , resource_manager_(srv_name::MANAGER, this)
   , config_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &RobotManager::syncCb, this)
   , mode_(modes::AUTO)
 {
-  class_name_ = __func__;
-  subsystem_name_ = "robot_manager";
-  subsystem_code_ = error::Subsystem::ROBOT_MANAGER;
-  log_group_ = "robot_manager";
-  error_handler_ = error::ErrorHandler(subsystem_code_, log_group_);
 
   //\TODO:Remove, deprecated
-  log_class_ = class_name_;
-  log_subsys_ = subsystem_name_;
-  std::string prefix = generateLogPrefix(__func__);
+  log_class_ = this->class_name_;
+  log_subsys_ = this->subsystem_name_;
 
   // Start the server for loading/unloading robots as resources
   resource_manager_.addServer<temoto_2::RobotLoad>(srv_name::SERVER_LOAD, &RobotManager::loadCb,
@@ -56,7 +51,7 @@ RobotManager::RobotManager()
     // Debug what was added
     for (auto& config : local_configs_)
     {
-      TEMOTO_DEBUG("%s Added robot: '%s'.", prefix.c_str(), config->getName().c_str());
+      TEMOTO_DEBUG("Added robot: '%s'.", config->getName().c_str());
     }
 
     // Advertise the parsed local robots
@@ -64,9 +59,9 @@ RobotManager::RobotManager()
   }
   else
   {
-    TEMOTO_WARN("%s Failed to read '%s'. Verify that the file exists and the sequence of robots "
+    TEMOTO_WARN("Failed to read '%s'. Verify that the file exists and the sequence of robots "
                 "is listed under 'Robots' node.",
-                prefix.c_str(), yaml_filename.c_str());
+                yaml_filename.c_str());
   }
 
   TEMOTO_INFO("Robot manager is ready.");
@@ -74,7 +69,6 @@ RobotManager::RobotManager()
 
 void RobotManager::loadLocalRobot(RobotConfigPtr config)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   if (!config)
   {
     throw CREATE_ERROR(error::Code::NULL_PTR, "config == NULL");
@@ -86,20 +80,21 @@ void RobotManager::loadLocalRobot(RobotConfigPtr config)
     active_robot_ = std::make_shared<Robot>(config, resource_manager_, *this);
     loaded_robots_.emplace(load_proc_res.rmp.resource_id, active_robot_);
     config->adjustReliability(1.0);
-    TEMOTO_DEBUG("%s Robot '%s' loaded.", prefix.c_str(), config->getName().c_str());
+    advertiseConfig(config);
+    TEMOTO_DEBUG("Robot '%s' loaded.", config->getName().c_str());
   }
   catch (error::ErrorStack& error_stack)
   {
     //\TODO: Should we adjust reliability for only certain type of errors?
     config->adjustReliability(0.0);
-    FORWARD_ERROR(error_stack);
+    advertiseConfig(config);
+    throw FORWARD_ERROR(error_stack);
   }
 }
 
 void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-  TEMOTO_INFO("%s Starting to load robot '%s'...", prefix.c_str(), req.robot_name.c_str());
+  TEMOTO_INFO("Starting to load robot '%s'...", req.robot_name.c_str());
 
   // Find the suitable robot and fill the process manager service request
   auto config = findRobot(req.robot_name, local_configs_);
@@ -108,12 +103,12 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
     try
     {
       loadLocalRobot(config);
-      res.rmp.code = rmp::status_codes::FAILED;
+      res.rmp.code = rmp::status_codes::OK;
       res.rmp.message = "Robot sucessfully loaded.";
     }
     catch (error::ErrorStack& error_stack)
     {
-      FORWARD_ERROR(error_stack);
+      throw FORWARD_ERROR(error_stack);
     }
     catch (...)
     {
@@ -127,52 +122,43 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
   config = findRobot(req.robot_name, remote_configs_);
   if (config)
   {
-    temoto_2::RobotLoad load_robot_srvc;
-    load_robot_srvc.request.robot_name = req.robot_name;
-    TEMOTO_INFO("%s RobotManager is forwarding request: '%s'", prefix.c_str(),
-                req.robot_name.c_str());
-
-    if (resource_manager_.call<temoto_2::RobotLoad>(robot_manager::srv_name::MANAGER,
-                                                    robot_manager::srv_name::SERVER_LOAD,
-                                                    load_robot_srvc, config->getTemotoNamespace()))
+    try
     {
-      TEMOTO_DEBUG("%s Call to remote RobotManager was sucessful.", prefix.c_str());
+      temoto_2::RobotLoad load_robot_srvc;
+      load_robot_srvc.request.robot_name = req.robot_name;
+      TEMOTO_INFO("RobotManager is forwarding request: '%s'", req.robot_name.c_str());
+
+      resource_manager_.call<temoto_2::RobotLoad>(robot_manager::srv_name::MANAGER,
+                                                  robot_manager::srv_name::SERVER_LOAD,
+                                                  load_robot_srvc, config->getTemotoNamespace());
+      TEMOTO_DEBUG("Call to remote RobotManager was sucessful.");
       res.rmp = load_robot_srvc.response.rmp;
-      try
-      {
-        active_robot_ = std::make_shared<Robot>(config, resource_manager_, *this);
-        loaded_robots_.emplace(load_robot_srvc.response.rmp.resource_id, active_robot_);
-      }
-      catch (...)
-      {
-        TEMOTO_ERROR("%s Exception occured while creating Robot object.", prefix.c_str());
-        res.rmp.message = "Exception occured while creating Robot object.";
-        res.rmp.code = rmp::status_codes::FAILED;
-      }
+      active_robot_ = std::make_shared<Robot>(config, resource_manager_, *this);
+      loaded_robots_.emplace(load_robot_srvc.response.rmp.resource_id, active_robot_);
     }
-    else
+    catch(error::ErrorStack& error_stack)
     {
-      TEMOTO_ERROR("%s Failed to call the remote RobotManager.", prefix.c_str());
-      res.rmp.message = "Failed to call the remote RobotManager.";
-      res.rmp.code = rmp::status_codes::FAILED;
-      return;
+      throw FORWARD_ERROR(error_stack);
     }
-
+    catch (...)
+    {
+      throw CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Exception occured while creating Robot "
+                                                           "object.");
+    }
     return;
   }
-
-  // no local nor remote robot found
-  res.rmp.code = rmp::status_codes::FAILED;
-  res.rmp.message = "Robot manager did not find a suitable robot.";
-  TEMOTO_ERROR("%s %s", prefix.c_str(), res.rmp.message.c_str());
+  else
+  {
+    // no local nor remote robot found
+    throw CREATE_ERROR(error::Code::ROBOT_NOT_FOUND,"Robot manager did not find a suitable robot.");
+  }
 }
 
 void RobotManager::unloadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-  TEMOTO_DEBUG("%s ROBOT '%s' unloading...", prefix.c_str(), req.robot_name.c_str());
+  TEMOTO_DEBUG("ROBOT '%s' unloading...", req.robot_name.c_str());
 
-  ros::Duration(5).sleep();
+//  ros::Duration(5).sleep();
 
   // search for the robot based on its resource id, remove from map,
   // and clear active_robot_ if the unloaded robot was active.
@@ -185,13 +171,11 @@ void RobotManager::unloadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLo
     }
     loaded_robots_.erase(it);
   }
-  TEMOTO_DEBUG("%s ROBOT '%s' unloaded.", prefix.c_str(), req.robot_name.c_str());
+  TEMOTO_DEBUG("ROBOT '%s' unloaded.", req.robot_name.c_str());
 }
 
 void RobotManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-
   if (msg.action == rmp::sync_action::REQUEST_CONFIG)
   {
     advertiseConfigs(local_configs_);
@@ -217,18 +201,26 @@ void RobotManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& pa
                              [&](const RobotConfigPtr& ri) { return *ri == *config; });
       if (it != remote_configs_.end())
       {
-        TEMOTO_DEBUG("%s Updating remote robot '%s' at '%s'.", prefix.c_str(),
-                     config->getName().c_str(), config->getTemotoNamespace().c_str());
+        TEMOTO_DEBUG("Updating remote robot '%s' at '%s'.", config->getName().c_str(), config->getTemotoNamespace().c_str());
         *it = config;  // overwrite found entry
       }
       else
       {
-        TEMOTO_DEBUG("%s Adding remote robot '%s' at '%s'.", prefix.c_str(),
-                     config->getName().c_str(), config->getTemotoNamespace().c_str());
+        TEMOTO_DEBUG("Adding remote robot '%s' at '%s'.", config->getName().c_str(), config->getTemotoNamespace().c_str());
         remote_configs_.push_back(config);
       }
     }
   }
+}
+
+void RobotManager::advertiseConfig(RobotConfigPtr config)
+{
+  // publish all local robots
+  YAML::Node yaml_config;
+  yaml_config["Robots"].push_back(config->getYAMLConfig());
+  PayloadType payload;
+  payload.data = YAML::Dump(yaml_config);
+  config_syncer_.advertise(payload);
 }
 
 void RobotManager::advertiseConfigs(RobotConfigs configs)
@@ -251,36 +243,32 @@ void RobotManager::advertiseConfigs(RobotConfigs configs)
 
 RobotConfigs RobotManager::parseRobotConfigs(const YAML::Node& yaml_config)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   RobotConfigs configs;
 
-  //  TEMOTO_DEBUG("%s CONFIG NODE:%d %s", prefix.c_str(), config.Type(), Dump(config).c_str());
   if (!yaml_config.IsMap())
   {
     // TODO Throw
-    TEMOTO_WARN("%s Unable to parse 'Robots' key from config.", prefix.c_str());
+    TEMOTO_WARN("Unable to parse 'Robots' key from config.");
     return configs;
   }
 
   YAML::Node robots_node = yaml_config["Robots"];
   if (!robots_node.IsSequence())
   {
-    TEMOTO_WARN("%s The given config does not contain sequence of robots.", prefix.c_str());
+    TEMOTO_WARN("The given config does not contain sequence of robots.");
     // TODO Throw
     return configs;
   }
 
-  TEMOTO_DEBUG("%s Parsing %lu robots.", prefix.c_str(), robots_node.size());
+  TEMOTO_DEBUG("Parsing %lu robots.", robots_node.size());
 
   // go over each robot node in the sequence
   for (YAML::const_iterator node_it = robots_node.begin(); node_it != robots_node.end(); ++node_it)
   {
     if (!node_it->IsMap())
     {
-      TEMOTO_ERROR("%s Unable to parse the robot config. Parameters in YAML have to be specified "
-                   "in "
-                   "key-value pairs.",
-                   prefix.c_str());
+      TEMOTO_ERROR("Unable to parse the robot config. Parameters in YAML have to be specified in "
+                   "key-value pairs.");
       continue;
     }
 
@@ -295,13 +283,12 @@ RobotConfigs RobotManager::parseRobotConfigs(const YAML::Node& yaml_config)
       }
       else
       {
-        TEMOTO_WARN("%s Ignoring duplicate of robot '%s'.", prefix.c_str(),
-                    config.getName().c_str());
+        TEMOTO_WARN("Ignoring duplicate of robot '%s'.", config.getName().c_str());
       }
     }
     catch (...)
     {
-      TEMOTO_WARN("%s Failed to parse RobotConfig from config.", prefix.c_str());
+      TEMOTO_WARN("Failed to parse RobotConfig from config.");
       continue;
     }
   }
@@ -310,8 +297,7 @@ RobotConfigs RobotManager::parseRobotConfigs(const YAML::Node& yaml_config)
 
 bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-  TEMOTO_DEBUG("%s PLANNING...", prefix.c_str());
+  TEMOTO_DEBUG("PLANNING...");
   if (active_robot_)
   {
     if (active_robot_->isLocal())
@@ -328,7 +314,7 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
       {
         active_robot_->plan("manipulator", req.target_pose);
       }
-      TEMOTO_DEBUG("%s DONE PLANNING...", prefix.c_str());
+      TEMOTO_DEBUG("DONE PLANNING...");
       res.message = "Planning sent to MoveIt";
       res.code = rmp::status_codes::OK;
     }
@@ -343,12 +329,12 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
       fwd_plan_srvc.response = res;
       if (client_plan.call(fwd_plan_srvc))
       {
-        TEMOTO_DEBUG("%s Call to remote RobotManager was sucessful.", prefix.c_str());
+        TEMOTO_DEBUG("Call to remote RobotManager was sucessful.");
         res = fwd_plan_srvc.response;
       }
       else
       {
-        TEMOTO_ERROR("%s Call to remote RobotManager service failed.", prefix.c_str());
+        TEMOTO_ERROR("Call to remote RobotManager service failed.");
         res.message = "Call to remote RobotManager service failed.";
         res.code = rmp::status_codes::FAILED;
       }
@@ -356,7 +342,7 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
   }
   else
   {
-    TEMOTO_ERROR("%s Unable to plan, because the robot is not loaded.", prefix.c_str());
+    TEMOTO_ERROR("Unable to plan, because the robot is not loaded.");
     res.message = "Unable to plan, because the robot is not loaded.";
     res.code = rmp::status_codes::FAILED;
   }
@@ -367,14 +353,13 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
 bool RobotManager::execCb(temoto_2::RobotExecute::Request& req,
                           temoto_2::RobotExecute::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-  TEMOTO_INFO("%s EXECUTING...", prefix.c_str());
+  TEMOTO_INFO("EXECUTING...");
   if (active_robot_)
   {
     if (active_robot_->isLocal())
     {
       active_robot_->execute("manipulator");
-      TEMOTO_DEBUG("%s DONE EXECUTING...", prefix.c_str());
+      TEMOTO_DEBUG("DONE EXECUTING...");
       res.message = "Execute command sent to MoveIt";
       res.code = rmp::status_codes::OK;
     }
@@ -389,12 +374,12 @@ bool RobotManager::execCb(temoto_2::RobotExecute::Request& req,
       fwd_exec_srvc.response = res;
       if (client_exec.call(fwd_exec_srvc))
       {
-        TEMOTO_DEBUG("%s Call to remote RobotManager was sucessful.", prefix.c_str());
+        TEMOTO_DEBUG("Call to remote RobotManager was sucessful.");
         res = fwd_exec_srvc.response;
       }
       else
       {
-        TEMOTO_ERROR("%s Call to remote RobotManager service failed.", prefix.c_str());
+        TEMOTO_ERROR("Call to remote RobotManager service failed.");
         res.message = "Call to remote RobotManager service failed.";
         res.code = rmp::status_codes::FAILED;
       }
@@ -402,7 +387,7 @@ bool RobotManager::execCb(temoto_2::RobotExecute::Request& req,
   }
   else
   {
-    TEMOTO_ERROR("%s Unable to execute, because the robot is not loaded.", prefix.c_str());
+    TEMOTO_ERROR("Unable to execute, because the robot is not loaded.");
   }
   return true;
 }
@@ -410,11 +395,10 @@ bool RobotManager::execCb(temoto_2::RobotExecute::Request& req,
 bool RobotManager::getVizInfoCb(temoto_2::RobotGetVizInfo::Request& req,
                                 temoto_2::RobotGetVizInfo::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-  TEMOTO_INFO("%s GETTING visualization info...", prefix.c_str());
+  TEMOTO_INFO("GETTING visualization info...");
   if (!active_robot_)
   {
-    TEMOTO_ERROR("%s Robot not loaded.", prefix.c_str());
+    TEMOTO_ERROR("Robot not loaded.");
     res.code = -1;
   }
   else
@@ -428,8 +412,7 @@ bool RobotManager::getVizInfoCb(temoto_2::RobotGetVizInfo::Request& req,
 bool RobotManager::setTargetCb(temoto_2::RobotSetTarget::Request& req,
                                temoto_2::RobotSetTarget::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-  TEMOTO_INFO("%s Looking for target of type '%s'", prefix.c_str(), req.target_type.c_str());
+  TEMOTO_INFO("Looking for target of type '%s'", req.target_type.c_str());
 
   // TODO: Only "hand" type is experimentally implemented
   if (req.target_type == "hand")
@@ -440,24 +423,19 @@ bool RobotManager::setTargetCb(temoto_2::RobotSetTarget::Request& req,
     gesture_specifier.type = "hand";
     //    gesture_specifiers.push_back(gesture_specifier);
 
-    hand_srv_msg_.request.gesture_specifiers.push_back(gesture_specifier);
-    if (resource_manager_.call<temoto_2::LoadGesture>(context_manager::srv_name::MANAGER,
-                                                      context_manager::srv_name::GESTURE_SERVER,
-                                                      hand_srv_msg_))
+    try
     {
-      TEMOTO_DEBUG("%s Call to ContextManager was sucessful.", prefix.c_str());
-      res.code = 0;
-      res.message = "Robot manager got a 'hand' topic from context_manager.";
-      TEMOTO_DEBUG("%s Subscribing to '%s'", prefix.c_str(), hand_srv_msg_.response.topic.c_str());
+      hand_srv_msg_.request.gesture_specifiers.push_back(gesture_specifier);
+      resource_manager_.call<temoto_2::LoadGesture>(context_manager::srv_name::MANAGER,
+          context_manager::srv_name::GESTURE_SERVER,
+          hand_srv_msg_);
+      TEMOTO_DEBUG("Subscribing to '%s'", hand_srv_msg_.response.topic.c_str());
       target_pose_sub_ =
-          nh_.subscribe(hand_srv_msg_.response.topic, 1, &RobotManager::targetPoseCb, this);
+        nh_.subscribe(hand_srv_msg_.response.topic, 1, &RobotManager::targetPoseCb, this);
     }
-    else
+    catch(error::ErrorStack& error_stack)
     {
-      TEMOTO_ERROR("%s Failed to call ContextManager.", prefix.c_str());
-      res.code = 1;
-      res.message = "Failed to call ContextManager.";
-      return true;
+      throw FORWARD_ERROR(error_stack);
     }
   }
   return true;
@@ -466,12 +444,11 @@ bool RobotManager::setTargetCb(temoto_2::RobotSetTarget::Request& req,
 bool RobotManager::setModeCb(temoto_2::RobotSetMode::Request& req,
                              temoto_2::RobotSetMode::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-  TEMOTO_INFO("%s SET MODE...", prefix.c_str());
+  TEMOTO_INFO("SET MODE...");
   // input validation
   if (req.mode != modes::AUTO && req.mode != modes::NAVIGATION && req.mode != modes::MANIPULATION)
   {
-    TEMOTO_ERROR("%s Mode '%s' is not supported.", prefix.c_str(), req.mode.c_str());
+    TEMOTO_ERROR("Mode '%s' is not supported.", req.mode.c_str());
     res.message = "Mode is not supported.";
     res.code = rmp::status_codes::FAILED;
     return true;
@@ -482,7 +459,7 @@ bool RobotManager::setModeCb(temoto_2::RobotSetMode::Request& req,
     if (active_robot_->isLocal())
     {
       mode_ = req.mode;
-      TEMOTO_DEBUG("%s Robot mode set to: %s...", prefix.c_str(), mode_.c_str());
+      TEMOTO_DEBUG("Robot mode set to: %s...", mode_.c_str());
       res.message = "Robot mode set to '" + mode_ + "'.";
       res.code = rmp::status_codes::OK;
     }
@@ -497,12 +474,12 @@ bool RobotManager::setModeCb(temoto_2::RobotSetMode::Request& req,
       fwd_mode_srvc.response = res;
       if (client_mode.call(fwd_mode_srvc))
       {
-        TEMOTO_DEBUG("%s Call to remote RobotManager was sucessful.", prefix.c_str());
+        TEMOTO_DEBUG("Call to remote RobotManager was sucessful.");
         res = fwd_mode_srvc.response;
       }
       else
       {
-        TEMOTO_ERROR("%s Call to remote RobotManager service failed.", prefix.c_str());
+        TEMOTO_ERROR("Call to remote RobotManager service failed.");
         res.message = "Call to remote RobotManager service failed.";
         res.code = rmp::status_codes::FAILED;
       }
@@ -510,7 +487,7 @@ bool RobotManager::setModeCb(temoto_2::RobotSetMode::Request& req,
   }
   else
   {
-    TEMOTO_ERROR("%s Unable to set mode, because the robot is not loaded.", prefix.c_str());
+    TEMOTO_ERROR("Unable to set mode, because the robot is not loaded.");
   }
   return true;
 }
@@ -535,9 +512,7 @@ void RobotManager::targetPoseCb(const leap_motion_controller::Set& set)
 
 void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-
-  TEMOTO_DEBUG("%s status info was received", prefix.c_str());
+  TEMOTO_DEBUG("status info was received");
   TEMOTO_DEBUG_STREAM(srv.request);
   // if any resource should fail, just unload it and try again
   // there is a chance that sensor manager gives us better sensor this time
@@ -546,21 +521,28 @@ void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)
   {
     TEMOTO_WARN("Robot manager detected a hand sensor failure. Unloading and "
                 "trying again");
-    resource_manager_.unloadClientResource(hand_srv_msg_.response.rmp.resource_id);
+    try
+    {
+      resource_manager_.unloadClientResource(hand_srv_msg_.response.rmp.resource_id);
+    }
+    catch(error::ErrorStack& error_stack)
+    {
+      TEMOTO_ERROR_STREAM(error_stack);
+    }
 
     // retry with previous request
-    if (resource_manager_.call<temoto_2::LoadGesture>(context_manager::srv_name::MANAGER,
-                                                      context_manager::srv_name::GESTURE_SERVER,
-                                                      hand_srv_msg_))
+    try
     {
-      TEMOTO_DEBUG("%s Call to ContextManager was sucessful.", prefix.c_str());
-      TEMOTO_DEBUG("%s Subscribing to '%s'", prefix.c_str(), hand_srv_msg_.response.topic.c_str());
+      resource_manager_.call<temoto_2::LoadGesture>(context_manager::srv_name::MANAGER,
+                                                    context_manager::srv_name::GESTURE_SERVER,
+                                                    hand_srv_msg_);
+      TEMOTO_DEBUG("Subscribing to '%s'", hand_srv_msg_.response.topic.c_str());
       target_pose_sub_ =
           nh_.subscribe(hand_srv_msg_.response.topic, 1, &RobotManager::targetPoseCb, this);
     }
-    else
+    catch(error::ErrorStack& error_stack)
     {
-      TEMOTO_ERROR("%s Failed to call ContextManager.", prefix.c_str());
+      throw FORWARD_ERROR(error_stack);
     }
   }
 
@@ -584,8 +566,6 @@ void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)
 
 RobotConfigPtr RobotManager::findRobot(const std::string& robot_name, const RobotConfigs& configs)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-
   // Local list of devices that follow the requirements
   RobotConfigs candidates;
 

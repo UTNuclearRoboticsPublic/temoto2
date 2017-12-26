@@ -21,7 +21,7 @@
 namespace output_manager
 {
 
-class RvizManager : BaseSubsystem
+class RvizManager : public BaseSubsystem
 {
 public:
   RvizManager();

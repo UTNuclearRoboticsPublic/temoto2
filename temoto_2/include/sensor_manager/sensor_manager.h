@@ -17,7 +17,7 @@ namespace sensor_manager
 
 typedef std_msgs::String PayloadType;
 
-class SensorManager : BaseSubsystem
+class SensorManager : public BaseSubsystem
 {
 public:
     /**
@@ -75,6 +75,8 @@ private:
    */
   void statusCb(temoto_2::ResourceStatus& srv);
 
+  void advertiseSensor(SensorInfoPtr sensor_ptr);
+
   void advertiseLocalSensors();
 
   std::vector<SensorInfoPtr> parseSensors(const YAML::Node& config);
@@ -92,7 +94,7 @@ private:
    */
   SensorInfoPtr findSensor(std::string type, std::string name, std::string executable, const std::vector<SensorInfoPtr>& sensors);
 
-  std::string log_class_, log_subsys_, log_group_;
+  std::string log_class_, log_subsys_;
 //  ros::ServiceServer list_devices_server_;
   rmp::ResourceManager<SensorManager> resource_manager_;
   rmp::ConfigSynchronizer<SensorManager, PayloadType> config_syncer_;

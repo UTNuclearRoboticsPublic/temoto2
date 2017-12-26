@@ -24,6 +24,7 @@ enum class Subsystem : int
   ALGORITHM_MANAGER,
   ROBOT_MANAGER,
   OUTPUT_MANAGER,
+  PROCESS_MANAGER,
   TASK
 };
 
@@ -45,6 +46,10 @@ enum class Code : int
   // Resource management
   RESOURCE_LOAD_FAIL,    // Failed to load resource
   RESOURCE_UNLOAD_FAIL,  // Failed to unload resource
+  RESOURCE_NOT_FOUND,  // Resource was not found
+  RMP_CAST_FAIL,         // Failed to cast an object
+  RMP_FATAL,             // Something extremely bad happened
+  RMP_NOT_FOUND,         // Resource id was not found //\TODO: remove
 
   // Core
   DESC_OPEN_FAIL,       // Failed to open the xml file
@@ -75,7 +80,14 @@ enum class Code : int
 
   // Process manager
   PROCESS_SPAWN_FAIL,  // Failed to spawn new process
-  PROCESS_KILL_FAIL,    // Failed to kill a process
+  PROCESS_KILL_FAIL,   // Failed to kill a process
+
+  // Robot manager
+  ROBOT_NOT_FOUND, // The requested robot was not found from local and remote managers.
+
+  // Algorithm manager
+  ALGORITHM_NOT_FOUND, // The requested algorithm was not found from local and remote managers.
+  
 
   UNHANDLED_EXCEPTION  // Unhandled exception
 };
@@ -94,11 +106,12 @@ typedef std::vector<temoto_2::Error> ErrorStack;
 
 #define __TEMOTO_ERROR_HANDLER_VERBOSE__ TRUE
 
-#define CREATE_ERROR(code, message) error_handler_.create(code, TEMOTO_LOG_PREFIX, message)
+#define CREATE_ERROR(code, ...) this->error_handler_.create(code, TEMOTO_LOG_PREFIX, error::ErrorHandler::formatToString(__VA_ARGS__))
 
-#define FORWARD_ERROR(error_stack) error_handler_.forward(error_stack, TEMOTO_LOG_PREFIX)
+#define FORWARD_ERROR(error_stack) this->error_handler_.forward(error_stack, TEMOTO_LOG_PREFIX)
 
-#define SEND_ERROR(error_stack) error_handler_.send(error_stack)
+#define SEND_ERROR(error_stack) this->error_handler_.send(error_stack)
+
 
 /**
  * @brief The ErrorHandler class
@@ -116,14 +129,15 @@ public:
    * @param prefix Prefix describing where the error was created.
    * @param message A brief description of what went wrong.
    */
-  ErrorStack create(Code code, const std::string& prefix, const std::string& message);
+  ErrorStack create(Code code, const std::string& prefix, const std::string& message) const; 
+
 
   /**
    * @brief Appends the existing error stack with a prefix.
    * @param error_stack Error stack to which the prefix is appended.
    * @param prefix Prefix describing where the error is forwarded.
    */
-  ErrorStack forward(ErrorStack error_stack, const std::string& prefix);
+  ErrorStack forward(ErrorStack error_stack, const std::string& prefix) const;
 
   /**
    * @brief Publishes the error_stack
@@ -131,17 +145,39 @@ public:
    */
   void send(ErrorStack error_stack);
 
+
+  static std::string formatToString(const char* fmt, ...)
+  {
+    boost::shared_array<char> buffer;
+    size_t size = 0;
+    va_list args;
+    va_start(args, fmt);
+    ros::console::vformatToBuffer(buffer, size, fmt, args);
+    va_end(args);
+    return std::string(buffer.get(), size);
+  }
+
+  static std::string formatToString(const std::string& s) 
+  {
+    return s;
+  }
+
+
 private:
   Subsystem subsystem_;
 
   std::string log_group_;
 
   ros::NodeHandle n_;
-
-  ros::Publisher error_publisher_;
 };
 
 }  // end of error namespace
+
+
+/**
+ * @brief Define + operator to append some other ErrorStack to this stack.
+ */
+error::ErrorStack& operator+=(error::ErrorStack& er_lhs, const error::ErrorStack& es_rhs);
 
 /**
  * @brief operator <<

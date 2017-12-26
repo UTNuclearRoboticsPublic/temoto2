@@ -72,22 +72,18 @@ public:
     srv_msg.request.executable = ros_program_name;
 
     // Call the server
-    if (!resource_manager_->template call<temoto_2::LoadSensor>(
-            sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, srv_msg))
+    try
     {
-      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service");
+      resource_manager_->template call<temoto_2::LoadSensor>(
+            sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, srv_msg);
+    }
+    catch(error::ErrorStack& error_stack)
+    {
+      throw FORWARD_ERROR(error_stack);
     }
 
-    // If the request was fulfilled, then add the srv to the list of allocated sensors
-    if (srv_msg.response.rmp.code == 0)
-    {
-      allocated_sensors_.push_back(srv_msg);
-      return srv_msg.response.topic;
-    }
-    else
-    {
-      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Unsuccessful call to sensor manager: ");
-    }
+    allocated_sensors_.push_back(srv_msg);
+    return srv_msg.response.topic;
   }
 
   /**
@@ -108,24 +104,26 @@ public:
     req.package_name = package_name;
     req.executable = ros_program_name;
 
-    auto cur_sensor_it = allocated_sensors_.begin();
-    while (cur_sensor_it != allocated_sensors_.end())
+    // The == operator used in the lambda function is defined in
+    // sensor manager services header
+    auto found_sensor_it = std::find_if(
+        allocated_sensors_.begin(), allocated_sensors_.end(),
+        [&](const temoto_2::LoadSensor& srv_msg) -> bool { return srv_msg.request == req; });
+    if (found_sensor_it == allocated_sensors_.end())
     {
-      // The == operator used in the lambda function is defined in
-      // sensor manager services header
-      auto found_sensor_it = std::find_if(
-          cur_sensor_it, allocated_sensors_.end(),
-          [&](const temoto_2::LoadSensor& srv_msg) -> bool { return srv_msg.request == req; });
-      if (found_sensor_it != allocated_sensors_.end())
-      {
-        // do the unloading
-        resource_manager_->unloadClientResource(found_sensor_it->response.rmp.resource_id);
-        cur_sensor_it = found_sensor_it;
-      }
-      else if (cur_sensor_it == allocated_sensors_.begin())
-      {
-        throw CREATE_ERROR(error::Code::RESOURCE_UNLOAD_FAIL, "Unable to unload resource that is not loaded.");
-      }
+      throw CREATE_ERROR(error::Code::RESOURCE_UNLOAD_FAIL, "Unable to unload resource that is not "
+                                                            "loaded.");
+    }
+
+    try
+    {
+      // do the unloading
+      resource_manager_->unloadClientResource(found_sensor_it->response.rmp.resource_id);
+      allocated_sensors_.erase(found_sensor_it);
+    }
+    catch (error::ErrorStack& error_stack)
+    {
+      throw FORWARD_ERROR(error_stack);
     }
   }
 
@@ -153,24 +151,20 @@ public:
         TEMOTO_DEBUG("Asking the same sensor again");
 
         // this call automatically updates the response in allocated sensors vec
-        if (!resource_manager_->template call<temoto_2::LoadSensor>(
-                sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, *sens_it))
+        try
         {
-          throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service");
+          resource_manager_->template call<temoto_2::LoadSensor>(
+              sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, *sens_it);
         }
-
-        if (sens_it->response.rmp.code == 0)
+        catch(error::ErrorStack& error_stack)
         {
-          // @TODO: send somehow topic to whoever is using this thing
-          // or do topic remapping
-        }
-        else
-        {
-          throw FORWARD_ERROR(sens_it->response.rmp.error_stack);
+          throw FORWARD_ERROR(error_stack);
         }
       }
       else
       {
+        throw CREATE_ERROR(error::Code::RESOURCE_NOT_FOUND, "Resource status arrived for a "
+                                                            "resource that does not exist.");
       }
     }
   }

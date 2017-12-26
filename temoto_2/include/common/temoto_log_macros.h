@@ -15,7 +15,7 @@
 #define TEMOTO_WARN_STREAM(...) ROS_LOG_STREAM(::ros::console::levels::Warn, TEMOTO_CONSOLE_NAME, __VA_ARGS__)
 #define TEMOTO_ERROR_STREAM(...) ROS_LOG_STREAM(::ros::console::levels::Error, TEMOTO_CONSOLE_NAME, __VA_ARGS__)
 
-#define TEMOTO_LOG_PREFIX (::common::getTemotoNamespace()+"/"+this->class_name_+"/"+__func__).c_str()
+#define TEMOTO_LOG_PREFIX ("::"+::common::getTemotoNamespace()+"/"+this->subsystem_name_+"/"+this->class_name_+"::"+__func__).c_str()
 
 #define TEMOTO_PRINT_AT_LOCATION_WITH_FILTER(filter, ...) \
 ::ros::console::print(filter, __rosconsole_define_location__loc.logger_, __rosconsole_define_location__loc.level_, __FILE__, __LINE__, TEMOTO_LOG_PREFIX, __VA_ARGS__)

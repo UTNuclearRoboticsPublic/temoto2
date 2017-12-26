@@ -85,6 +85,8 @@ private:
 
   void syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload);
 
+  void advertiseConfig(RobotConfigPtr config);
+
   void advertiseConfigs(RobotConfigs configs);
 
   RobotConfigs parseRobotConfigs(const YAML::Node& config);
@@ -111,7 +113,7 @@ private:
   std::string mode_;
   geometry_msgs::PoseStamped default_target_pose_;
 
-  std::string log_class_, log_subsys_, log_group_;
+  std::string log_class_, log_subsys_;
 
   ros::NodeHandle nh_;
   ros::ServiceServer server_plan_;

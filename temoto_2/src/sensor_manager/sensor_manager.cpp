@@ -23,15 +23,10 @@
 namespace sensor_manager
 {
 SensorManager::SensorManager()
-  : resource_manager_(srv_name::MANAGER, this)
+  : BaseSubsystem("sensor_manager", error::Subsystem::SENSOR_MANAGER, __func__)
+  ,  resource_manager_(srv_name::MANAGER, this)
   , config_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &SensorManager::syncCb, this)
 {
-  class_name_ = __func__;
-  subsystem_name_ = "context_manager";
-  subsystem_code_ = error::Subsystem::SENSOR_MANAGER;
-  log_group_ = "context_manager";
-  error_handler_ = error::ErrorHandler(subsystem_code_, log_group_);
-
   // Start the server
   resource_manager_.addServer<temoto_2::LoadSensor>(srv_name::SERVER, &SensorManager::startSensorCb,
                                                     &SensorManager::stopSensorCb);
@@ -149,6 +144,15 @@ void SensorManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& p
   }
 }
 
+void SensorManager::advertiseSensor(SensorInfoPtr sensor_ptr)
+{
+    YAML::Node config;
+    config["Sensors"].push_back(*sensor_ptr);
+    PayloadType payload;
+    payload.data = Dump(config);
+    config_syncer_.advertise(payload);
+}
+
 void SensorManager::advertiseLocalSensors()
 {
     // publish all local sensors
@@ -190,10 +194,10 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
                 load_process_msg.request.package_name.c_str(),
                 load_process_msg.request.executable.c_str(), sensor_ptr->getReliability());
 
-    if (resource_manager_.call<temoto_2::LoadProcess>(process_manager::srv_name::MANAGER,
-                                                      process_manager::srv_name::SERVER,
-                                                      load_process_msg))
+    try
     {
+      resource_manager_.call<temoto_2::LoadProcess>(
+          process_manager::srv_name::MANAGER, process_manager::srv_name::SERVER, load_process_msg);
       TEMOTO_DEBUG("Call to ProcessManager was sucessful.");
 
       // fill in the response about which particular sensor was chosen
@@ -201,24 +205,19 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
       res.topic = common::getAbsolutePath(sensor_ptr->getTopic());
       res.executable = sensor_ptr->getExecutable();
       res.rmp = load_process_msg.response.rmp;
+
+      sensor_ptr->adjustReliability(1.0);
+      advertiseSensor(sensor_ptr);
     }
-    else
-    {
-      // TODO: Client needs a proper response
-      TEMOTO_ERROR("Failed to call the ProcessManager.");
-      return;
+    catch(error::ErrorStack& error_stack)
+    { 
+      sensor_ptr->adjustReliability(0.0);
+      advertiseSensor(sensor_ptr);
+      throw FORWARD_ERROR(error_stack);
     }
 
-    // Increase or decrease the reliability depending on the return code
-    // and send the update to other managers.
-    (res.rmp.code == 0) ? sensor_ptr->adjustReliability(1.0) : sensor_ptr->adjustReliability(0.0);
     allocated_sensors_.emplace(res.rmp.resource_id, sensor_ptr);
-    YAML::Node config;
-    config["Sensors"].push_back(*sensor_ptr);
 
-    PayloadType payload;
-    payload.data = Dump(config);
-    config_syncer_.advertise(payload);
     return;
   }
 
@@ -240,30 +239,29 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
                 sensor_ptr->getType().c_str(), sensor_ptr->getPackageName().c_str(),
                 sensor_ptr->getExecutable().c_str(), sensor_ptr->getReliability());
 
-    if (resource_manager_.call<temoto_2::LoadSensor>(
-            sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, load_sensor_msg,
-            sensor_ptr->getTemotoNamespace()))
+    try
     {
+      resource_manager_.call<temoto_2::LoadSensor>(
+          sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, load_sensor_msg,
+          sensor_ptr->getTemotoNamespace());
       TEMOTO_DEBUG("Call to remote SensorManager was sucessful.");
       res = load_sensor_msg.response;
       allocated_sensors_.emplace(res.rmp.resource_id, sensor_ptr);
     }
-    else
+    catch(error::ErrorStack& error_stack)
     {
-      // TODO: Client needs a proper response
-      TEMOTO_ERROR("Failed to call the remote SensorManager.");
-      return;
+      throw FORWARD_ERROR(error_stack);
     }
     return;
   }
-
-  // no suitable local nor remote sensor was found
-  res.package_name = req.package_name;
-  res.executable = "";
-  res.topic = "";
-  res.rmp.code = 1;
-  res.rmp.message = "SensorManager did not find a suitable sensor.";
-  TEMOTO_ERROR("%s", res.rmp.message.c_str());
+  else
+  {
+    // no suitable local nor remote sensor was found
+    res.package_name = req.package_name;
+    res.executable = "";
+    res.topic = "";
+    throw CREATE_ERROR(error::Code::RMP_NOT_FOUND, "SensorManager did not find a suitable sensor.");
+  }
 }
 
 // TODO: rename "stopSensorCb" to "unloadSensorCb"

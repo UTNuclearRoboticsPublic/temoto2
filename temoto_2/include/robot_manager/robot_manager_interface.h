@@ -61,24 +61,20 @@ public:
     // the name of the topic
     temoto_2::RobotLoad load_srvc;
     load_srvc.request.robot_name = robot_name;
-    if (resource_manager_-> template call<temoto_2::RobotLoad>(
-            robot_manager::srv_name::MANAGER, robot_manager::srv_name::SERVER_LOAD, load_srvc))
+    try
     {
-      if(load_srvc.response.rmp.code == rmp::status_codes::FAILED)
-      {
-        throw FORWARD_ERROR(load_srvc.response.rmp.error_stack);
-      }
+      resource_manager_->template call<temoto_2::RobotLoad>(
+          robot_manager::srv_name::MANAGER, robot_manager::srv_name::SERVER_LOAD, load_srvc);
     }
-    else
+    catch(error::ErrorStack& error_stack)
     {
-      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
+      throw FORWARD_ERROR(error_stack);
     }
   }
 
   void plan()
   {
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-    TEMOTO_DEBUG("%s", prefix.c_str());
 
     temoto_2::RobotPlan msg;
     msg.request.use_default_target = true;

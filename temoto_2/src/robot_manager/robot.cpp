@@ -43,17 +43,23 @@ void Robot::load()
 void Robot::loadHardware()
 {
   RobotFeature& ftr = config_->getRobotFeature(FeatureType::HARDWARE);
-  temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable(), ftr.getArgs());
-  TEMOTO_DEBUG("HARDWARE resource id: %d", res_id);
-  ftr.setResourceId(res_id);
+  try
+  {
+    temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable(), ftr.getArgs());
+    TEMOTO_DEBUG("HARDWARE resource id: %d", res_id);
+    ftr.setResourceId(res_id);
 
-  // Wait for robot/joint states become available.
-  //std::string cmd_vel_topic = '/' + config->getRobotNamespace() + "/cmd_vel";
-  std::string joint_states_topic = '/' + config_->getRobotNamespace() + "/joint_states";
-  waitForTopic(joint_states_topic, res_id);
-  ftr.setLoaded(true);
-
-// Wait for hardware. Poll parameter server until robot_description becomes available.
+    // Wait for robot/joint states become available.
+    // std::string cmd_vel_topic = '/' + config->getRobotNamespace() + "/cmd_vel";
+    std::string joint_states_topic = '/' + config_->getRobotNamespace() + "/joint_states";
+    waitForTopic(joint_states_topic, res_id);
+    //waitForTopic(cmd_vel_topic, res_id);
+    ftr.setLoaded(true);
+  }
+  catch(error::ErrorStack& error_stack)
+  {
+    throw FORWARD_ERROR(error_stack);
+  }
 }
 
 void Robot::waitForParam(const std::string& param, temoto_id::ID interrupt_res_id)
@@ -102,15 +108,22 @@ bool Robot::isTopicAvailable(const std::string& topic)
 // Load robot's urdf
 void Robot::loadUrdf()
 {
-  RobotFeature& ftr = config_->getRobotFeature(FeatureType::URDF);
-  std::string urdf_path = '/' + ros::package::getPath(ftr.getPackageName()) + '/' + ftr.getExecutable();
-  temoto_id::ID res_id = rosExecute("temoto_2", "urdf_loader.py", urdf_path);
-  TEMOTO_DEBUG("URDF resource id: %d", res_id);
-  ftr.setResourceId(res_id);
+  try
+  {
+    RobotFeature& ftr = config_->getRobotFeature(FeatureType::URDF);
+    std::string urdf_path = '/' + ros::package::getPath(ftr.getPackageName()) + '/' + ftr.getExecutable();
+    temoto_id::ID res_id = rosExecute("temoto_2", "urdf_loader.py", urdf_path);
+    TEMOTO_DEBUG("URDF resource id: %d", res_id);
+    ftr.setResourceId(res_id);
 
-  std::string robot_desc_param = '/' + config_->getRobotNamespace() + "/robot_description";
-  waitForParam(robot_desc_param, res_id);
-  ftr.setLoaded(true);
+    std::string robot_desc_param = '/' + config_->getRobotNamespace() + "/robot_description";
+    waitForParam(robot_desc_param, res_id);
+    ftr.setLoaded(true);
+  }
+  catch(error::ErrorStack& error_stack)
+  {
+    throw FORWARD_ERROR(error_stack);
+  }
 }
 
 // Load MoveIt! move group and move group interfaces
@@ -148,16 +161,17 @@ temoto_id::ID Robot::rosExecute(const std::string& package_name, const std::stri
   load_proc_srvc.request.executable = executable;
   load_proc_srvc.request.args = args;
 
-  if (resource_manager_.call<temoto_2::LoadProcess>(
-          process_manager::srv_name::MANAGER, process_manager::srv_name::SERVER, load_proc_srvc))
+  try
   {
-    if (load_proc_srvc.response.rmp.code != rmp::status_codes::FAILED)
-    {
-      //TODO: FORWARD error
-    }
-    return load_proc_srvc.response.rmp.resource_id;
+    resource_manager_.call<temoto_2::LoadProcess>(
+        process_manager::srv_name::MANAGER, process_manager::srv_name::SERVER, load_proc_srvc);
   }
-  return temoto_id::UNASSIGNED_ID;
+  catch(error::ErrorStack& error_stack)
+  {
+    throw FORWARD_ERROR(error_stack);
+  }
+
+  return load_proc_srvc.response.rmp.resource_id;
 }
 
 

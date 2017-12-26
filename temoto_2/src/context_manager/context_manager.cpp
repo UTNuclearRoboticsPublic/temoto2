@@ -8,16 +8,11 @@
 namespace context_manager
 {
 ContextManager::ContextManager()
-  : resource_manager_1_(srv_name::MANAGER, this)
+  : BaseSubsystem("context_manager", error::Subsystem::CONTEXT_MANAGER, __func__)
+  , resource_manager_1_(srv_name::MANAGER, this)
   , resource_manager_2_(srv_name::MANAGER_2, this)
   , object_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &ContextManager::objectSyncCb, this)
 {
-  class_name_ = __func__;
-  subsystem_name_ = "context_manager";
-  subsystem_code_ = error::Subsystem::CONTEXT_MANAGER;
-  log_group_ = "context_manager";
-  error_handler_ = error::ErrorHandler(subsystem_code_, log_group_);
-  
   /*
    * Start the servers
    */

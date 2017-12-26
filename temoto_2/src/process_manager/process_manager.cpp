@@ -23,7 +23,7 @@ ProcessManager::ProcessManager() : resource_manager_(srv_name::MANAGER, this)
 {
   class_name_ = __func__;
   subsystem_name_ = "process_manager";
-  subsystem_code_ = error::Subsystem::ROBOT_MANAGER;
+  subsystem_code_ = error::Subsystem::PROCESS_MANAGER;
   log_group_ = "process_manager";
   error_handler_ = error::ErrorHandler(subsystem_code_, log_group_);
 

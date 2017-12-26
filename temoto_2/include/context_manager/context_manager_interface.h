@@ -75,16 +75,9 @@ public:
                                                             , srv_msg);
       allocated_speeches_.push_back(srv_msg);
     }
-    catch (...)
+    catch(error::ErrorStack& error_stack)
     {
-      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service");
-    }
-
-    // Check if the request was satisfied
-    // TODO: in future, catch code==0 exeption from RMP and rethrow from here
-    if (srv_msg.response.rmp.code != 0)
-    {
-      throw FORWARD_ERROR(srv_msg.response.rmp.error_stack);
+      throw FORWARD_ERROR(error_stack);
     }
 
     // Subscribe to the topic that was provided by the "Context Manager"
@@ -113,16 +106,9 @@ public:
           context_manager::srv_name::MANAGER, context_manager::srv_name::GESTURE_SERVER, srv_msg);
       allocated_gestures_.push_back(srv_msg);
     }
-    catch (...)
+    catch(error::ErrorStack& error_stack)
     {
-      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call the server");
-    }
-
-    // Check if the request was satisfied
-    // TODO: in future, catch code==0 exeption from RMP and rethrow from here
-    if (srv_msg.response.rmp.code != 0)
-    {
-      throw FORWARD_ERROR(srv_msg.response.rmp.error_stack);
+      throw FORWARD_ERROR(error_stack);
     }
 
     // Subscribe to the topic that was provided by the "Context Manager"
@@ -219,58 +205,55 @@ public:
                                   });
       if (speech_it != allocated_speeches_.end())
       {
-        TEMOTO_DEBUG("Unloading speech");
-        resource_manager_->unloadClientResource(speech_it->response.rmp.resource_id);
-        TEMOTO_DEBUG("Asking the same speech again");
-        if (!resource_manager_->template call<temoto_2::LoadSpeech>(
-                context_manager::srv_name::MANAGER, context_manager::srv_name::SPEECH_SERVER, *speech_it))
+        try
         {
-          throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service");
+          TEMOTO_DEBUG("Unloading speech");
+          resource_manager_->unloadClientResource(speech_it->response.rmp.resource_id);
+          TEMOTO_DEBUG("Asking the same speech again");
+          resource_manager_->template call<temoto_2::LoadSpeech>(
+              context_manager::srv_name::MANAGER, context_manager::srv_name::SPEECH_SERVER,
+              *speech_it);
+        }
+        catch(error::ErrorStack& error_stack)
+        {
+          throw FORWARD_ERROR(error_stack);
         }
 
-        if (speech_it->response.rmp.code == 0)
-        {
-          // Replace subscriber
-          TEMOTO_DEBUG("Replacing subscriber new topic'%s'",
-                   speech_it->response.topic.c_str());
-          gesture_subscriber_.shutdown();
-          gesture_subscriber_ = nh_.subscribe(speech_it->response.topic, 1000, task_speech_cb_, task_speech_obj_);
-        }
-        else
-        {
-          throw FORWARD_ERROR(speech_it->response.rmp.error_stack);
-        }
+        // Replace subscriber
+        TEMOTO_DEBUG("Replacing subscriber new topic'%s'",
+                 speech_it->response.topic.c_str());
+        gesture_subscriber_.shutdown();
+        gesture_subscriber_ = nh_.subscribe(speech_it->response.topic, 1000, task_speech_cb_, task_speech_obj_);
       }
 
 
       if (gest_it != allocated_gestures_.end())
       {
-        TEMOTO_DEBUG("Unloading gesture");
-        resource_manager_->unloadClientResource(gest_it->response.rmp.resource_id);
-        TEMOTO_DEBUG("Asking the same gesture again");
-        if (!resource_manager_->template call<temoto_2::LoadGesture>(
-                context_manager::srv_name::MANAGER, context_manager::srv_name::GESTURE_SERVER, *gest_it))
+        try
         {
-          throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service");
+          TEMOTO_DEBUG("Unloading gesture");
+          resource_manager_->unloadClientResource(gest_it->response.rmp.resource_id);
+          TEMOTO_DEBUG("Asking the same gesture again");
+          resource_manager_->template call<temoto_2::LoadGesture>(
+              context_manager::srv_name::MANAGER, context_manager::srv_name::GESTURE_SERVER,
+              *gest_it);
+        }
+        catch(error::ErrorStack& error_stack)
+        {
+          throw FORWARD_ERROR(error_stack);
         }
 
-        if (gest_it->response.rmp.code == 0)
-        {
-          // Replace subscriber
-          TEMOTO_DEBUG("Replacing subscriber new topic'%s'",
-                   gest_it->response.topic.c_str());
-          gesture_subscriber_.shutdown();
-          gesture_subscriber_ = nh_.subscribe(gest_it->response.topic, 1000, task_gesture_cb_, task_gesture_obj_);
-        }
-        else
-        {
-          throw FORWARD_ERROR(gest_it->response.rmp.error_stack);
-        }
+
+        // Replace subscriber
+        TEMOTO_DEBUG("Replacing subscriber new topic'%s'",
+                 gest_it->response.topic.c_str());
+        gesture_subscriber_.shutdown();
+        gesture_subscriber_ = nh_.subscribe(gest_it->response.topic, 1000, task_gesture_cb_, task_gesture_obj_);
       }
 
       if (gest_it != allocated_gestures_.end() && speech_it != allocated_speeches_.end())
       {
-        TEMOTO_ERROR("%s Got resource_id that is not registered in this interface.", prefix.c_str());
+        throw CREATE_ERROR(error::Code::RESOURCE_NOT_FOUND, "Got resource_id that is not registered in this interface.");
       }
     }
   }

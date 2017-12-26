@@ -5,16 +5,14 @@ namespace error
 {
 ErrorHandler::ErrorHandler()
 {
-  error_publisher_ = n_.advertise<temoto_2::ErrorStack>("temoto_error_messages", 100);
 }
 
 ErrorHandler::ErrorHandler(Subsystem subsystem, std::string log_group)
   : subsystem_(subsystem), log_group_(log_group)
 {
-  error_publisher_ = n_.advertise<temoto_2::ErrorStack>("temoto_error_messages", 100);
 }
 
-ErrorStack ErrorHandler::create(Code code, const std::string& prefix, const std::string& message)
+ErrorStack ErrorHandler::create(Code code, const std::string& prefix, const std::string& message) const
 {
   ErrorStack est;
 
@@ -34,7 +32,7 @@ ErrorStack ErrorHandler::create(Code code, const std::string& prefix, const std:
   return est;
 }
 
-ErrorStack ErrorHandler::forward(ErrorStack error_stack, const std::string& prefix)
+ErrorStack ErrorHandler::forward(ErrorStack error_stack, const std::string& prefix) const
 {
   temoto_2::Error error;
   error.subsystem = static_cast<int>(subsystem_);
@@ -51,15 +49,25 @@ ErrorStack ErrorHandler::forward(ErrorStack error_stack, const std::string& pref
   return error_stack;
 }
 
-void ErrorHandler::send(ErrorStack est)
+void ErrorHandler::send(ErrorStack est) 
 {
   // Create an ErrorStack message and publish it
+  ros::Publisher error_publisher_ =
+      n_.advertise<temoto_2::ErrorStack>("temoto_error_messages", 100);
   temoto_2::ErrorStack error_stack_msg;
   error_stack_msg.error_stack = est;
   error_publisher_.publish(error_stack_msg);
 }
 
 }  // error namespace
+
+
+error::ErrorStack& operator+=(error::ErrorStack& es_lhs, const error::ErrorStack& es_rhs)
+{
+  es_lhs.insert(es_lhs.end(), es_rhs.begin(), es_rhs.end());
+  return es_lhs;
+}
+
 
 std::ostream& operator<<(std::ostream& out, const temoto_2::Error& t)
 {

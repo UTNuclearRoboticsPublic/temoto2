@@ -3,6 +3,7 @@
 
 #include <string>
 #include "common/temoto_id.h"
+#include "common/base_subsystem.h"
 #include "rmp/resource_manager.h"
 
 namespace rmp
@@ -14,15 +15,14 @@ template<class Owner>
 class ResourceManager;
 
 template <class Owner>
-class BaseResourceClient
+class BaseResourceClient : public BaseSubsystem
 {
 	public:
-		BaseResourceClient(ResourceManager<Owner>& resource_manager) : 
-            resource_manager_(resource_manager)
-		{
-		}
+    BaseResourceClient(ResourceManager<Owner>& resource_manager)
+      : BaseSubsystem(resource_manager), resource_manager_(resource_manager)
+    {
+    }
         
-
 		virtual ~BaseResourceClient()
 		{
 		}
@@ -30,7 +30,7 @@ class BaseResourceClient
     virtual const std::string& getName() const = 0;
     virtual std::map<temoto_id::ID, std::string> getInternalResources() const = 0;
     virtual const std::map<temoto_id::ID, std::string>
-    getInternalResources(temoto_id::ID external_resource_id) const = 0;
+    getInternalResources(temoto_id::ID external_resource_id) = 0;
     virtual size_t getQueryCount() const = 0;
     virtual void unloadResource(temoto_id::ID resource_id) = 0;
     virtual void setFailedFlag(temoto_id::ID external_resource_id) = 0;
