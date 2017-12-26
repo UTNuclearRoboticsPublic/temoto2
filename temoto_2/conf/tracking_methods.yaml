@@ -38,5 +38,12 @@ tests:
     input_topic_types:
       - type_0
       - type_1
+
+  - filter_category: "algorithm"
+    filter_type: "test_algorithm_1"
+    input_topic_types:
+      - type_2
+      - type_3
     output_topic_types:
       - type_1
+      - type_0

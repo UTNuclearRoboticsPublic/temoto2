@@ -29,6 +29,14 @@ add_dependencies(algorithm_0 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORT
 target_link_libraries(algorithm_0 ${catkin_LIBRARIES} )
 
 # # # # # # # # # # # #
+# ALGORITHM 1
+# # # # # # # # # # # #
+
+add_executable(algorithm_1 src/algorithm_1.cpp)
+add_dependencies(algorithm_1 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(algorithm_1 ${catkin_LIBRARIES} )
+
+# # # # # # # # # # # #
 # SENSOR 0
 # # # # # # # # # # # #
 

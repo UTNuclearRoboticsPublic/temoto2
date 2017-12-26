@@ -13,7 +13,7 @@ void sub0Cb(const std_msgs::String &msg)
 
   // Create the messages
   std_msgs::String msg_0;
-  msg_0.data = string_0 + " is working";
+  msg_0.data = string_0 + " like it is supposed to.";
 
   // Publish the messages
   pub_0.publish(msg_0);
@@ -27,7 +27,7 @@ void sub1Cb(const std_msgs::String &msg)
 
   // Create the messages
   std_msgs::String msg_1;
-  msg_1.data = string_1 + " is flowing";
+  msg_1.data = string_1 + " properly.";
 
   // Publish the messages
   pub_1.publish(msg_1);
@@ -35,18 +35,18 @@ void sub1Cb(const std_msgs::String &msg)
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "algorithm_0_node");
+  ros::init(argc, argv, "algorithm_1_node");
   ros::NodeHandle nh;
 
   // Test publishers
-  pub_0 = nh.advertise<std_msgs::String>("algorithm_0_pub_0", 10);
-  pub_1 = nh.advertise<std_msgs::String>("algorithm_0_pub_1", 10);
+  pub_0 = nh.advertise<std_msgs::String>("algorithm_1_pub_0", 10);
+  pub_1 = nh.advertise<std_msgs::String>("algorithm_1_pub_1", 10);
 
   // Test subscribers
-  ros::Subscriber sub_0 = nh.subscribe( "algorithm_0_sub_0", 10, sub0Cb);
-  ros::Subscriber sub_1 = nh.subscribe( "algorithm_0_sub_1", 10, sub1Cb);
+  ros::Subscriber sub_0 = nh.subscribe( "algorithm_1_sub_0", 10, sub0Cb);
+  ros::Subscriber sub_1 = nh.subscribe( "algorithm_1_sub_1", 10, sub1Cb);
 
-  std::cout << "Algorithm_0 READY\n";
+  std::cout << "Algorithm_1 READY\n";
 
   ros::spin();
 

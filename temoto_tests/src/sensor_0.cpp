@@ -22,8 +22,8 @@ int main(int argc, char **argv)
   {
     // Create the messages
     std_msgs::String msg_0, msg_1;
-    msg_0.data = "(sensor_0/topic_0 DATA = " + std::to_string(i) + ")";
-    msg_1.data = "(sensor_0/topic_1 DATA = " + std::to_string(i) + ")";
+    msg_0.data = "(" + std::to_string(i) + ") The pipe";
+    msg_1.data = "(" + std::to_string(i) + ") The data";
 
     i++;
 

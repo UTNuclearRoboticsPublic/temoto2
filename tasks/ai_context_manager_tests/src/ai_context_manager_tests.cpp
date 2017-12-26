@@ -160,7 +160,7 @@ void startInterface_1()
     TopicContainer tracker_topics = cmi_.startTracker("tests");
 
     // Pass the name of the object to the output
-    what_0_word_out = tracker_topics.getOutputTopic("data");
+    what_0_word_out = tracker_topics.getOutputTopic("type_1");
 
     std::cout << "GOT TOPIC: " << what_0_word_out << std::endl;
   }
