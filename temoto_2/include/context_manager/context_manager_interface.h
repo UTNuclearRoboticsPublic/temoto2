@@ -42,8 +42,14 @@ public:
     resource_manager_ = std::unique_ptr<rmp::ResourceManager<ContextManagerInterface>>(new rmp::ResourceManager<ContextManagerInterface>(name_, this));
 
     // ensure that resource_manager was created
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-    validateInterface(prefix);
+    try
+    {
+      validateInterface();
+    }
+    catch (error::ErrorStack& error_stack)
+    {
+      throw FORWARD_ERROR(error_stack);
+    }
 
     // register status callback function
     resource_manager_->registerStatusCb(&ContextManagerInterface::statusInfoCb);

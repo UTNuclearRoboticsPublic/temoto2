@@ -39,6 +39,9 @@ enum class Code : int
   NULL_PTR,       // Pointer is null
   UNINITIALIZED,  // Object is not initialized
 
+  // Config sync related
+  YAML_ERROR,
+
   // Service related
   SERVICE_REQ_FAIL,     // Service request failed
   SERVICE_STATUS_FAIL,  // Service responded with FAILED status
@@ -87,7 +90,10 @@ enum class Code : int
 
   // Algorithm manager
   ALGORITHM_NOT_FOUND, // The requested algorithm was not found from local and remote managers.
-  
+  NOT_INITIALIZED,
+
+  // Context Manager
+  NO_TRACKERS_FOUND,
 
   UNHANDLED_EXCEPTION  // Unhandled exception
 };

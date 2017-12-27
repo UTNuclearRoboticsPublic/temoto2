@@ -155,9 +155,9 @@ void startInterface_1()
 
     std::cout << "GOT TOPIC: " << what_0_word_out << std::endl;
   }
-  catch( error::ErrorStack& e )
+  catch( error::ErrorStack& error_stack )
   {
-    error_handler_.forwardAndAppend(e, prefix);
+    SEND_ERROR(error_stack);
   }
 
 // -------------------------------</ USER CODE >-------------------------------

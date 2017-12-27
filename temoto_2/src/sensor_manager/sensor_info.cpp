@@ -64,7 +64,6 @@ std::string SensorInfo::toString() const
   ret += "  type             : " + getType() + "\n";
   ret += "  package name     : " + getPackageName() + "\n";
   ret += "  executable       : " + getExecutable() + "\n";
-  ret += "  topic            : " + getTopic() + "\n";
   ret += "  description      : " + getDescription() + "\n";
   ret += "  reliability      : " + std::to_string(getReliability()) + "\n";
 

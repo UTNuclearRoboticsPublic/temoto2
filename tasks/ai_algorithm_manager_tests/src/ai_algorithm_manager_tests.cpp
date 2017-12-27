@@ -29,7 +29,7 @@ AlgorithmManagerTests()
 }
 
 // startTask with arguments
-bool startTask(TTP::TaskInterface task_interface)
+void startTask(TTP::TaskInterface task_interface)
 {
   // TODO: This is a hack for Veiko
   task_alias = task_interface.alias_;
@@ -43,8 +43,6 @@ bool startTask(TTP::TaskInterface task_interface)
         startInterface_0();
     break;
   }
-
-  return true;
   // </ AUTO-GENERATED, DO NOT MODIFY >
 }
 
@@ -82,16 +80,12 @@ void startInterface_0()
   // </ AUTO-GENERATED, DO NOT MODIFY >
 
 // -------------------------------< USER CODE >-------------------------------
-
-  // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-
   try
   {
     // Initialize the sensor manager interface
     ami_.initialize(this);
 
-    TASK_INFO_STREAM(prefix << " Starting the algorithm manager task");
+    TASK_INFO_STREAM("Starting the algorithm manager task");
 
     // Start the test algorithm
     AlgorithmTopicsReq requested_topics;
@@ -108,9 +102,9 @@ void startInterface_0()
     what_0_word_out = what_0_word_in;
     what_0_data_0_out = "blah";
   }
-  catch( error::ErrorStack& e )
+  catch( error::ErrorStack& error_stack )
   {
-      error_handler_.forwardAndAppend(e, prefix);
+    SEND_ERROR(error_stack);
   }
 
 // -------------------------------</ USER CODE >-------------------------------
@@ -133,7 +127,7 @@ void startInterface_0()
 private:
 
 // Create context manager interface object for context manager manager
-AlgorithmManagerInterface ami_;
+AlgorithmManagerInterface<AlgorithmManagerTests> ami_;
 
 std::string task_alias;
 

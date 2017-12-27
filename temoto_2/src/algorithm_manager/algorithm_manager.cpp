@@ -101,56 +101,77 @@ void AlgorithmManager::statusCb(temoto_2::ResourceStatus& srv)
  */
 void AlgorithmManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload)
 {
-  // Advertise local algorithms
-  if (msg.action == rmp::sync_action::REQUEST_CONFIG)
+  try
   {
-    advertiseLocalAlgorithms();
-    return;
+    // Advertise local algorithms
+    if (msg.action == rmp::sync_action::REQUEST_CONFIG)
+    {
+      advertiseLocalAlgorithms();
+      return;
+    }
+
+    // Update/add remote algorithms
+    if (msg.action == rmp::sync_action::ADVERTISE_CONFIG)
+    {
+      // Convert the config string to YAML tree and parse
+      YAML::Node config = YAML::Load(payload.data);
+      std::cout << YAML::Dump(config) << std::endl;
+      std::vector<AlgorithmInfoPtr> algorithms = parseAlgorithms(config);
+
+      // TODO: Hold remote stuff in a map or something keyed by namespace
+      // TODO: Temoto namespace can (doesn't have to) be contained in config
+      for (auto& s : algorithms)
+      {
+        s->setTemotoNamespace(msg.temoto_namespace);
+      }
+
+      for (auto& algorithm : algorithms)
+      {
+        // Check if algorithm has to be added or updated
+        auto it = std::find_if(remote_algorithms_.begin()
+                             , remote_algorithms_.end()
+                             , [&](const AlgorithmInfoPtr& ra)
+                               {
+                                 return *ra == *algorithm;
+                               });
+
+        // Update the algorithm
+        if (it != remote_algorithms_.end())
+        {
+          TEMOTO_DEBUG("Updating remote algorithm '%s' at '%s'.",
+              algorithm->getName().c_str(), algorithm->getTemotoNamespace().c_str());
+
+          // Update by owerwriting the old entry
+          *it = algorithm;
+        }
+
+        // Add new algorithm
+        else
+        {
+          TEMOTO_DEBUG("Adding remote algorithm '%s' at '%s'.",
+              algorithm->getName().c_str(), algorithm->getTemotoNamespace().c_str());
+
+          remote_algorithms_.push_back(algorithm);
+        }
+      }
+    }
+  }
+  // Catch temoto errors
+  catch(error::ErrorStack error_stack)
+  {
+    throw FORWARD_ERROR(error_stack);
   }
 
-  // Update/add remote algorithms
-  if (msg.action == rmp::sync_action::ADVERTISE_CONFIG)
+  // Catch yaml errors
+  catch (YAML::InvalidNode e)
   {
-    // Convert the config string to YAML tree and parse
-    YAML::Node config = YAML::Load(payload.data);
-    std::vector<AlgorithmInfoPtr> algorithms = parseAlgorithms(config);
+    throw CREATE_ERROR(error::Code::YAML_ERROR, e.what());
+  }
 
-    // TODO: Hold remote stuff in a map or something keyed by namespace
-    // TODO: Temoto namespace can (doesn't have to) be contained in config
-    for (auto& s : algorithms)
-    {
-      s->setTemotoNamespace(msg.temoto_namespace);
-    }
-
-    for (auto& algorithm : algorithms)
-    {
-      // Check if algorithm has to be added or updated
-      auto it = std::find_if(remote_algorithms_.begin()
-                           , remote_algorithms_.end()
-                           , [&](const AlgorithmInfoPtr& ra)
-                             {
-                               return *ra == *algorithm;
-                             });
-
-      // Update the algorithm
-      if (it != remote_algorithms_.end())
-      {
-        TEMOTO_DEBUG("Updating remote algorithm '%s' at '%s'.",
-            algorithm->getName().c_str(), algorithm->getTemotoNamespace().c_str());
-
-        // Update by owerwriting the old entry
-        *it = algorithm;
-      }
-
-      // Add new algorithm
-      else
-      {
-        TEMOTO_DEBUG("Adding remote algorithm '%s' at '%s'.",
-            algorithm->getName().c_str(), algorithm->getTemotoNamespace().c_str());
-
-        remote_algorithms_.push_back(algorithm);
-      }
-    }
+  // Catch all other errors
+  catch(...)
+  {
+    throw CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Received an unhandled exception.");
   }
 }
 
@@ -160,7 +181,7 @@ void AlgorithmManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType
 void AlgorithmManager::advertiseAlgorithm(AlgorithmInfoPtr algorithm_ptr)
 {
     YAML::Node config;
-    config["Sensors"].push_back(*algorithm_ptr);
+    config["Algorithms"].push_back(*algorithm_ptr);
     PayloadType payload;
     payload.data = Dump(config);
     config_syncer_.advertise(payload);
@@ -277,7 +298,7 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
     }
     catch(error::ErrorStack& error_stack)
     {
-      if (error_stack.front().code != error::Code::SERVICE_REQ_FAIL)
+      if (error_stack.front().code != static_cast<int>(error::Code::SERVICE_REQ_FAIL))
       {
         algorithm_ptr->adjustReliability(0.0);
         advertiseAlgorithm(algorithm_ptr); // Let other managers know about the updated reliability
@@ -290,7 +311,6 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
 
     // Fill out the response about which particular algorithm was chosen
     res.package_name = algorithm_ptr->getPackageName();
-    res.topic = algorithm_ptr->getTopic();
     res.executable = algorithm_ptr->getExecutable();
     res.rmp = load_process_msg.response.rmp;
 

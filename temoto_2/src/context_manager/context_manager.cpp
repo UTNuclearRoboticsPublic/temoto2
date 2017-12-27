@@ -68,8 +68,6 @@ ContextManager::ContextManager()
  */
 void ContextManager::objectSyncCb(const temoto_2::ConfigSync& msg, const Objects& payload)
 {
-  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-
   if (msg.action == rmp::sync_action::REQUEST_CONFIG)
   {
     advertiseAllObjects();
@@ -79,7 +77,7 @@ void ContextManager::objectSyncCb(const temoto_2::ConfigSync& msg, const Objects
   // Add or update objects
   if (msg.action == rmp::sync_action::ADVERTISE_CONFIG)
   {
-    TEMOTO_DEBUG("%s Received a payload", prefix.c_str());
+    TEMOTO_DEBUG("Received a payload.");
     addOrUpdateObjects(payload, true);
   }
 }
@@ -89,8 +87,7 @@ void ContextManager::objectSyncCb(const temoto_2::ConfigSync& msg, const Objects
  */
 void ContextManager::addOrUpdateObjects(const Objects& objects_to_add, bool from_other_manager)
 {
-  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-
+  // Loop over the list of provided objects
   for (auto& object : objects_to_add)
   {
     // Check if the object has to be added or updated
@@ -100,14 +97,14 @@ void ContextManager::addOrUpdateObjects(const Objects& objects_to_add, bool from
     // Update the object
     if (it != objects_.end())
     {
-      TEMOTO_DEBUG("%s Updating object: '%s'", prefix.c_str(), object.name.c_str());
+      TEMOTO_DEBUG("Updating object: '%s'.", object.name.c_str());
       *it = std::make_shared<temoto_2::ObjectContainer>(object);
     }
 
     // Add new object
     else
     {
-      TEMOTO_DEBUG("%s Adding new object: '%s'", prefix.c_str(), object.name.c_str());
+      TEMOTO_DEBUG("Adding new object: '%s'.", object.name.c_str());
       objects_.push_back(std::make_shared<temoto_2::ObjectContainer>(object));
     }
   }
@@ -115,7 +112,7 @@ void ContextManager::addOrUpdateObjects(const Objects& objects_to_add, bool from
   // If this object was added by own namespace, then advertise this config to other managers
   if (!from_other_manager)
   {
-    TEMOTO_DEBUG("%s Advertising the objects to other namespaces", prefix.c_str());
+    TEMOTO_DEBUG("Advertising the objects to other namespaces.");
     object_syncer_.advertise(objects_to_add);
   }
 }
@@ -145,8 +142,7 @@ void ContextManager::advertiseAllObjects()
  */
 bool ContextManager::addObjectsCb(temoto_2::AddObjects::Request& req, temoto_2::AddObjects::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-  TEMOTO_DEBUG_STREAM(prefix << "received a request to add %d objects: \n" << req.objects.size());
+  TEMOTO_DEBUG_STREAM("Received a request to add %d objects: \n" << req.objects.size());
 
   addOrUpdateObjects(req.objects, false);
 
@@ -159,23 +155,19 @@ bool ContextManager::addObjectsCb(temoto_2::AddObjects::Request& req, temoto_2::
 void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
                                    temoto_2::LoadTracker::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-  TEMOTO_INFO_STREAM(prefix << " Received a request: \n" << req << std::endl);
+  TEMOTO_INFO_STREAM(" Received a request: \n" << req << std::endl);
 
   try
   {
     // Get the tracking methods of the requested category
     auto trackers = categorized_trackers_.find(req.tracker_category);
-    std::cout << "D0 \n";
 
     // Proceed if the requested tracker category exists
     if (trackers != categorized_trackers_.end())
     {
-      std::cout << "D1 \n";
       // Choose a tracker based on a TODO metric
       const TrackerInfo& tracker = trackers->second.at(0);
 
-      std::cout << "D2 \n";
       // Create a unique pipe identifier string
       std::string pipeID = "pipe_" + std::to_string(pipeIDGenerator.generateID())
                          + "_at_" + common::getTemotoNamespace();
@@ -270,23 +262,16 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
 
       // Send the output topics of the last filter back via response
       res.output_topics = required_topics.outputTopicsAsKeyValues();
-    }
-    else
-    {
-      res.rmp.errorStack = error_handler_.createAndReturn(999, prefix, "No trackers found for the requested category");
-    }
 
-  // Catch the errors
+      return;
+    }
   }
-  catch(error::ErrorStack& e)
+  catch (error::ErrorStack& error_stack)
   {
-    res.rmp.errorStack = error_handler_.forwardAndReturn(e, prefix);
-  }
-  catch(...)
-  {
-    res.rmp.errorStack = error_handler_.createAndReturn(999, prefix, "Unhandled exception");
+    throw FORWARD_ERROR(error_stack);
   }
 
+  throw CREATE_ERROR(error::Code::NO_TRACKERS_FOUND, "No trackers found for the requested category");
 }
 
 /*
@@ -303,9 +288,8 @@ void ContextManager::unloadTrackerCb(temoto_2::LoadTracker::Request& req, temoto
 void ContextManager::loadGestureCb(temoto_2::LoadGesture::Request& req,
                                    temoto_2::LoadGesture::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-  TEMOTO_INFO("%s Gesture requested.", prefix.c_str());
-  TEMOTO_DEBUG("%s Using hardcoded specifiers[0]", prefix.c_str());
+  TEMOTO_INFO("Gesture requested.");
+  TEMOTO_DEBUG("Using hardcoded specifiers[0]");
 
   temoto_2::LoadSensor msg;
   msg.request.sensor_type = req.gesture_specifiers[0].type;
@@ -316,21 +300,16 @@ void ContextManager::loadGestureCb(temoto_2::LoadGesture::Request& req,
     resource_manager_1_.call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
                                                    sensor_manager::srv_name::SERVER,
                                                    msg);
-  }
-  catch (...)
-  {
-    TEMOTO_ERROR("%s Service call failed.", prefix.c_str());
-    return;  // TODO: throw here
-  }
 
-  TEMOTO_DEBUG("%s Got a response: '%s'", prefix.c_str(), msg.response.rmp.message.c_str());
-  res.topic = msg.response.topic;
-  res.package_name = msg.response.package_name;
-  res.executable = msg.response.executable;
-  res.rmp.code = msg.response.rmp.code;
-  res.rmp.message = "Gesture request was ";
-  res.rmp.message = +(msg.response.rmp.code == 0) ? "satisfied." : "not satisfied.";
-  // TODO: send a reasonable response message and code
+    TEMOTO_DEBUG("Got a response: '%s'.", msg.response.rmp.message.c_str());
+    res.package_name = msg.response.package_name;
+    res.executable = msg.response.executable;
+    res.topic = msg.response.output_topics.at(0).value;
+  }
+  catch (error::ErrorStack& error_stack)
+  {
+    throw FORWARD_ERROR(error_stack);
+  }
 }
 
 /*
@@ -392,47 +371,43 @@ void ContextManager::parseTrackers(std::string config_path)
 void ContextManager::unloadGestureCb(temoto_2::LoadGesture::Request& req,
                                    temoto_2::LoadGesture::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-  TEMOTO_DEBUG("%s Gesture unloaded.", prefix.c_str());
+  TEMOTO_DEBUG("Gesture unloaded.");
 }
 
+/*
+ * TODO: use the generic tracker service
+ */
 void ContextManager::loadSpeechCb(temoto_2::LoadSpeech::Request& req,
                                   temoto_2::LoadSpeech::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-  TEMOTO_INFO("%s Speech requested.", prefix.c_str());
-  TEMOTO_DEBUG("%s Using hardcoded specifiers[0]", prefix.c_str());
+  TEMOTO_INFO("Speech requested.");
+  TEMOTO_DEBUG("Using hardcoded specifiers[0]");
 
   temoto_2::LoadSensor msg;
   msg.request.sensor_type = req.speech_specifiers[0].type;
 
-  // Call the sensor manager to arrange us a speech sensor
+  // Request a speech sensor from the Sensor Manager
   try
   {
     resource_manager_1_.call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
-                                                 sensor_manager::srv_name::SERVER, msg);
-  }
-  catch (...)
-  {
-    TEMOTO_ERROR("%s Service call failed.", prefix.c_str());
-    return;  // TODO: throw here
-  }
+                                                   sensor_manager::srv_name::SERVER,
+                                                   msg);
 
-  TEMOTO_DEBUG("%s Got a response: '%s'", prefix.c_str(), msg.response.rmp.message.c_str());
-  res.topic = msg.response.topic;
-  res.package_name = msg.response.package_name;
-  res.executable = msg.response.executable;
-  res.rmp.code = msg.response.rmp.code;
-  res.rmp.message = "Speech request was ";
-  res.rmp.message = +(msg.response.rmp.code == 0) ? "satisfied." : "not satisfied.";
-  // TODO: send a reasonable response message and code
+    TEMOTO_DEBUG("Got a response: '%s'", msg.response.rmp.message.c_str());
+    res.package_name = msg.response.package_name;
+    res.executable = msg.response.executable;
+    res.topic = msg.response.output_topics.at(0).value; // TODO deprecated
+  }
+  catch (error::ErrorStack& error_stack)
+  {
+    throw FORWARD_ERROR(error_stack);
+  }
 }
 
 void ContextManager::unloadSpeechCb(temoto_2::LoadSpeech::Request& req,
                                     temoto_2::LoadSpeech::Response& res)
 {
-  std::string prefix = "[ContextManager::unloadSpeechCb]:";
-  TEMOTO_INFO("%s Speech unloaded.", prefix.c_str());
+  TEMOTO_INFO("Speech unloaded.");
 }
 
 

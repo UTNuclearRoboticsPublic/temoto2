@@ -66,7 +66,7 @@ std::string AlgorithmInfo::getOutputTopic(const std::string& type)
 std::string AlgorithmInfo::toString() const
 {
   std::string ret;
-  ret += "algorithm: " + getName() + "\n";
+  ret += "  algorithm: " + getName() + "\n";
   ret += "  temoto_namespace : " + getTemotoNamespace() + "\n";
   ret += "  type             : " + getType() + "\n";
   ret += "  package name     : " + getPackageName() + "\n";

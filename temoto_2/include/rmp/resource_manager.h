@@ -5,7 +5,6 @@
 #include "rmp/resource_server.h"
 #include "rmp/resource_client.h"
 #include "rmp/resource_manager_services.h"
-#include "rmp/log_macros.h"
 #include "ros/callback_queue.h"
 #include <string>
 #include <memory>  // dynamic_pointer_cast
@@ -159,13 +158,9 @@ public:
     }
     catch (error::ErrorStack& error_stack)
     {
+      clients_.erase(client_it);
       clients_mutex_.unlock();
       throw FORWARD_ERROR(error_stack);
-    }
-    if (!ret)
-    {
-      // Remove the client
-      clients_.erase(client_it);
     }
 
     clients_mutex_.unlock();

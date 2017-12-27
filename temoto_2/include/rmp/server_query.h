@@ -7,7 +7,6 @@
 #include <set>
 #include <utility>
 #include "common/temoto_id.h"
-#include "rmp/log_macros.h"
 #include "common/base_subsystem.h"
 
 namespace rmp

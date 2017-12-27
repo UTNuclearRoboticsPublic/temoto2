@@ -84,10 +84,22 @@ public:
     setTopicsByKeyValue(v_kv, input_topics_);
   }
 
-  // Set input topics by key/value vector
+  // Set output topics by key/value vector
   void setOutputTopicsByKeyValue(std::vector<diagnostic_msgs::KeyValue>& v_kv)
   {
     setTopicsByKeyValue(v_kv, output_topics_);
+  }
+
+  // Set input topics by string pair
+  void setInputTopics(std::vector<StringPair> input_topics)
+  {
+    input_topics_ = input_topics;
+  }
+
+  // Set output topics by string pair
+  void setOutputTopics(std::vector<StringPair> output_topics)
+  {
+    output_topics_ = output_topics;
   }
 
 private:

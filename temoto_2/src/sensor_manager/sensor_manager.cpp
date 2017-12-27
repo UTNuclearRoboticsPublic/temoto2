@@ -15,7 +15,6 @@
 
 #include "ros/package.h"
 #include "sensor_manager/sensor_manager.h"
-#include "sensor_manager/sensor_manager_errors.h"
 #include <algorithm>
 #include <utility>
 #include <yaml-cpp/yaml.h>
@@ -195,29 +194,38 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
     load_process_msg.request.package_name = sensor_ptr->getPackageName();
     load_process_msg.request.executable = sensor_ptr->getExecutable();
 
-    // Remap the output topics if requested
-    for (auto& req_topic : req.output_topics)
+    // Check if any particular topic types were requested
+    if (!req.output_topics.empty())
     {
-      // And return the input topics via response
-      diagnostic_msgs::KeyValue res_output_topic;
-      res_output_topic.key = req_topic.key;
-      std::string default_topic = sensor_ptr->getOutputTopic(req_topic.key);
-
-      if (req_topic.value != "")
+      // Remap the output topics if requested
+      for (auto& req_topic : req.output_topics)
       {
-        res_output_topic.value = common::getAbsolutePath(req_topic.value);
-        std::string remap_arg = default_topic + ":=" + req_topic.value;
-        load_process_msg.request.args += remap_arg + " ";
-      }
-      else
-      {
-        res_output_topic.value = common::getAbsolutePath(default_topic);
-      }
+        // And return the input topics via response
+        diagnostic_msgs::KeyValue res_output_topic;
+        res_output_topic.key = req_topic.key;
+        std::string default_topic = sensor_ptr->getOutputTopic(req_topic.key);
 
-      // Add the topic to the response message
-      res.output_topics.push_back(res_output_topic);
+        if (req_topic.value != "")
+        {
+          res_output_topic.value = common::getAbsolutePath(req_topic.value);
+          std::string remap_arg = default_topic + ":=" + req_topic.value;
+          load_process_msg.request.args += remap_arg + " ";
+        }
+        else
+        {
+          res_output_topic.value = common::getAbsolutePath(default_topic);
+        }
+
+        // Add the topic to the response message
+        res.output_topics.push_back(res_output_topic);
+      }
     }
-
+    else
+    {
+      TopicContainer output_topics;
+      output_topics.setOutputTopics(sensor_ptr->getOutputTopics());
+      res.output_topics = output_topics.outputTopicsAsKeyValues();
+    }
     TEMOTO_INFO("SensorManager found a suitable local sensor: '%s', '%s', '%s', reliability %.3f",
                 load_process_msg.request.action.c_str(),
                 load_process_msg.request.package_name.c_str(),
@@ -241,7 +249,7 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
     }
     catch(error::ErrorStack& error_stack)
     { 
-      if (error_stack.front().code != error::Code::SERVICE_REQ_FAIL)
+      if (error_stack.front().code != static_cast<int>(error::Code::SERVICE_REQ_FAIL))
       {
         sensor_ptr->adjustReliability(0.0);
         advertiseSensor(sensor_ptr);
@@ -270,7 +278,7 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
     load_sensor_msg.request.executable = sensor_ptr->getExecutable();
     load_sensor_msg.request.output_topics = req.output_topics;
 
-    TEMOTO_INFO("SensorManager is forwarding request: '%s', '%s', '%s', reliability %.3f",
+    TEMOTO_INFO("Sensor Manager is forwarding request: '%s', '%s', '%s', reliability %.3f",
                 sensor_ptr->getType().c_str(), sensor_ptr->getPackageName().c_str(),
                 sensor_ptr->getExecutable().c_str(), sensor_ptr->getReliability());
 
@@ -281,7 +289,7 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
                                                    load_sensor_msg,
                                                    sensor_ptr->getTemotoNamespace());
 
-      TEMOTO_DEBUG("Call to remote SensorManager was sucessful.");
+      TEMOTO_DEBUG("Call to remote Sensor Manager was sucessful.");
 
       res = load_sensor_msg.response;
       allocated_sensors_.emplace(res.rmp.resource_id, sensor_ptr);
@@ -295,10 +303,7 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
   else
   {
     // no suitable local nor remote sensor was found
-    res.package_name = req.package_name;
-    res.executable = "";
-    res.topic = "";
-    throw CREATE_ERROR(error::Code::RMP_NOT_FOUND, "SensorManager did not find a suitable sensor.");
+    throw CREATE_ERROR(error::Code::RMP_NOT_FOUND, "Sensor Manager did not find a suitable sensor.");
   }
 }
 

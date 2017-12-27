@@ -31,8 +31,6 @@ class SensorTopicsRes : public TopicContainer
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-class SensorManagerInterface : BaseSubsystem
-
 namespace sensor_manager
 {
 
@@ -91,7 +89,7 @@ public:
     {
       validateInterface();
     }
-    catch (error::ErrorStack& e)
+    catch (error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }

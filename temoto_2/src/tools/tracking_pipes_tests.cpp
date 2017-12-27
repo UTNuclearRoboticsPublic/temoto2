@@ -7,7 +7,6 @@
 
 #include "ros/ros.h"
 #include "ros/package.h"
-#include "core/common.h"
 #include "context_manager/tracking_method.h"
 
 #include <algorithm>

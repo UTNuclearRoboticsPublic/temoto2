@@ -1,15 +1,14 @@
 #ifndef SENSOR_INFO_H
 #define SENSOR_INFO_H
 
+#include "common/temoto_log_macros.h"
+#include "common/topic_container.h"   // StringPair
 #include <string>
 #include <vector>
 #include <map>
 #include <ctype.h>
-#include <memory>  // shared_ptr
-#include "common/temoto_log_macros.h"
+#include <memory>                     // shared_ptr
 #include <yaml-cpp/yaml.h>
-
-typedef std::pair<std::string, std::string> StringPair;
 
 namespace sensor_manager
 {

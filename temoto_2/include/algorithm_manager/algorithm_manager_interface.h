@@ -33,7 +33,7 @@ class AlgorithmTopicsRes : public TopicContainer
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 template <class OwnerTask>
-class AlgorithmManagerInterface : BaseSubsystem
+class AlgorithmManagerInterface : public BaseSubsystem
 {
 public:
   /**
@@ -65,9 +65,9 @@ public:
     {
       validateInterface();
     }
-    catch (error::ErrorStack& e)
+    catch (error::ErrorStack& error_stack)
     {
-      FORWARD_ERROR(error_stack);
+      throw FORWARD_ERROR(error_stack);
     }
 
     return startAlgorithm(algorithm_type, "", "", AlgorithmTopicsReq());
@@ -88,7 +88,7 @@ public:
     }
     catch (error::ErrorStack& error_stack)
     {
-      FORWARD_ERROR(error_stack);
+      throw FORWARD_ERROR(error_stack);
     }
 
     return startAlgorithm(algorithm_type, "", "", topics);
@@ -113,7 +113,7 @@ public:
     }
     catch (error::ErrorStack& error_stack)
     {
-      FORWARD_ERROR(error_stack);
+      throw FORWARD_ERROR(error_stack);
     }
 
     return startAlgorithm(algorithm_type, "", "", topics);
@@ -129,9 +129,9 @@ public:
     try
     {
       // Call the server
-      if (!resource_manager_->template call<temoto_2::LoadAlgorithm>(algorithm_manager::srv_name::MANAGER
-                                                                   , algorithm_manager::srv_name::SERVER
-                                                                   , srv_msg))
+      resource_manager_->template call<temoto_2::LoadAlgorithm>(algorithm_manager::srv_name::MANAGER
+                                                              , algorithm_manager::srv_name::SERVER
+                                                              , srv_msg);
 
       allocated_algorithms_.push_back(srv_msg);
       AlgorithmTopicsRes responded_topics;
@@ -142,7 +142,7 @@ public:
     }
     catch (error::ErrorStack& error_stack)
     {
-      FORWARD_ERROR(error_stack);
+      throw FORWARD_ERROR(error_stack);
     }
   }
 
@@ -206,7 +206,8 @@ public:
     }
     catch (error::ErrorStack& error_stack)
     {
-      FORWARD_ERROR(error_stack);
+      SEND_ERROR(error_stack);
+      return;
     }
 
     TEMOTO_DEBUG("Received status information.");
@@ -230,7 +231,7 @@ public:
       if (algorithm_itr != allocated_algorithms_.end())
       {
         // ... unload it and ...
-        TEMOTO_DEBUG_STREAM(prefix << "Unloading");
+        TEMOTO_DEBUG_STREAM("Unloading");
         resource_manager_->unloadClientResource(algorithm_itr->response.rmp.resource_id);
 
         // ... copy the output/input topics from the response into the output/input topics
@@ -240,7 +241,7 @@ public:
 
         // ... and load an alternative algorithm. This call automatically
         // updates the response in allocated algorithms vector
-        TEMOTO_DEBUG_STREAM(prefix << "Trying to load an alternative algorithm");
+        TEMOTO_DEBUG_STREAM("Trying to load an alternative algorithm");
 
         try
         {
@@ -250,7 +251,7 @@ public:
         }
         catch (error::ErrorStack& error_stack)
         {
-          throw CREATE_ERROR(error_stack);
+          throw FORWARD_ERROR(error_stack);
         }
       }
       else
