@@ -63,7 +63,9 @@ public:
       std::string topic = '/' + temoto_namespace + '/' + this->resource_manager_.getName() + "/status";
       msg.request.rmp.status_topic = topic;
       msg.request.rmp.temoto_namespace = temoto_namespace;
+
       TEMOTO_DEBUG("New query, performing external call to %s", service_client_.getService().c_str());
+
       if (service_client_.call(msg))
       {
         if (msg.response.rmp.code == status_codes::FAILED)

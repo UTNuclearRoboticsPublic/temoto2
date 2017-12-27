@@ -135,10 +135,13 @@ public:
     // Initialize the sensor manager interface
     smi_.initialize(this);
 
+    SensorTopicsReq requested_topics;
+    requested_topics.addOutputTopicType("data");
+
     TASK_INFO(" Starting the camera");
 
-    // Start the camera with our custom launch file
-    std::string camera_topic = smi_.startSensor("camera");
+    SensorTopicsRes responded_topics = smi_.startSensor("camera", requested_topics);
+    std::string camera_topic = responded_topics.getOutputTopic("data");
 
     TASK_INFO_STREAM("Got camera on topic '" << camera_topic << "'");
 

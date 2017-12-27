@@ -1,5 +1,8 @@
 #include "context_manager/context_manager_containers.h"
 
+namespace context_manager
+{
+
 // ObjectContainer comparison operator
 bool operator==(const temoto_2::ObjectContainer& ob1, const temoto_2::ObjectContainer& ob2)
 {
@@ -9,4 +12,5 @@ bool operator==(const temoto_2::ObjectContainer& ob1, const temoto_2::ObjectCont
   }
 
   return true;
+}
 }

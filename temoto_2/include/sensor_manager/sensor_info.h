@@ -1,12 +1,13 @@
 #ifndef SENSOR_INFO_H
 #define SENSOR_INFO_H
 
+#include "common/temoto_log_macros.h"
+#include "common/topic_container.h"   // StringPair
 #include <string>
 #include <vector>
 #include <map>
 #include <ctype.h>
-#include <memory>  // shared_ptr
-#include "common/temoto_log_macros.h"
+#include <memory>                     // shared_ptr
 #include <yaml-cpp/yaml.h>
 
 namespace sensor_manager
@@ -48,10 +49,16 @@ public:
     return sensor_name_;
   }
 
-  std::string getTopic() const
+  // Get output topics
+  const std::vector<StringPair>& getOutputTopics() const
   {
-    return topic_;
+    return output_topics_;
   }
+
+  // Get topic by type
+  std::string getTopicByType(const std::string& type, const std::vector<StringPair>& topics);
+
+  std::string getOutputTopic(const std::string& type);
 
   // Get sensor type
   std::string getType() const
@@ -96,9 +103,9 @@ public:
     sensor_name_ = name;
   }
 
-  void setTopic(std::string topic)
+  void addTopicOut(StringPair topic)
   {
-    topic_ = topic;
+    output_topics_.push_back(topic);
   }
 
   void setType(std::string sensor_type)
@@ -137,11 +144,11 @@ private:
   
   std::string temoto_namespace_;
   std::string sensor_name_;
-  std::string topic_;
   std::string sensor_type_;
   std::string package_name_;
   std::string executable_;
   std::string description_;
+  std::vector<StringPair> output_topics_;
   /**
    * @brief Reliability ratings of the sensor.
    */
@@ -163,8 +170,43 @@ typedef std::vector<SensorInfoPtr> SensorInfoPtrs;
 
 static bool operator==(const SensorInfo& s1, const SensorInfo& s2)
 {
-  return (s1.getTemotoNamespace() == s2.getTemotoNamespace() && s1.getTopic() == s2.getTopic() &&
-          s1.getExecutable() == s2.getExecutable() && s1.getPackageName() == s2.getPackageName());
+  // Check the namespace, executable and name of the package
+  if (s1.getTemotoNamespace() != s2.getTemotoNamespace() ||
+      s1.getExecutable() != s2.getExecutable() ||
+      s1.getPackageName() != s2.getPackageName())
+  {
+    return false;
+  }
+
+  // Check the size of input and output topics
+  if (s1.getOutputTopics().size() != s2.getOutputTopics().size())
+  {
+    return false;
+  }
+
+  // Check the output topics
+  auto output_topics_2_copy = s2.getOutputTopics();
+  for (auto& output_topic_1 : s1.getOutputTopics())
+  {
+    bool topic_found = false;
+    for (auto it=output_topics_2_copy.begin(); it!=output_topics_2_copy.end(); it++)
+    {
+      if (output_topic_1.first == it->first)
+      {
+        topic_found = true;
+        output_topics_2_copy.erase(it);
+        break;
+      }
+    }
+
+    if (!topic_found)
+    {
+      return false;
+    }
+  }
+
+  // The sensor infos are equal
+  return true;
 }
 } // namespace sensor_manager
 
@@ -180,9 +222,16 @@ struct convert<sensor_manager::SensorInfo>
     node["sensor_type"] = sensor.getType();
     node["package_name"] = sensor.getPackageName();
     node["executable"] = sensor.getExecutable();
-    node["topic"] = sensor.getTopic();
     node["description"] = sensor.getDescription();
     node["reliability"] = sensor.getReliability();
+
+    Node output_topics_node;
+    for (auto& topics : sensor.getOutputTopics())
+    {
+      output_topics_node[topics.first] = topics.second;
+    }
+    node["output_topics"] = output_topics_node;
+
     return node;
   }
 
@@ -200,7 +249,13 @@ struct convert<sensor_manager::SensorInfo>
       sensor.setType(node["sensor_type"].as<std::string>());
       sensor.setPackageName(node["package_name"].as<std::string>());
       sensor.setExecutable(node["executable"].as<std::string>());
-      sensor.setTopic(node["topic"].as<std::string>());
+
+      // Get the output_topics
+      Node output_topics_node = node["output_topics"];
+      for (YAML::const_iterator node_it = output_topics_node.begin(); node_it != output_topics_node.end(); ++node_it)
+      {
+        sensor.addTopicOut({node_it->first.as<std::string>(), node_it->second.as<std::string>()});
+      }
     }
     catch (YAML::InvalidNode e)
     {

@@ -188,6 +188,7 @@ public:
 
           // prepare the response for the client
           res.rmp.resource_id = ext_resource_id;
+
           //res.rmp.code = status_codes::OK;
           //res.rmp.message = "New resource sucessfully loaded.";
         }
@@ -206,6 +207,7 @@ public:
         res.rmp.error_stack = FORWARD_ERROR(error_stack);
         return true;
       }
+
     }
     else
     {

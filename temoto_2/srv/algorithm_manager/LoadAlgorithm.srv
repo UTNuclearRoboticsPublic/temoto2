@@ -13,6 +13,17 @@ string package_name
 # When undefined, first defined entry is used.
 string executable
 
+# Input topics. Each element is a pair of strings where the 
+# first element (key) describes the type of the topic and the
+# second element (value) describes the name of the topic itself.
+# Key is required but if the value is left empty, a default
+# topic name is used (indicated by the algorithm info file)
+# by the algorithm manager
+diagnostic_msgs/KeyValue[] input_topics
+
+# Same idea applies here as it did with the input_topics
+diagnostic_msgs/KeyValue[] output_topics
+
 ---
 
 # Remote Management Response
@@ -24,5 +35,8 @@ string package_name
 # name of the executable/launchable/runnable
 string executable
 
-# return the name of the topic
-string topic
+# Actual input topics
+diagnostic_msgs/KeyValue[] input_topics
+
+# Actual output topics
+diagnostic_msgs/KeyValue[] output_topics

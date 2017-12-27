@@ -5,6 +5,7 @@
 #include "TTP/base_task/base_task.h"
 #include "common/temoto_id.h"
 #include "common/console_colors.h"
+#include "common/topic_container.h"
 
 #include "std_msgs/Float32.h"
 #include "std_msgs/String.h"
@@ -26,7 +27,6 @@ public:
   typedef void (OwnerTask::*GestureCallbackType)(leap_motion_controller::Set);
   typedef void (OwnerTask::*SpeechCallbackType)(std_msgs::String);
 
-
   ContextManagerInterface()
   {
     class_name_ = __func__;
@@ -42,8 +42,14 @@ public:
     resource_manager_ = std::unique_ptr<rmp::ResourceManager<ContextManagerInterface>>(new rmp::ResourceManager<ContextManagerInterface>(name_, this));
 
     // ensure that resource_manager was created
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-    validateInterface(prefix);
+    try
+    {
+      validateInterface();
+    }
+    catch (error::ErrorStack& error_stack)
+    {
+      throw FORWARD_ERROR(error_stack);
+    }
 
     // register status callback function
     resource_manager_->registerStatusCb(&ContextManagerInterface::statusInfoCb);
@@ -54,12 +60,17 @@ public:
 
   void getSpeech(std::vector<temoto_2::SpeechSpecifier> speech_specifiers, SpeechCallbackType callback, OwnerTask* obj)
   {
+    try
+    {
+      validateInterface();
+    }
+    catch (error::ErrorStack& error_stack)
+    {
+      throw FORWARD_ERROR(error_stack);
+    }
+
     task_speech_cb_ = callback;
     task_speech_obj_ = obj;
-
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-    validateInterface(prefix);
 
     // Contact the "Context Manager", pass the speech specifier and if successful, get
     // the name of the topic
@@ -81,18 +92,23 @@ public:
     }
 
     // Subscribe to the topic that was provided by the "Context Manager"
-    TEMOTO_DEBUG("%s subscribing to topic'%s'", prefix.c_str(), srv_msg.response.topic.c_str());
+    TEMOTO_DEBUG("subscribing to topic'%s'", srv_msg.response.topic.c_str());
     speech_subscriber_ = nh_.subscribe(srv_msg.response.topic, 1000, task_speech_cb_, task_speech_obj_);
   }
 
   void getGesture(std::vector<temoto_2::GestureSpecifier> gesture_specifiers, GestureCallbackType callback, OwnerTask* obj)
   {
+    try
+    {
+      validateInterface();
+    }
+    catch (error::ErrorStack& error_stack)
+    {
+      throw FORWARD_ERROR(error_stack);
+    }
+
     task_gesture_cb_ = callback;
     task_gesture_obj_ = obj;
-
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-    validateInterface(prefix);
 
     // Contact the "Context Manager", pass the gesture specifier and if successful, get
     // the name of the topic
@@ -113,14 +129,54 @@ public:
 
     // Subscribe to the topic that was provided by the "Context Manager"
     // TODO: This should be a vector of subsctibers, not just one.
-    TEMOTO_INFO("%s subscribing to topic'%s'", prefix.c_str(), srv_msg.response.topic.c_str());
+    TEMOTO_INFO("subscribing to topic'%s'", srv_msg.response.topic.c_str());
     gesture_subscriber_ = nh_.subscribe(srv_msg.response.topic, 1000, task_gesture_cb_, task_gesture_obj_);
   }
 
+  /**
+   * @brief startTracker
+   * @param tracker_category
+   * @return
+   */
+  TopicContainer startTracker(std::string tracker_category)
+  {
+    // Validate the interface
+    try
+    {
+      validateInterface();
+    }
+    catch (error::ErrorStack& error_stack)
+    {
+      throw FORWARD_ERROR(error_stack);
+    }
+
+    // Start filling out the LoadTracker message
+    temoto_2::LoadTracker load_tracker_msg;
+    load_tracker_msg.request.tracker_category = tracker_category;
+
+    try
+    {
+      resource_manager_->template call<temoto_2::LoadTracker>(context_manager::srv_name::MANAGER_2,
+                                                              context_manager::srv_name::TRACKER_SERVER,
+                                                              load_tracker_msg);
+    }
+    catch (error::ErrorStack& error_stack)
+    {
+      throw FORWARD_ERROR(error_stack);
+    }
+
+    TopicContainer topics_to_return;
+    topics_to_return.setOutputTopicsByKeyValue(load_tracker_msg.response.output_topics);
+
+    return topics_to_return;
+  }
+
+  /**
+   * @brief addWorldObjects
+   * @param objects
+   */
   void addWorldObjects(const std::vector<temoto_2::ObjectContainer>& objects)
   {
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-
     // Check if this message contains the basic parameters
     // Does it have a name
     for (auto& object : objects)
@@ -133,7 +189,7 @@ public:
       // Are the detection methods specified
       if (object.detection_methods.empty())
       {
-        throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Direction method unspecified");
+        throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Detection method unspecified");
       }
     }
 
@@ -147,12 +203,18 @@ public:
     }
 
     // Check the response code
+    // TODO: First of all, transfer the RMP members straight to the request part.
+    //       Then, instead of checkin the code, check the error stack.
     if (add_obj_srvmsg.response.rmp.code != 0)
     {
       throw FORWARD_ERROR(add_obj_srvmsg.response.rmp.error_stack);
     }
   }
 
+  /**
+   * @brief addWorldObjects
+   * @param object
+   */
   void addWorldObjects(const temoto_2::ObjectContainer& object)
   {
     std::vector<temoto_2::ObjectContainer> objects;
@@ -160,13 +222,21 @@ public:
     addWorldObjects(objects);
   }
 
-
-
+  /**
+   * @brief stopAllocatedServices
+   * @return
+   */
   bool stopAllocatedServices()
   {
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-    validateInterface(prefix);
+    // Validate the interface
+    try
+    {
+      validateInterface();
+    }
+    catch (error::ErrorStack& error_stack)
+    {
+      throw FORWARD_ERROR(error_stack);
+    }
 
     try
     {
@@ -175,24 +245,31 @@ public:
       allocated_gestures_.clear();
       allocated_speeches_.clear();
     }
-    catch (...)
+    catch (error::ErrorStack& error_stack)
     {
-      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to unload resources");
+      throw FORWARD_ERROR(error_stack);
     }
   }
 
   void statusInfoCb(temoto_2::ResourceStatus& srv)
   {
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-    validateInterface(prefix);
+    // Validate the interface
+    try
+    {
+      validateInterface();
+    }
+    catch (error::ErrorStack& error_stack)
+    {
+      throw FORWARD_ERROR(error_stack);
+    }
 
-    TEMOTO_DEBUG("%s status info was received", prefix.c_str());
+    TEMOTO_DEBUG("Received status information");
     TEMOTO_DEBUG_STREAM(srv.request);
     // if any resource should fail, just unload it and try again
     // there is a chance that sensor manager gives us better sensor this time
     if (srv.request.status_code == rmp::status_codes::FAILED)
     {
-      TEMOTO_WARN("Human context interface detected a sensor failure. Unloading and "
+      TEMOTO_WARN("Context Manager interface detected a sensor failure. Unloading and "
                                 "trying again");
       auto gest_it = std::find_if(allocated_gestures_.begin(), allocated_gestures_.end(),
                                   [&](const temoto_2::LoadGesture& sens) -> bool {
@@ -293,7 +370,7 @@ private:
    * @brief validateInterface()
    * @param sensor_type
    */
-  void validateInterface(std::string& log_prefix)
+  void validateInterface()
   {
     if(!resource_manager_)
     {

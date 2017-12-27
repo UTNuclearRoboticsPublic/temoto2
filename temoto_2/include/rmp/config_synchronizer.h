@@ -3,7 +3,8 @@
 
 #include "ros/ros.h"
 #include <ros/serialization.h>
-#include "rmp/log_macros.h"
+#include "common/base_subsystem.h"
+#include "common/temoto_log_macros.h"
 #include <string>
 #include <sstream>
 #include "temoto_2/ConfigSync.h"
@@ -23,7 +24,7 @@ const std::string REQUEST_CONFIG = "request_config";
 
 
 template <class Owner, class PayloadType>
-class ConfigSynchronizer
+class ConfigSynchronizer : public BaseSubsystem
 {
 public:
   typedef void (Owner::*OwnerCbType)(const temoto_2::ConfigSync&, const PayloadType& payload);
@@ -36,11 +37,8 @@ public:
     , sync_topic_(sync_topic)
     , sync_cb_(sync_cb)
     , owner_(owner)
+    , BaseSubsystem(*owner, __func__)
   {
-    log_class_ = "rmp/ConfigSync";
-    log_subsys_ = name;
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
-
     // Setup publisher and subscriber
     sync_pub_ = nh_.advertise<temoto_2::ConfigSync>(sync_topic, 1000);
     sync_sub_ = nh_.subscribe(sync_topic, 1000, &ConfigSynchronizer::wrappedSyncCb, this);
@@ -70,7 +68,7 @@ public:
         }
       }
       active_connections = sync_pub_.getNumSubscribers();
-      RMP_DEBUG("Waiting for subscribers: %d/%d", active_connections, total_connections);
+      TEMOTO_DEBUG("Waiting for subscribers: %d/%d", active_connections, total_connections);
       if (active_connections == total_connections)
       {
         break;
@@ -78,7 +76,7 @@ public:
       ros::Duration(0.1).sleep();
     }
 
-    RMP_INFO("ConfigSynchronizer created.");
+    TEMOTO_INFO("ConfigSynchronizer created.");
   }
 
   ~ConfigSynchronizer()
@@ -131,7 +129,7 @@ public:
 
     catch (...)
     {
-      RMP_ERROR("Siit lendas laiali @ advertise");
+      TEMOTO_ERROR("Siit lendas laiali @ advertise");
     }
 
   }
@@ -170,9 +168,9 @@ private:
 
       (owner_->*sync_cb_)(msg, payload);
     }
-    catch (...)
+    catch(error::ErrorStack& error_stack)
     {
-      RMP_ERROR("Siit lendas laiali @ syncCb");
+      SEND_ERROR(FORWARD_ERROR(error_stack));
     }
   }
 
@@ -184,9 +182,6 @@ private:
   ros::NodeHandle nh_;
   ros::Publisher sync_pub_;
   ros::Subscriber sync_sub_;
-
-  std::string log_subsys_, log_class_;
-
 };
 }
 

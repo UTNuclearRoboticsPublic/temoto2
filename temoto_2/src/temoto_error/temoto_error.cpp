@@ -32,6 +32,7 @@ ErrorStack ErrorHandler::create(Code code, const std::string& prefix, const std:
   return est;
 }
 
+
 ErrorStack ErrorHandler::forward(ErrorStack error_stack, const std::string& prefix) const
 {
   temoto_2::Error error;
@@ -53,14 +54,16 @@ void ErrorHandler::send(ErrorStack est)
 {
   // Create an ErrorStack message and publish it
   ros::Publisher error_publisher_ =
-      n_.advertise<temoto_2::ErrorStack>("temoto_error_messages", 100);
+      n_.advertise<temoto_2::ErrorStack>("/temoto_2/temoto_error_messages", 100);
+
+  while(error_publisher_.getNumSubscribers() < 1){}
   temoto_2::ErrorStack error_stack_msg;
   error_stack_msg.error_stack = est;
   error_publisher_.publish(error_stack_msg);
 }
 
-}  // error namespace
 
+}  // error namespace
 
 error::ErrorStack& operator+=(error::ErrorStack& es_lhs, const error::ErrorStack& es_rhs)
 {
@@ -74,7 +77,8 @@ std::ostream& operator<<(std::ostream& out, const temoto_2::Error& t)
   out << std::endl;
   out << "* code: " << t.code << std::endl;
   out << "* subsystem: " << t.subsystem << std::endl;
-  out << RED << "* message: " << t.prefix << " " << t.message << RESET << std::endl;
+  out << "* prefix: " << t.prefix << std::endl;
+  out << RED << "* message: " << t.message << RESET << std::endl;
   out << "* timestamp: " << t.stamp << std::endl;
   return out;
 }

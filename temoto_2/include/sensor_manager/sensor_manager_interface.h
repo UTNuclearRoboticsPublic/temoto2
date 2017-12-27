@@ -2,10 +2,34 @@
 #define SENSOR_MANAGER_INTERFACE_H
 
 #include "common/base_subsystem.h"
+#include "common/topic_container.h"
+
 #include "TTP/base_task/base_task.h"
 #include "sensor_manager/sensor_manager_services.h"
 #include "rmp/resource_manager.h"
 #include <memory> //unique_ptr
+
+/**
+ * @brief The AlgorithmTopicsReq class
+ */
+class SensorTopicsReq : public TopicContainer
+{
+  /* DELIBERATELY EMPTY */
+};
+
+/**
+ * @brief The AlgorithmTopicsRes class
+ */
+class SensorTopicsRes : public TopicContainer
+{
+  /* DELIBERATELY EMPTY */
+};
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ *                          SENSOR MANAGER INTERFACE
+ *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 namespace sensor_manager
 {
@@ -36,46 +60,71 @@ public:
   /**
    * @brief startSensor
    * @param sensor_type
+   * @return
    */
-  std::string startSensor(std::string sensor_type)
+  SensorTopicsRes startSensor(const std::string& sensor_type)
   {
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-    validateInterface(prefix);
 
     try
     {
-      return startSensor(sensor_type, "", "");
+      validateInterface();
     }
     catch (error::ErrorStack& error_stack)
     {
-      FORWARD_ERROR(error_stack);
+      throw FORWARD_ERROR(error_stack);
     }
+
+    return startSensor(sensor_type, "", "", SensorTopicsReq());
   }
 
   /**
    * @brief startSensor
    * @param sensor_type
+   * @param topics
+   * @return
+   */
+  SensorTopicsRes startSensor(const std::string& sensor_type, const SensorTopicsReq& topics)
+  {
+    try
+    {
+      validateInterface();
+    }
+    catch (error::ErrorStack& error_stack)
+    {
+      throw FORWARD_ERROR(error_stack);
+    }
+
+    return startSensor(sensor_type, "", "", topics);
+  }
+
+  /**
+   * @brief startSensor
+   * @param algorithm_type
    * @param package_name
    * @param ros_program_name
+   * @param topics
+   * @return
    */
-  std::string startSensor(std::string sensor_type, std::string package_name,
-                          std::string ros_program_name)
+  SensorTopicsRes startSensor(const std::string& sensor_type
+                            , const std::string& package_name
+                            , const std::string& ros_program_name
+                            , const SensorTopicsReq& topics)
   {
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-    validateInterface(prefix);
+    validateInterface();
 
     // Fill out the "StartSensorRequest" request
     temoto_2::LoadSensor srv_msg;
     srv_msg.request.sensor_type = sensor_type;
     srv_msg.request.package_name = package_name;
     srv_msg.request.executable = ros_program_name;
+    srv_msg.request.output_topics = topics.outputTopicsAsKeyValues();
 
-    // Call the server
+    // Call the server    
     try
     {
-      resource_manager_->template call<temoto_2::LoadSensor>(
-            sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, srv_msg);
+      resource_manager_->template call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
+                                                             sensor_manager::srv_name::SERVER,
+                                                             srv_msg);
     }
     catch(error::ErrorStack& error_stack)
     {
@@ -83,7 +132,10 @@ public:
     }
 
     allocated_sensors_.push_back(srv_msg);
-    return srv_msg.response.topic;
+    SensorTopicsRes responded_topics;
+    responded_topics.setOutputTopicsByKeyValue( srv_msg.response.output_topics );
+
+    return responded_topics;
   }
 
   /**
@@ -94,9 +146,14 @@ public:
    */
   void stopSensor(std::string sensor_type, std::string package_name, std::string ros_program_name)
   {
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-    validateInterface(prefix);
+    try
+    {
+      validateInterface();
+    }
+    catch (error::ErrorStack& error_stack)
+    {
+      throw FORWARD_ERROR(error_stack);
+    }
 
     // Find all instances where request part matches of what was given and unload each resource
     temoto_2::LoadSensor::Request req;
@@ -107,8 +164,10 @@ public:
     // The == operator used in the lambda function is defined in
     // sensor manager services header
     auto found_sensor_it = std::find_if(
-        allocated_sensors_.begin(), allocated_sensors_.end(),
-        [&](const temoto_2::LoadSensor& srv_msg) -> bool { return srv_msg.request == req; });
+        allocated_sensors_.begin(),
+        allocated_sensors_.end(),
+        [&](const temoto_2::LoadSensor& srv_msg) -> bool{ return srv_msg.request == req; });
+
     if (found_sensor_it == allocated_sensors_.end())
     {
       throw CREATE_ERROR(error::Code::RESOURCE_UNLOAD_FAIL, "Unable to unload resource that is not "
@@ -127,13 +186,24 @@ public:
     }
   }
 
+  /**
+   * @brief statusInfoCb
+   * @param srv
+   */
   void statusInfoCb(temoto_2::ResourceStatus& srv)
   {
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-    validateInterface(prefix);
+    try
+    {
+      validateInterface();
+    }
+    catch (error::ErrorStack& error_stack)
+    {
+      throw FORWARD_ERROR(error_stack);
+    }
 
-    TEMOTO_DEBUG("%s status info was received", prefix.c_str());
+    TEMOTO_DEBUG("status info was received");
     TEMOTO_DEBUG_STREAM(srv.request);
+
     // if any resource should fail, just unload it and try again
     // there is a chance that sensor manager gives us better sensor this time
     if (srv.request.status_code == rmp::status_codes::FAILED)
@@ -184,10 +254,9 @@ private:
   std::unique_ptr<rmp::ResourceManager<SensorManagerInterface>> resource_manager_;
 
   /**
-   * @brief validateInterface()
-   * @param sensor_type
+   * @brief validateInterface
    */
-  void validateInterface(std::string& log_prefix)
+  void validateInterface()
   {
     if(!resource_manager_)
     {

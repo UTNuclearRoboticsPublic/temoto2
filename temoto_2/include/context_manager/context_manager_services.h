@@ -1,5 +1,5 @@
-#ifndef HUMAN_CONTEXT_SERVICES_H
-#define HUMAN_CONTEXT_SERVICES_H
+#ifndef CONTEXT_MANAGER_SERVICES_H
+#define CONTEXT_MANAGER_SERVICES_H
 
 #include <string>
 #include "rmp/resource_manager_services.h"
@@ -12,7 +12,7 @@ namespace context_manager
 {
 	namespace srv_name
 	{
-    const std::string MANAGER = "context_manager_1";
+    const std::string MANAGER = "context_manager";
     const std::string SYNC_TOPIC = "/temoto_2/"+MANAGER+"/sync_1";
     const std::string GESTURE_SERVER = "load_gesture";
     const std::string SPEECH_SERVER = "load_speech";
@@ -23,6 +23,12 @@ namespace context_manager
 
     const std::string SERVER_ADD_OBJECTS = "add_objects";
   }
+}
+
+static bool operator==(const temoto_2::LoadTracker::Request& r1,
+                       const temoto_2::LoadTracker::Request& r2)
+{
+    return( r1.detection_method == r2.detection_method);
 }
 
 static bool operator==(const temoto_2::LoadGesture::Request& r1,

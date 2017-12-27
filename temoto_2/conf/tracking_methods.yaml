@@ -1,0 +1,49 @@
+---
+hands:
+- method:
+  - filter_category: "sensor"
+    filter_type: "hand"
+
+- method:
+  - filter_category: "sensor"
+    filter_type: "camera"
+
+  - filter_category: "algorithm"
+    filter_type: "hand detector"
+    input_topic_types:
+      - data
+    output_topic_types:
+      - data
+  
+artags:
+- method:
+  - filter_category: "sensor"
+    filter_type: "camera"
+
+  - filter_category: "algorithm"
+    filter_type: "artag"
+    input_topic_types:
+      - camera_info
+      - data
+    output_topic_types:
+      - data
+
+tests:
+- method:
+  - filter_category: "sensor"
+    filter_type: "test_sensor_0"
+
+  - filter_category: "algorithm"
+    filter_type: "test_algorithm_0"
+    input_topic_types:
+      - type_0
+      - type_1
+
+  - filter_category: "algorithm"
+    filter_type: "test_algorithm_1"
+    input_topic_types:
+      - type_2
+      - type_3
+    output_topic_types:
+      - type_1
+      - type_0

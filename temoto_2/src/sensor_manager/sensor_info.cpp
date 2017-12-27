@@ -35,6 +35,27 @@ void SensorInfo::setReliability(float reliability)
   reliability_idx_ = 0;
 }
 
+// Get topic by type
+std::string SensorInfo::getTopicByType(const std::string& type, const std::vector<StringPair>& topics)
+{
+  // Loop over the topics and check the type match. Return the topic if the types amatch
+  for(auto&topic : topics)
+  {
+    if(topic.first == type)
+    {
+      return topic.second;
+    }
+  }
+
+  return std::string();
+}
+
+// Get output topic
+std::string SensorInfo::getOutputTopic(const std::string& type)
+{
+  return getTopicByType(type, output_topics_);
+}
+
 std::string SensorInfo::toString() const
 {
   std::string ret;
@@ -43,9 +64,19 @@ std::string SensorInfo::toString() const
   ret += "  type             : " + getType() + "\n";
   ret += "  package name     : " + getPackageName() + "\n";
   ret += "  executable       : " + getExecutable() + "\n";
-  ret += "  topic            : " + getTopic() + "\n";
   ret += "  description      : " + getDescription() + "\n";
   ret += "  reliability      : " + std::to_string(getReliability()) + "\n";
+
+  // Print out the output topics
+  if (!getOutputTopics().empty())
+  {
+    ret += "  output_topics \n";
+    for (auto& topic : getOutputTopics())
+    {
+      ret += "    " + topic.first + " : " + topic.second + "\n";
+    }
+  }
+
   return ret;
 }
 

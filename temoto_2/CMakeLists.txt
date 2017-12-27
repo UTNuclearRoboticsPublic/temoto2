@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   geometry_msgs
   shape_msgs
+  diagnostic_msgs
   class_loader
   cmake_modules
 	message_generation
@@ -90,12 +91,15 @@ generate_messages(
   std_msgs
   geometry_msgs
   shape_msgs
+  diagnostic_msgs
+  temoto_2
 )
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES yaml-cpp
-  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs message_runtime human_msgs
+  # LIBRARIES temoto_2
+  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs message_runtime human_msgs diagnostic_msgs
   DEPENDS 
     TinyXML
     EIGEN3
@@ -114,7 +118,7 @@ include_directories(
 
 # # # # # # # # # # # #
 # CONTEXT MANAGER
-# # # # # # # # # # # #
+# # # # # # # # # # # # 
 add_executable(context_manager src/context_manager/context_manager_node.cpp
 				                       src/context_manager/context_manager.cpp
                                src/context_manager/context_manager_containers.cpp
@@ -184,8 +188,8 @@ target_link_libraries(temoto_agent ttp)
 # PROCESS MANAGER
 # # # # # # # # # # # #
 add_executable(process_manager src/process_manager/process_manager.cpp
-	src/process_manager/process_manager_node.cpp
-  src/temoto_error/temoto_error.cpp)
+	                             src/process_manager/process_manager_node.cpp
+                               src/temoto_error/temoto_error.cpp)
 add_dependencies(process_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(process_manager ${catkin_LIBRARIES} )
 
@@ -201,8 +205,8 @@ add_executable(robot_manager src/robot_manager/robot_manager.cpp
                              src/common/reliability.cpp
                              src/temoto_error/temoto_error.cpp)
 
-  add_dependencies(robot_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-  target_link_libraries(robot_manager ${catkin_LIBRARIES} yaml-cpp)
+add_dependencies(robot_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(robot_manager ${catkin_LIBRARIES} yaml-cpp)
 
 
 # # # # # # # # # # # #
@@ -212,6 +216,10 @@ add_executable(language_input src/tools/language_input.cpp
                               src/temoto_error/temoto_error.cpp)
 add_dependencies(language_input ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(language_input ${catkin_LIBRARIES} )
+
+add_executable(tracking_pipes_tests src/tools/tracking_pipes_tests.cpp)
+add_dependencies(tracking_pipes_tests ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(tracking_pipes_tests ${catkin_LIBRARIES} yaml-cpp)
 
 #add_executable(algorithm_info_tests src/tools/algorithm_info_tests.cpp
 #                                    src/algorithm_manager/algorithm_info.cpp)

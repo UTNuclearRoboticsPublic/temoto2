@@ -35,10 +35,38 @@ void AlgorithmInfo::setReliability(float reliability)
   reliability_idx_ = 0;
 }
 
+// Get topic by type
+std::string AlgorithmInfo::getTopicByType(const std::string& type, const std::vector<StringPair>& topics)
+{
+  // Loop over the topics and check the type match. Return the topic if the types amatch
+  for(auto&topic : topics)
+  {
+    if(topic.first == type)
+    {
+      return topic.second;
+    }
+  }
+
+  return std::string();
+}
+
+// Get input topic
+std::string AlgorithmInfo::getInputTopic(const std::string& type)
+{
+  return getTopicByType(type, input_topics_);
+}
+
+// Get output topic
+std::string AlgorithmInfo::getOutputTopic(const std::string& type)
+{
+  return getTopicByType(type, output_topics_);
+}
+
+// To string
 std::string AlgorithmInfo::toString() const
 {
   std::string ret;
-  ret += "algorithm: " + getName() + "\n";
+  ret += "  algorithm: " + getName() + "\n";
   ret += "  temoto_namespace : " + getTemotoNamespace() + "\n";
   ret += "  type             : " + getType() + "\n";
   ret += "  package name     : " + getPackageName() + "\n";
@@ -49,7 +77,7 @@ std::string AlgorithmInfo::toString() const
   // Print out the input topics
   if (!getTopicsIn().empty())
   {
-    ret += "  topics_in \n";
+    ret += "  input_topics \n";
     for (auto& topic : getTopicsIn())
     {
       ret += "    " + topic.first + " : " + topic.second + "\n";
@@ -59,7 +87,7 @@ std::string AlgorithmInfo::toString() const
   // Print out the output topics
   if (!getTopicsOut().empty())
   {
-    ret += "  topics_out \n";
+    ret += "  output_topics \n";
     for (auto& topic : getTopicsOut())
     {
       ret += "    " + topic.first + " : " + topic.second + "\n";

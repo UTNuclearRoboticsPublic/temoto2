@@ -43,6 +43,11 @@ void startTask(TTP::TaskInterface task_interface)
       case 0:
           startInterface_0();
       break;
+
+      // Interface 1
+      case 1:
+          startInterface_1();
+      break;
   }
   // </ AUTO-GENERATED, DO NOT MODIFY >
 }
@@ -64,7 +69,7 @@ std::vector<TTP::Subject> getSolution()
  * * * * * * * * * * * * * * * * * * * * * * * * */
 
 /*
- * Interface 1 body
+ * Interface 0 body
  */
 void startInterface_0()
 {
@@ -114,6 +119,56 @@ void startInterface_0()
   output_subjects.push_back(what_0_out);
 
   // </ AUTO-GENERATED, DO NOT MODIFY >
+}
+
+/*
+ * Interface 1 body
+ */
+void startInterface_1()
+{
+  // < AUTO-GENERATED, DO NOT MODIFY >
+
+  // Extracting input subjects
+  TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
+  std::string  what_0_word_in = what_0_in.words_[0];
+
+  // Creating output variables
+  std::string  what_0_word_out;
+
+  // </ AUTO-GENERATED, DO NOT MODIFY >
+
+// -------------------------------< USER CODE >-------------------------------
+
+  // Name of the method, used for making debugging a bit simpler
+  std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+
+  try
+  {
+    // Initialize the sensor manager interface
+    cmi_.initialize(this);
+
+    // Start a tracker
+    TopicContainer tracker_topics = cmi_.startTracker("tests");
+
+    // Pass the name of the object to the output
+    what_0_word_out = tracker_topics.getOutputTopic("type_1");
+
+    std::cout << "GOT TOPIC: " << what_0_word_out << std::endl;
+  }
+  catch( error::ErrorStack& error_stack )
+  {
+    SEND_ERROR(error_stack);
+  }
+
+// -------------------------------</ USER CODE >-------------------------------
+
+    // < AUTO-GENERATED, DO NOT MODIFY >
+
+    TTP::Subject what_0_out("what", what_0_word_out);
+    what_0_out.markComplete();
+    output_subjects.push_back(what_0_out);
+
+    // </ AUTO-GENERATED, DO NOT MODIFY >
 }
 
 ~ContextManagerTests()

@@ -14,4 +14,16 @@
    
   </interface>
 
+  <!--Interface block-->
+  <interface id="1" type="asynchronous">
+    
+    <!--Input block-->
+    <in>    
+      <what>
+        <arg word="tag"/>
+      </what>
+    </in>
+   
+  </interface>
+
 </task>

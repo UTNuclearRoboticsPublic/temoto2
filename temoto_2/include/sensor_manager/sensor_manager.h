@@ -1,6 +1,7 @@
 #ifndef SENSOR_MANAGER_H
 #define SENSOR_MANAGER_H
 
+#include "common/base_subsystem.h"
 #include "sensor_manager/sensor_info.h"
 #include "sensor_manager/sensor_manager_services.h"
 #include "process_manager/process_manager_services.h"
@@ -32,7 +33,7 @@ public:
 
     const std::string& getName() const
     {
-      return log_subsys_;
+      return subsystem_name_;
     }
     
 private:
@@ -92,10 +93,9 @@ private:
    * @return Returns a boolean. If suitable device was found, then the req param
    * is formatted as a nodeSpawnKill::Request (first one in the list, even if there is more)
    */
-  SensorInfoPtr findSensor(std::string type, std::string name, std::string executable, const std::vector<SensorInfoPtr>& sensors);
+  SensorInfoPtr findSensor(temoto_2::LoadSensor::Request& req, const std::vector<SensorInfoPtr>& sensors);
 
-  std::string log_class_, log_subsys_;
-//  ros::ServiceServer list_devices_server_;
+  //  ros::ServiceServer list_devices_server_;
   rmp::ResourceManager<SensorManager> resource_manager_;
   rmp::ConfigSynchronizer<SensorManager, PayloadType> config_syncer_;
 

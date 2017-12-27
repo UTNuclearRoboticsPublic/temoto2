@@ -66,7 +66,9 @@ SensorManager::~SensorManager()
 
 void SensorManager::statusCb(temoto_2::ResourceStatus& srv)
 {
-  TEMOTO_DEBUG("Status received.");
+
+  TEMOTO_DEBUG("Received a status message.");
+
   // adjust package reliability when someone reported that it has failed.
   if (srv.request.status_code == rmp::status_codes::FAILED)
   {
@@ -104,6 +106,7 @@ bool SensorManager::listDevicesCb(temoto_2::ListDevices::Request& req,
 
 void SensorManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload)
 {
+
   if (msg.action == rmp::sync_action::REQUEST_CONFIG)
   {
     advertiseLocalSensors();
@@ -179,16 +182,50 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
   TEMOTO_DEBUG("received a request to start '%s': '%s', '%s'", req.sensor_type.c_str(),
                req.package_name.c_str(), req.executable.c_str());
 
+  TEMOTO_DEBUG_STREAM("\n IN MORE DETAIL: \n" << req << "\n");
+
   // Try to find suitable candidate from local sensors
-  auto sensor_ptr = findSensor(req.sensor_type, req.package_name, req.executable, local_sensors_);
+  auto sensor_ptr = findSensor(req, local_sensors_);
   if (sensor_ptr)
   {
-    // local sensor found, make a call to the local resource manager
+    // Try to run the sensor via local Resource Manager
     temoto_2::LoadProcess load_process_msg;
     load_process_msg.request.action = process_manager::action::ROS_EXECUTE;
     load_process_msg.request.package_name = sensor_ptr->getPackageName();
     load_process_msg.request.executable = sensor_ptr->getExecutable();
 
+    // Check if any particular topic types were requested
+    if (!req.output_topics.empty())
+    {
+      // Remap the output topics if requested
+      for (auto& req_topic : req.output_topics)
+      {
+        // And return the input topics via response
+        diagnostic_msgs::KeyValue res_output_topic;
+        res_output_topic.key = req_topic.key;
+        std::string default_topic = sensor_ptr->getOutputTopic(req_topic.key);
+
+        if (req_topic.value != "")
+        {
+          res_output_topic.value = common::getAbsolutePath(req_topic.value);
+          std::string remap_arg = default_topic + ":=" + req_topic.value;
+          load_process_msg.request.args += remap_arg + " ";
+        }
+        else
+        {
+          res_output_topic.value = common::getAbsolutePath(default_topic);
+        }
+
+        // Add the topic to the response message
+        res.output_topics.push_back(res_output_topic);
+      }
+    }
+    else
+    {
+      TopicContainer output_topics;
+      output_topics.setOutputTopics(sensor_ptr->getOutputTopics());
+      res.output_topics = output_topics.outputTopicsAsKeyValues();
+    }
     TEMOTO_INFO("SensorManager found a suitable local sensor: '%s', '%s', '%s', reliability %.3f",
                 load_process_msg.request.action.c_str(),
                 load_process_msg.request.package_name.c_str(),
@@ -200,9 +237,8 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
           process_manager::srv_name::MANAGER, process_manager::srv_name::SERVER, load_process_msg, rmp::FailureBehavior::UNLOAD_LINKED_RELOAD);
       TEMOTO_DEBUG("Call to ProcessManager was sucessful.");
 
-      // fill in the response about which particular sensor was chosen
+      // Fill out the response about which particular sensor was chosen
       res.package_name = sensor_ptr->getPackageName();
-      res.topic = common::getAbsolutePath(sensor_ptr->getTopic());
       res.executable = sensor_ptr->getExecutable();
       res.rmp = load_process_msg.response.rmp;
 
@@ -211,8 +247,11 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
     }
     catch(error::ErrorStack& error_stack)
     { 
-      sensor_ptr->adjustReliability(0.0);
-      advertiseSensor(sensor_ptr);
+      if (error_stack.front().code != static_cast<int>(error::Code::SERVICE_REQ_FAIL))
+      {
+        sensor_ptr->adjustReliability(0.0);
+        advertiseSensor(sensor_ptr);
+      }
       throw FORWARD_ERROR(error_stack);
     }
 
@@ -227,7 +266,7 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
     TEMOTO_INFO("Looking from: \n%s", rs->toString().c_str());
   }
 
-  sensor_ptr = findSensor(req.sensor_type, req.package_name, req.executable, remote_sensors_);
+  sensor_ptr = findSensor(req, remote_sensors_);
   if (sensor_ptr)
   {
     // remote sensor candidate was found, forward the request to the remote sensor manager
@@ -235,7 +274,9 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
     load_sensor_msg.request.sensor_type = sensor_ptr->getType();
     load_sensor_msg.request.package_name = sensor_ptr->getPackageName();
     load_sensor_msg.request.executable = sensor_ptr->getExecutable();
-    TEMOTO_INFO("SensorManager is forwarding request: '%s', '%s', '%s', reliability %.3f",
+    load_sensor_msg.request.output_topics = req.output_topics;
+
+    TEMOTO_INFO("Sensor Manager is forwarding request: '%s', '%s', '%s', reliability %.3f",
                 sensor_ptr->getType().c_str(), sensor_ptr->getPackageName().c_str(),
                 sensor_ptr->getExecutable().c_str(), sensor_ptr->getReliability());
 
@@ -257,9 +298,6 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
   else
   {
     // no suitable local nor remote sensor was found
-    res.package_name = req.package_name;
-    res.executable = "";
-    res.topic = "";
     throw CREATE_ERROR(error::Code::SENSOR_NOT_FOUND, "SensorManager did not find a suitable sensor.");
   }
 }
@@ -273,15 +311,20 @@ void SensorManager::stopSensorCb(temoto_2::LoadSensor::Request& req,
   return;
 }
 
-SensorInfoPtr SensorManager::findSensor(std::string type, std::string package_name,
-                                        std::string executable, const SensorInfoPtrs& sensor_infos)
+SensorInfoPtr SensorManager::findSensor(temoto_2::LoadSensor::Request& req
+                                      , const SensorInfoPtrs& sensor_infos)
 {
   // Local list of devices that follow the requirements
   std::vector<SensorInfoPtr> candidates;
 
   // Find the devices that follow the "type" criteria
-  auto it = std::copy_if(sensor_infos.begin(), sensor_infos.end(), std::back_inserter(candidates),
-                         [&](const SensorInfoPtr& s) { return s->getType() == type; });
+  auto it = std::copy_if(sensor_infos.begin()
+                       , sensor_infos.end()
+                       , std::back_inserter(candidates)
+                       , [&](const SensorInfoPtr& s)
+                         {
+                           return s->getType() == req.sensor_type;
+                         });
   
   // The requested type of sensor is not available
   if (candidates.empty())
@@ -291,19 +334,61 @@ SensorInfoPtr SensorManager::findSensor(std::string type, std::string package_na
  
   // If package_name is specified, remove all non-matching candidates
   auto it_end = candidates.end();
-  if (package_name != "")
+  if (req.package_name != "")
   {
-    it_end = std::remove_if(candidates.begin(), candidates.end(), [&](SensorInfoPtr s) {
-      return s->getPackageName() != package_name;
-    });
+    it_end = std::remove_if(candidates.begin(), candidates.end(),
+                            [&](SensorInfoPtr s)
+                            {
+                              return s->getPackageName() != req.package_name;
+                            });
   }
 
   // If executable is specified, remove all non-matching candidates
-  if (executable != "")
+  if (req.executable != "")
   {
-    it_end = std::remove_if(candidates.begin(), it_end, [&](SensorInfoPtr s) {
-      return s->getExecutable() != executable;
-    });
+    it_end = std::remove_if(candidates.begin(), it_end,
+                            [&](SensorInfoPtr s)
+                            {
+                              return s->getExecutable() != req.executable;
+                            });
+  }
+
+  // If output topics are specified ...
+  if (!req.output_topics.empty())
+  {
+    it_end = std::remove_if(candidates.begin(), it_end,
+                            [&](SensorInfoPtr s)
+                            {
+                              if (s->getOutputTopics().size() < req.output_topics.size())
+                                return true;
+
+                              // Make a copy of the input topics
+                              std::vector<StringPair> output_topics_copy = s->getOutputTopics();
+
+                              // Start looking for the requested topic types
+                              for (auto& topic : req.output_topics)
+                              {
+                                bool found = false;
+                                for (auto it=output_topics_copy.begin(); it != output_topics_copy.end(); it++)
+                                {
+                                  // If the topic was found then remove it from the copy list
+                                  if (topic.key == it->first)
+                                  {
+                                    found = true;
+                                    output_topics_copy.erase(it);
+                                    break;
+                                  }
+                                }
+
+                                // If this topic type was not found then return with false
+                                if (!found)
+                                {
+                                  return true;
+                                }
+                              }
+
+                              return false;
+                            });
   }
 
   // Sort remaining candidates based on their reliability.

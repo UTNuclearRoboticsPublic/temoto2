@@ -102,9 +102,7 @@ private:
    * @param algorithms
    * @return
    */
-  AlgorithmInfoPtr findAlgorithm(std::string type
-                               , std::string name
-                               , std::string executable
+  AlgorithmInfoPtr findAlgorithm(temoto_2::LoadAlgorithm::Request req
                                , const std::vector<AlgorithmInfoPtr>& algorithms);
 
 };
