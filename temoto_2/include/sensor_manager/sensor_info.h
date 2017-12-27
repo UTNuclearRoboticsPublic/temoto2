@@ -50,13 +50,8 @@ public:
     return sensor_name_;
   }
 
-  std::string getTopic() const
-  {
-    return topic_;
-  }
-
   // Get output topics
-  const std::vector<StringPair>& getTopicsOut() const
+  const std::vector<StringPair>& getOutputTopics() const
   {
     return output_topics_;
   }
@@ -109,11 +104,6 @@ public:
     sensor_name_ = name;
   }
 
-  void setTopic(std::string topic)
-  {
-    topic_ = topic;
-  }
-
   void addTopicOut(StringPair topic)
   {
     output_topics_.push_back(topic);
@@ -155,7 +145,6 @@ private:
   
   std::string temoto_namespace_;
   std::string sensor_name_;
-  std::string topic_;
   std::string sensor_type_;
   std::string package_name_;
   std::string executable_;
@@ -191,14 +180,14 @@ static bool operator==(const SensorInfo& s1, const SensorInfo& s2)
   }
 
   // Check the size of input and output topics
-  if (s1.getTopicsOut().size() != s2.getTopicsOut().size())
+  if (s1.getOutputTopics().size() != s2.getOutputTopics().size())
   {
     return false;
   }
 
   // Check the output topics
-  auto output_topics_2_copy = s2.getTopicsOut();
-  for (auto& output_topic_1 : s1.getTopicsOut())
+  auto output_topics_2_copy = s2.getOutputTopics();
+  for (auto& output_topic_1 : s1.getOutputTopics())
   {
     bool topic_found = false;
     for (auto it=output_topics_2_copy.begin(); it!=output_topics_2_copy.end(); it++)
@@ -234,12 +223,11 @@ struct convert<sensor_manager::SensorInfo>
     node["sensor_type"] = sensor.getType();
     node["package_name"] = sensor.getPackageName();
     node["executable"] = sensor.getExecutable();
-    node["topic"] = sensor.getTopic();
     node["description"] = sensor.getDescription();
     node["reliability"] = sensor.getReliability();
 
     Node output_topics_node;
-    for (auto& topics : sensor.getTopicsOut())
+    for (auto& topics : sensor.getOutputTopics())
     {
       output_topics_node[topics.first] = topics.second;
     }
@@ -262,7 +250,6 @@ struct convert<sensor_manager::SensorInfo>
       sensor.setType(node["sensor_type"].as<std::string>());
       sensor.setPackageName(node["package_name"].as<std::string>());
       sensor.setExecutable(node["executable"].as<std::string>());
-      sensor.setTopic(node["topic"].as<std::string>());
 
       // Get the output_topics
       Node output_topics_node = node["output_topics"];

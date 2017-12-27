@@ -32,9 +32,5 @@ string package_name
 # name of the executable/launchable/runnable
 string executable
 
-# !! DEPRECATED !! 
-# return the name of the topic
-string topic
-
 # Actual output topics
 diagnostic_msgs/KeyValue[] output_topics

@@ -23,7 +23,6 @@
 #include <ros/xmlrpc_manager.h>
 #include "temoto_2/nodeSpawnKill.h"
 
-#include "core/common.h"
 
 FILE * f;
 

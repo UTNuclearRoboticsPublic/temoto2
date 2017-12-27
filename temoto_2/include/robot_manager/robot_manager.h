@@ -1,8 +1,8 @@
 #ifndef ROBOT_MANAGER_H
 #define ROBOT_MANAGER_H
 
-#include "core/common.h"
 #include "common/temoto_id.h"
+#include "common/base_subsystem.h"
 #include "robot_manager/robot_manager_services.h"
 #include "process_manager/process_manager_services.h"
 #include "context_manager/context_manager_services.h"
@@ -28,7 +28,7 @@ class Robot;
 
 typedef std_msgs::String PayloadType;
 
-class RobotManager
+class RobotManager : public BaseSubsystem
 {
 public:
   RobotManager();
@@ -85,6 +85,8 @@ private:
 
   void syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload);
 
+  void advertiseConfig(RobotConfigPtr config);
+
   void advertiseConfigs(RobotConfigs configs);
 
   RobotConfigs parseRobotConfigs(const YAML::Node& config);
@@ -111,7 +113,7 @@ private:
   std::string mode_;
   geometry_msgs::PoseStamped default_target_pose_;
 
-  std::string log_class_, log_subsys_, log_group_;
+  std::string log_class_, log_subsys_;
 
   ros::NodeHandle nh_;
   ros::ServiceServer server_plan_;

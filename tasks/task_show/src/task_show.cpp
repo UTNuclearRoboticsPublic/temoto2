@@ -32,7 +32,7 @@ TaskShow()
 }
 
 // startTask with arguments
-bool startTask(TTP::TaskInterface task_interface)
+void startTask(TTP::TaskInterface task_interface)
 {
 // * AUTO-GENERATED, DO NOT MODIFY *
     input_subjects = task_interface.input_subjects_;
@@ -56,8 +56,6 @@ bool startTask(TTP::TaskInterface task_interface)
     {
         std::cout << "OH NO: " << e.what() << std::endl; 
     }
-
-    return true;
 // * AUTO-GENERATED, DO NOT MODIFY *
 }
 
@@ -87,31 +85,21 @@ void startInterface_0()
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
-    try
-    {
-        // Initialize the output manager interface
-        omi_.initialize(this);
-        
-        std::cout << "D2\n";
-        TASK_INFO(" TaskShow: Showing '%s' in '%s' @ '%s' topic"
-                  , what_0_word_in.c_str()
-                  , where_0_word_in.c_str()
-                  , what_0_data_0_in.c_str());
+    // Initialize the output manager interface
+    omi_.initialize(this);
 
-        // Show the image in rviz
-        omi_.showInRviz("image", what_0_data_0_in);
+    std::cout << "D2\n";
+    TASK_INFO(" TaskShow: Showing '%s' in '%s' @ '%s' topic", what_0_word_in.c_str(),
+              where_0_word_in.c_str(), what_0_data_0_in.c_str());
 
-        // Fill the out part of the current task-interface
-        what_0_word_out = what_0_word_in;
-        what_0_data_0_out = what_0_data_0_in;
-    }
-    catch( error::ErrorStackUtil& e )
-    {
-        e.forward( prefix );
-        this->error_handler_.append(e);
-    }
+    // Show the image in rviz
+    omi_.showInRviz("image", what_0_data_0_in);
 
-// --------------------------------</ USER CODE >-------------------------------
+    // Fill the out part of the current task-interface
+    what_0_word_out = what_0_word_in;
+    what_0_data_0_out = what_0_data_0_in;
+
+    // --------------------------------</ USER CODE >-------------------------------
 
     // < AUTO-GENERATED, DO NOT MODIFY >
 
@@ -145,26 +133,16 @@ void startInterface_1()
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
-    try
-    {
-        // Initialize the output manager interface
-        omi_.initialize(this);
+    // Initialize the output manager interface
+    omi_.initialize(this);
 
-        TASK_INFO(" TaskShow: Showing '%s' in '%s' @ '%s' topic"
-                  , what_0_word_in.c_str()
-                  , where_0_word_in.c_str()
-                  , what_0_data_0_in.c_str());
+    TASK_INFO(" TaskShow: Showing '%s' in '%s' @ '%s' topic", what_0_word_in.c_str(),
+              where_0_word_in.c_str(), what_0_data_0_in.c_str());
 
-        // Show the marker in rviz
-        omi_.showInRviz("marker", what_0_data_0_in);
-    }
-    catch( error::ErrorStackUtil& e )
-    {
-        e.forward( prefix );
-        this->error_handler_.append(e);
-    }
+    // Show the marker in rviz
+    omi_.showInRviz("marker", what_0_data_0_in);
 
-// --------------------------------</ USER CODE >-------------------------------
+    // --------------------------------</ USER CODE >-------------------------------
 }
 
 
@@ -194,7 +172,7 @@ std::vector<TTP::Subject> getSolution()
 private:
 
 // Create sensor manager interface object for accessing sensor manager
-OutputManagerInterface omi_;
+output_manager::OutputManagerInterface<TaskShow> omi_;
 
 // Class name
 std::string class_name_ = "TaskShow";

@@ -7,7 +7,6 @@
 
 #include "ros/ros.h"
 #include "ros/package.h"
-#include "core/common.h"
 #include "algorithm_manager/algorithm_info.h"
 
 #include <algorithm>

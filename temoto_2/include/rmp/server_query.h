@@ -8,23 +8,21 @@
 #include <utility>
 #include "common/temoto_id.h"
 #include "rmp/log_macros.h"
+#include "common/base_subsystem.h"
 
 namespace rmp
 {
 // class for storing resource requests and hold their bingdings to clients
-template <class ServiceMsgType, class Owner>
-class ServerQuery
+template <class ServiceMsgType>
+class ServerQuery : public BaseSubsystem
 {
 public:
-  ServerQuery() : failed_(false), owner_(NULL)
-  {
-  } 
   // special constructor for resource server
-  ServerQuery(const typename ServiceMsgType::Request& req, temoto_id::ID internal_id, Owner* owner)
-    : owner_(owner), failed_(false)
+  ServerQuery(const typename ServiceMsgType::Request& req, temoto_id::ID internal_id, const BaseSubsystem& b)
+    : BaseSubsystem(b), failed_(false)
   {
-    log_class_ = "rmp/ServerQuery";
-    log_subsys_ = owner_->getName();
+    class_name_ = __func__;
+
     msg_.request = req;  // response part is set after executing owners callback
     msg_.response.rmp.resource_id = internal_id;
   }
@@ -63,15 +61,11 @@ public:
 
   void linkTo(temoto_id::ID internal_resource_id)
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
-
     auto ret = linked_resources_.emplace(internal_resource_id);
     if (ret.second == false)
     {
       // resource already exists, something that should never happen...
-      RMP_ERROR("%s An extreme badness has happened. Somebody tried to link the same "
-                "resource twice to a resource_server.",
-                prefix.c_str());
+      throw CREATE_ERROR(error::Code::RMP_FATAL, "Somebody tried to link the same resource twice.");
     }
   }
 
@@ -106,8 +100,6 @@ public:
 
 private:
   std::string log_class_, log_subsys_;
-
-  Owner* owner_;
 
   // ID's of internally linked clients. Those are added automatically when call()
   // function is called from owner's load callback.

@@ -4,3 +4,4 @@ string target_type
 
 int64 code
 string message
+temoto_2/Error[] error_stack

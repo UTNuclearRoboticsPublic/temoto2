@@ -69,10 +69,10 @@ std::string SensorInfo::toString() const
   ret += "  reliability      : " + std::to_string(getReliability()) + "\n";
 
   // Print out the output topics
-  if (!getTopicsOut().empty())
+  if (!getOutputTopics().empty())
   {
     ret += "  output_topics \n";
-    for (auto& topic : getTopicsOut())
+    for (auto& topic : getOutputTopics())
     {
       ret += "    " + topic.first + " : " + topic.second + "\n";
     }

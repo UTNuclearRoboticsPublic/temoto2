@@ -32,7 +32,7 @@ TaskIndex()
 /*
  * startTask
  */
-bool startTask(TTP::TaskInterface task_interface)
+void startTask(TTP::TaskInterface task_interface)
 {
 // * AUTO-GENERATED, DO NOT MODIFY *
     input_subjects = task_interface.input_subjects_;
@@ -44,8 +44,6 @@ bool startTask(TTP::TaskInterface task_interface)
         startInterface_0();
     break;
     }
-
-    return true;
 // * AUTO-GENERATED, DO NOT MODIFY *
 }
 

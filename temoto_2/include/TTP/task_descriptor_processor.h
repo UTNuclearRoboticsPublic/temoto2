@@ -3,16 +3,17 @@
 
 #include "TTP/task_descriptor.h"
 #include <tinyxml.h>            // http://www.dinomage.com/2012/01/tutorial-using-tinyxml-part-1/
+#include "common/base_subsystem.h"
 
 namespace TTP
 {
 
-class TaskDescriptorProcessor
+class TaskDescriptorProcessor : BaseSubsystem
 {
 
 public:
 
-    TaskDescriptorProcessor( std::string path );
+    TaskDescriptorProcessor( std::string path, BaseSubsystem& b);
 
     Action getTaskAction();
 

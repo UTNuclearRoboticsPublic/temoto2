@@ -1,5 +1,5 @@
-#ifndef BASE_ERROR_H
-#define BASE_ERROR_H
+#ifndef TEMOTO_ERROR_H
+#define TEMOTO_ERROR_H
 
 #include <string>
 #include <vector>
@@ -11,9 +11,6 @@
 
 namespace error
 {
-
-const int FORWARDING_CODE = 0;
-const bool VERBOSE = true;
 
 /**
  * @brief Enum that stores the subsystem codes
@@ -27,109 +24,93 @@ enum class Subsystem : int
   ALGORITHM_MANAGER,
   ROBOT_MANAGER,
   OUTPUT_MANAGER,
+  PROCESS_MANAGER,
   TASK
 };
 
 /**
- * @brief Enum that stores the urgency leveles
+ * @brief Enum that stores the error codes
  */
-enum class Urgency : int
+enum class Code : int
 {
-  LOW,        // Does not affect the performance of the system directly
-  MEDIUM,     // Does not affect the performance of the system directly, but needs to be resolved
-  HIGH        // Affects the performance of the system, needs to be resolved immediately
+  FORWARDING,  // Indicate the forwarding type
+
+  // Generic
+  NULL_PTR,       // Pointer is null
+  UNINITIALIZED,  // Object is not initialized
+
+  // Service related
+  SERVICE_REQ_FAIL,     // Service request failed
+  SERVICE_STATUS_FAIL,  // Service responded with FAILED status
+
+  // Resource management
+  RESOURCE_LOAD_FAIL,    // Failed to load resource
+  RESOURCE_UNLOAD_FAIL,  // Failed to unload resource
+  RESOURCE_NOT_FOUND,  // Resource was not found
+  RMP_CAST_FAIL,         // Failed to cast an object
+  RMP_FATAL,             // Something extremely bad happened
+  RMP_NOT_FOUND,         // Resource id was not found //\TODO: remove
+
+  // Core
+  DESC_OPEN_FAIL,       // Failed to open the xml file
+  DESC_NO_ROOT,         // Missing root element
+  DESC_NO_ATTR,         // Attribute missing
+  DESC_INVALID_ARG,     // Invalid/Corrupt arguments
+  CLASS_LOADER_FAIL,    // Classloader failed to do its job
+  FIND_TASK_FAIL,       // Failed to find tasks
+  UNSPECIFIED_TASK,     // The task is unspecified
+  NAMELESS_TASK_CLASS,  // The task is missing a class name
+  NO_TASK_CLASS,        // Task handler could not find the task class
+
+  // TTP
+  BAD_ANY_CAST,       // Bad any cast
+  NLP_INV_ARG,        // Invalid argument in Natural Language Processor
+  NLP_BAD_INPUT,      // NLP was not able to make any sense from provided input text
+  NLP_NO_TASK,        // Suitable task was not found
+  NLP_DISABLED,       // NLP was tried to be used while it was disabled
+  SUBJECT_NOT_FOUND,  // Subject was not found
+
+  // Output manager
+  RVIZ_OPEN_FAIL,          // Failed to open rviz
+  PLUGIN_LOAD_FAIL,        // Failed to load rviz plugin
+  PLUGIN_UNLOAD_FAIL,      // Failed to unload rviz plugin
+  PLUGIN_GET_CONFIG_FAIL,  // Failed to get rviz plugin config
+  PLUGIN_SET_CONFIG_FAIL,  // Failed to set rviz plugin config
+  CONFIG_OPEN_FAIL,        // Failed to open the plugin config file
+
+  // Process manager
+  PROCESS_SPAWN_FAIL,  // Failed to spawn new process
+  PROCESS_KILL_FAIL,   // Failed to kill a process
+
+  // Robot manager
+  ROBOT_NOT_FOUND, // The requested robot was not found from local and remote managers.
+
+  // Algorithm manager
+  ALGORITHM_NOT_FOUND, // The requested algorithm was not found from local and remote managers.
+  
+
+  UNHANDLED_EXCEPTION  // Unhandled exception
 };
+
+// Some random idea how to store error descriptions
+static const std::map<Code, std::string> descriptions = {
+  {Code::FORWARDING, "Forwarding" },
+  {Code::PROCESS_KILL_FAIL, "Node kill failed heavily, it was hit by extreme badness" }
+};
+
 
 /**
  * @brief ErrorStack
  */
-typedef std::vector <temoto_2::Error> ErrorStack;
+typedef std::vector<temoto_2::Error> ErrorStack;
 
-// TODO: Dont use this anymore and change the old error management system
-class ErrorStackUtil
-{
-public:
+#define __TEMOTO_ERROR_HANDLER_VERBOSE__ TRUE
 
-    /**
-     * @brief ErrorStackUtil
-     * @param code
-     * @param subsystem
-     * @param urgency
-     * @param message
-     * @param timeStamp
-     */
-    ErrorStackUtil ( int code,
-                     Subsystem subsystem,
-                     Urgency urgency,
-                     std::string message,
-                     ros::Time timeStamp );
+#define CREATE_ERROR(code, ...) this->error_handler_.create(code, TEMOTO_LOG_PREFIX, error::ErrorHandler::formatToString(__VA_ARGS__))
 
-    /**
-     * @brief ErrorStackUtil
-     * @param code
-     * @param subsystem
-     * @param urgency
-     * @param message
-     */
-    ErrorStackUtil ( int code,
-                     Subsystem subsystem,
-                     Urgency urgency,
-                     std::string message);
+#define FORWARD_ERROR(error_stack) this->error_handler_.forward(error_stack, TEMOTO_LOG_PREFIX)
 
-    /**
-     * @brief getStack
-     * @return
-     */
-    ErrorStack getStack ();
-
-    /**
-     * @brief push
-     * @param code
-     * @param subsystem
-     * @param urgency
-     * @param message
-     * @param timeStamp
-     */
-    void push ( int code,
-                Subsystem subsystem,
-                Urgency urgency,
-                std::string message,
-                ros::Time timeStamp );
-
-    /**
-     * @brief apush
-     * @param base_error
-     */
-    void push ( temoto_2::Error base_error );
-
-    /**
-     * @brief forward
-     * @param message
-     */
-    void forward ( std::string from_where );
-
-private:
-
-    /**
-     * @brief error_stack_
-     */
-    ErrorStack error_stack_;
-
-    /**
-     * @brief initBaseError
-     * @param code
-     * @param subsystem
-     * @param urgency
-     * @param message
-     * @param stamp
-     * @return
-     */
-    temoto_2::Error initBaseError ( int code,
-                                        Subsystem subsystem,
-                                        Urgency urgency,
-                                        std::string message,
-                                        ros::Time stamp);
-};
+#define SEND_ERROR(error_stack) this->error_handler_.send(error_stack)
 
 
 /**
@@ -138,74 +119,65 @@ private:
 class ErrorHandler
 {
 public:
-
   ErrorHandler();
 
   ErrorHandler(Subsystem subsystem, std::string log_group);
 
-  void createAndThrow(int code, std::string prefix, std::string message);
+  /**
+   * @brief Creates the ErrorStack object.
+   * @param code Code for classifying the error.
+   * @param prefix Prefix describing where the error was created.
+   * @param message A brief description of what went wrong.
+   */
+  ErrorStack create(Code code, const std::string& prefix, const std::string& message) const; 
 
-  ErrorStack createAndReturn(int code, std::string prefix, std::string message);
-
-  void forwardAndThrow(ErrorStack& est, std::string prefix);
 
   /**
-   * @brief Appends the ErrorStack
-   * @param errorStack
+   * @brief Appends the existing error stack with a prefix.
+   * @param error_stack Error stack to which the prefix is appended.
+   * @param prefix Prefix describing where the error is forwarded.
    */
-  void append( ErrorStack errorStack );
-
-  void forwardAndAppend(ErrorStack errorStack, std::string prefix);
-
-  ErrorStack forwardAndReturn(ErrorStack errorStack, std::string prefix);
+  ErrorStack forward(ErrorStack error_stack, const std::string& prefix) const;
 
   /**
-   * @brief append
-   * @param err_stk_util
+   * @brief Publishes the error_stack
+   * @param error_stack
    */
-  void append( ErrorStackUtil err_stck_util );
+  void send(ErrorStack error_stack);
 
-  /**
-   * @brief Returns the ErrorStack and sets the "newErrors" flag to false
-   * @return
-   */
-  ErrorStack read();
 
-  /**
-   * @brief Returns the ErrorStack and does not change the "newErrors" flag
-   * @return
-   */
-  ErrorStack readSilent() const;
+  static std::string formatToString(const char* fmt, ...)
+  {
+    boost::shared_array<char> buffer;
+    size_t size = 0;
+    va_list args;
+    va_start(args, fmt);
+    ros::console::vformatToBuffer(buffer, size, fmt, args);
+    va_end(args);
+    return std::string(buffer.get(), size);
+  }
 
-  /**
-   * @brief Returns the ErrorStack, sets the "newErrors" flag to false and clears the stack
-   * @return
-   */
-  ErrorStack readAndClear();
+  static std::string formatToString(const std::string& s) 
+  {
+    return s;
+  }
 
-  /**
-   * @brief Returns "true" if there are any new unread errors
-   * @return
-   */
-  bool gotUnreadErrors() const;
 
 private:
-
   Subsystem subsystem_;
 
   std::string log_group_;
 
   ros::NodeHandle n_;
-
-  ros::Publisher error_publisher_;
-
-  bool newErrors_ = false;
-
-  ErrorStack errorStack_;
 };
 
+}  // end of error namespace
 
-} // end of error namespace
+
+/**
+ * @brief Define + operator to append some other ErrorStack to this stack.
+ */
+error::ErrorStack& operator+=(error::ErrorStack& er_lhs, const error::ErrorStack& es_rhs);
 
 /**
  * @brief operator <<
@@ -222,13 +194,5 @@ std::ostream& operator<<(std::ostream& out, const temoto_2::Error& t);
  * @return
  */
 std::ostream& operator<<(std::ostream& out, const error::ErrorStack& t);
-
-/**
- * @brief operator <<
- * @param out
- * @param t
- * @return
- */
-std::ostream& operator<<(std::ostream& out, const error::ErrorHandler& t);
 
 #endif

@@ -1,7 +1,7 @@
 #include "TTP/io_descriptor.h"
-#include "TTP/TTP_errors.h"
 #include "common/tools.h"
 #include <iostream>
+#include <string>
 
 namespace TTP
 {
@@ -34,21 +34,14 @@ void Subject::addData(std::string datatype, float data)
     // Check if the given datatype is amongst valid datatypes
     if (std::find(valid_datatypes.begin(), valid_datatypes.end(), datatype) == valid_datatypes.end())
     {
-        throw error::ErrorStackUtil (TTPErr::DESC_INVALID_ARG
-                                     , error::Subsystem::AGENT
-                                     , error::Urgency::LOW
-                                     , prefix + " Invalid datatype: '" + datatype + "'."
-                                     , ros::Time::now() );
+        throw std::string("Invalid datatype: '" + datatype + "'.");
     }
 
     if (datatype != "number")
     {
-        throw error::ErrorStackUtil (TTPErr::DESC_INVALID_ARG
-                                     , error::Subsystem::AGENT
-                                     , error::Urgency::LOW
-                                     , prefix + " Numerical data '" + std::to_string(data) +
-                                     "' cannot be tagged with a non-numerical datatype '" + datatype + "'."
-                                     , ros::Time::now() );
+      throw std::string("Numerical data '" + std::to_string(data) +
+                         "' cannot be tagged with a non-numerical datatype '" + datatype +
+                         "'.");
     }
 
     data_.emplace_back(datatype, boost::any_cast<float>(data));
@@ -63,20 +56,13 @@ void Subject::addData(std::string datatype, std::string data)
     // Check if the given datatype is amongst valid datatypes
     if (std::find(valid_datatypes.begin(), valid_datatypes.end(), datatype) == valid_datatypes.end())
     {
-        throw error::ErrorStackUtil (TTPErr::DESC_INVALID_ARG
-                                     , error::Subsystem::AGENT
-                                     , error::Urgency::LOW
-                                     , prefix + " Invalid datatype: '" + datatype + "'."
-                                     , ros::Time::now() );
+        throw std::string("Invalid datatype: '" + datatype + "'.");
     }
 
     if (datatype == "number")
     {
-        throw error::ErrorStackUtil (TTPErr::DESC_INVALID_ARG
-                                     , error::Subsystem::AGENT
-                                     , error::Urgency::LOW
-                                     , prefix + " A string is not a numerical datatype."
-                                     , ros::Time::now() );
+      //TODO: USE STD:EXCEPTION HERE
+        throw std::string("A string is not a numerical datatype.");
     }
 
     data_.emplace_back(datatype, boost::any_cast<std::string>(data));
@@ -95,8 +81,7 @@ Subject getSubjectByType(const std::string& type, Subjects& subjects)
             return std::move(ret_subject);
         }
     }
-    // TODO: throw temoto error
-    throw;
+    throw std::string("Subject of type '" + type + "' was not found.");
 }
 
 // Subjects comparison operator

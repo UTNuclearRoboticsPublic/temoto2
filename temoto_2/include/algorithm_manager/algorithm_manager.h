@@ -73,6 +73,11 @@ private:
   /**
    * @brief advertiseLocalAlgorithms
    */
+  void advertiseAlgorithm(AlgorithmInfoPtr);
+
+  /**
+   * @brief advertiseLocalAlgorithms
+   */
   void advertiseLocalAlgorithms();
 
   /**

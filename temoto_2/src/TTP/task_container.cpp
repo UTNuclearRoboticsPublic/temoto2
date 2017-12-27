@@ -48,7 +48,7 @@ Subjects TaskContainer::operator()(Subjects input_subjects)
 
     // Start the task
     std::cout << "starting a task ...\n";
-    task_pointer_->startTask(task_descriptor_->getFirstInterface());
+    task_pointer_->startTaskWrapped(task_descriptor_->getFirstInterface());
 
     // Get the output subjects, make a local copy and return them to the next task
     task_descriptor_->setFirstOutputSubjects(task_pointer_->getSolution());

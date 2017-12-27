@@ -2,12 +2,8 @@
 #define ALGORITHM_MANAGER_INTERFACE_H
 
 #include "common/base_subsystem.h"
-#include "common/interface_errors.h"
-#include "common/tools.h"
 #include "common/topic_container.h"
-#include "common/temoto_log_macros.h"
 
-#include "TTP/base_task/task_errors.h"
 #include "TTP/base_task/base_task.h"
 #include "algorithm_manager/algorithm_manager_services.h"
 #include "rmp/resource_manager.h"
@@ -29,15 +25,14 @@ class AlgorithmTopicsRes : public TopicContainer
   /* DELIBERATELY EMPTY */
 };
 
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *
  *                        ALGORITHM MANAGER INTERFACE
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-/**
- * @brief The AlgorithmManagerInterface class
- */
+template <class OwnerTask>
 class AlgorithmManagerInterface : BaseSubsystem
 {
 public:
@@ -66,15 +61,13 @@ public:
    */
   AlgorithmTopicsRes startAlgorithm(const std::string& algorithm_type)
   {
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-
     try
     {
-      validateInterface(prefix);
+      validateInterface();
     }
     catch (error::ErrorStack& e)
     {
-      error_handler_.forwardAndThrow(e, prefix);
+      FORWARD_ERROR(error_stack);
     }
 
     return startAlgorithm(algorithm_type, "", "", AlgorithmTopicsReq());
@@ -89,15 +82,13 @@ public:
   AlgorithmTopicsRes startAlgorithm(const std::string& algorithm_type
                                   , const AlgorithmTopicsReq& topics)
   {
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-
     try
     {
-      validateInterface(prefix);
+      validateInterface();
     }
-    catch (error::ErrorStack& e)
+    catch (error::ErrorStack& error_stack)
     {
-      error_handler_.forwardAndThrow(e, prefix);
+      FORWARD_ERROR(error_stack);
     }
 
     return startAlgorithm(algorithm_type, "", "", topics);
@@ -116,9 +107,16 @@ public:
                                   , const std::string& ros_program_name
                                   , const AlgorithmTopicsReq& topics)
   {
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-    validateInterface(prefix);
+    try
+    {
+      validateInterface();
+    }
+    catch (error::ErrorStack& error_stack)
+    {
+      FORWARD_ERROR(error_stack);
+    }
+
+    return startAlgorithm(algorithm_type, "", "", topics);
 
     // Fill out the "StartAlgorithmRequest" request
     temoto_2::LoadAlgorithm srv_msg;
@@ -128,17 +126,13 @@ public:
     srv_msg.request.input_topics = topics.inputTopicsAsKeyValues();
     srv_msg.request.output_topics = topics.outputTopicsAsKeyValues();
 
-    // Call the server
-    if (!resource_manager_->template call<temoto_2::LoadAlgorithm>(algorithm_manager::srv_name::MANAGER
-                                                                 , algorithm_manager::srv_name::SERVER
-                                                                 , srv_msg))
+    try
     {
-      error_handler_.forwardAndThrow(srv_msg.response.rmp.errorStack, prefix);
-    }
+      // Call the server
+      if (!resource_manager_->template call<temoto_2::LoadAlgorithm>(algorithm_manager::srv_name::MANAGER
+                                                                   , algorithm_manager::srv_name::SERVER
+                                                                   , srv_msg))
 
-    // If the request was fulfilled, then add the srv to the list of allocated algorithms
-    if (srv_msg.response.rmp.code == 0)
-    {
       allocated_algorithms_.push_back(srv_msg);
       AlgorithmTopicsRes responded_topics;
       responded_topics.setInputTopicsByKeyValue( srv_msg.response.input_topics );
@@ -146,9 +140,9 @@ public:
 
       return responded_topics;
     }
-    else
+    catch (error::ErrorStack& error_stack)
     {
-      error_handler_.forwardAndThrow(srv_msg.response.rmp.errorStack, prefix);
+      FORWARD_ERROR(error_stack);
     }
   }
 
@@ -200,19 +194,29 @@ public:
 //    }
 //  }
 
+  /**
+   * @brief statusInfoCb
+   * @param srv
+   */
   void statusInfoCb(temoto_2::ResourceStatus& srv)
   {
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-    validateInterface(prefix);
+    try
+    {
+      validateInterface();
+    }
+    catch (error::ErrorStack& error_stack)
+    {
+      FORWARD_ERROR(error_stack);
+    }
 
-    TEMOTO_DEBUG("%s status info was received", prefix.c_str());
+    TEMOTO_DEBUG("Received status information.");
     TEMOTO_DEBUG_STREAM(srv.request);
 
     // If the resource has falied then reload it since there is a chance that
     // algorithm manager will provide better algorithm this time
     if (srv.request.status_code == rmp::status_codes::FAILED)
     {
-      TEMOTO_WARN("%s detected an algorithm failure. Unloading and trying again", prefix.c_str());
+      TEMOTO_WARN("detected an algorithm failure. Unloading and trying again.");
 
       // Find the algorithm from the list of allocated algorithms
       auto algorithm_itr = std::find_if(allocated_algorithms_.begin()
@@ -237,19 +241,16 @@ public:
         // ... and load an alternative algorithm. This call automatically
         // updates the response in allocated algorithms vector
         TEMOTO_DEBUG_STREAM(prefix << "Trying to load an alternative algorithm");
-        if (!resource_manager_->template call<temoto_2::LoadAlgorithm>(algorithm_manager::srv_name::MANAGER
-                                                                     , algorithm_manager::srv_name::SERVER
-                                                                     , *algorithm_itr))
-        {
-          error_handler_.createAndThrow(taskErr::SERVICE_REQ_FAIL
-                                      , prefix
-                                      , "Failed to call the service");
-        }
 
-        // Throw an error if the response is negative
-        if (algorithm_itr->response.rmp.code != 0)
+        try
         {
-          error_handler_.forwardAndThrow(algorithm_itr->response.rmp.errorStack, prefix);
+          resource_manager_->template call<temoto_2::LoadAlgorithm>(algorithm_manager::srv_name::MANAGER
+                                                                  , algorithm_manager::srv_name::SERVER
+                                                                  , *algorithm_itr);
+        }
+        catch (error::ErrorStack& error_stack)
+        {
+          throw CREATE_ERROR(error_stack);
         }
       }
       else
@@ -259,7 +260,7 @@ public:
       }
 
       // Forward and append the error stack
-      error_handler_.forwardAndAppend(srv.request.errorStack, prefix);
+      SEND_ERROR(srv.request.error_stack);
     }
   }
 
@@ -274,17 +275,15 @@ private:
   std::vector<temoto_2::LoadAlgorithm> allocated_algorithms_;
   std::unique_ptr<rmp::ResourceManager<AlgorithmManagerInterface>> resource_manager_;
 
+
   /**
-   * @brief validateInterface()
-   * @param algorithm_type
+   * @brief validateInterface
    */
-  void validateInterface(std::string& prefix)
+  void validateInterface()
   {
     if(!resource_manager_)
     {
-      error_handler_.createAndThrow(interface_error::NOT_INITIALIZED
-                                  , prefix
-                                  , " Interface is not initialized.");
+      throw CREATE_ERROR(error::Code::NOT_INITIALIZED, "Interface is not initalized.");
     }
   }
 };

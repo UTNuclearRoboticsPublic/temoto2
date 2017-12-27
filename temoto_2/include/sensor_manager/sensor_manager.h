@@ -10,6 +10,8 @@
 #include "temoto_2/ConfigSync.h"
 
 #include "std_msgs/String.h"
+#include "common/temoto_id.h"
+#include "common/base_subsystem.h"
 
 namespace sensor_manager
 {
@@ -74,6 +76,8 @@ private:
    */
   void statusCb(temoto_2::ResourceStatus& srv);
 
+  void advertiseSensor(SensorInfoPtr sensor_ptr);
+
   void advertiseLocalSensors();
 
   std::vector<SensorInfoPtr> parseSensors(const YAML::Node& config);
@@ -91,7 +95,7 @@ private:
    */
   SensorInfoPtr findSensor(temoto_2::LoadSensor::Request& req, const std::vector<SensorInfoPtr>& sensors);
 
-//  ros::ServiceServer list_devices_server_;
+  //  ros::ServiceServer list_devices_server_;
   rmp::ResourceManager<SensorManager> resource_manager_;
   rmp::ConfigSynchronizer<SensorManager, PayloadType> config_syncer_;
 

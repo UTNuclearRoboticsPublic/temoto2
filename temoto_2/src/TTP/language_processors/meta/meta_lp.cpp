@@ -1,7 +1,6 @@
 #include "common/tools.h"
 #include "TTP/language_processors/meta/meta_lp.h"
 #include "TTP/language_processors/meta/branch_finder.h"
-#include "TTP/TTP_errors.h"
 
 #include "meta/analyzers/tokenizers/icu_tokenizer.h"
 #include "meta/sequence/sequence.h"
@@ -12,8 +11,9 @@
 namespace TTP
 {
 
-MetaLP::MetaLP(std::string language_models_dir)
+MetaLP::MetaLP(std::string language_models_dir, BaseSubsystem& b) : BaseSubsystem(b)
 {
+    class_name_ = __func__;     
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = common::generateLogPrefix("", class_name_, __func__);
 
@@ -37,17 +37,13 @@ TaskTree MetaLP::processText(std::string input_text)
     if (input_text.empty())
     {
         // Throw error
-        error::ErrorStackUtil error_stack_util( TTPErr::NLP_INV_ARG,
-                                                error::Subsystem::AGENT,
-                                                error::Urgency::LOW,
-                                                prefix + " Received an empty string",
-                                                ros::Time::now() );
-        throw error_stack_util;
+        throw CREATE_ERROR(error::Code::NLP_INV_ARG, "Received an empty string");
     }
 
     meta::sequence::sequence seq;
 
-    std::unique_ptr<meta::analyzers::token_stream> stream = meta::make_unique<meta::analyzers::tokenizers::icu_tokenizer>();
+    std::unique_ptr<meta::analyzers::token_stream> stream =
+        meta::make_unique<meta::analyzers::tokenizers::icu_tokenizer>();
     stream->set_content(std::move(input_text));
 
     while (*stream)
@@ -90,12 +86,7 @@ TaskTree MetaLP::processText(std::string input_text)
             {
                 std::cout << prefix << "No tasks were found\n";
                 // Throw error
-                error::ErrorStackUtil error_stack_util( TTPErr::NLP_BAD_INPUT,
-                                                        error::Subsystem::AGENT,
-                                                        error::Urgency::LOW,
-                                                        prefix + " Could not make any sense of input text",
-                                                        ros::Time::now() );
-                throw error_stack_util;
+                throw CREATE_ERROR(error::Code::NLP_BAD_INPUT, "Could not make any sense of input text.");
             }
         }
         else

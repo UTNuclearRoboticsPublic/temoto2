@@ -5,7 +5,7 @@
 
 void displayErrorMessages( const temoto_2::ErrorStack &e_stack )
 {
-    error::ErrorStack e = e_stack.errorStack;
+    error::ErrorStack e = e_stack.error_stack;
     std::cout << e << std::endl;
 }
 

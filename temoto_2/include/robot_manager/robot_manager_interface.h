@@ -1,13 +1,9 @@
 #ifndef ROBOT_MANAGER_INTERFACE_H
 #define ROBOT_MANAGER_INTERFACE_H
 
-#include "core/common.h"
-
-#include "TTP/base_task/task_errors.h"
 #include "TTP/base_task/base_task.h"
 #include "common/temoto_id.h"
 #include "common/console_colors.h"
-#include "common/interface_errors.h"
 
 #include "robot_manager/robot_manager_services.h"
 #include "rmp/resource_manager.h"
@@ -15,20 +11,24 @@
 #include <vector>
 #include <string>
 
+namespace robot_manager
+{
+
 template <class OwnerTask>
-class RobotManagerInterface
+class RobotManagerInterface : public BaseSubsystem
 {
 public:
-  RobotManagerInterface(TTP::BaseTask* task) : task_(task)
+  RobotManagerInterface()
   {
+    class_name_ = __func__;
   }
 
-  void initialize()
+  void initialize(TTP::BaseTask* task)
   {
-    log_class_ = "";
-    log_subsys_ = "robot_manager_interface";
-    log_group_ = "interfaces." + task_->getPackageName();
-    name_ = task_->getName() + "/robot_manager_interface";
+    initializeBase(task);
+    log_group_ = "interfaces." + task->getPackageName();
+    
+    name_ = task->getName() + "/robot_manager_interface";
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
     // create resource manager
@@ -59,37 +59,33 @@ public:
 
     // Contact the "Context Manager", pass the gesture specifier and if successful, get
     // the name of the topic
-    temoto_2::RobotLoad load_srv;
-    load_srv.request.robot_name = robot_name;
-    if (resource_manager_-> template call<temoto_2::RobotLoad>(
-            robot_manager::srv_name::MANAGER, robot_manager::srv_name::SERVER_LOAD, load_srv))
+    temoto_2::RobotLoad load_srvc;
+    load_srvc.request.robot_name = robot_name;
+    try
     {
-      TEMOTO_DEBUG("%s Call successful", prefix.c_str());
-      if(load_srv.response.rmp.code == rmp::status_codes::FAILED)
-      {
-        TEMOTO_ERROR("%s Failed to load the robot '%s': %s", prefix.c_str(), robot_name.c_str(), load_srv.response.rmp.message.c_str());
-      }
-      
+      resource_manager_->template call<temoto_2::RobotLoad>(
+          robot_manager::srv_name::MANAGER, robot_manager::srv_name::SERVER_LOAD, load_srvc);
     }
-    else
+    catch(error::ErrorStack& error_stack)
     {
-      TEMOTO_ERROR("%s Service call failed", prefix.c_str());
+      throw FORWARD_ERROR(error_stack);
     }
   }
 
   void plan()
   {
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-    TEMOTO_DEBUG("%s", prefix.c_str());
 
     temoto_2::RobotPlan msg;
     msg.request.use_default_target = true;
 
-    if (!client_plan_.call(msg) || msg.response.code != 0)
+    if (!client_plan_.call(msg))
     {
-      throw error::ErrorStackUtil(
-          taskErr::SERVICE_REQ_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
-          prefix + " Service request failed: " + msg.response.message, ros::Time::now());
+      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
+    }
+    else if (msg.response.code == rmp::status_codes::FAILED)
+    {
+      throw FORWARD_ERROR(msg.response.error_stack);
     }
   }
 
@@ -100,11 +96,13 @@ public:
 
     temoto_2::RobotPlan msg;
     msg.request.use_default_target = false;
-    if (!client_plan_.call(msg) || msg.response.code != 0)
+    if (!client_plan_.call(msg))
     {
-      throw error::ErrorStackUtil(
-          taskErr::SERVICE_REQ_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
-          prefix + " Service request failed: " + msg.response.message, ros::Time::now());
+      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
+    }
+    else if (msg.response.code == rmp::status_codes::FAILED)
+    {
+      throw FORWARD_ERROR(msg.response.error_stack);
     }
   }
 
@@ -114,11 +112,13 @@ public:
     TEMOTO_DEBUG("%s", prefix.c_str());
 
     temoto_2::RobotExecute msg;
-    if (!client_exec_.call(msg) || msg.response.code != 0)
+    if (!client_exec_.call(msg))
     {
-      throw error::ErrorStackUtil(
-          taskErr::SERVICE_REQ_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
-          prefix + " Service request failed: " + msg.response.message, ros::Time::now());
+      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
+    }
+    else if (msg.response.code == rmp::status_codes::FAILED)
+    {
+      throw FORWARD_ERROR(msg.response.error_stack);
     }
   }
 
@@ -128,12 +128,13 @@ public:
     TEMOTO_DEBUG("%s", prefix.c_str());
 
     temoto_2::RobotGetVizInfo msg;
-
-    if (!client_viz_info_.call(msg) || msg.response.code != 0)
+    if (!client_viz_info_.call(msg))
     {
-      throw error::ErrorStackUtil(
-          taskErr::SERVICE_REQ_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
-          prefix + " Service request failed: " + msg.response.message, ros::Time::now());
+      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
+    }
+    else if (msg.response.code == rmp::status_codes::FAILED)
+    {
+      throw FORWARD_ERROR(msg.response.error_stack);
     }
     return msg.response.info;
   }
@@ -145,11 +146,13 @@ public:
 
     temoto_2::RobotSetTarget msg;
     msg.request.target_type = target_type;
-    if (!client_set_target_.call(msg) || msg.response.code != 0)
+    if (!client_set_target_.call(msg))
     {
-      throw error::ErrorStackUtil(
-          taskErr::SERVICE_REQ_FAIL, error::Subsystem::ROBOT_MANAGER, error::Urgency::MEDIUM,
-          prefix + " Service request failed: " + msg.response.message, ros::Time::now());
+      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
+    }
+    else if (msg.response.code == rmp::status_codes::FAILED)
+    {
+      throw FORWARD_ERROR(msg.response.error_stack);
     }
   }
 
@@ -159,12 +162,9 @@ public:
    */
   void validateInterface(std::string& log_prefix)
   {
-    if(!resource_manager_)
+    if (!resource_manager_)
     {
-      TEMOTO_ERROR("%s Interface is not initalized.", log_prefix.c_str());
-      throw error::ErrorStackUtil(
-          interface_error::NOT_INITIALIZED, error::Subsystem::TASK, error::Urgency::MEDIUM,
-          log_prefix + " Interface is not initialized.", ros::Time::now());
+      throw CREATE_ERROR(error::Code::UNINITIALIZED, "Interface is not initalized.");
     }
   }
 
@@ -188,7 +188,6 @@ public:
 private:
   std::string name_;
   std::string log_class_, log_subsys_, log_group_;
-  TTP::BaseTask* task_;
 
   ros::NodeHandle nh_;
   ros::ServiceClient client_load_;
@@ -200,4 +199,5 @@ private:
   std::unique_ptr<rmp::ResourceManager<RobotManagerInterface>> resource_manager_;
 };
 
+} // namespace
 #endif

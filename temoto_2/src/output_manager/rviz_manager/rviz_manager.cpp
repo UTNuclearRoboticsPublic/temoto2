@@ -1,14 +1,24 @@
 #include "output_manager/rviz_manager/rviz_manager.h"
 
-namespace rviz_manager
+namespace output_manager
 {
-RvizManager::RvizManager() : resource_manager_(srv_name::MANAGER, this)
+RvizManager::RvizManager()
+  : BaseSubsystem("output_manager", error::Subsystem::OUTPUT_MANAGER, __func__)
+  , resource_manager_(srv_name::RVIZ_MANAGER, this)
 {
-  log_class_ = "";
-  log_subsys_ = "rviz_manager";
+  class_name_ = __func__;
+  subsystem_name_ = "rviz_manager";
+  subsystem_code_ = error::Subsystem::SENSOR_MANAGER;
   log_group_ = "rviz_manager";
+  error_handler_ = error::ErrorHandler(subsystem_code_, log_group_);
+
+  //\TODO:Remove, deprecated
+  log_class_ = class_name_;
+  log_subsys_ = subsystem_name_;
+  std::string prefix = generateLogPrefix(__func__);
+
   // Set up server for loading rviz plugins
-  resource_manager_.addServer<temoto_2::LoadRvizPlugin>(rviz_manager::srv_name::SERVER,
+  resource_manager_.addServer<temoto_2::LoadRvizPlugin>(srv_name::RVIZ_SERVER,
                                                         &RvizManager::LoadRvizPluginCb,
                                                         &RvizManager::unloadRvizPluginCb);
 
@@ -79,26 +89,18 @@ void RvizManager::runRviz()
 
       if (ros::Time::now() >= timeout)
       {
-        throw error::ErrorStackUtil(
-            outputManagerErr::RVIZ_OPEN_FAIL, error::Subsystem::OUTPUT_MANAGER,
-            error::Urgency::MEDIUM,
-            prefix + " Failed to launch rviz plugin manager: Timeout reached.", ros::Time::now());
+        throw CREATE_ERROR(error::Code::RVIZ_OPEN_FAIL, "Failed to launch rviz plugin manager: Timeout reached.");
       }
       TEMOTO_DEBUG("%s All rviz_plugin_manager services connected.", prefix.c_str());
     }
     else
     {
-      throw error::ErrorStackUtil(outputManagerErr::RVIZ_OPEN_FAIL,
-                                  error::Subsystem::OUTPUT_MANAGER, error::Urgency::MEDIUM,
-                                  prefix + " Failed to launch rviz: " + msg.response.rmp.message,
-                                  ros::Time::now());
+      throw CREATE_ERROR(error::Code::RVIZ_OPEN_FAIL, "Failed to launch rviz: ");
     }
   }
   catch (...)
   {
-    throw error::ErrorStackUtil(outputManagerErr::SERVICE_REQ_FAIL,
-                                error::Subsystem::OUTPUT_MANAGER, error::Urgency::MEDIUM,
-                                prefix + " Failed to start RViz", ros::Time::now());
+    throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to start RViz");
   }
 
 }
@@ -123,19 +125,12 @@ bool RvizManager::loadPluginRequest(rviz_plugin_manager::PluginLoad& load_plugin
     }
     else
     {
-      throw error::ErrorStackUtil(
-          outputManagerErr::PLUGIN_LOAD_FAIL, error::Subsystem::OUTPUT_MANAGER,
-          error::Urgency::MEDIUM,
-          prefix + " Failed to load rviz plugin: " + load_plugin_srv.response.message,
-          ros::Time::now());
+      throw CREATE_ERROR(error::Code::PLUGIN_LOAD_FAIL, "Failed to load rviz plugin: " + load_plugin_srv.response.message);
     }
   }
   else
   {
-    throw error::ErrorStackUtil(outputManagerErr::SERVICE_REQ_FAIL,
-                                error::Subsystem::OUTPUT_MANAGER, error::Urgency::MEDIUM,
-                                prefix + " Failed to call service /rviz_plugin_load",
-                                ros::Time::now());
+    throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service /rviz_plugin_load");
   }
 }
 
@@ -159,19 +154,12 @@ bool RvizManager::unloadPluginRequest(rviz_plugin_manager::PluginUnload& unload_
     }
     else
     {
-      throw error::ErrorStackUtil(
-          outputManagerErr::PLUGIN_UNLOAD_FAIL, error::Subsystem::OUTPUT_MANAGER,
-          error::Urgency::MEDIUM,
-          prefix + " Failed to unload rviz plugin: " + unload_plugin_srv.response.message,
-          ros::Time::now());
+      throw CREATE_ERROR(error::Code::PLUGIN_UNLOAD_FAIL, "Failed to unload rviz plugin: " + unload_plugin_srv.response.message);
     }
   }
   else
   {
-    throw error::ErrorStackUtil(outputManagerErr::SERVICE_REQ_FAIL,
-                                error::Subsystem::OUTPUT_MANAGER, error::Urgency::MEDIUM,
-                                prefix + " Failed to call service /rviz_plugin_unload",
-                                ros::Time::now());
+    throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service /rviz_plugin_unload");
   }
 }
 
@@ -196,19 +184,14 @@ bool RvizManager::getPluginConfigRequest(
     }
     else
     {
-      throw error::ErrorStackUtil(
-          outputManagerErr::PLUGIN_GET_CONFIG_FAIL, error::Subsystem::OUTPUT_MANAGER,
-          error::Urgency::MEDIUM,
-          prefix + " Failed to get rviz plugin config: " + get_plugin_config_srv.response.message,
-          ros::Time::now());
+      throw CREATE_ERROR(error::Code::PLUGIN_GET_CONFIG_FAIL,
+                         "Failed to get rviz plugin config: " +
+                             get_plugin_config_srv.response.message);
     }
   }
   else
   {
-    throw error::ErrorStackUtil(outputManagerErr::SERVICE_REQ_FAIL,
-                                error::Subsystem::OUTPUT_MANAGER, error::Urgency::MEDIUM,
-                                prefix + " Failed to call service /rviz_plugin_get_config",
-                                ros::Time::now());
+    throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service /rviz_plugin_get_config");
   }
 }
 
@@ -233,19 +216,14 @@ bool RvizManager::setPluginConfigRequest(
     }
     else
     {
-      throw error::ErrorStackUtil(
-          outputManagerErr::PLUGIN_SET_CONFIG_FAIL, error::Subsystem::OUTPUT_MANAGER,
-          error::Urgency::MEDIUM,
-          prefix + " Failed to set rviz plugin config: " + set_plugin_config_srv.response.message,
-          ros::Time::now());
+      throw CREATE_ERROR(error::Code::PLUGIN_SET_CONFIG_FAIL,
+                         "Failed to set rviz plugin config: " +
+                             set_plugin_config_srv.response.message);
     }
   }
   else
   {
-    throw error::ErrorStackUtil(outputManagerErr::SERVICE_REQ_FAIL,
-                                error::Subsystem::OUTPUT_MANAGER, error::Urgency::MEDIUM,
-                                prefix + " Failed to call service /rviz_plugin_set_config",
-                                ros::Time::now());
+    throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service /rviz_plugin_set_config");
   }
 }
 
@@ -259,23 +237,16 @@ void RvizManager::LoadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
   // Name of the method, used for making debugging a bit simpler
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
-  TEMOTO_INFO("%s Received a new %s request", prefix.c_str(), srv_name::SERVER.c_str());
+  TEMOTO_INFO("%s Received a new %s request", prefix.c_str(), srv_name::RVIZ_SERVER.c_str());
   TEMOTO_INFO_STREAM(req);
 
   try
   {
     runRviz();
   }
-  catch (error::ErrorStackUtil& e)
+  catch (error::ErrorStack& error_stack)
   {
-    // Format the rmp service response
-    res.rmp.code = 1;
-    res.rmp.message = e.getStack().back().message;
-
-    // Append the error to local ErrorStack
-    e.forward(prefix);
-    this->error_handler_.append(e);
-    return;
+    FORWARD_ERROR(error_stack);
   }
 
   // Check the type of the requested display plugin and run if found
@@ -315,27 +286,14 @@ void RvizManager::LoadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
      //   setPluginConfigRequest(set_plugin_config_srv);
      // }
     }
-    catch (error::ErrorStackUtil& e)
+    catch (error::ErrorStack& error_stack)
     {
-      // Format the service response
-      res.rmp.code = 1;
-      res.rmp.message = e.getStack().back().message;
-
-      // Append the error to local ErrorStack
-      e.forward(prefix);
-      this->error_handler_.append(e);
+      FORWARD_ERROR(error_stack);
     }
   }
   else
   {
-    error::ErrorStackUtil e(outputManagerErr::SERVICE_REQ_FAIL, error::Subsystem::OUTPUT_MANAGER,
-                            error::Urgency::MEDIUM,
-                            prefix + " Did not find any appropriate display plugins",
-                            ros::Time::now());
-    res.rmp.code = 1;
-    res.rmp.message = e.getStack().back().message;
-    this->error_handler_.append(e);
-    return;
+    throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Did not find any appropriate display plugins");
   }
 }
 
@@ -370,20 +328,14 @@ void RvizManager::unloadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
       res.rmp.code = 0;
       res.rmp.message = "Request satisfied";
     }
-    catch (error::ErrorStackUtil& e)
+    catch (error::ErrorStack& error_stack)
     {
-      // Append the error to local ErrorStack
-      e.forward(prefix);
-      this->error_handler_.append(e);
-
-      res.rmp.code = 1;
-      res.rmp.message += e.getStack().back().message + ";\n";
+      FORWARD_ERROR(error_stack);
     }
   }
   else
   {
-    res.rmp.code = 1;
-    res.rmp.message = "No allocated resources were found";
+    throw CREATE_ERROR(error::Code::PLUGIN_UNLOAD_FAIL, "No allocated resources were found");
   }
 }
 

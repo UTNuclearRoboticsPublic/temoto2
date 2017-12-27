@@ -6,49 +6,42 @@
 #include <map>
 #include <utility>
 #include "common/temoto_id.h"
-#include "rmp/log_macros.h"
 
 namespace rmp
 {
 // class for storing resource requests and hold their bingdings to external servers
 template <class ServiceMsgType, class Owner>
-class ClientQuery
+class ClientQuery : public BaseSubsystem
 {
 public:
-  ClientQuery() : owner_(NULL), failed_(false)
-  {
-  }
   // special constructor for resource client
-  ClientQuery(const ServiceMsgType& msg, Owner* owner) : msg_(msg), owner_(owner), failed_(false)
+  ClientQuery(const ServiceMsgType& msg, Owner* owner)
+    : BaseSubsystem(*owner, __func__), msg_(msg), owner_(owner), failed_(false)
   {
-    log_class_ = "rmp/ClientQuery";
-    log_subsys_ = owner_->getName();
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
+    this->log_group_ = "rmp." + this->log_group_;
   }
 
   void addInternalResource(temoto_id::ID resource_id, std::string& server_name)
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
     // try to insert to map
-    RMP_DEBUG("%s id:%d, server_name:'%s'", prefix.c_str(), resource_id,
-                    server_name.c_str());
+    TEMOTO_DEBUG("Adding id:%d, server_name:'%s'", resource_id, server_name.c_str());
     auto ret = internal_resources_.emplace(resource_id, server_name);
 
     if (!ret.second)
     {
-      RMP_ERROR("%s Not allowed to add internal resources with "
-                "identical ids.", prefix.c_str());
+      throw CREATE_ERROR(error::Code::RMP_FATAL, "Not allowed to add internal resources with "
+                                                 "identical ids.");
     }
   }
 
   // remove the internal resource from this query and return how many are still connected
   size_t removeInternalResource(temoto_id::ID resource_id)
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
     auto it = internal_resources_.find(resource_id);
     if (it == internal_resources_.end())
     {
-      RMP_ERROR("%s Resource_id not found!", prefix.c_str());
+      throw CREATE_ERROR(error::Code::RMP_FATAL,
+                         "Unable to remove the resource. Resource_id %s not found.", resource_id);
     }
     std::string caller_name = it->second;
 
@@ -82,13 +75,12 @@ public:
 
   void debug()
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, "");
-    RMP_DEBUG_STREAM(prefix << "    Query req:" << std::endl << msg_.request);
-    RMP_DEBUG_STREAM(prefix << "    Query res:" << std::endl << msg_.response);
-    RMP_DEBUG_STREAM(prefix << "    Internal resources:");
+    TEMOTO_DEBUG_STREAM("    Query req:" << std::endl << msg_.request);
+    TEMOTO_DEBUG_STREAM("    Query res:" << std::endl << msg_.response);
+    TEMOTO_DEBUG_STREAM("    Internal resources:");
     for (auto& r : internal_resources_)
     {
-      RMP_DEBUG("%s      id:%d server_name:'%s'",prefix.c_str(), r.first, r.second.c_str());
+      TEMOTO_DEBUG("     id:%d server_name:'%s'", r.first, r.second.c_str());
     }
   }
 
@@ -103,8 +95,6 @@ private:
   // internal resource ids and their callers name
   std::map<temoto_id::ID, std::string> internal_resources_;
 
-  std::string log_class_, log_subsys_;
-  std::string rmp_log_prefix_;
   Owner* owner_;
 
   ServiceMsgType msg_;  /// Store request and response, note that RMP specific fields (resource_id,

@@ -1,16 +1,18 @@
 #ifndef PROCESS_MANAGER_H
 #define PROCESS_MANAGER_H
 
-//#include "core/common.h"
-#include "process_manager/process_manager_errors.h"
 #include "process_manager/process_manager_services.h"
 #include "rmp/resource_manager.h"
 #include <stdio.h> //pid_t TODO: check where pid_t actually is
 #include <mutex>
 
+#include "common/base_subsystem.h"
+
+
+
 namespace process_manager
 {
-	class ProcessManager
+	class ProcessManager : public BaseSubsystem
 	{
 		public:
 
@@ -45,8 +47,6 @@ namespace process_manager
 
 			// Resource management protocol
 			rmp::ResourceManager<ProcessManager> resource_manager_;
-
-			//error::ErrorHandler error_handler_;
 
 			// Listens for calls to start or kill processes
 			//ros::ServiceServer spawn_kill_srv_;

@@ -8,7 +8,6 @@
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "core/common.h"
 #include "common/request_container.h"
 #include "std_msgs/String.h"
 #include "temoto_2/nodeSpawnKill.h"

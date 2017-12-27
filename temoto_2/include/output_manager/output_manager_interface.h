@@ -1,11 +1,7 @@
-#include "core/common.h"
-
 #include "common/temoto_id.h"
-#include "common/interface_errors.h"
-#include "TTP/base_task/task_errors.h"
+#include "common/base_subsystem.h"
 #include "TTP/base_task/base_task.h"
-#include "output_manager/output_manager_errors.h"
-#include "output_manager/rviz_manager/rviz_manager_services.h"
+#include "output_manager/output_manager_services.h"
 #include "robot_manager/robot_manager_services.h"
 #include "rmp/resource_manager.h"
 #include "temoto_2/LoadRvizPlugin.h"
@@ -15,10 +11,13 @@
 #include <vector>
 #include <yaml-cpp/yaml.h>
 
+namespace output_manager
+{
 /**
  * @brief The OutputManagerInterface class
  */
-class OutputManagerInterface
+template <class OwnerTask>
+class OutputManagerInterface : public BaseSubsystem
 {
 public:
   /**
@@ -26,6 +25,7 @@ public:
    */
   OutputManagerInterface()
   {
+    class_name_ = __func__;
   }
 
   /**
@@ -33,8 +33,7 @@ public:
    */
   void initialize(TTP::BaseTask* task)
   {
-    log_class_ = "";
-    log_subsys_ = "output_manager_interface";
+    initializeBase(task);
     log_group_ = "interfaces." + task->getPackageName();
 
     name_ = task->getName() + "/output_manager_interface";
@@ -61,25 +60,16 @@ public:
     load_srv.request.config = display_config;
 
     // Call the server
-    if (!resource_manager_->template call<temoto_2::LoadRvizPlugin>(
-            rviz_manager::srv_name::MANAGER, rviz_manager::srv_name::SERVER, load_srv))
+    try
     {
-      throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK,
-                                  error::Urgency::MEDIUM, prefix + " Failed to call service",
-                                  ros::Time::now());
+      resource_manager_->template call<temoto_2::LoadRvizPlugin>(
+          srv_name::RVIZ_MANAGER, srv_name::RVIZ_SERVER, load_srv);
     }
-
-    if (load_srv.response.rmp.code == 0)
+    catch(error::ErrorStack& error_stack)
     {
-      plugins_.push_back(load_srv);
+      throw FORWARD_ERROR(error_stack);
     }
-    else
-    {
-      throw error::ErrorStackUtil(
-          taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK, error::Urgency::MEDIUM,
-          prefix + " Unsuccessful call to rviz_manager" + load_srv.response.rmp.message,
-          ros::Time::now());
-    }
+    plugins_.push_back(load_srv);
   }
 
   /**
@@ -112,9 +102,7 @@ public:
       }
       else if (cur_plugin_it == plugins_.begin())
       {
-        throw error::ErrorStackUtil(
-            taskErr::RESOURCE_UNLOAD_FAIL, error::Subsystem::TASK, error::Urgency::MEDIUM,
-            prefix + " Unable to unload resource that is not loaded.", ros::Time::now());
+        throw CREATE_ERROR(error::Code::RESOURCE_UNLOAD_FAIL, "Unable to unload resource that is not loaded.");
       }
     }
   }
@@ -197,9 +185,7 @@ public:
     catch (std::ifstream::failure e)
     {
       // Rethrow the exception
-      throw error::ErrorStackUtil(
-          outputManagerErr::FILE_OPEN_FAIL, error::Subsystem::TASK, error::Urgency::MEDIUM,
-          prefix + " Failed to open the display config file", ros::Time::now());
+      throw CREATE_ERROR(error::Code::CONFIG_OPEN_FAIL, "Failed to open the display config file");
     }
   }
 
@@ -229,10 +215,7 @@ public:
   //        if (!resource_manager_->template call<temoto_2::LoadSensor>(
   //                sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, *sens_it))
   //        {
-  //          throw error::ErrorStackUtil(taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK,
-  //                                      error::Urgency::MEDIUM, prefix + " Failed to call
-  //                                      service",
-  //                                      ros::Time::now());
+  //          throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service");
   //        }
   //
   //        // If the request was fulfilled, then add the srv to the list of allocated sensors
@@ -243,10 +226,7 @@ public:
   //        }
   //        else
   //        {
-  //          throw error::ErrorStackUtil(
-  //              taskErr::SERVICE_REQ_FAIL, error::Subsystem::TASK, error::Urgency::MEDIUM,
-  //              prefix + " Unsuccessful call to sensor manager: " + sens_it->response.rmp.message,
-  //              ros::Time::now());
+  //          throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Unsuccessful call to sensor manager: ");
   //        }
   //      }
   //      else
@@ -279,8 +259,6 @@ private:
 
   std::vector<temoto_2::LoadRvizPlugin> plugins_;
 
-  error::ErrorHandler error_handler_;
-
   /**
    * @brief validateInterface()
    * @param sensor_type
@@ -289,10 +267,9 @@ private:
   {
     if (!resource_manager_)
     {
-      TEMOTO_ERROR("%s Interface is not initalized.", log_prefix.c_str());
-      throw error::ErrorStackUtil(interface_error::NOT_INITIALIZED, error::Subsystem::TASK,
-                                  error::Urgency::MEDIUM,
-                                  log_prefix + " Interface is not initialized.", ros::Time::now());
+      throw CREATE_ERROR(error::Code::UNINITIALIZED, "Interface is not initalized.");
     }
   }
 };
+
+} // namespace

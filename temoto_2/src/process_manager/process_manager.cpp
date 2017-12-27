@@ -8,7 +8,6 @@
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "core/common.h"
 #include "process_manager/process_manager.h"
 
 #include <stdio.h>
@@ -22,9 +21,11 @@ namespace process_manager
 {
 ProcessManager::ProcessManager() : resource_manager_(srv_name::MANAGER, this)
 {
-  log_class_ = "";
-  log_subsys_ = "process_manager";
+  class_name_ = __func__;
+  subsystem_name_ = "process_manager";
+  subsystem_code_ = error::Subsystem::PROCESS_MANAGER;
   log_group_ = "process_manager";
+  error_handler_ = error::ErrorHandler(subsystem_code_, log_group_);
 
   resource_manager_.addServer<temoto_2::LoadProcess>(srv_name::SERVER, &ProcessManager::loadCb,
                                                      &ProcessManager::unloadCb);
@@ -38,8 +39,6 @@ ProcessManager::~ProcessManager()
 // Timer callback where running proceses are checked if they are operational
 void ProcessManager::update(const ros::TimerEvent&)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-
   // execute each process in loading_processes vector
   waitForLock(running_mutex_);
   waitForLock(loading_mutex_);
@@ -67,7 +66,7 @@ void ProcessManager::update(const ros::TimerEvent&)
     }
 
     // Fork the parent process
-    TEMOTO_DEBUG("%s Forking the process.", prefix.c_str());
+    TEMOTO_DEBUG("Forking the process.");
     pid_t pid = fork();
 
     // Child process
@@ -80,7 +79,7 @@ void ProcessManager::update(const ros::TimerEvent&)
     }
 
     // Only parent gets here
-    TEMOTO_DEBUG("%s Child %d forked.", prefix.c_str(), pid);
+    TEMOTO_DEBUG("Child %d forked.", pid);
     running_processes_.insert({ pid, srv });
   }
   loading_processes_.clear();
@@ -95,10 +94,10 @@ void ProcessManager::update(const ros::TimerEvent&)
     if (proc_it != running_processes_.end())
     {
       // Kill the process
-      TEMOTO_DEBUG("%s Sending kill(SIGTERM) to %d", prefix.c_str(), pid);
+      TEMOTO_DEBUG("Sending kill(SIGTERM) to %d", pid);
 
       int ret = kill(pid, SIGTERM);
-      TEMOTO_DEBUG("%s kill(SIGTERM) returned: %d", prefix.c_str(), ret);
+      TEMOTO_DEBUG("kill(SIGTERM) returned: %d", ret);
       // TODO: Check the returned value
 
       // Remove the process from the map
@@ -106,8 +105,7 @@ void ProcessManager::update(const ros::TimerEvent&)
     }
     else
     {
-      TEMOTO_DEBUG("%s Unable to normally unload reource with pid: %d. Resource not running any more.",
-                prefix.c_str(), pid);
+      TEMOTO_DEBUG("Unable to normally unload reource with pid: %d. Resource not running any more.", pid);
     }
   }
   unloading_processes_.clear();
@@ -123,9 +121,10 @@ void ProcessManager::update(const ros::TimerEvent&)
     // If the child process has stopped running,
     if (kill_response != 0)
     {
-      TEMOTO_ERROR("%s Process %d ('%s' '%s' '%s') has stopped.",
-                prefix.c_str(), proc_it->first, proc_it->second.request.action.c_str(),
-                proc_it->second.request.package_name.c_str(), proc_it->second.request.executable.c_str());
+      TEMOTO_ERROR("Process %d ('%s' '%s' '%s') has stopped.", proc_it->first,
+                   proc_it->second.request.action.c_str(),
+                   proc_it->second.request.package_name.c_str(),
+                   proc_it->second.request.executable.c_str());
 
       // TODO: send error information to all related connections
       temoto_2::ResourceStatus srv;
@@ -161,14 +160,11 @@ void ProcessManager::update(const ros::TimerEvent&)
 void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
                             temoto_2::LoadProcess::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-
   // Validate the action command.
   if (req.action == action::ROS_EXECUTE) //|| action == action::SYS_EXECUTE)
   {
-
-    TEMOTO_DEBUG("%s adding '%s' '%s' '%s' to the loading queue.", prefix.c_str(),
-                 req.action.c_str(), req.package_name.c_str(), req.executable.c_str());
+    TEMOTO_DEBUG("adding '%s' '%s' '%s' to the loading queue.", req.action.c_str(),
+                 req.package_name.c_str(), req.executable.c_str());
 
     temoto_2::LoadProcess srv;
     srv.request = req;
@@ -186,7 +182,7 @@ void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
   {
     res.rmp.code = -1;
     res.rmp.message = "Action not supported by the process manager.";
-    TEMOTO_ERROR("%s Action '%s' is not supported.", prefix.c_str(), req.action.c_str());
+    TEMOTO_ERROR("Action '%s' is not supported.", req.action.c_str());
     return;  // TODO THROW EXCEPTION TO RMP?
   }
 }
@@ -194,8 +190,7 @@ void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
 void ProcessManager::unloadCb(temoto_2::LoadProcess::Request& req,
                               temoto_2::LoadProcess::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-  TEMOTO_DEBUG("%s Unloading resource with id '%ld' ...", prefix.c_str(), res.rmp.resource_id);
+  TEMOTO_DEBUG("Unloading resource with id '%ld' ...", res.rmp.resource_id);
 
   // Lookup the requested process by its resource id.
   waitForLock(running_mutex_);
@@ -207,12 +202,11 @@ void ProcessManager::unloadCb(temoto_2::LoadProcess::Request& req,
     unloading_processes_.push_back(proc_it->first);
     res.rmp.code = 0;
     res.rmp.message = "Resource added to unload queue.";
-    TEMOTO_DEBUG("%s Resource with id '%ld' added to unload queue.", prefix.c_str(), res.rmp.resource_id);
+    TEMOTO_DEBUG("Resource with id '%ld' added to unload queue.", res.rmp.resource_id);
   }
   else
   {
-    TEMOTO_ERROR("%s Unable to unload reource with resource_id: %ld. Resource is not running.", prefix.c_str(),
-              res.rmp.resource_id);
+    TEMOTO_ERROR("Unable to unload reource with resource_id: %ld. Resource is not running.", res.rmp.resource_id);
     // Fill response
     res.rmp.code = rmp::status_codes::FAILED;
     res.rmp.message = "Resource is not running. Unable to unload.";
@@ -224,12 +218,10 @@ void ProcessManager::unloadCb(temoto_2::LoadProcess::Request& req,
 
   void ProcessManager::waitForLock(std::mutex& m)
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
     while (!m.try_lock())
     {
-      RMP_DEBUG("%s Waiting for lock()", prefix.c_str());
+      TEMOTO_DEBUG("Waiting for lock()");
       ros::Duration(0.1).sleep();  // sleep for few ms
     }
-    // RMP_DEBUG("%s Obtained lock()", prefix.c_str());
   }
 }  // namespace process_manager

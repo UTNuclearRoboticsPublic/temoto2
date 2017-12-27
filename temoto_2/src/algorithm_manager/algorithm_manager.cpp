@@ -8,9 +8,7 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "ros/package.h"
-#include "core/common.h"
 #include "algorithm_manager/algorithm_manager.h"
-#include "algorithm_manager/algorithm_manager_errors.h"
 #include <algorithm>
 #include <utility>
 #include <yaml-cpp/yaml.h>
@@ -23,16 +21,10 @@ namespace algorithm_manager
  * Constructor
  */
 AlgorithmManager::AlgorithmManager()
-  : resource_manager_(srv_name::MANAGER, this)
+  : BaseSubsystem("algorithm_manager", error::Subsystem::ALGORITHM_MANAGER, __func__)
+  , resource_manager_(srv_name::MANAGER, this)
   , config_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &AlgorithmManager::syncCb, this)
 {
-  class_name_ = __func__;
-  subsystem_name_ = "algorithm_manager";
-  subsystem_code_ = error::Subsystem::ALGORITHM_MANAGER;
-  log_group_ = "algorithm_manager";
-  error_handler_ = error::ErrorHandler(subsystem_code_, log_group_);
-
-  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
 
   // Start the server
   resource_manager_.addServer<temoto_2::LoadAlgorithm>(srv_name::SERVER
@@ -60,7 +52,7 @@ AlgorithmManager::AlgorithmManager()
 
     for (auto& s : local_algorithms_)
     {
-      TEMOTO_DEBUG("%s Added algorithm: '%s'.", prefix.c_str(), s->getName().c_str());
+      TEMOTO_DEBUG("Added algorithm: '%s'.", s->getName().c_str());
     }
 
     // notify other managers about our algorithms
@@ -68,13 +60,13 @@ AlgorithmManager::AlgorithmManager()
   }
   else
   {
-    TEMOTO_WARN("%s Failed to read '%s'. Verify that the file exists and the sequence of algorithms "
+    TEMOTO_WARN("Failed to read '%s'. Verify that the file exists and the sequence of algorithms "
                 "is listed under 'Algorithms' node.",
-                prefix.c_str(), yaml_filename.c_str());
+                yaml_filename.c_str());
   }
   ///////////////////////////////////////////////////////////////////////////////////////
 
-  TEMOTO_INFO_STREAM(prefix << " Algorithm manager is ready.");
+  TEMOTO_INFO_STREAM("Algorithm manager is ready.");
 }
 
 /*
@@ -82,8 +74,7 @@ AlgorithmManager::AlgorithmManager()
  */
 void AlgorithmManager::statusCb(temoto_2::ResourceStatus& srv)
 {
-  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-  TEMOTO_DEBUG("%s Received a status message", prefix.c_str());
+  TEMOTO_DEBUG("Received a status message");
 
   // If the status message indicates, that the algorithm has failed,
   // then adjust it's reliability
@@ -110,8 +101,6 @@ void AlgorithmManager::statusCb(temoto_2::ResourceStatus& srv)
  */
 void AlgorithmManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload)
 {
-  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-
   // Advertise local algorithms
   if (msg.action == rmp::sync_action::REQUEST_CONFIG)
   {
@@ -146,7 +135,7 @@ void AlgorithmManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType
       // Update the algorithm
       if (it != remote_algorithms_.end())
       {
-        TEMOTO_DEBUG("%s Updating remote algorithm '%s' at '%s'.", prefix.c_str(),
+        TEMOTO_DEBUG("Updating remote algorithm '%s' at '%s'.",
             algorithm->getName().c_str(), algorithm->getTemotoNamespace().c_str());
 
         // Update by owerwriting the old entry
@@ -156,13 +145,25 @@ void AlgorithmManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType
       // Add new algorithm
       else
       {
-        TEMOTO_DEBUG("%s Adding remote algorithm '%s' at '%s'.", prefix.c_str(),
+        TEMOTO_DEBUG("Adding remote algorithm '%s' at '%s'.",
             algorithm->getName().c_str(), algorithm->getTemotoNamespace().c_str());
 
         remote_algorithms_.push_back(algorithm);
       }
     }
   }
+}
+
+/*
+ * Advertise local algorithm
+ */
+void AlgorithmManager::advertiseAlgorithm(AlgorithmInfoPtr algorithm_ptr)
+{
+    YAML::Node config;
+    config["Sensors"].push_back(*algorithm_ptr);
+    PayloadType payload;
+    payload.data = Dump(config);
+    config_syncer_.advertise(payload);
 }
 
 /*
@@ -192,9 +193,7 @@ void AlgorithmManager::advertiseLocalAlgorithms()
 void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
                                      , temoto_2::LoadAlgorithm::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-  TEMOTO_DEBUG("%s received a request to load '%s': '%s', '%s'"
-             , prefix.c_str()
+  TEMOTO_DEBUG("received a request to load '%s': '%s', '%s'"
              , req.algorithm_type.c_str()
              , req.package_name.c_str()
              , req.executable.c_str());
@@ -257,69 +256,59 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
       res.output_topics.push_back(res_output_topic);
     }
 
-    TEMOTO_DEBUG("%s Sending arguments: '%s'.", prefix.c_str(), load_process_msg.request.args.c_str());
+    TEMOTO_DEBUG("Sending arguments: '%s'.", load_process_msg.request.args.c_str());
 
-    TEMOTO_INFO("%s Found a suitable local algorithm: '%s', '%s', '%s', reliability %.3f"
-              , prefix.c_str()
+    TEMOTO_INFO("Found a suitable local algorithm: '%s', '%s', '%s', reliability %.3f"
               , load_process_msg.request.action.c_str()
               , load_process_msg.request.package_name.c_str()
               , load_process_msg.request.executable.c_str()
               , algorithm_ptr->getReliability());
 
     // Request the Process Manager to load the algorithm
-    if (!resource_manager_.call<temoto_2::LoadProcess>(process_manager::srv_name::MANAGER
-                                                    , process_manager::srv_name::SERVER
-                                                    , load_process_msg))
+    try
     {
-      // Respond with an error message
-      res.rmp.code = 1;
-      res.rmp.message = "Failed to call the ProcessManager.";
-      res.rmp.errorStack = error_handler_.createAndReturn(ErrorCode::SERVICE_REQ_FAIL
-                                                        , prefix
-                                                        , res.rmp.message);
-      return;
-    }
-
-    TEMOTO_DEBUG("%s Call to Process Manager was sucessful.", prefix.c_str());
-
-    // Increase or decrease the reliability depending on the return code
-    if (res.rmp.code == 0)
-    {
+      resource_manager_.call<temoto_2::LoadProcess>(process_manager::srv_name::MANAGER
+                                                  , process_manager::srv_name::SERVER
+                                                  , load_process_msg);
       algorithm_ptr->adjustReliability(1.0);
 
-      // Fill out the response about which particular algorithm was chosen
-      res.package_name = algorithm_ptr->getPackageName();
-      res.executable = algorithm_ptr->getExecutable();
-      res.rmp = load_process_msg.response.rmp;
-
-      // Add the allocated algorithm to the respective structure
-      allocated_algorithms_.emplace(res.rmp.resource_id, algorithm_ptr);
+      // Let other managers know about the updated reliability
+      advertiseAlgorithm(algorithm_ptr);
     }
-    else
+    catch(error::ErrorStack& error_stack)
     {
-      algorithm_ptr->adjustReliability(0.0);
-      res.rmp = load_process_msg.response.rmp;
-      res.rmp.errorStack = error_handler_.forwardAndReturn(load_process_msg.response.rmp.errorStack, prefix);
+      if (error_stack.front().code != error::Code::SERVICE_REQ_FAIL)
+      {
+        algorithm_ptr->adjustReliability(0.0);
+        advertiseAlgorithm(algorithm_ptr); // Let other managers know about the updated reliability
+      }
+
+      throw FORWARD_ERROR(error_stack);
     }
 
-    // Let other managers know about the updated reliability
-    YAML::Node config;
-    config["Algorithms"].push_back(*algorithm_ptr);
+    TEMOTO_DEBUG("Call to Process Manager was sucessful.");
 
-    PayloadType payload;
-    payload.data = Dump(config);
-    config_syncer_.advertise(payload);
+    // Fill out the response about which particular algorithm was chosen
+    res.package_name = algorithm_ptr->getPackageName();
+    res.topic = algorithm_ptr->getTopic();
+    res.executable = algorithm_ptr->getExecutable();
+    res.rmp = load_process_msg.response.rmp;
 
+    // Add the allocated algorithm to the respective structure
+    allocated_algorithms_.emplace(res.rmp.resource_id, algorithm_ptr);
     return;
   }
 
-  TEMOTO_DEBUG("%s Could not find the requested algorithm form local algorithms. "
-               "Trying to find the algorithm from known remote algorithms", prefix.c_str());
+  TEMOTO_DEBUG("Could not find the requested algorithm form local algorithms. "
+               "Trying to find the algorithm from known remote algorithms");
 
-  // try remote algorithms
+  /*
+   * If no local algorithms were found, then look them from the list
+   * of known remote algorithms
+   */
   for (auto& ra : remote_algorithms_)
   {
-    TEMOTO_INFO("%s Looking from: \n%s",prefix.c_str(), ra->toString().c_str());
+    TEMOTO_INFO("Looking from: \n%s", ra->toString().c_str());
   }
 
   algorithm_ptr = findAlgorithm(req, remote_algorithms_);
@@ -340,42 +329,26 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
               , algorithm_ptr->getReliability());
 
     // Call the remote algorithm manager
-    if (!resource_manager_.call<temoto_2::LoadAlgorithm>(algorithm_manager::srv_name::MANAGER
-                                                       , algorithm_manager::srv_name::SERVER
-                                                       , load_algorithm_msg
-                                                       , algorithm_ptr->getTemotoNamespace()))
+    try
     {
-      // Respond with an error message
-      res.rmp.code = 1;
-      res.rmp.message = "Failed to call the remote Algorithm Manager of "
-                      + std::string(algorithm_ptr->getTemotoNamespace());
-      res.rmp.errorStack = error_handler_.createAndReturn(ErrorCode::SERVICE_REQ_FAIL
-                                                        , prefix
-                                                        , res.rmp.message);
-      return;
+      resource_manager_.call<temoto_2::LoadAlgorithm>(algorithm_manager::srv_name::MANAGER,
+                                                      algorithm_manager::srv_name::SERVER,
+                                                      load_algorithm_msg, algorithm_ptr->getTemotoNamespace());
+    }
+    catch (error::ErrorStack& error_stack)
+    {
+      throw FORWARD_ERROR(error_stack);
     }
 
-    // Check if the request was successful
-    if (load_algorithm_msg.response.rmp.code == 0)
-    {
-      TEMOTO_DEBUG("%s Call to remote Algorithm Manager was sucessful.", prefix.c_str());
-      res = load_algorithm_msg.response;
-      allocated_algorithms_.emplace(res.rmp.resource_id, algorithm_ptr);
-    }
-    else
-    {
-      res.rmp = load_algorithm_msg.response.rmp;
-      res.rmp.errorStack = error_handler_.forwardAndReturn(res.rmp.errorStack, prefix);
-    }
+    TEMOTO_DEBUG("Call to remote AlgorithmManager was sucessful.");
+
+    res = load_algorithm_msg.response;
+    allocated_algorithms_.emplace(res.rmp.resource_id, algorithm_ptr);
     return;
   }
 
   // No suitable local nor remote algorithm was found
-  res.rmp.code = 1;
-  res.rmp.message = "AlgorithmManager did not find a suitable algorithm.";
-  res.rmp.errorStack = error_handler_.createAndReturn(ErrorCode::RESOURCE_LOAD_FAIL
-                                                    , prefix
-                                                    , res.rmp.message);
+  throw CREATE_ERROR(error::Code::ALGORITHM_NOT_FOUND, "AlgorithmManager did not find a suitable algorithm.");
 }
 
 /*
@@ -384,10 +357,7 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
 void AlgorithmManager::unloadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
                                        , temoto_2::LoadAlgorithm::Response& res)
 {
-  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-  TEMOTO_DEBUG("%s received a request to stop algorithm with id '%ld'"
-             , prefix.c_str()
-             , res.rmp.resource_id);
+  TEMOTO_DEBUG("received a request to stop algorithm with id '%ld'", res.rmp.resource_id);
 
   allocated_algorithms_.erase(res.rmp.resource_id);
   return;
@@ -399,8 +369,6 @@ void AlgorithmManager::unloadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
 AlgorithmInfoPtr AlgorithmManager::findAlgorithm(temoto_2::LoadAlgorithm::Request req
                                                , const AlgorithmInfoPtrs& algorithm_infos)
 {
-  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-
   // Local list of devices that follow the requirements
   std::vector<AlgorithmInfoPtr> candidates;
 
@@ -528,7 +496,8 @@ AlgorithmInfoPtr AlgorithmManager::findAlgorithm(temoto_2::LoadAlgorithm::Reques
 
   if (candidates.begin() == it_end)
   {
-    TEMOTO_ERROR_STREAM(prefix << "no candidates found");
+    TEMOTO_ERROR_STREAM("no candidates found");
+
     // Algorithm with the requested criteria was not found.
     return NULL;
   }
@@ -542,39 +511,36 @@ AlgorithmInfoPtr AlgorithmManager::findAlgorithm(temoto_2::LoadAlgorithm::Reques
  */
 AlgorithmInfoPtrs AlgorithmManager::parseAlgorithms(const YAML::Node& config)
 {
-  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
   std::vector<AlgorithmInfoPtr> algorithms;
 
-  //  TEMOTO_INFO("%s CONFIG NODE:%d %s", prefix.c_str(), config.Type(), Dump(config).c_str());
   if (!config.IsMap())
   {
     // TODO Throw
-    TEMOTO_WARN("%s Unable to parse 'algorithms' key from config.", prefix.c_str());
+    TEMOTO_WARN("Unable to parse 'algorithms' key from config.");
     return algorithms;
   }
 
   YAML::Node algorithms_node = config["Algorithms"];
 
   // Node throws
-  TEMOTO_INFO("%s algorithms NODE:%d", prefix.c_str(), algorithms_node.Type());
+  TEMOTO_INFO("Algorithms NODE:%d", algorithms_node.Type());
 
   if (!algorithms_node.IsSequence())
   {
-    TEMOTO_WARN("%s The given config does not contain sequence of algorithms.", prefix.c_str());
+    TEMOTO_WARN("The given config does not contain sequence of algorithms.");
     // TODO Throw
     return algorithms;
   }
 
-  TEMOTO_INFO("%s Parsing %lu algorithms.", prefix.c_str(), algorithms_node.size());
+  TEMOTO_INFO("Parsing %lu algorithms.", algorithms_node.size());
 
   // go over each algorithm node in the sequence
   for (YAML::const_iterator node_it = algorithms_node.begin(); node_it != algorithms_node.end(); ++node_it)
   {
     if (!node_it->IsMap())
     {
-      TEMOTO_ERROR("%s Unable to parse the algorithm. Parameters in YAML have to be specified in "
-                 "key-value pairs.",
-                 prefix.c_str());
+      TEMOTO_ERROR("Unable to parse the algorithm. Parameters in YAML have to be specified in "
+                   "key-value pairs.");
       continue;
     }
 
@@ -591,13 +557,12 @@ AlgorithmInfoPtrs AlgorithmManager::parseAlgorithms(const YAML::Node& config)
       }
       else
       {
-        TEMOTO_WARN("%s Ignoring duplicate of algorithm '%s'.", prefix.c_str(),
-                    algorithm.getName().c_str());
+        TEMOTO_WARN("Ignoring duplicate of algorithm '%s'.", algorithm.getName().c_str());
       }
     }
     catch (YAML::TypedBadConversion<AlgorithmInfo> e)
     {
-      TEMOTO_WARN("%s Failed to parse AlgorithmInfo from config: %s", prefix.c_str(), e.what());
+      TEMOTO_WARN("Failed to parse AlgorithmInfo from config: %s", e.what());
       continue;
     }
   }

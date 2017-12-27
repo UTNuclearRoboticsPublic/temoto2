@@ -21,25 +21,25 @@ include_directories( ${catkin_INCLUDE_DIRS})
 
 
 # # # # # # # # # # # #
-# ALGORITHM 0
+# ALGORITHMS
 # # # # # # # # # # # #
 
+# algorithm_0
 add_executable(algorithm_0 src/algorithm_0.cpp)
 add_dependencies(algorithm_0 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(algorithm_0 ${catkin_LIBRARIES} )
 
-# # # # # # # # # # # #
-# ALGORITHM 1
-# # # # # # # # # # # #
-
+# algorithm_1
 add_executable(algorithm_1 src/algorithm_1.cpp)
 add_dependencies(algorithm_1 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(algorithm_1 ${catkin_LIBRARIES} )
 
+
 # # # # # # # # # # # #
-# SENSOR 0
+# SENSORS
 # # # # # # # # # # # #
 
+# sensor_0
 add_executable(sensor_0 src/sensor_0.cpp)
 add_dependencies(sensor_0 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(sensor_0 ${catkin_LIBRARIES} )

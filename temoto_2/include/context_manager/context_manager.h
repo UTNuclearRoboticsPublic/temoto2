@@ -1,8 +1,6 @@
 #ifndef CONTEXT_MANAGER_H
 #define CONTEXT_MANAGER_H
 
-#include "common/tools.h"
-#include "common/temoto_log_macros.h"
 #include "common/base_subsystem.h"
 #include "common/temoto_id.h"
 

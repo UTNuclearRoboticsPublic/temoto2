@@ -50,17 +50,32 @@ public:
     {}
 
     /**
+     * @brief startTaskWrapped
+     * @param task_interface
+     * @return
+     */
+    void startTaskWrapped(TaskInterface task_interface)
+    {
+      try
+      {
+        startTask(task_interface);
+      }
+      catch(error::ErrorStack& error_stack)
+      {
+        SEND_ERROR(FORWARD_ERROR(error_stack));
+      }
+      catch(...)
+      {
+        SEND_ERROR(CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Received unhandled exception in task '" + getName() + "'."));
+      }
+    }
+
+    /**
      * @brief startTask
      * @param task_interface
      * @return
      */
-    virtual bool startTask(TaskInterface task_interface) = 0;
-
-    /**
-     * @brief pauseTask
-     * @return
-     */
-    bool pauseTask();
+    virtual void startTask(TaskInterface task_interface) = 0;
 
     /**
      * @brief stopTask
@@ -118,11 +133,6 @@ public:
      * a magical undefined .so reference error will appear if the task is destructed
      */
     virtual ~BaseTask(){};
-
-    /**
-     * @brief error_handler_
-     */
-    error::ErrorHandler error_handler_;
 
     std::vector<TTP::Subject> input_subjects;
 

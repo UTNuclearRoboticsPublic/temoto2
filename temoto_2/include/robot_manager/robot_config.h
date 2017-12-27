@@ -7,21 +7,22 @@
 #include <ctype.h>
 #include <memory>  // shared_ptr
 #include "common/temoto_log_macros.h"
-#include <yaml-cpp/yaml.h>
 #include "common/reliability.h"
+#include "common/base_subsystem.h"
+#include <yaml-cpp/yaml.h>
 #include "robot_manager/robot_feature.h"
 
 namespace robot_manager
 {
 
-class RobotConfig
+class RobotConfig : BaseSubsystem
 {
 public:
   /**
    * @brief RobotConfig
    */
 
-  RobotConfig(YAML::Node yaml_config);
+  RobotConfig(YAML::Node yaml_config, BaseSubsystem& b);
   
 
 
