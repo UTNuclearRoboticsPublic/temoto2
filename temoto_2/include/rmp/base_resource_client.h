@@ -5,6 +5,7 @@
 #include "common/temoto_id.h"
 #include "common/base_subsystem.h"
 #include "rmp/resource_manager.h"
+#include "rmp/client_query.h"
 
 namespace rmp
 {
@@ -28,8 +29,8 @@ class BaseResourceClient : public BaseSubsystem
 		}
 
     virtual const std::string& getName() const = 0;
-    virtual std::map<temoto_id::ID, std::string> getInternalResources() const = 0;
-    virtual const std::map<temoto_id::ID, std::string>
+    virtual std::map<temoto_id::ID, FailureBehavior> getInternalResources() const = 0;
+    virtual const std::map<temoto_id::ID, FailureBehavior>
     getInternalResources(temoto_id::ID external_resource_id) = 0;
     virtual size_t getQueryCount() const = 0;
     virtual void unloadResource(temoto_id::ID resource_id) = 0;

@@ -222,7 +222,8 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
     {
       resource_manager_.call<temoto_2::LoadProcess>(process_manager::srv_name::MANAGER
                                                   , process_manager::srv_name::SERVER
-                                                  , load_process_msg);
+                                                  , load_process_msg
+                                                  , rmp::FailureBehavior::UNLOAD_LINKED_RELOAD);
       algorithm_ptr->adjustReliability(1.0);
       advertiseAlgorithm(algorithm_ptr); // Let other managers know about the updated reliability
     }
@@ -273,7 +274,7 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
     {
       resource_manager_.call<temoto_2::LoadAlgorithm>(
           algorithm_manager::srv_name::MANAGER, algorithm_manager::srv_name::SERVER,
-          load_algorithm_msg, algorithm_ptr->getTemotoNamespace());
+          load_algorithm_msg, rmp::FailureBehavior::UNLOAD_LINKED_RELOAD, algorithm_ptr->getTemotoNamespace());
     }
     catch (error::ErrorStack& error_stack)
     {

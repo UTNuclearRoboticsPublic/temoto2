@@ -69,7 +69,7 @@ public:
     {
       res.rmp.code = status_codes::FAILED;
       res.rmp.error_stack =
-          CREATE_ERROR(error::Code::RMP_FATAL, "ResourceServer Owner is NULL. Query aborted.");
+          CREATE_ERROR(error::Code::RMP_FAIL, "ResourceServer Owner is NULL. Query aborted.");
       return true;
     }
 
@@ -162,7 +162,7 @@ public:
         active_server_mutex_.unlock();
         res.rmp.code = status_codes::FAILED;
         res.rmp.error_stack =
-            CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Unexpected error was thrown from "
+            CREATE_ERROR(error::Code::RMP_FAIL, "Unexpected error was thrown from "
                                                            "owner's load callback.");
         return true;
       }
@@ -195,7 +195,7 @@ public:
         {
           queries_mutex_.unlock();
           res.rmp.code = status_codes::FAILED;
-          res.rmp.error_stack = CREATE_ERROR(error::Code::RMP_NOT_FOUND, "Query got missing during owners callback, oh well...");
+          res.rmp.error_stack = CREATE_ERROR(error::Code::RMP_FAIL, "Query got missing during owners callback, oh well...");
           return true;
         }
       }
@@ -257,7 +257,7 @@ public:
       TEMOTO_DEBUG("Query with ext id %d was found", ext_rid);
       TEMOTO_DEBUG("internal resource count: %lu", found_query_it->getLinkedResources().size());
 
-      // Query found, try to remove client from it.
+      // Query found, try to remove external client from it.
       size_t resources_left = found_query_it->removeExternalResource(ext_rid);
       if (resources_left == 0)
       {
@@ -381,7 +381,7 @@ public:
     });
     if (q_it == queries_.end())
     {
-      throw CREATE_ERROR(error::Code::RMP_NOT_FOUND, "External id not found from any queries.");
+      throw CREATE_ERROR(error::Code::RMP_FAIL, "External id not found from any queries.");
     }
     return q_it;
   }

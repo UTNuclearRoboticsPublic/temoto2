@@ -197,7 +197,7 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
     try
     {
       resource_manager_.call<temoto_2::LoadProcess>(
-          process_manager::srv_name::MANAGER, process_manager::srv_name::SERVER, load_process_msg);
+          process_manager::srv_name::MANAGER, process_manager::srv_name::SERVER, load_process_msg, rmp::FailureBehavior::UNLOAD_LINKED_RELOAD);
       TEMOTO_DEBUG("Call to ProcessManager was sucessful.");
 
       // fill in the response about which particular sensor was chosen
@@ -243,7 +243,7 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
     {
       resource_manager_.call<temoto_2::LoadSensor>(
           sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, load_sensor_msg,
-          sensor_ptr->getTemotoNamespace());
+          rmp::FailureBehavior::UNLOAD_LINKED_RELOAD, sensor_ptr->getTemotoNamespace());
       TEMOTO_DEBUG("Call to remote SensorManager was sucessful.");
       res = load_sensor_msg.response;
       allocated_sensors_.emplace(res.rmp.resource_id, sensor_ptr);
@@ -260,7 +260,7 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
     res.package_name = req.package_name;
     res.executable = "";
     res.topic = "";
-    throw CREATE_ERROR(error::Code::RMP_NOT_FOUND, "SensorManager did not find a suitable sensor.");
+    throw CREATE_ERROR(error::Code::SENSOR_NOT_FOUND, "SensorManager did not find a suitable sensor.");
   }
 }
 

@@ -44,12 +44,11 @@ enum class Code : int
   SERVICE_STATUS_FAIL,  // Service responded with FAILED status
 
   // Resource management
+  RMP_FAIL,         // Something in RMP failed
+
   RESOURCE_LOAD_FAIL,    // Failed to load resource
   RESOURCE_UNLOAD_FAIL,  // Failed to unload resource
   RESOURCE_NOT_FOUND,  // Resource was not found
-  RMP_CAST_FAIL,         // Failed to cast an object
-  RMP_FATAL,             // Something extremely bad happened
-  RMP_NOT_FOUND,         // Resource id was not found //\TODO: remove
 
   // Core
   DESC_OPEN_FAIL,       // Failed to open the xml file
@@ -84,6 +83,9 @@ enum class Code : int
 
   // Robot manager
   ROBOT_NOT_FOUND, // The requested robot was not found from local and remote managers.
+
+  // Robot manager
+  SENSOR_NOT_FOUND, // The requested robot was not found from local and remote managers.
 
   // Algorithm manager
   ALGORITHM_NOT_FOUND, // The requested algorithm was not found from local and remote managers.

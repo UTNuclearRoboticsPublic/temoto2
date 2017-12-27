@@ -9,6 +9,15 @@
 
 namespace rmp
 {
+
+enum class FailureBehavior : int
+{
+  NONE,
+  UNLOAD_LINKED,
+  UNLOAD_LINKED_RELOAD,
+  RELOAD
+};
+
 // class for storing resource requests and hold their bingdings to external servers
 template <class ServiceMsgType, class Owner>
 class ClientQuery : public BaseSubsystem
@@ -21,40 +30,31 @@ public:
     this->log_group_ = "rmp." + this->log_group_;
   }
 
-  void addInternalResource(temoto_id::ID resource_id, std::string& server_name)
+  void addInternalResource(temoto_id::ID resource_id, FailureBehavior failure_behavior)
   {
     // try to insert to map
-    TEMOTO_DEBUG("Adding id:%d, server_name:'%s'", resource_id, server_name.c_str());
-    auto ret = internal_resources_.emplace(resource_id, server_name);
+    TEMOTO_DEBUG("Adding internal resource, id:%d", resource_id);
+    auto ret = internal_resources_.emplace(resource_id, failure_behavior);
 
     if (!ret.second)
     {
-      throw CREATE_ERROR(error::Code::RMP_FATAL, "Not allowed to add internal resources with "
+      throw CREATE_ERROR(error::Code::RMP_FAIL, "Not allowed to add internal resources with "
                                                  "identical ids.");
     }
   }
 
   // remove the internal resource from this query and return how many are still connected
-  size_t removeInternalResource(temoto_id::ID resource_id)
+  void removeInternalResource(temoto_id::ID resource_id)
   {
     auto it = internal_resources_.find(resource_id);
     if (it == internal_resources_.end())
     {
-      throw CREATE_ERROR(error::Code::RMP_FATAL,
+      throw CREATE_ERROR(error::Code::RMP_FAIL,
                          "Unable to remove the resource. Resource_id %s not found.", resource_id);
     }
-    std::string caller_name = it->second;
 
     /// Erase resource_id from internal resource map.
     internal_resources_.erase(it);
-
-    /// Count how many internal connections we have left with the erased caller.
-    size_t cnt = count_if(internal_resources_.begin(), internal_resources_.end(),
-                          [&](const std::pair<temoto_id::ID, std::string>& r) -> bool {
-                            return r.second == caller_name;
-                          });
-
-    return cnt;
   }
 
   // Check if given internal resource_id is attached to this query.
@@ -78,13 +78,28 @@ public:
     TEMOTO_DEBUG_STREAM("    Query req:" << std::endl << msg_.request);
     TEMOTO_DEBUG_STREAM("    Query res:" << std::endl << msg_.response);
     TEMOTO_DEBUG_STREAM("    Internal resources:");
+    std::string behavior_string;
     for (auto& r : internal_resources_)
     {
-      TEMOTO_DEBUG("     id:%d server_name:'%s'", r.first, r.second.c_str());
+    switch(r.second)
+    {
+      case FailureBehavior::UNLOAD_LINKED:
+        behavior_string = "UNLOAD_LINKED";
+        break;
+      case FailureBehavior::UNLOAD_LINKED_RELOAD:
+        behavior_string = "UNLOAD_LINKED_RELOAD";
+        break;
+      case FailureBehavior::RELOAD:
+        behavior_string = "RELOAD";
+        break;
+      default:
+        behavior_string = "NONE";
+    }
+    TEMOTO_DEBUG("     id:%d FailureBehavior: '%s'", r.first, behavior_string.c_str());
     }
   }
 
-  const std::map<temoto_id::ID, std::string> getInternalResources() const
+  const std::map<temoto_id::ID, FailureBehavior> getInternalResources() const
   {
     return internal_resources_;
   }
@@ -93,7 +108,7 @@ public:
 
 private:
   // internal resource ids and their callers name
-  std::map<temoto_id::ID, std::string> internal_resources_;
+  std::map<temoto_id::ID, FailureBehavior> internal_resources_;
 
   Owner* owner_;
 

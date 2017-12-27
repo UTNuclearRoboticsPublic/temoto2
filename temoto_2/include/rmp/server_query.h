@@ -65,7 +65,7 @@ public:
     if (ret.second == false)
     {
       // resource already exists, something that should never happen...
-      throw CREATE_ERROR(error::Code::RMP_FATAL, "Somebody tried to link the same resource twice.");
+      throw CREATE_ERROR(error::Code::RMP_FAIL, "Somebody tried to link the same resource twice.");
     }
   }
 
