@@ -24,9 +24,9 @@ artags:
     filter_type: "artag"
     input_topic_types:
       - camera_info
-      - data
+      - camera_data
     output_topic_types:
-      - data
+      - marker_data
 
 tests:
 - method:

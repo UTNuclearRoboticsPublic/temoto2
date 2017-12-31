@@ -28,14 +28,14 @@ Sensors:
 Algorithms:
 - algorithm_name: "AR Tag detector"
   algorithm_type: "artag"
-  package_name: "temoto_2"
-  executable:  "test_2.launch"
+  package_name: "ar_track_alvar"
+  executable:  "monocular_temoto.launch"
   input_topics:
-    camera_info: "/camera_info"
-    data: "/usb_cam/raw"
+    camera_info: "camera_info"
+    camera_data: "usb_cam/raw"
   output_topics:
-    visualization: "visualization_marker"
-    markers: "ar_pose_marker"
+    visualization_data: "visualization_marker"
+    marker_data: "ar_pose_marker"
 
 - algorithm_name: "Algorithm_0"
   algorithm_type: "test_algorithm_0"
