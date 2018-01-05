@@ -210,6 +210,7 @@ void AlgorithmManager::advertiseLocalAlgorithms()
 
 /*
  * Load algorithm callback
+ * \TODO: Make sure all the topics returned from this function are ABSOLUTE!
  */
 void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
                                      , temoto_2::LoadAlgorithm::Response& res)

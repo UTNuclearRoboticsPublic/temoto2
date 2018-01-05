@@ -133,6 +133,7 @@ public:
       try
       {
         (owner_->*load_callback_)(req, res);
+        //TEMOTO_WARN_STREAM("OWNER CALLBACK:\nREQUEST:" << req << "\nRESPONSE:" << res);
       }
       catch(error::ErrorStack& error_stack)
       {

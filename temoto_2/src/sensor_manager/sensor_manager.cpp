@@ -239,7 +239,16 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
     {
       TopicContainer output_topics;
       output_topics.setOutputTopics(sensor_ptr->getOutputTopics());
-      res.output_topics = output_topics.outputTopicsAsKeyValues();
+
+      // Translate all topics to absolute
+      res.output_topics.clear();
+      for (const auto& output_topic : sensor_ptr->getOutputTopics())
+      {
+        diagnostic_msgs::KeyValue topic_msg;
+        topic_msg.key = output_topic.first;
+        topic_msg.value = common::getAbsolutePath(output_topic.second);
+        res.output_topics.push_back(topic_msg);
+      }
     }
     TEMOTO_INFO("SensorManager found a suitable local sensor: '%s', '%s', '%s', reliability %.3f",
                 load_process_msg.request.action.c_str(),
