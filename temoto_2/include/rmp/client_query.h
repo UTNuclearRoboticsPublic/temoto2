@@ -73,30 +73,32 @@ public:
     return msg_.response.rmp.resource_id;
   }
 
-  void debug()
+  std::string toString() const
   {
-    TEMOTO_DEBUG_STREAM("    Query req:" << std::endl << msg_.request);
-    TEMOTO_DEBUG_STREAM("    Query res:" << std::endl << msg_.response);
-    TEMOTO_DEBUG_STREAM("    Internal resources:");
+    std::stringstream ret;
+    ret << "   Query req:" << std::endl << msg_.request << std::endl;
+    ret << "   Query res:" << std::endl << msg_.response << std::endl;
+    ret << "   Internal resources:" << std::endl;
     std::string behavior_string;
     for (auto& r : internal_resources_)
     {
-    switch(r.second)
-    {
-      case FailureBehavior::UNLOAD_LINKED:
-        behavior_string = "UNLOAD_LINKED";
-        break;
-      case FailureBehavior::UNLOAD_LINKED_RELOAD:
-        behavior_string = "UNLOAD_LINKED_RELOAD";
-        break;
-      case FailureBehavior::RELOAD:
-        behavior_string = "RELOAD";
-        break;
-      default:
-        behavior_string = "NONE";
+      switch (r.second)
+      {
+        case FailureBehavior::UNLOAD_LINKED:
+          behavior_string = "UNLOAD_LINKED";
+          break;
+        case FailureBehavior::UNLOAD_LINKED_RELOAD:
+          behavior_string = "UNLOAD_LINKED_RELOAD";
+          break;
+        case FailureBehavior::RELOAD:
+          behavior_string = "RELOAD";
+          break;
+        default:
+          behavior_string = "NONE";
+      }
+      ret << "id:" << r.first << "; FailureBehavior: '" << behavior_string << "'";
     }
-    TEMOTO_DEBUG("     id:%d FailureBehavior: '%s'", r.first, behavior_string.c_str());
-    }
+    return ret.str();
   }
 
   const std::map<temoto_id::ID, FailureBehavior> getInternalResources() const

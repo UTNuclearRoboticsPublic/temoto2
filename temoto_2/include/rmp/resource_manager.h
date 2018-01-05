@@ -333,14 +333,13 @@ public:
 
     if (req.status_code == status_codes::FAILED)
     {
-      // reqister failed resource
-      
-            ROS_INFO("START DEBUGGING CLIENTS");
-            for (auto& client : clients_)
-            {
-              client->debug();
-            }
-            ROS_INFO("END DEBUGGING CLIENTS");
+      // Debug clients
+       TEMOTO_DEBUG("STATUS START DEBUGGING CLIENTS");
+       for (auto& client : clients_)
+       {
+         TEMOTO_DEBUG("Client:\n%s",client->toString().c_str());
+       }
+       TEMOTO_DEBUG("STATUS END DEBUGGING CLIENTS");
 
       // Go through clients and locate the one from
       // which the request arrived
@@ -355,7 +354,7 @@ public:
                          // ROS_INFO("comparing client: %s", client_ptr->getName().c_str());
                          return client_ptr->getName() == client_name;
                        });
-      // internal ids that are related to the incoming external id from client side
+      // get internal ids which are related to the incoming external id from client side
       std::vector<temoto_id::ID> int_ids;
       if (client_it != clients_.end())
       {

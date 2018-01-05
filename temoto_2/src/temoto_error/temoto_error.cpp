@@ -1,5 +1,6 @@
 #include "temoto_error/temoto_error.h"
 #include "common/temoto_log_macros.h"
+#include "common/console_colors.h"
 
 namespace error
 {
@@ -25,7 +26,8 @@ ErrorStack ErrorHandler::create(Code code, const std::string& prefix, const std:
 
 // Print the message out if the verbose mode is enabled
 #ifdef __TEMOTO_ERROR_HANDLER_VERBOSE__
-  TEMOTO_ERROR_STREAM(prefix << " " << message);
+  // TODO: Figure out how to get class_name_ here so we could use TEMOTO_ERROR_STREAM macro
+  std::cout << CYAN << prefix << " ERROR: " << message << RESET <<std::endl;
 #endif
 
   est.push_back(error);
@@ -43,7 +45,8 @@ ErrorStack ErrorHandler::forward(ErrorStack error_stack, const std::string& pref
 
 // Print the message out if the verbose mode is enabled
 #ifdef __TEMOTO_ERROR_HANDLER_VERBOSE__
-  TEMOTO_ERROR_STREAM(prefix << " Forwarding.");
+  //TEMOTO_ERROR_STREAM(prefix << " Forwarding.");
+  std::cout << CYAN << prefix << " ERROR FWD: " << RESET << std::endl;
 #endif
 
   error_stack.push_back(error);

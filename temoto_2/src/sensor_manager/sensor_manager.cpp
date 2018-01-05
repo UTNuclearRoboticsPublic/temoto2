@@ -69,20 +69,28 @@ void SensorManager::statusCb(temoto_2::ResourceStatus& srv)
 
   TEMOTO_DEBUG("Received a status message.");
 
-  // adjust package reliability when someone reported that it has failed.
+  // If local sensor failed, adjust package reliability and advertise to other managers via
+  // synchronizer.
   if (srv.request.status_code == rmp::status_codes::FAILED)
   {
     auto it = allocated_sensors_.find(srv.request.resource_id);
     if (it != allocated_sensors_.end())
     {
-      TEMOTO_WARN("Sensor failure detected, adjusting reliability.");
-      it->second->adjustReliability(0.0);
-      YAML::Node config;
-      config["Sensors"].push_back(*it->second);
+      if(it->second->isLocal())
+      {
+        TEMOTO_WARN("Local sensor failure detected, adjusting reliability.");
+        it->second->adjustReliability(0.0);
+        YAML::Node config;
+        config["Sensors"].push_back(*it->second);
 
-      PayloadType payload;
-      payload.data = Dump(config);
-      config_syncer_.advertise(payload);
+        PayloadType payload;
+        payload.data = Dump(config);
+        config_syncer_.advertise(payload);
+      }
+      else
+      {
+        TEMOTO_WARN("Remote sensor failure detected, doing nothing (sensor will be updated via synchronizer).");
+      }
     }
   }
 }
@@ -126,8 +134,14 @@ void SensorManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& p
       s->setTemotoNamespace(msg.temoto_namespace);
     }
 
+    for (auto& s : remote_sensors_)
+    {
+      TEMOTO_DEBUG("---------REMOTE SENSOR: \n %s", s->toString().c_str());
+    }
+
     for (auto& sensor : sensors)
     {
+      TEMOTO_DEBUG("------ COMPARING Sensor \n %s", sensor->toString().c_str());
       // Check if sensor has to be added or updated
       auto it = std::find_if(remote_sensors_.begin(), remote_sensors_.end(),
           [&](const SensorInfoPtr& rs) { return *rs == *sensor; });
@@ -149,6 +163,7 @@ void SensorManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& p
 
 void SensorManager::advertiseSensor(SensorInfoPtr sensor_ptr)
 {
+  TEMOTO_DEBUG("------ Advertising Sensor \n %s", sensor_ptr->toString().c_str());
     YAML::Node config;
     config["Sensors"].push_back(*sensor_ptr);
     PayloadType payload;
@@ -444,6 +459,7 @@ SensorInfoPtrs SensorManager::parseSensors(const YAML::Node& config)
       {
         // OK, this is unique pointer, add it to the sensors vector.
         sensors.emplace_back(std::make_shared<SensorInfo>(sensor));
+        TEMOTO_DEBUG_STREAM("####### PARSED SENSOR: #######\n" << sensors.back()->toString());
       }
       else
       {

@@ -261,15 +261,17 @@ public:
     return ext_server_name_;
   }
 
-  void debug()
+  std::string toString()
   {
-    TEMOTO_DEBUG(" Client name: %s", name_.c_str());
-    TEMOTO_DEBUG(" Ext server name: %s", ext_server_name_.c_str());
-    TEMOTO_DEBUG(" Ext RM name: %s", ext_resource_manager_name_.c_str());
+    std::string ret;
+    ret += " Client name: " + name_ + "\n";
+    ret += " Ext server name: " + ext_server_name_ + "\n";
+    ret += " Ext manager name: " + ext_resource_manager_name_ + "\n";
     for(auto& q : queries_)
     {
-      q.debug();
+      ret += q.toString() + "\n";
     }
+    return ret;
   }
 
 private:

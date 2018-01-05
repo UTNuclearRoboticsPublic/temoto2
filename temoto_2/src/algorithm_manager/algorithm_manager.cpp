@@ -115,7 +115,7 @@ void AlgorithmManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType
     {
       // Convert the config string to YAML tree and parse
       YAML::Node config = YAML::Load(payload.data);
-      std::cout << YAML::Dump(config) << std::endl;
+//      std::cout << YAML::Dump(config) << std::endl;
       std::vector<AlgorithmInfoPtr> algorithms = parseAlgorithms(config);
 
       // TODO: Hold remote stuff in a map or something keyed by namespace
@@ -219,7 +219,7 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
              , req.package_name.c_str()
              , req.executable.c_str());
 
-  TEMOTO_DEBUG_STREAM("\n IN MORE DETAIL: \n" << req << "\n");
+//  TEMOTO_DEBUG_STREAM("\n IN MORE DETAIL: \n" << req << "\n");
 
   // Try to find suitable candidate from local algorithms
   auto algorithm_ptr = findAlgorithm(req, local_algorithms_);

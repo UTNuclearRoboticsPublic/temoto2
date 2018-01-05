@@ -38,7 +38,7 @@ class BaseResourceClient : public BaseSubsystem
     virtual bool hasFailed(temoto_id::ID internal_resource_id) = 0;
     virtual void unloadResources() = 0;
     virtual bool internalResourceExists(temoto_id::ID) = 0;
-    virtual void debug() = 0;
+    virtual std::string toString() = 0;
 
   protected:
 		ResourceManager<Owner>& resource_manager_;

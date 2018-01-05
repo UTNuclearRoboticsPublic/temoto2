@@ -51,14 +51,14 @@ ContextManager::ContextManager()
   parseTrackers(yaml_filename);
 
   // Print out the trackers
-  for (auto& tracker_category : categorized_trackers_)
-  {
-    std::cout << "CATEGORY: " << tracker_category.first << std::endl;
-    for (auto& tracking_method : tracker_category.second)
-    {
-      std::cout << tracking_method.toString() << std::endl;
-    }
-  }
+//  for (auto& tracker_category : categorized_trackers_)
+//  {
+//    std::cout << "CATEGORY: " << tracker_category.first << std::endl;
+//    for (auto& tracking_method : tracker_category.second)
+//    {
+//      std::cout << tracking_method.toString() << std::endl;
+//    }
+//  }
   
   TEMOTO_INFO("Context Manager is ready.");
 }
