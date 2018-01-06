@@ -47,6 +47,8 @@ class BaseResourceClient : public BaseSubsystem
 
 };
 
+template <class Owner>
+using BaseResourceClientPtr = std::shared_ptr<BaseResourceClient<Owner>>;
 }
 
 

@@ -184,7 +184,7 @@ public:
     {
       return q_it->failed_;
     }
-    // Return with false if resource was not found from this client
+    // Return false if resource was not found from this client
     return false; 
   }
 
