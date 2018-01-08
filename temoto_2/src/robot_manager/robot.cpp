@@ -133,11 +133,11 @@ void Robot::loadUrdf()
 void Robot::loadManipulation()
 {
 
-  // Add planning groups, described in configuration
-//  for (auto group : config_->getMoveitPlanningGroups())
-//  {
-//    addPlanningGroup(group);
-//  }
+// Add planning groups, described in configuration
+  for (auto group : config_->getMoveitPlanningGroups())
+  {
+    addPlanningGroup(group);
+  }
 }
 
 // Load Move Base

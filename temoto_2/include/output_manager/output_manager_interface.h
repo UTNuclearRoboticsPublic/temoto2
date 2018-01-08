@@ -115,49 +115,83 @@ public:
   void showRobot(const std::string& robot_name,
                  const std::set<std::string>& visualization_options)
   {
-
     try
     {
       YAML::Node info = YAML::Load(getRobotInfo(robot_name));
       YAML::Node rviz_node = info["RViz"];
 
-      TEMOTO_DEBUG_STREAM("VIZ DUMP: " << info);
-      TEMOTO_DEBUG_STREAM("RVIZ DUMP: " << rviz_node);
+      if(!rviz_node.IsMap())
+      {
+        throw CREATE_ERROR(error::Code::ROBOT_VIZ_NOT_FOUND, "RViz visualization options are "
+                                                             "missing.");
+      }
 
- //     if(!rviz.IsMap())
- //     {
- //       TEMOTO_ERROR("RViz visualization options are missing.");
- //     }
-
+      // Show robot model
       if (visualization_options.find("robot_model") != visualization_options.end())
       {
-        if (rviz_node["urdf"].IsMap())
-        {
-          std::string rob_desc_param = rviz_node["urdf"]["robot_description"].as<std::string>();
-          std::string conf = "{Robot Description: " + rob_desc_param + "}";
-          TEMOTO_WARN("robot desc %s",rob_desc_param.c_str() );
-          showInRviz("robot_model", rob_desc_param, conf);
-        }
-        else
-        {
-          TEMOTO_ERROR("Robot does not have an urdf capability, which is required to show the "
-                       "robot model.");
-        }
+        showRobotModel(rviz_node);
+      }
+
+      // Show manipulation
+      if (visualization_options.find("manipulation") != visualization_options.end())
+      {
+        showManipulation(rviz_node);
       }
     }
-    catch(YAML::Exception& e)
+    catch(error::ErrorStack& error_stack)
     {
-      TEMOTO_ERROR_STREAM(e.what());
+      throw FORWARD_ERROR(error_stack);
+    }
+    catch(std::exception& e) // capture and wrap possible YAML failures
+    {
+      throw CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Unhandled exception: " + std::string(e.what()));
+    }
+  }
+
+  void showRobotModel(YAML::Node& rviz_node)
+  {
+    YAML::Node urdf_node = rviz_node["urdf"];
+    if (urdf_node.IsMap())
+    {
+      std::string robot_desc_param = urdf_node["robot_description"].as<std::string>();
+      std::string conf = "{Robot Description: " + robot_desc_param + "}";
+      showInRviz("robot_model", "", conf);
+    }
+    else
+    {
+      throw CREATE_ERROR(error::Code::ROBOT_FEATURE_NOT_FOUND, "Robot does not have an urdf "
+                                                               "capability, which is requred to "
+                                                               "show the robot model.");
+    }
+  }
+
+  std::string showManipulation(YAML::Node& rviz_node)
+  {
+    YAML::Node urdf_node = rviz_node["urdf"];
+    if (!urdf_node.IsMap())
+    {
+      throw CREATE_ERROR(error::Code::ROBOT_FEATURE_NOT_FOUND, "Robot does not have an urdf "
+                                                               "capability, which is requred to "
+                                                               "show the manipulation.");
     }
 
+    YAML::Node manipulation_node = rviz_node["manipulation"];
+    if (!manipulation_node.IsMap())
+    {
+      throw CREATE_ERROR(error::Code::ROBOT_FEATURE_NOT_FOUND, "Robot does not have a manipulation "
+                                                               "capability, which is requred to "
+                                                               "show the manipulation.");
+    }
 
-  // --Robot description
-//  std::string viz_conf = "{Robot Description: /" + act_rob_ns +
-//                         "/robot_description, Move Group Namespace: /" + act_rob_ns +
-//                         ", Planning Scene Topic: /" + act_rob_ns +
-//                         "/move_group/monitored_planning_scene, Planning Request: {Planning Group: "
-//                         "manipulator}, Planned Path: {Trajectory Topic: /" +
-//                         act_rob_ns + "/move_group/display_planned_path}}";
+    std::string robot_desc_param = urdf_node["robot_description"].as<std::string>();
+    std::string move_group_ns = manipulation_node["move_group_ns"].as<std::string>();
+
+    std::string conf = "{Robot Description: " + robot_desc_param +
+                       ", Move Group Namespace: " + move_group_ns + 
+                       ", Planning Scene Topic: " + move_group_ns + "/move_group/monitored_planning_scene"
+                       ", Planning Request: {Planning Group: manipulator}"
+                       ", Planned Path: {Trajectory Topic: " + move_group_ns + "/move_group/display_planned_path}}";
+    showInRviz("manipulation", "", conf);
   }
 
   std::string getRobotInfo(const std::string& robot_name)
