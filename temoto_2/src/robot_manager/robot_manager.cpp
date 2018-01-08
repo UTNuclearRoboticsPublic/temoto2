@@ -200,7 +200,7 @@ void RobotManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& pa
     {
       // Check if robot config has to be added or updated
       auto it = std::find_if(remote_configs_.begin(), remote_configs_.end(),
-                             [&](const RobotConfigPtr& ri) { return *ri == *config; });
+                             [&](const RobotConfigPtr& ri) -> bool { return *ri == *config; });
       if (it != remote_configs_.end())
       {
         TEMOTO_DEBUG("Updating remote robot '%s' at '%s'.", config->getName().c_str(), config->getTemotoNamespace().c_str());
@@ -398,16 +398,41 @@ bool RobotManager::getVizInfoCb(temoto_2::RobotGetVizInfo::Request& req,
                                 temoto_2::RobotGetVizInfo::Response& res)
 {
   TEMOTO_INFO("GETTING visualization info...");
-  if (!active_robot_)
+  // Search for the loaded robot, when its name is specified.
+  if (req.robot_name != "")
   {
-    TEMOTO_ERROR("Robot not loaded.");
-    res.code = -1;
+    auto robot_it = std::find_if(loaded_robots_.begin(), loaded_robots_.end(),
+                                 [&](const std::pair<temoto_id::ID, RobotPtr> p) -> bool {
+                                   return p.second->getName() == req.robot_name;
+                                 });
+    if (robot_it != loaded_robots_.end())
+    {
+      res.info = robot_it->second->getVizInfo();
+    }
+    else
+    {
+      res.error_stack = CREATE_ERROR(error::Code::ROBOT_NOT_LOADED,
+                                     "The requested robot '%s' is not loaded.", req.robot_name);
+      res.code == rmp::status_codes::FAILED;
+      return true;
+    }
   }
   else
   {
-    res.info = active_robot_->getVizInfo();
+    // Robot name is not specified, try to use the active robot.
+    if (active_robot_)
+    {
+      res.info = active_robot_->getVizInfo();
+    }
+    else
+    {
+      res.error_stack =
+          CREATE_ERROR(error::Code::ROBOT_NOT_LOADED, "No loaded robots found.", req.robot_name);
+      res.code == rmp::status_codes::FAILED;
+      return true;
+    }
   }
-  res.code = 0;
+  res.code = rmp::status_codes::OK;
   return true;
 }
 

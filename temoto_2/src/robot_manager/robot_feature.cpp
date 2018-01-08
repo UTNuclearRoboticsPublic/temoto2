@@ -16,6 +16,8 @@ std::string RobotFeature::getName() const
 {
   switch (type_)
   {
+    case FeatureType::HARDWARE:
+      return "hardware";
     case FeatureType::URDF:
       return "urdf";
     case FeatureType::MANIPULATION:

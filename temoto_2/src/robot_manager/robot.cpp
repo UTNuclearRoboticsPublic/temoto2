@@ -24,11 +24,12 @@ Robot::~Robot()
 
 void Robot::load()
 {
-  if (features_.size() > 1)
+  if (!hasFeature(FeatureType::HARDWARE) || config_->getRobotFeatures().size() < 2)
   {
     TEMOTO_ERROR(
         "Loading failed! Robot has to have hardware and at least one of the following features "
         "(urdf, manipulation, navigation or gripper).");
+    TEMOTO_ERROR_STREAM(config_->toString() << "  " << config_->getRobotFeatures().size());
     // \TODO:: throw
     return;
   }
@@ -270,14 +271,14 @@ std::string Robot::getVizInfo()
 
   if (hasFeature(FeatureType::MANIPULATION))
   {
-    rviz["manipulation"]["move_group_ns"] = '/' + act_rob_ns;
+    rviz["manipulation"]["move_group_ns"] = "/" + act_rob_ns;
   }
 
   if (hasFeature(FeatureType::NAVIGATION))
   {
-    rviz["navigation"]["move_base_ns"] = '/' + act_rob_ns;
+    rviz["navigation"]["move_base_ns"] = "/" + act_rob_ns;
   }
   
-  return Dump(info);
+  return YAML::Dump(info);
 }
 }

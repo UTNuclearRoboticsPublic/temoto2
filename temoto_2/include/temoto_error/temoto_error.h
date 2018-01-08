@@ -86,6 +86,7 @@ enum class Code : int
 
   // Robot manager
   ROBOT_NOT_FOUND, // The requested robot was not found from local and remote managers.
+  ROBOT_NOT_LOADED, // The requested robot is not loaded.
 
   // Robot manager
   SENSOR_NOT_FOUND, // The requested robot was not found from local and remote managers.

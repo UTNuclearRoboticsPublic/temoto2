@@ -116,20 +116,38 @@ public:
                  const std::set<std::string>& visualization_options)
   {
 
-    YAML::Node info = YAML::Load(getRobotInfo(robot_name));
-    
-    if (visualization_options.find("robot_model") != visualization_options.end())
+    try
     {
-      if (info["urdf"].IsMap())
+      YAML::Node info = YAML::Load(getRobotInfo(robot_name));
+      YAML::Node rviz_node = info["RViz"];
+
+      TEMOTO_DEBUG_STREAM("VIZ DUMP: " << info);
+      TEMOTO_DEBUG_STREAM("RVIZ DUMP: " << rviz_node);
+
+ //     if(!rviz.IsMap())
+ //     {
+ //       TEMOTO_ERROR("RViz visualization options are missing.");
+ //     }
+
+      if (visualization_options.find("robot_model") != visualization_options.end())
       {
-        std::string rob_desc_param = info["urdf"]["robot_description"].as<std::string>();
-        TEMOTO_WARN("robot desc %s",rob_desc_param.c_str() );
-        showInRviz("robot_model", rob_desc_param);
+        if (rviz_node["urdf"].IsMap())
+        {
+          std::string rob_desc_param = rviz_node["urdf"]["robot_description"].as<std::string>();
+          std::string conf = "{Robot Description: " + rob_desc_param + "}";
+          TEMOTO_WARN("robot desc %s",rob_desc_param.c_str() );
+          showInRviz("robot_model", rob_desc_param, conf);
+        }
+        else
+        {
+          TEMOTO_ERROR("Robot does not have an urdf capability, which is required to show the "
+                       "robot model.");
+        }
       }
-      else
-      {
-        TEMOTO_ERROR("Robot does not have an urdf capability.");
-      }
+    }
+    catch(YAML::Exception& e)
+    {
+      TEMOTO_ERROR_STREAM(e.what());
     }
 
 
@@ -145,7 +163,8 @@ public:
   std::string getRobotInfo(const std::string& robot_name)
   {
     std::string info;
-    ros::ServiceClient rm_client;
+    ros::ServiceClient rm_client =
+        nh_.serviceClient<temoto_2::RobotGetVizInfo>(robot_manager::srv_name::SERVER_GET_VIZ_INFO);
     temoto_2::RobotGetVizInfo info_srvc;
     info_srvc.request.robot_name = robot_name;
     if (rm_client.call(info_srvc))
@@ -153,6 +172,10 @@ public:
       TEMOTO_DEBUG(" GET ROBOT INFO SUCESSFUL. Response:");
       TEMOTO_DEBUG_STREAM(info_srvc.response);
       info = info_srvc.response.info;
+    }
+    else
+    {
+      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to obtain visualization info from robot manager.");
     }
     return info;
   }
@@ -258,6 +281,8 @@ private:
   std::unique_ptr<rmp::ResourceManager<OutputManagerInterface>> resource_manager_;
 
   std::vector<temoto_2::LoadRvizPlugin> plugins_;
+
+  ros::NodeHandle nh_;
 
   /**
    * @brief validateInterface()
