@@ -258,7 +258,7 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
     try
     {
       resource_manager_.call<temoto_2::LoadProcess>(
-          process_manager::srv_name::MANAGER, process_manager::srv_name::SERVER, load_process_msg, rmp::FailureBehavior::UNLOAD_LINKED_RELOAD);
+          process_manager::srv_name::MANAGER, process_manager::srv_name::SERVER, load_process_msg, rmp::FailureBehavior::NONE);
       TEMOTO_DEBUG("Call to ProcessManager was sucessful.");
 
       // Fill out the response about which particular sensor was chosen
@@ -308,7 +308,7 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
     {
       resource_manager_.call<temoto_2::LoadSensor>(
           sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, load_sensor_msg,
-          rmp::FailureBehavior::UNLOAD_LINKED_RELOAD, sensor_ptr->getTemotoNamespace());
+          rmp::FailureBehavior::NONE, sensor_ptr->getTemotoNamespace());
       TEMOTO_DEBUG("Call to remote SensorManager was sucessful.");
       res = load_sensor_msg.response;
       allocated_sensors_.emplace(res.rmp.resource_id, sensor_ptr);

@@ -138,7 +138,11 @@ void ProcessManager::update(const ros::TimerEvent&)
       statuses_to_send.push_back(srv);
       
       // Remove the process from the map
-      proc_it = running_processes_.erase(proc_it);
+      // Commented out until proper resource mechanism is implemented.
+      // Currently the status is propagated to who ever is using the resource,
+      // each of which is responsible to unload the failed resource on its own.
+      //proc_it = running_processes_.erase(proc_it);
+      proc_it++;
     }
     else
     {
@@ -152,7 +156,7 @@ void ProcessManager::update(const ros::TimerEvent&)
   {
     resource_manager_.sendStatus(srv);
 
-    // TODO: Normally unload command should come from upper chain, howerver, when sending status us unsucessful, we should unload the resource manually?
+    // TODO: Normally unload command should come from upper chain, howerver, when sending status is unsucessful, we should unload the resource manually?
    // running_processes_.erase(proc_it++);
   }
 }

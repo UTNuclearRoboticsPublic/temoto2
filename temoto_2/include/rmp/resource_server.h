@@ -58,7 +58,36 @@ public:
       TEMOTO_ERROR("Failed because queries_ is empty.");
       return;
     }
-    queries_.back().linkTo(internal_resource_id);
+    queries_.back().linkResource(internal_resource_id);
+  }
+
+  
+  void unlinkInternalResource(temoto_id::ID internal_resource_id)
+  {
+    TEMOTO_DEBUG("Trying to unlink resource '%d'.", internal_resource_id);
+    try
+    {
+      const auto found_query_it =
+          std::find_if(queries_.begin(), queries_.end(),
+                       [internal_resource_id](const ServerQuery<ServiceType>& query) -> bool {
+                         return query.isLinkedTo(internal_resource_id);
+                       });
+      if (found_query_it != queries_.end())
+      {
+        found_query_it->unlinkResource(internal_resource_id);
+        //if(found_query_it->getInternalResources().size()==0)
+      }
+      else
+      {
+        throw CREATE_ERROR(error::Code::RMP_FAIL,
+                           "Resource id '%ld' was not found from any queries.",
+                           internal_resource_id);
+      }
+    }
+    catch (error::ErrorStack& error_stack)
+    {
+      throw FORWARD_ERROR(error_stack);
+    }
   }
 
   bool wrappedLoadCallback(typename ServiceType::Request& req, typename ServiceType::Response& res)

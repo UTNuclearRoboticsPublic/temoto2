@@ -131,7 +131,7 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
       resource_manager_.call<temoto_2::RobotLoad>(robot_manager::srv_name::MANAGER,
                                                   robot_manager::srv_name::SERVER_LOAD,
                                                   load_robot_srvc,
-                                                  rmp::FailureBehavior::UNLOAD_LINKED_RELOAD,
+                                                  rmp::FailureBehavior::NONE,
                                                   config->getTemotoNamespace());
       TEMOTO_DEBUG("Call to remote RobotManager was sucessful.");
       res.rmp = load_robot_srvc.response.rmp;
@@ -430,7 +430,7 @@ bool RobotManager::setTargetCb(temoto_2::RobotSetTarget::Request& req,
       hand_srv_msg_.request.gesture_specifiers.push_back(gesture_specifier);
       resource_manager_.call<temoto_2::LoadGesture>(
           context_manager::srv_name::MANAGER, context_manager::srv_name::GESTURE_SERVER,
-          hand_srv_msg_, rmp::FailureBehavior::UNLOAD_LINKED_RELOAD);
+          hand_srv_msg_, rmp::FailureBehavior::NONE);
       TEMOTO_DEBUG("Subscribing to '%s'", hand_srv_msg_.response.topic.c_str());
       target_pose_sub_ =
         nh_.subscribe(hand_srv_msg_.response.topic, 1, &RobotManager::targetPoseCb, this);
@@ -538,7 +538,7 @@ void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)
       resource_manager_.call<temoto_2::LoadGesture>(context_manager::srv_name::MANAGER,
                                                     context_manager::srv_name::GESTURE_SERVER,
                                                     hand_srv_msg_,
-                                                    rmp::FailureBehavior::UNLOAD_LINKED_RELOAD);
+                                                    rmp::FailureBehavior::NONE);
       TEMOTO_DEBUG("Subscribing to '%s'", hand_srv_msg_.response.topic.c_str());
       target_pose_sub_ =
           nh_.subscribe(hand_srv_msg_.response.topic, 1, &RobotManager::targetPoseCb, this);

@@ -55,6 +55,7 @@ void Robot::loadHardware()
     waitForTopic(joint_states_topic, res_id);
     //waitForTopic(cmd_vel_topic, res_id);
     ftr.setLoaded(true);
+    TEMOTO_DEBUG("Robot HARDWARE loaded.");
   }
   catch(error::ErrorStack& error_stack)
   {
@@ -119,6 +120,7 @@ void Robot::loadUrdf()
     std::string robot_desc_param = '/' + config_->getRobotNamespace() + "/robot_description";
     waitForParam(robot_desc_param, res_id);
     ftr.setLoaded(true);
+    TEMOTO_DEBUG("Robot URDF loaded.");
   }
   catch(error::ErrorStack& error_stack)
   {

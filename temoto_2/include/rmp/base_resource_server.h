@@ -43,6 +43,8 @@ class BaseResourceServer : public BaseSubsystem
 		};
 
 		virtual void linkInternalResource(temoto_id::ID resource_id) = 0;
+		virtual void unlinkInternalResource(temoto_id::ID resource_id) = 0;
+		virtual bool isLinkedTo(temoto_id::ID resource_id) const = 0;
 		virtual bool hasInternalResource(temoto_id::ID resource_id) const = 0;
 		virtual bool hasExternalResource(temoto_id::ID resource_id) const = 0;
 		virtual void unloadResource(temoto_2::UnloadResource::Request& req, temoto_2::UnloadResource::Response& res) = 0;

@@ -13,8 +13,7 @@ namespace rmp
 enum class FailureBehavior : int
 {
   NONE,
-  UNLOAD_LINKED,
-  UNLOAD_LINKED_RELOAD,
+  UNLOAD,
   RELOAD
 };
 
@@ -84,11 +83,8 @@ public:
     {
       switch (r.second)
       {
-        case FailureBehavior::UNLOAD_LINKED:
-          behavior_string = "UNLOAD_LINKED";
-          break;
-        case FailureBehavior::UNLOAD_LINKED_RELOAD:
-          behavior_string = "UNLOAD_LINKED_RELOAD";
+        case FailureBehavior::UNLOAD:
+          behavior_string = "UNLOAD";
           break;
         case FailureBehavior::RELOAD:
           behavior_string = "RELOAD";

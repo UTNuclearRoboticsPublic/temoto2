@@ -58,7 +58,7 @@ public:
     return linked_resources_.find(internal_resource_id) != linked_resources_.end();
   }
 
-  void linkTo(temoto_id::ID internal_resource_id)
+  void linkResource(temoto_id::ID internal_resource_id)
   {
     auto ret = linked_resources_.emplace(internal_resource_id);
     if (ret.second == false)
@@ -66,6 +66,17 @@ public:
       // resource already exists, something that should never happen...
       throw CREATE_ERROR(error::Code::RMP_FAIL, "Somebody tried to link the same resource twice.");
     }
+  }
+
+  void unlinkResource(temoto_id::ID internal_resource_id)
+  {
+    size_t cnt = linked_resources_.erase(internal_resource_id);
+    if (cnt == 0)
+    {
+      // resource already exists, something that should never happen...
+      throw CREATE_ERROR(error::Code::RMP_FAIL, "Resource id '%s' was not found.", internal_resource_id);
+    }
+      TEMOTO_DEBUG("Resource id '%d' was successfully unlinked from the query.", internal_resource_id);
   }
 
   const ServiceMsgType& getMsg() const

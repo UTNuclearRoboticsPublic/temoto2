@@ -104,7 +104,7 @@ public:
   }
 
   template <class ServiceType>
-  void call(std::string resource_manager_name, std::string server_name, ServiceType& msg, rmp::FailureBehavior failure_behavior = rmp::FailureBehavior::UNLOAD_LINKED, std::string temoto_namespace = ::common::getTemotoNamespace())
+  void call(std::string resource_manager_name, std::string server_name, ServiceType& msg, rmp::FailureBehavior failure_behavior = rmp::FailureBehavior::NONE, std::string temoto_namespace = ::common::getTemotoNamespace())
   {
     using ClientType = ResourceClient<ServiceType, Owner>;
     using ClientPtr = std::shared_ptr<ClientType>;
@@ -139,12 +139,12 @@ public:
       }
     }
 
-    // generate new if for owner as the call was not initiated from any servers callback
+    // generate new id for owner as the call was not initiated from any servers callback
     msg.response.rmp.resource_id = generateID();
     
     try
     {
-      // make the call to server
+      // make the call
       client_ptr->call(msg, failure_behavior);
 
       if (active_server_)
@@ -246,6 +246,17 @@ public:
     waitForLock(servers_mutex_);
     for (const auto& server : servers_)
     {
+      if (!server->hasInternalResource(srv.request.resource_id))
+      {
+        continue;
+      }
+
+      if (srv.request.status_code == rmp::status_codes::FAILED)
+      {
+        // if this status message is about resource failure, mark the corresponding query as failed.
+        server->setFailedFlag(srv.request.resource_id);
+      }
+      
       // get ext ID's and Topic pairs which correspond to the external resource ID
       auto ext_resources = server->getExternalResourcesByInternalId(srv.request.resource_id);
       ResourceInfo info;
@@ -260,10 +271,7 @@ public:
         info.srv.request.resource_id = ext_resource.first;
         info.status_topic = ext_resource.second;
         infos.push_back(info);
-
       }
-      
-     server->setFailedFlag(srv.request.resource_id);
     }
     servers_mutex_.unlock();
 
@@ -322,6 +330,17 @@ public:
       throw CREATE_ERROR(error::Code::RMP_FAIL, "Client '%s' does not exist.", client_name);
     }
     return *it;
+  }
+
+  void unlinkResource(temoto_id::ID resource_id)
+  {
+    for (auto server:servers_)
+    {
+      if(server->isLinkedTo(resource_id))
+      {
+        server->unlinkInternalResource(resource_id);
+      }
+    }
   }
 
   bool statusCallback(temoto_2::ResourceStatus::Request& req,
@@ -388,14 +407,31 @@ public:
             }
           }
 
-          // forward status info to whoever is linked to the given internal resource
           try
           {
+            // forward status info to whoever is linked to the given internal resource
             sendStatus(srv);
+
+            // Take action based on resource failure behavior
+            //switch (int_resource.second)
+            //{
+            //  case rmp::FailureBehavior::UNLOAD:
+            //    TEMOTO_WARN("UNLOADING LINKED RESOURCE %d", int_resource.first);
+            //    unlinkResource(int_resource.first);
+
+            //    break;
+            //  case rmp::FailureBehavior::RELOAD:
+            //    TEMOTO_WARN("UNLOADING LINKED RESOURCE AND RELOADING %d", int_resource.first);
+            //    unlinkResource(int_resource.first);
+            //    // now try to reload.
+            //    break;
+            //  default:
+            //    TEMOTO_WARN("DEFAULT BEHAVIOR RESOURCE %d", int_resource.first);
+            //}
           }
           catch (error::ErrorStack& error_stack)
           {
-            res.error_stack += error_stack;
+            res.error_stack += FORWARD_ERROR(error_stack);
           }
         }
       }
