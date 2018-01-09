@@ -1384,14 +1384,16 @@ void TaskManager::stopTask(std::string action, std::string what)
               throw CREATE_ERROR(error::Code::SUBJECT_NOT_FOUND, e);
             }
 
-            // Debug
-            TEMOTO_DEBUG_STREAM (prefix << " Found task '" << task_it->first->getAction() << "'. Stopping it");
+            std::string lib_path = task_it->first->getLibPath();
 
-            // Remove the task
-            asynchronous_tasks_.erase(task_it);
+            // Debug
+            TEMOTO_DEBUG_STREAM (prefix << " Found task '" << lib_path << "'. Stopping it");
+
+            // Remove the task, task_it is pointed to the next element
+            task_it = asynchronous_tasks_.erase(task_it);
 
             // TODO: the library should not be unloaded here. It should be done in the unloadTasks method
-            unloadTaskLib(task_it->first->getLibPath());
+            unloadTaskLib(lib_path);
             task_stopped = true;
         }
     }
