@@ -77,8 +77,8 @@ Robots:
   #    package_name: "task_robot"
   #    executable: "ur5.launch"
   #
-- robot_name: "ur5"
-  description: "Heavy duty piece made by Universal Robotics"
+- robot_name: "vaultbot"
+  description: "Husky base with 2xUR5 manipulators."
   reliability: 0.8
   hardware:
     package_name: "task_robot"
@@ -88,7 +88,7 @@ Robots:
     executable: "urdf/vaultbot_robot.urdf.xacro"
   manipulation:
     moveit_config_package: "vaultbot_moveit_config"
-    planning_groups: ["manipulator"]
+    planning_groups: ["arms, ur5_right_temoto"]
   #  navigation:
   #    package_name: "task_robot"
   #    executable: "ur5.launch"

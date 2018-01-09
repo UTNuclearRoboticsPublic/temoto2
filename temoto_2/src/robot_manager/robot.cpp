@@ -38,6 +38,17 @@ void Robot::load()
   // It should bring up joint_state/robot publishers and hw specific nodes
   loadHardware();
   loadUrdf();
+
+  if (hasFeature(FeatureType::MANIPULATION))
+  {
+    loadManipulation();
+  }
+  
+  if (hasFeature(FeatureType::NAVIGATION))
+  {
+    loadNavigation();
+  }
+
 }
 
 // Load robot's hardware
@@ -134,8 +145,10 @@ void Robot::loadManipulation()
 {
 
 // Add planning groups, described in configuration
-  for (auto group : config_->getMoveitPlanningGroups())
+// TODO: read groups from srdf automatically
+  for (auto group : config_->getPlanningGroups())
   {
+    TEMOTO_DEBUG("Adding planning group %s", group.c_str());
     addPlanningGroup(group);
   }
 }
@@ -180,8 +193,12 @@ temoto_id::ID Robot::rosExecute(const std::string& package_name, const std::stri
 
 void Robot::addPlanningGroup(const std::string& planning_group_name)
 {
+  //Prepare robot description path and a nodehandle, which is in robot's namespace
+  std::string rob_desc = "/" + config_->getRobotNamespace() + "/robot_description";
+  ros::NodeHandle mg_nh("/" + config_->getRobotNamespace());
+  moveit::planning_interface::MoveGroupInterface::Options opts(planning_group_name, rob_desc, mg_nh);
   std::unique_ptr<moveit::planning_interface::MoveGroupInterface> group(
-      new moveit::planning_interface::MoveGroupInterface(planning_group_name));
+      new moveit::planning_interface::MoveGroupInterface(opts));
   //  group->setPlannerId("RRTConnectkConfigDefault");
   group->setPlannerId("ESTkConfigDefault");
   group->setNumPlanningAttempts(2);
