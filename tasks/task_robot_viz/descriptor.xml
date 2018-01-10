@@ -2,7 +2,7 @@
 <task action="show" alias="visualize, display">
 
   <!--Interface block-->
-  <interface id="0" type="synchronous">
+  <interface id="0" type="asynchronous">
     <!--Input block-->
     <in>    
       <what>
@@ -12,7 +12,7 @@
   </interface>
 
   <!--Interface block-->
-  <interface id="1" type="synchronous">
+  <interface id="1" type="asynchronous">
     <!--Input block-->
     <in>    
       <what>
@@ -22,7 +22,7 @@
   </interface>
 
   <!--Interface block-->
-  <interface id="2" type="synchronous">
+  <interface id="2" type="asynchronous">
     <!--Input block-->
     <in>    
       <what>
@@ -32,7 +32,7 @@
   </interface>
 
   <!--Interface block-->
-  <interface id="3" type="synchronous">
+  <interface id="3" type="asynchronous">
     <!--Input block-->
     <in>    
       <what>

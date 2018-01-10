@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<launch>
+  <!-- We do not have a robot connected, so publish fake joint states -->
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="/use_gui" value="false"/>
+  </node>
+
+  <!-- Given the published joint states, publish tf for the robot links -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen">
+    <param name="robot_description" value="/robemoto/robot_manager/robots/vaultbot/robot_description" />
+  </node>
+
+  <!-- start navigation simulation -->
+  <!--node name="map_server" pkg="map_server" type="map_server" args="$(find youbot_simpack)/map/maze.yaml"/-->
+
+  <!-- publish a TF between /map and /odom -->
+  <!--node name="static_transform_publisher" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 map odom 10"/-->
+  
+  <!-- start the fake odometry publisher, which provides TF from /odom to /base_footprint and publishes odom messages based on cmd_vel -->
+  <!--rosparam command="load" file="$(find fake_odom_publisher)/config/frames.yaml" /-->
+  <!--node name="fake_odom_publisher" pkg="fake_odom_publisher" type="fake_odom_publisher" respawn="true" output="screen">
+    <param name="odom_frame" value="odom" />
+    <param name="base_frame" value="base_link" />
+  </node-->
+
+  <!-- start navigation -->
+
+  <!--include file="$(find husky_navigation)/launch/move_base.launch">
+    <arg name="base_local_planner" value="dwa_local_planner/DWAPlannerROS" />
+    <arg name="base_global_planner" value="navfn/NavfnROS" />
+  </include-->
+
+</launch>

@@ -15,6 +15,7 @@
 #include "temoto_2/StopTaskMsg.h"
 #include <boost/any.hpp>
 #include <string>
+#include <exception>
 
 /*
  *basic log management, everything put under temoto_2.tasks for easier level control
@@ -64,9 +65,13 @@ public:
       {
         SEND_ERROR(FORWARD_ERROR(error_stack));
       }
+      catch(std::exception& e)
+      {
+        SEND_ERROR(CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Caught unhandled std exception: " + std::string(e.what())));
+      }
       catch(...)
       {
-        SEND_ERROR(CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Received unhandled exception in task '" + getName() + "'."));
+        SEND_ERROR(CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Caught unhandled exception."));
       }
     }
 

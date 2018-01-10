@@ -24,19 +24,31 @@ Robot::~Robot()
 
 void Robot::load()
 {
-  if (features_.size() > 1)
+  if (!hasFeature(FeatureType::HARDWARE) || config_->getRobotFeatures().size() < 2)
   {
     TEMOTO_ERROR(
         "Loading failed! Robot has to have hardware and at least one of the following features "
         "(urdf, manipulation, navigation or gripper).");
+    TEMOTO_ERROR_STREAM(config_->toString() << "  " << config_->getRobotFeatures().size());
     // \TODO:: throw
     return;
   }
 
   // Load robot's main launch file
   // It should bring up joint_state/robot publishers and hw specific nodes
-  loadHardware();
   loadUrdf();
+  loadHardware();
+
+  if (hasFeature(FeatureType::MANIPULATION))
+  {
+    loadManipulation();
+  }
+  
+  if (hasFeature(FeatureType::NAVIGATION))
+  {
+    loadNavigation();
+  }
+
 }
 
 // Load robot's hardware
@@ -50,11 +62,12 @@ void Robot::loadHardware()
     ftr.setResourceId(res_id);
 
     // Wait for robot/joint states become available.
-    // std::string cmd_vel_topic = '/' + config->getRobotNamespace() + "/cmd_vel";
-    std::string joint_states_topic = '/' + config_->getRobotNamespace() + "/joint_states";
-    waitForTopic(joint_states_topic, res_id);
+    // std::string cmd_vel_topic = config->getAbsRobotNamespace() + "/cmd_vel";
+    std::string joint_states_topic = config_->getAbsRobotNamespace() + "/joint_states";
+//    waitForTopic(joint_states_topic, res_id);
     //waitForTopic(cmd_vel_topic, res_id);
     ftr.setLoaded(true);
+    TEMOTO_DEBUG("Robot HARDWARE loaded.");
   }
   catch(error::ErrorStack& error_stack)
   {
@@ -116,9 +129,10 @@ void Robot::loadUrdf()
     TEMOTO_DEBUG("URDF resource id: %d", res_id);
     ftr.setResourceId(res_id);
 
-    std::string robot_desc_param = '/' + config_->getRobotNamespace() + "/robot_description";
+    std::string robot_desc_param = config_->getAbsRobotNamespace() + "/robot_description";
     waitForParam(robot_desc_param, res_id);
     ftr.setLoaded(true);
+    TEMOTO_DEBUG("Robot URDF loaded.");
   }
   catch(error::ErrorStack& error_stack)
   {
@@ -130,11 +144,13 @@ void Robot::loadUrdf()
 void Robot::loadManipulation()
 {
 
-  // Add planning groups, described in configuration
-//  for (auto group : config_->getMoveitPlanningGroups())
-//  {
-//    addPlanningGroup(group);
-//  }
+// Add planning groups, described in configuration
+// TODO: read groups from srdf automatically
+  for (auto group : config_->getPlanningGroups())
+  {
+    TEMOTO_DEBUG("Adding planning group %s", group.c_str());
+    addPlanningGroup(group);
+  }
 }
 
 // Load Move Base
@@ -156,7 +172,7 @@ temoto_id::ID Robot::rosExecute(const std::string& package_name, const std::stri
   std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   temoto_2::LoadProcess load_proc_srvc;
   load_proc_srvc.request.package_name = package_name;
-  load_proc_srvc.request.ros_namespace = config_->getName(); //Execute in robot namespace
+  load_proc_srvc.request.ros_namespace = config_->getAbsRobotNamespace(); //Execute in robot namespace
   load_proc_srvc.request.action = process_manager::action::ROS_EXECUTE;
   load_proc_srvc.request.executable = executable;
   load_proc_srvc.request.args = args;
@@ -177,8 +193,12 @@ temoto_id::ID Robot::rosExecute(const std::string& package_name, const std::stri
 
 void Robot::addPlanningGroup(const std::string& planning_group_name)
 {
+  //Prepare robot description path and a nodehandle, which is in robot's namespace
+  std::string rob_desc = config_->getAbsRobotNamespace() + "/robot_description";
+  ros::NodeHandle mg_nh(config_->getAbsRobotNamespace());
+  moveit::planning_interface::MoveGroupInterface::Options opts(planning_group_name, rob_desc, mg_nh);
   std::unique_ptr<moveit::planning_interface::MoveGroupInterface> group(
-      new moveit::planning_interface::MoveGroupInterface(planning_group_name));
+      new moveit::planning_interface::MoveGroupInterface(opts));
   //  group->setPlannerId("RRTConnectkConfigDefault");
   group->setPlannerId("ESTkConfigDefault");
   group->setNumPlanningAttempts(2);
@@ -255,7 +275,7 @@ bool Robot::isLocal() const
 
 std::string Robot::getVizInfo()
 {
-  std::string act_rob_ns = config_->getRobotNamespace();
+  std::string act_rob_ns = config_->getAbsRobotNamespace();
   YAML::Node info;
   YAML::Node rviz = info["RViz"];
 
@@ -263,19 +283,19 @@ std::string Robot::getVizInfo()
 
   if (hasFeature(FeatureType::URDF))
   {
-    rviz["urdf"]["robot_description"] = "/" + act_rob_ns + "/robot_description";
+    rviz["urdf"]["robot_description"] = act_rob_ns + "/robot_description";
   }
 
   if (hasFeature(FeatureType::MANIPULATION))
   {
-    rviz["manipulation"]["move_group_ns"] = '/' + act_rob_ns;
+    rviz["manipulation"]["move_group_ns"] = act_rob_ns;
   }
 
   if (hasFeature(FeatureType::NAVIGATION))
   {
-    rviz["navigation"]["move_base_ns"] = '/' + act_rob_ns;
+    rviz["navigation"]["move_base_ns"] = act_rob_ns;
   }
   
-  return Dump(info);
+  return YAML::Dump(info);
 }
 }

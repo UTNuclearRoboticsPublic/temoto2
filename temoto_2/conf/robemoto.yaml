@@ -15,6 +15,7 @@ Sensors:
   topic:  "stt/spoken_text"
   output_topics:
     data: "stt/spoken_text"
+  reliability: 0.9
 
 - sensor_name: "Sensor_0"
   sensor_type: "test_sensor_0"
@@ -69,12 +70,28 @@ Robots:
   urdf:
     package_name: "ur_description"
     executable: "urdf/ur5_joint_limited_robot.urdf.xacro"
-  #  manipulation:
-  #    moveit_config_package: "ur5_moveit_config"
-  #    planning_groups: ["manipulator"]
+  manipulation:
+    moveit_config_package: "ur5_moveit_config"
+    planning_groups: ["manipulator"]
   #  navigation:
   #    package_name: "task_robot"
   #    executable: "ur5.launch"
+  #
+- robot_name: "vaultbot"
+  description: "Husky base with 2xUR5 manipulators."
+  reliability: 0.8
+  hardware:
+    package_name: "task_robot"
+    executable: "vaultbot.launch"
+  urdf:
+    package_name: "vaultbot_description"
+    executable: "urdf/vaultbot_robot.urdf.xacro"
+  #manipulation:
+  #  moveit_config_package: "vaultbot_moveit_config"
+  #  planning_groups: ["arms, ur5_right_temoto"]
+  #navigation:
+  #  package_name: "task_robot"
+  #  executable: "vaultbot_navigation.launch" #Launch the map server and nav stack here
 
   #- robot_name: "ur3"
   #  package_name: "task_robot"

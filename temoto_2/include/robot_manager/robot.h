@@ -43,11 +43,12 @@ public:
 
   bool isLocal() const;
 
-  inline bool hasFeature(FeatureType type) const
+  inline bool hasFeature(const FeatureType type) const
   {
-    auto it = find_if(features_.begin(), features_.end(),
+    const auto& features = config_->getRobotFeatures();
+    auto it = find_if(features.begin(), features.end(),
             [&](const RobotFeature& feature) -> bool { return feature.getType() == type; });
-    return it != features_.end();
+    return it != features.end();
   }
 
   // return all the information required to visualize this robot
@@ -79,9 +80,6 @@ private:
 
   // Resource Manager
   rmp::ResourceManager<RobotManager>& resource_manager_;
-
-  // Enabled features for this robot
-  std::vector<RobotFeature> features_;
 
   // Manipulation related
   bool is_plan_valid_;

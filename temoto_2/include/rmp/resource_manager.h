@@ -104,12 +104,11 @@ public:
   }
 
   template <class ServiceType>
-  void call(std::string resource_manager_name, std::string server_name, ServiceType& msg, std::string temoto_namespace = ::common::getTemotoNamespace())
+  void call(std::string resource_manager_name, std::string server_name, ServiceType& msg, rmp::FailureBehavior failure_behavior = rmp::FailureBehavior::NONE, std::string temoto_namespace = ::common::getTemotoNamespace())
   {
     using ClientType = ResourceClient<ServiceType, Owner>;
     using ClientPtr = std::shared_ptr<ClientType>;
-    using BaseClientType = BaseResourceClient<Owner>;
-    using BaseClientPtr = std::shared_ptr<BaseClientType>;
+    using BaseClientPtr = BaseResourceClientPtr<Owner>;
 
     ClientPtr client_ptr = NULL;
 
@@ -136,17 +135,17 @@ public:
       if (!client_ptr)
       {
         // cast failed
-        //throw CREATE_ERROR(error::Code::RMP_CAST_FAIL, "Dynamic Cast failed, someone is misusing RMP.");
+        throw CREATE_ERROR(error::Code::RMP_FAIL, "Dynamic Cast failed, last time the same service was called using different type?");
       }
     }
 
-    // generate new if for owner as the call was not initiated from any servers callback
+    // generate new id for owner as the call was not initiated from any servers callback
     msg.response.rmp.resource_id = generateID();
     
     try
     {
-      // make the call to server
-      client_ptr->call(msg);
+      // make the call
+      client_ptr->call(msg, failure_behavior);
 
       if (active_server_)
       {
@@ -192,7 +191,7 @@ public:
     TEMOTO_DEBUG("Number of clients:%lu", clients_.size());
     for (auto client : clients_)
     {
-      std::map<temoto_id::ID, std::string> internal_resources = client->getInternalResources();
+      std::map<temoto_id::ID, FailureBehavior> internal_resources = client->getInternalResources();
       client->unloadResources();
       // TODO: remove all connections in servers
     }
@@ -217,9 +216,10 @@ public:
       // found the client, unload resource
       (*client_it)->unloadResource(resource_id);
 
-      // when all resources for this client are closed, destroy this client
+      // when all resources for this client are removed, destroy this client
       if ((*client_it)->getQueryCount() <= 0)
       {
+        TEMOTO_DEBUG("Destroying resource client '%s'", (*client_it)->getName().c_str());
         clients_.erase(client_it);
       }
     }
@@ -246,6 +246,17 @@ public:
     waitForLock(servers_mutex_);
     for (const auto& server : servers_)
     {
+      if (!server->hasInternalResource(srv.request.resource_id))
+      {
+        continue;
+      }
+
+      if (srv.request.status_code == rmp::status_codes::FAILED)
+      {
+        // if this status message is about resource failure, mark the corresponding query as failed.
+        server->setFailedFlag(srv.request.resource_id);
+      }
+      
       // get ext ID's and Topic pairs which correspond to the external resource ID
       auto ext_resources = server->getExternalResourcesByInternalId(srv.request.resource_id);
       ResourceInfo info;
@@ -260,16 +271,12 @@ public:
         info.srv.request.resource_id = ext_resource.first;
         info.status_topic = ext_resource.second;
         infos.push_back(info);
-
       }
-      
-     // TODO: the following is temporary hack
-     // set FAILED flag for resource queries. The flag is checked when new query arrives to the server
-     server->setFailedFlag(srv.request.resource_id);
     }
     servers_mutex_.unlock();
 
     // forward status info to whoever is related with the given resource
+    error::ErrorStack error_stack;
     for (auto& info : infos)
     {
       ros::ServiceClient service_client =
@@ -281,13 +288,20 @@ public:
       }
       else
       {
-        TEMOTO_ERROR("Failed to send ResourceStatus to %s", info.status_topic.c_str());
+        error_stack += CREATE_ERROR(error::Code::RMP_FAIL, "Failed to send ResourceStatus to %s.",
+                                    info.status_topic.c_str());
       }
     }
 
     if (infos.empty())
     {
-      TEMOTO_ERROR("Internal resource with id %ld was not found from any queries.", srv.request.resource_id); 
+      error_stack += CREATE_ERROR(error::Code::RMP_FAIL, "Internal resource with id %ld was not found from any queries.",
+                                  srv.request.resource_id);
+    }
+
+    if (!error_stack.empty())
+    {
+      throw error_stack;
     }
   }
 
@@ -297,7 +311,7 @@ public:
     waitForLock(clients_mutex_);
     auto client_it =
         std::find_if(clients_.begin(), clients_.end(),
-                     [&](const std::shared_ptr<BaseResourceClient<Owner>>& client_ptr) -> bool {
+                     [&](const BaseResourceClientPtr<Owner>& client_ptr) -> bool {
                        return client_ptr->hasFailed(resource_id);
                      });
     bool has_failed =  client_it != clients_.end();
@@ -305,108 +319,163 @@ public:
     return has_failed;
   }
 
+  BaseResourceClientPtr<Owner> getClientByName(const std::string& client_name)
+  {
+    auto it = std::find_if(clients_.begin(), clients_.end(),
+                           [&](const BaseResourceClientPtr<Owner>& client_ptr) -> bool {
+                             return client_ptr->getName() == client_name;
+                           });
+    if (it == clients_.end())
+    {
+      throw CREATE_ERROR(error::Code::RMP_FAIL, "Client '%s' does not exist.", client_name);
+    }
+    return *it;
+  }
+
+  void unlinkResource(temoto_id::ID resource_id)
+  {
+    for (auto server:servers_)
+    {
+      if(server->isLinkedTo(resource_id))
+      {
+        server->unlinkInternalResource(resource_id);
+      }
+    }
+  }
+
   bool statusCallback(temoto_2::ResourceStatus::Request& req,
                       temoto_2::ResourceStatus::Response& res)
   {
     TEMOTO_DEBUG("Got status request: "); 
-    ROS_INFO_STREAM(req);
+    TEMOTO_INFO_STREAM(req);
+    /* 
+       if status == FAILED
+
+       * identify the query
+         -mark it as Failed
+       *which internal clients used this query getInternalClients
+          -send status to each of those. 
+       *if this was last internal resource, remove the query and call owners status callback?
+     */
+
 
     // based on incoming external id, find the assigned internal client side ids
     // for each internal client side id find the external ids and do forwarding
 
     if (req.status_code == status_codes::FAILED)
     {
-      // reqister failed resource
-      
-            ROS_INFO("START DEBUGGING CLIENTS");
-            for (auto& client : clients_)
-            {
-              client->debug();
-            }
-            ROS_INFO("END DEBUGGING CLIENTS");
+      // Debug clients
+//       TEMOTO_DEBUG("STATUS START DEBUGGING CLIENTS");
+//       for (auto& client : clients_)
+//       {
+//         TEMOTO_DEBUG("Client:\n%s",client->toString().c_str());
+//       }
+//       TEMOTO_DEBUG("STATUS END DEBUGGING CLIENTS");
 
       // Go through clients and locate the one from
       // which the request arrived
       std::string client_name =
           "/" + req.temoto_namespace + "/" + req.manager_name + "/" + req.server_name;
-      TEMOTO_DEBUG("Got info that resource has failed, looking for '%s'", client_name.c_str());
+      TEMOTO_DEBUG("Got info that resource has failed, looking for client: '%s', external_resource_id: %ld", client_name.c_str(), req.resource_id);
 
-      waitForLock(clients_mutex_);
-      auto client_it =
-          std::find_if(clients_.begin(), clients_.end(),
-                       [&](const std::shared_ptr<BaseResourceClient<Owner>>& client_ptr) -> bool {
-                         // ROS_INFO("comparing client: %s", client_ptr->getName().c_str());
-                         return client_ptr->getName() == client_name;
-                       });
-      // internal ids that are related to the incoming external id from client side
-      std::vector<temoto_id::ID> int_ids;
-      if (client_it != clients_.end())
+      try
       {
-        const auto int_resources = (*client_it)->getInternalResources(req.resource_id);
+        waitForLock(clients_mutex_);
+        BaseResourceClientPtr<Owner> client_ptr = getClientByName(client_name);
+        client_ptr->setFailedFlag(req.resource_id);
+        // get internal ids which are related to the incoming external id from client side
+        const auto int_resources = client_ptr->getInternalResources(req.resource_id);
+        clients_mutex_.unlock();
+
+        temoto_2::ResourceStatus srv;
+        srv.request = req;
+        srv.response = res;
         for (const auto& int_resource : int_resources)
         {
-          // int_resource.first ==> internal resource id
-          // int_resource.second ==> server name
-          int_ids.emplace_back(int_resource.first);
-        }
-        (*client_it)->setFailedFlag(req.resource_id);
-      }
-      else
-      {
-        TEMOTO_ERROR("Could not find client that has failed."); 
-      }
-      clients_mutex_.unlock();
+          // for each internal resource, execute owner's callback
+          srv.request.resource_id = int_resource.first;
+          if (status_callback_)
+          {
+            try
+            {
+              (owner_->*status_callback_)(srv);
+            }
+            catch (error::ErrorStack& error_stack)
+            {
+              TEMOTO_ERROR("Caught an error from status callback.");
+              res.error_stack += error_stack;
+            }
+          }
 
-      //
-      temoto_2::ResourceStatus srv;
-      srv.request = req;
-      srv.response = res;
-      for (auto int_resource_id : int_ids)
-      {
-        // for each internal resource, execute owner's callback
-        srv.request.resource_id = int_resource_id;
-        if (status_callback_)
-        {
-          (owner_->*status_callback_)(srv);
-        }
+          try
+          {
+            // forward status info to whoever is linked to the given internal resource
+            sendStatus(srv);
 
-        // forward status info to whoever is related with the given internal resource
-        sendStatus(srv);
+            // Take action based on resource failure behavior
+            //switch (int_resource.second)
+            //{
+            //  case rmp::FailureBehavior::UNLOAD:
+            //    TEMOTO_WARN("UNLOADING LINKED RESOURCE %d", int_resource.first);
+            //    unlinkResource(int_resource.first);
+
+            //    break;
+            //  case rmp::FailureBehavior::RELOAD:
+            //    TEMOTO_WARN("UNLOADING LINKED RESOURCE AND RELOADING %d", int_resource.first);
+            //    unlinkResource(int_resource.first);
+            //    // now try to reload.
+            //    break;
+            //  default:
+            //    TEMOTO_WARN("DEFAULT BEHAVIOR RESOURCE %d", int_resource.first);
+            //}
+          }
+          catch (error::ErrorStack& error_stack)
+          {
+            res.error_stack += FORWARD_ERROR(error_stack);
+          }
+        }
       }
+      catch (error::ErrorStack& error_stack)
+      {
+        clients_mutex_.unlock();
+        TEMOTO_ERROR("An extreme badness was captured...");
+        res.error_stack += error_stack;
+        return true;
+      }
+
     }  // if code == FAILED
     return true;
   }
 
-  std::vector<std::pair<temoto_id::ID, std::string>>
-  getServerExtResources(temoto_id::ID internal_resource_id, const std::string& server_name)
-  {
-    waitForLock(servers_mutex_);
-    std::vector<std::pair<temoto_id::ID, std::string>> ext_resources;
-    auto s_it = find_if(servers_.begin(), servers_.end(),
-                        [&](const std::shared_ptr<BaseResourceServer<Owner>>& server_ptr) -> bool {
-                          return server_ptr->getName() == server_name;
-                        });
-    if (s_it != servers_.end())
-    {
-      try
-      {
-        ext_resources = (*s_it)->getExternalResources(internal_resource_id);
-      }
-      catch(error::ErrorStack& error_stack)
-      {
-        servers_mutex_.unlock();
-        throw FORWARD_ERROR(error_stack);
-      }
-    }
-    servers_mutex_.unlock();
-    return ext_resources;
-  }
-
+//  std::vector<std::pair<temoto_id::ID, std::string>>
+//  getServerExtResources(temoto_id::ID internal_resource_id, const std::string& server_name)
+//  {
+//    waitForLock(servers_mutex_);
+//    std::vector<std::pair<temoto_id::ID, std::string>> ext_resources;
+//    auto s_it = find_if(servers_.begin(), servers_.end(),
+//                        [&](const std::shared_ptr<BaseResourceServer<Owner>>& server_ptr) -> bool {
+//                          return server_ptr->getName() == server_name;
+//                        });
+//    if (s_it != servers_.end())
+//    {
+//      try
+//      {
+//        ext_resources = (*s_it)->getExternalResources(internal_resource_id);
+//      }
+//      catch(error::ErrorStack& error_stack)
+//      {
+//        servers_mutex_.unlock();
+//        throw FORWARD_ERROR(error_stack);
+//      }
+//    }
+//    servers_mutex_.unlock();
+//    return ext_resources;
+//  }
+//
   temoto_id::ID generateID()
   {
     std::lock_guard<std::mutex> lock(id_manager_mutex_);
     return id_manager_.generateID();
-;
   }
 
   const std::string getActiveServerName() const
@@ -437,7 +506,7 @@ private:
         return;
       }
     }
-    CREATE_ERROR(error::Code::RMP_NOT_FOUND, "Resource server '%s' not found.", active_server->getName());
+    CREATE_ERROR(error::Code::RMP_FAIL, "Resource server '%s' not found.", active_server->getName());
   }
 
   void waitForLock(std::mutex& m)

@@ -46,7 +46,7 @@ RvizManager::RvizManager()
   plugin_info_handler_.plugins_.emplace_back("image", "rviz/Image", "Temoto Image", "sensor_msgs/Image");
   plugin_info_handler_.plugins_.emplace_back("path", "rviz/Path", "Path plugin", "");
   plugin_info_handler_.plugins_.emplace_back("robot_model", "rviz/RobotModel", "Robot model plugin", "");
-  plugin_info_handler_.plugins_.emplace_back("manipulator", "moveit_rviz_plugin/MotionPlanning", "Moveit Motion Planning", "");
+  plugin_info_handler_.plugins_.emplace_back("manipulation", "moveit_rviz_plugin/MotionPlanning", "Moveit Motion Planning", "");
 }
 
 /* * * * * * * * * * * * * * * * *

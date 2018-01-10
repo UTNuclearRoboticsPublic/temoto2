@@ -117,7 +117,7 @@ void AlgorithmManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType
     {
       // Convert the config string to YAML tree and parse
       YAML::Node config = YAML::Load(payload.data);
-      std::cout << YAML::Dump(config) << std::endl;
+//      std::cout << YAML::Dump(config) << std::endl;
       std::vector<AlgorithmInfoPtr> algorithms = parseAlgorithms(config);
 
       // TODO: Hold remote stuff in a map or something keyed by namespace
@@ -212,6 +212,7 @@ void AlgorithmManager::advertiseLocalAlgorithms()
 
 /*
  * Load algorithm callback
+ * \TODO: Make sure all the topics returned from this function are ABSOLUTE!
  */
 void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
                                      , temoto_2::LoadAlgorithm::Response& res)
@@ -221,7 +222,7 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
              , req.package_name.c_str()
              , req.executable.c_str());
 
-  TEMOTO_DEBUG_STREAM("\n IN MORE DETAIL: \n" << req << "\n");
+//  TEMOTO_DEBUG_STREAM("\n IN MORE DETAIL: \n" << req << "\n");
 
   // Try to find suitable candidate from local algorithms
   auto algorithm_ptr = findAlgorithm(req, local_algorithms_);
@@ -252,7 +253,8 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
     {
       resource_manager_.call<temoto_2::LoadProcess>(process_manager::srv_name::MANAGER
                                                   , process_manager::srv_name::SERVER
-                                                  , load_process_msg);
+                                                  , load_process_msg
+                                                  , rmp::FailureBehavior::NONE);
       algorithm_ptr->adjustReliability(1.0);
 
       // Let other managers know about the updated reliability
@@ -313,9 +315,9 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
     // Call the remote algorithm manager
     try
     {
-      resource_manager_.call<temoto_2::LoadAlgorithm>(algorithm_manager::srv_name::MANAGER,
-                                                      algorithm_manager::srv_name::SERVER,
-                                                      load_algorithm_msg, algorithm_ptr->getTemotoNamespace());
+      resource_manager_.call<temoto_2::LoadAlgorithm>(
+          algorithm_manager::srv_name::MANAGER, algorithm_manager::srv_name::SERVER,
+          load_algorithm_msg, rmp::FailureBehavior::NONE, algorithm_ptr->getTemotoNamespace());
     }
     catch (error::ErrorStack& error_stack)
     {

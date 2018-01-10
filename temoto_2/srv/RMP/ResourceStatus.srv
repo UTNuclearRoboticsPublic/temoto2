@@ -21,4 +21,5 @@ temoto_2/Error[] error_stack
 
 ---
 
-# no return fields yet
+# Errorstack
+temoto_2/Error[] error_stack

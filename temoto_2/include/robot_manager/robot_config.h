@@ -39,9 +39,9 @@ public:
   }
 
   // Get the robot's namespace
-  std::string getRobotNamespace() const
+  std::string getAbsRobotNamespace() const
   {
-    return temoto_namespace_ + '/' + name_;
+    return "/" + temoto_namespace_ + "/robot_manager/robots/" + name_;
   }
 
   void parseName();

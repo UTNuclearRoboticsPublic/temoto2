@@ -2,6 +2,7 @@
 #define TEMOTO_ID_H
 
 #include <stdlib.h>
+#include <time.h>
 
 namespace temoto_id
 {
@@ -14,6 +15,7 @@ public:
   IDManager()
   {
     // generate random seed for more reliable testing
+    srand (time(NULL));
     current_ID_ = rand() % 1000;
   }
   /**

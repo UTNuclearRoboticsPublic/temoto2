@@ -47,12 +47,11 @@ enum class Code : int
   SERVICE_STATUS_FAIL,  // Service responded with FAILED status
 
   // Resource management
+  RMP_FAIL,  // Something in RMP failed
+
   RESOURCE_LOAD_FAIL,    // Failed to load resource
   RESOURCE_UNLOAD_FAIL,  // Failed to unload resource
-  RESOURCE_NOT_FOUND,  // Resource was not found
-  RMP_CAST_FAIL,         // Failed to cast an object
-  RMP_FATAL,             // Something extremely bad happened
-  RMP_NOT_FOUND,         // Resource id was not found //\TODO: remove
+  RESOURCE_NOT_FOUND,    // Resource was not found
 
   // Core
   DESC_OPEN_FAIL,       // Failed to open the xml file
@@ -74,23 +73,29 @@ enum class Code : int
   SUBJECT_NOT_FOUND,  // Subject was not found
 
   // Output manager
-  RVIZ_OPEN_FAIL,          // Failed to open rviz
-  PLUGIN_LOAD_FAIL,        // Failed to load rviz plugin
-  PLUGIN_UNLOAD_FAIL,      // Failed to unload rviz plugin
-  PLUGIN_GET_CONFIG_FAIL,  // Failed to get rviz plugin config
-  PLUGIN_SET_CONFIG_FAIL,  // Failed to set rviz plugin config
-  CONFIG_OPEN_FAIL,        // Failed to open the plugin config file
+  RVIZ_OPEN_FAIL,           // Failed to open rviz
+  PLUGIN_LOAD_FAIL,         // Failed to load rviz plugin
+  PLUGIN_UNLOAD_FAIL,       // Failed to unload rviz plugin
+  PLUGIN_GET_CONFIG_FAIL,   // Failed to get rviz plugin config
+  PLUGIN_SET_CONFIG_FAIL,   // Failed to set rviz plugin config
+  CONFIG_OPEN_FAIL,         // Failed to open the plugin config file
+  ROBOT_FEATURE_NOT_FOUND,  // The requested feature is not available.
+  ROBOT_VIZ_NOT_FOUND,      // Robot visualization problem.
 
   // Process manager
   PROCESS_SPAWN_FAIL,  // Failed to spawn new process
   PROCESS_KILL_FAIL,   // Failed to kill a process
 
   // Robot manager
-  ROBOT_NOT_FOUND, // The requested robot was not found from local and remote managers.
+  ROBOT_NOT_FOUND,   // The requested robot was not found from local and remote managers.
+  ROBOT_NOT_LOADED,  // The requested robot is not loaded.
+
+  // Robot manager
+  SENSOR_NOT_FOUND,  // The requested robot was not found from local and remote managers.
 
   // Algorithm manager
-  ALGORITHM_NOT_FOUND, // The requested algorithm was not found from local and remote managers.
-  NOT_INITIALIZED,
+  ALGORITHM_NOT_FOUND,  // The requested algorithm was not found from local and remote managers.
+  NOT_INITIALIZED,      // TODO: same as UNINITIALIZED above?
 
   // Context Manager
   NO_TRACKERS_FOUND,

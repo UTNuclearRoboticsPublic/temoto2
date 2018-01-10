@@ -3,6 +3,7 @@
 
 #include "common/temoto_log_macros.h"
 #include "common/topic_container.h"   // StringPair
+#include "common/reliability.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -22,13 +23,15 @@ public:
 
   SensorInfo(std::string sensor_name = "A noname sensor");
   
-  /**
-   * \brief Adjust reliability
-   * \param reliability the new reliability contribution to the moving average filter. The value has
-   * to be in range [0-1], 0 being not reliable at all and 1.0 is very
-   * reliable.
-   */
-  void adjustReliability(float reliability = 1.0);
+  void adjustReliability(float reliability)
+  {
+    reliability_.adjustReliability(reliability);
+  }
+
+  void resetReliability(float reliability)
+  {
+    reliability_.resetReliability(reliability);
+  }
 
 
   std::string toString() const;
@@ -86,8 +89,13 @@ public:
 
   float getReliability() const
   {
-    return reliability_;
-  };
+    return reliability_.getReliability();
+  }
+
+  bool isLocal() const
+  {
+    return getTemotoNamespace() == common::getTemotoNamespace();
+  }
 
 
   /* * * * * * * * * * * *
@@ -128,13 +136,6 @@ public:
     description_ = description;
   }
 
-  /**
-   * \brief Set reliability
-   * \param reliability Sets the initial values for the reliability moving average filter.
-   * The value has to be in range [0-1], 0 being not reliable at all and 1.0 is very
-   * reliable.
-   */
-  void setReliability(float reliability = 0.8);
 
 private:
 
@@ -148,21 +149,8 @@ private:
   std::string package_name_;
   std::string executable_;
   std::string description_;
+  Reliability reliability_;
   std::vector<StringPair> output_topics_;
-  /**
-   * @brief Reliability ratings of the sensor.
-   */
-  std::array<float, 100> reliabilities_;
-
-  /**
-   * @brief Reliability moving average.
-   */
-  float reliability_;
-
-  /**
-   * @brief Reliability rating of the sensor.
-   */
-  unsigned int reliability_idx_;
 };
 
 typedef std::shared_ptr<SensorInfo> SensorInfoPtr;
@@ -273,7 +261,7 @@ struct convert<sensor_manager::SensorInfo>
 
     try
     {
-      sensor.setReliability(node["reliability"].as<float>());
+      sensor.resetReliability(node["reliability"].as<float>());
     }
     catch (YAML::InvalidNode e)
     {

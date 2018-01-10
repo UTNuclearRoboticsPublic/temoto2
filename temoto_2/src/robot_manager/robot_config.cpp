@@ -189,7 +189,7 @@ std::string RobotConfig::toString() const
   ret += "  features: \n";
   for (auto& f : features_)
   {
-    ret += "    %s" + f.getName() + "\n";
+    ret += "    " + f.getName() + "\n";
   }
   return ret;
 }
