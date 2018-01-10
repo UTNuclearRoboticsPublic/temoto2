@@ -24,11 +24,10 @@ Robot::~Robot()
 
 void Robot::load()
 {
-  if (!hasFeature(FeatureType::HARDWARE) || config_->getRobotFeatures().size() < 2)
+  if (config_->getRobotFeatures().size())
   {
     TEMOTO_ERROR(
-        "Loading failed! Robot has to have hardware and at least one of the following features "
-        "(urdf, manipulation, navigation or gripper).");
+        "Robot is missing features. Please specify urdf, manipulation, navigation or gripper sections in the configuration file.");
     TEMOTO_ERROR_STREAM(config_->toString() << "  " << config_->getRobotFeatures().size());
     // \TODO:: throw
     return;
@@ -57,14 +56,12 @@ void Robot::loadHardware()
   RobotFeature& ftr = config_->getRobotFeature(FeatureType::HARDWARE);
   try
   {
-    temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable(), ftr.getArgs());
+    temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable());
     TEMOTO_DEBUG("HARDWARE resource id: %d", res_id);
     ftr.setResourceId(res_id);
 
     // Wait for robot/joint states become available.
     // std::string cmd_vel_topic = config->getAbsRobotNamespace() + "/cmd_vel";
-    std::string joint_states_topic = config_->getAbsRobotNamespace() + "/joint_states";
-//    waitForTopic(joint_states_topic, res_id);
     //waitForTopic(cmd_vel_topic, res_id);
     ftr.setLoaded(true);
     TEMOTO_DEBUG("Robot HARDWARE loaded.");
@@ -81,8 +78,7 @@ void Robot::waitForParam(const std::string& param, temoto_id::ID interrupt_res_i
 
   while (!nh_.hasParam(param))
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
-    TEMOTO_DEBUG("%s Waiting for %s ...", prefix.c_str(), param.c_str());
+    TEMOTO_DEBUG("Waiting for %s ...", param.c_str());
     if (resource_manager_.hasFailed(interrupt_res_id))
     {
       //throw CREATE_ERROR(robot_error::SERVICE_STATUS_FAIL, "Loading interrupted. A FAILED status was received from process manager.");
@@ -94,17 +90,16 @@ void Robot::waitForParam(const std::string& param, temoto_id::ID interrupt_res_i
 void Robot::waitForTopic(const std::string& topic, temoto_id::ID interrupt_res_id)
 {
   //\TODO: add 30 sec timeout protection.
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   while (!isTopicAvailable(topic))
   {
-    TEMOTO_DEBUG("%s Waiting for %s ...", prefix.c_str(), topic.c_str());
+    TEMOTO_DEBUG("Waiting for %s ...", topic.c_str());
     if (resource_manager_.hasFailed(interrupt_res_id))
     {
       throw CREATE_ERROR(error::Code::SERVICE_STATUS_FAIL, "Loading interrupted. A FAILED status was received from process manager.");
     }
     ros::Duration(0.2).sleep();
   }
-  TEMOTO_DEBUG("%s Topic '%s' was found.", prefix.c_str(), topic.c_str());
+  TEMOTO_DEBUG("%s Topic '%s' was found.", topic.c_str());
 }
 
 bool Robot::isTopicAvailable(const std::string& topic)
@@ -123,7 +118,7 @@ void Robot::loadUrdf()
 {
   try
   {
-    RobotFeature& ftr = config_->getRobotFeature(FeatureType::URDF);
+    FeatureURDF& ftr = config_->getFeatureURDF();
     std::string urdf_path = '/' + ros::package::getPath(ftr.getPackageName()) + '/' + ftr.getExecutable();
     temoto_id::ID res_id = rosExecute("temoto_2", "urdf_loader.py", urdf_path);
     TEMOTO_DEBUG("URDF resource id: %d", res_id);
@@ -132,7 +127,7 @@ void Robot::loadUrdf()
     std::string robot_desc_param = config_->getAbsRobotNamespace() + "/robot_description";
     waitForParam(robot_desc_param, res_id);
     ftr.setLoaded(true);
-    TEMOTO_DEBUG("Robot URDF loaded.");
+    TEMOTO_DEBUG("Feature 'urdf' loaded.");
   }
   catch(error::ErrorStack& error_stack)
   {
@@ -140,23 +135,93 @@ void Robot::loadUrdf()
   }
 }
 
-// Load MoveIt! move group and move group interfaces
+// Load move group and move group interfaces
 void Robot::loadManipulation()
 {
-
-// Add planning groups, described in configuration
-// TODO: read groups from srdf automatically
-  for (auto group : config_->getPlanningGroups())
+  try
   {
-    TEMOTO_DEBUG("Adding planning group %s", group.c_str());
-    addPlanningGroup(group);
+    FeatureManipulation& ftr = config_->getFeatureManipulation();
+    temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable());
+    TEMOTO_DEBUG("Manipulation resource id: %d", res_id);
+    ftr.setResourceId(res_id);
+
+    // Add planning groups
+    // TODO: read groups from srdf automatically
+    for (auto group : config_->getFeatureManipulation().getPlanningGroups())
+    {
+      TEMOTO_DEBUG("Adding planning group %s", group.c_str());
+      addPlanningGroup(group);
+    }
+
+    ftr.setLoaded(true);
+    TEMOTO_DEBUG("Feature 'manipulation' loaded.");
+  }
+  catch(error::ErrorStack& error_stack)
+  {
+    throw FORWARD_ERROR(error_stack);
+  }
+}
+
+// Load robot driver that will publish joint states and robot state
+void Robot::loadManipulationDriver()
+{
+  try
+  {
+    FeatureManipulation& ftr = config_->getFeatureManipulation();
+    temoto_id::ID res_id = rosExecute(ftr.getDriverPackageName(), ftr.getDriverExecutable());
+    TEMOTO_DEBUG("Manipulation driver resource id: %d", res_id);
+    ftr.setDriverResourceId(res_id);
+
+    std::string joint_states_topic = config_->getAbsRobotNamespace() + "/joint_states";
+    waitForTopic(joint_states_topic, res_id);
+
+    ftr.setLoaded(true);
+    TEMOTO_DEBUG("Feature 'manipulation driver' loaded.");
+  }
+  catch(error::ErrorStack& error_stack)
+  {
+    throw FORWARD_ERROR(error_stack);
   }
 }
 
 // Load Move Base
 void Robot::loadNavigation()
 {
+  FeatureNavigation& ftr = config_->getFeatureNavigation();
+  temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable());
+  TEMOTO_DEBUG("Navigation resource id: %d", res_id);
+  ftr.setResourceId(res_id);
 
+  ftr.setLoaded(true);
+  TEMOTO_DEBUG("Feature 'navigation' loaded.");
+}
+catch (error::ErrorStack& error_stack)
+{
+  throw FORWARD_ERROR(error_stack);
+  }
+}
+
+
+// Load robot driver that will publish odom
+void Robot::loadNavigationDriver()
+{
+  try
+  {
+    FeatureNavigation& ftr = config_->getFeatureNavigation();
+    temoto_id::ID res_id = rosExecute(ftr.getDriverPackageName(), ftr.getDriverExecutable());
+    TEMOTO_DEBUG("Manipulation driver resource id: %d", res_id);
+    ftr.setDriverResourceId(res_id);
+
+    std::string odom_topic = config_->getAbsRobotNamespace() + "/odom";
+    waitForTopic(odom_topic, res_id);
+
+    ftr.setLoaded(true);
+    TEMOTO_DEBUG("Feature 'navigation driver' loaded.");
+  }
+  catch(error::ErrorStack& error_stack)
+  {
+    throw FORWARD_ERROR(error_stack);
+  }
 }
 
 // Load Gripper
@@ -169,7 +234,6 @@ void Robot::loadGripper()
 temoto_id::ID Robot::rosExecute(const std::string& package_name, const std::string& executable,
                        const std::string& args)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   temoto_2::LoadProcess load_proc_srvc;
   load_proc_srvc.request.package_name = package_name;
   load_proc_srvc.request.ros_namespace = config_->getAbsRobotNamespace(); //Execute in robot namespace
@@ -219,7 +283,6 @@ void Robot::removePlanningGroup(const std::string& planning_group_name)
 
 void Robot::plan(const std::string& planning_group_name, geometry_msgs::PoseStamped& target_pose)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   auto group_it =
       planning_groups_.find(planning_group_name);  ///< Will throw if group does not exist
   if (group_it != planning_groups_.end())
@@ -227,23 +290,20 @@ void Robot::plan(const std::string& planning_group_name, geometry_msgs::PoseStam
     group_it->second->setStartStateToCurrentState();
     group_it->second->setPoseTarget(target_pose);
     is_plan_valid_ = static_cast<bool>( group_it->second->plan(last_plan) );
-    TEMOTO_DEBUG("%s Plan %s", prefix.c_str(), is_plan_valid_ ? "FOUND" : "FAILED");
+    TEMOTO_DEBUG("Plan %s",  is_plan_valid_ ? "FOUND" : "FAILED");
   }
   else
   {
-    TEMOTO_ERROR("%s Planning group '%s' was not found.", prefix.c_str(),
-                 planning_group_name.c_str());
+    TEMOTO_ERROR("Planning group '%s' was not found.", planning_group_name.c_str());
   }
 }
 
 void Robot::execute(const std::string& planning_group_name)
 {
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
   moveit::planning_interface::MoveGroupInterface::Plan empty_plan;
   if (!is_plan_valid_)
   {
-    TEMOTO_ERROR("%s Unable to execute group '%s' without a plan.", prefix.c_str(),
-                 planning_group_name.c_str());
+    TEMOTO_ERROR("Unable to execute group '%s' without a plan.", planning_group_name.c_str());
     return;
   }
   auto group_it =
@@ -254,12 +314,11 @@ void Robot::execute(const std::string& planning_group_name)
     group_it->second->setStartStateToCurrentState();
     group_it->second->setRandomTarget();
     success = static_cast<bool>(group_it->second->execute(last_plan));
-    TEMOTO_DEBUG("%s Execution %s", prefix.c_str(), success ? "SUCCESSFUL" : "FAILED");
+    TEMOTO_DEBUG("Execution %s",  success ? "SUCCESSFUL" : "FAILED");
   }
   else
   {
-    TEMOTO_ERROR("%s Planning group '%s' was not found.", prefix.c_str(),
-                 planning_group_name.c_str());
+    TEMOTO_ERROR("Planning group '%s' was not found.", planning_group_name.c_str());
   }
 }
 

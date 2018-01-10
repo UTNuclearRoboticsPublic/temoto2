@@ -43,11 +43,11 @@ public:
 
   bool isLocal() const;
 
-  inline bool hasFeature(const FeatureType type) const
+  inline bool hasFeature(const std::string& feature_name) const
   {
     const auto& features = config_->getRobotFeatures();
     auto it = find_if(features.begin(), features.end(),
-            [&](const RobotFeature& feature) -> bool { return feature.getType() == type; });
+            [&](const RobotFeature& feature) -> bool { return feature.getName() == feature_name; });
     return it != features.end();
   }
 
@@ -64,7 +64,7 @@ private:
   void loadGripper();
 
   temoto_id::ID rosExecute(const std::string& package_name, const std::string& executable,
-                  const std::string& args);
+                  const std::string& args = "");
 
   void waitForParam(const std::string& param, temoto_id::ID interrupt_res_id);
   void waitForTopic(const std::string& topic, temoto_id::ID interrupt_res_id);

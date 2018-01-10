@@ -1,45 +1,44 @@
 #include "robot_manager/robot_feature.h"
 
+// ALL OF THESE CLASSES MAY THROW YAML EXCEPTIONS
+
 namespace robot_manager
 {
-RobotFeature::RobotFeature(const FeatureType type) : RobotFeature(type, "", "")
+FeatureURDF::FeatureURDF() : RobotFeature("urdf")
 {
 }
 
-RobotFeature::RobotFeature(const FeatureType type, const std::string package_name, const std::string executable,
-                           std::string args)
-  : type_(type), package_name_(package_name), executable_(executable), args_(args), is_loaded_(false)
+FeatureURDF::FeatureURDF(const YAML::Node& urdf_conf) : RobotFeature("urdf")
 {
+  this->package_name = urdf_conf["package_name"].as<std::string>();
+  this->executable = urdf_conf["executable"].as<std::string>();
 }
 
-std::string RobotFeature::getName() const
+FeatureManipulation::FeatureManipulation(const YAML::Node& manip_conf)
+  : RobotFeature("manipulation")
 {
-  switch (type_)
-  {
-    case FeatureType::HARDWARE:
-      return "hardware";
-    case FeatureType::URDF:
-      return "urdf";
-    case FeatureType::MANIPULATION:
-      return "manipulation";
-    case FeatureType::NAVIGATION:
-      return "navigation";
-    case FeatureType::GRIPPER:
-      return "gripper";
-    default:
-      return "unknown_feature_type";
-  }
+  this->package_name = manip_conf["controller"]["package_name"].as<std::string>();
+  this->executable = "move_group.launch";
+  
+  this->driver_package_name = manip_conf["driver"]["package_name"].as<std::string>();
+  this->driver_executable = manip_conf["driver"]["executable"].as<std::string>();
 }
 
-void RobotFeature::setResourceId(temoto_id::ID resource_id)
+FeatureNavigation::FeatureNavigation(const YAML::Node& manip_conf)
+  : RobotFeature("navigation")
 {
-  resource_id_ = resource_id;
+  this->package_name = manip_conf["controller"]["package_name"].as<std::string>();
+  this->executable = "move_base.launch";
+  
+  this->driver_package_name = manip_conf["driver"]["package_name"].as<std::string>();
+  this->driver_executable = manip_conf["driver"]["executable"].as<std::string>();
 }
 
-bool operator==(const RobotFeature& rf1, const RobotFeature& rf2)
-{
-  return (rf1.getType() == rf2.getType() && rf1.getPackageName() == rf2.getPackageName() &&
-          rf1.getExecutable() == rf2.getExecutable() && rf1.getArgs() == rf2.getArgs());
-}
 
+
+// bool operator==(const RobotFeature& rf1, const RobotFeature& rf2)
+//{
+//  return (rf1.getType() == rf2.getType() && rf1.getPackageName() == rf2.getPackageName() &&
+//          rf1.getExecutable() == rf2.getExecutable() && rf1.getArgs() == rf2.getArgs());
+//}
 }

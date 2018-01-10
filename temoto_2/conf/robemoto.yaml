@@ -61,18 +61,18 @@ Algorithms:
     type_1: "algorithm_1_pub_1"
 
 Robots:
-- robot_name: "ur5"
-  description: "Heavy duty piece made by Universal Robotics"
-  reliability: 0.5
-  hardware:
-    package_name: "task_robot"
-    executable: "ur5.launch"
-  urdf:
-    package_name: "ur_description"
-    executable: "urdf/ur5_joint_limited_robot.urdf.xacro"
-  manipulation:
-    moveit_config_package: "ur5_moveit_config"
-    planning_groups: ["manipulator"]
+  #- robot_name: "ur5"
+  #  description: "Heavy duty piece made by Universal Robotics"
+  #  reliability: 0.5
+  #  hardware:
+  #    package_name: "task_robot"
+  #    executable: "ur5.launch"
+  #  urdf:
+  #    package_name: "ur_description"
+  #    executable: "urdf/ur5_joint_limited_robot.urdf.xacro"
+  #  manipulation:
+  #    moveit_config_package: "ur5_moveit_config"
+  #    planning_groups: ["manipulator"]
   #  navigation:
   #    package_name: "task_robot"
   #    executable: "ur5.launch"
@@ -80,18 +80,24 @@ Robots:
 - robot_name: "vaultbot"
   description: "Husky base with 2xUR5 manipulators."
   reliability: 0.8
-  hardware:
-    package_name: "task_robot"
-    executable: "vaultbot.launch"
   urdf:
     package_name: "vaultbot_description"
     executable: "urdf/vaultbot_robot.urdf.xacro"
-  #manipulation:
-  #  moveit_config_package: "vaultbot_moveit_config"
-  #  planning_groups: ["arms, ur5_right_temoto"]
-  #navigation:
-  #  package_name: "task_robot"
-  #  executable: "vaultbot_navigation.launch" #Launch the map server and nav stack here
+  manipulation:
+    controller:
+      package_name: "vaultbot_moveit_config" #Has to contain move_group.launch
+      planning_groups: ["arms, ur5_right_temoto"]
+    driver:
+      package_name: "task_robot"
+      executable: "vaultbot_manipulation.launch"
+  navigation:
+    controller:
+      package_name: "husky_navigation" #Has to contain move_base.launch
+      local_planner: "dwa_local_planner/DWAPlannerROS"
+      global_planner: "navfn/NavfnROS"
+    driver:
+      package_name: "task_robot"
+      executable: "vaultbot_navigation.launch"
 
   #- robot_name: "ur3"
   #  package_name: "task_robot"

@@ -10,7 +10,7 @@
 #include "common/reliability.h"
 #include "common/base_subsystem.h"
 #include <yaml-cpp/yaml.h>
-#include "robot_manager/robot_feature.h"
+#include "robot_manager/robot_features.h"
 
 namespace robot_manager
 {
@@ -66,22 +66,17 @@ public:
     return description_;
   }
 
-  const std::vector<std::string>& getPlanningGroups() const
-  {
-    return planning_groups_;
-  }
-
   float getReliability() const
   {
     return reliability_.getReliability();
   }
 
-  const RobotFeatures& getRobotFeatures() const
-  {
-    return features_;
-  }
+//  const RobotFeatures& getRobotFeatures() const
+//  {
+//    return features_;
+//  }
 
-  RobotFeature& getRobotFeature(FeatureType type);
+//  RobotFeature& getRobotFeature(FeatureType type);
 
   void adjustReliability(float reliability)
   {
@@ -112,8 +107,9 @@ private:
 
   std::string temoto_namespace_;
   YAML::Node yaml_config_;
-  RobotFeatures features_;
-  std::vector<std::string> planning_groups_;
+  FeatureURDF feature_urdf_;
+  FeatureManipulation feature_manipulation_;
+  FeatureNavigation feature_navigation_;
   
   std::string name_;
   std::string description_;

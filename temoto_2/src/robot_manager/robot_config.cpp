@@ -81,7 +81,7 @@ void RobotConfig::parseReliability()
   }
   catch (YAML::InvalidNode e)
   {
-    TEMOTO_WARN("CONFIG: description NOT FOUND");
+    TEMOTO_WARN("CONFIG: reliability NOT FOUND");
   }
 }
 
@@ -95,7 +95,7 @@ void RobotConfig::parseHardware()
   }
   catch (...)
   {
-    TEMOTO_ERROR("CONFIG: hardware: (executable or package_path) NOT FOUND");
+    TEMOTO_ERROR("CONFIG: hardware: (executable or package_name) NOT FOUND");
     //\TODO: throw
   }
 }

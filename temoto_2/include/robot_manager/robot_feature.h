@@ -1,35 +1,22 @@
-#ifndef ROBOT_FEATURE_H
-#define ROBOT_FEATURE_H
+#ifndef ROBOT_FEATURES_H
+#define ROBOT_FEATURES_H
 
 #include "common/temoto_id.h"
 #include <string>
 #include <vector>
+#include <yaml-cpp/yaml.h>
 
 namespace robot_manager
 {
-enum class FeatureType
-{
-  HARDWARE,
-  URDF,
-  MANIPULATION,
-  NAVIGATION,
-  GRIPPER
-};
 
 class RobotFeature
 {
 public:
-  RobotFeature(const FeatureType type);
-  RobotFeature(const FeatureType type, const std::string package_name, const std::string executable, const std::string args = "");
+  RobotFeature(const std::string& name = "unknown_feature");
 
   std::string getName() const;
 
-  FeatureType getType() const
-  {
-    return type_;
-  }
-
-  std::string getPackageName() const
+  std::string getPackageName() const;
   {
     return package_name_;
   }
@@ -39,37 +26,124 @@ public:
     return executable_;
   }
 
-  std::string getArgs() const
+  temoto_id::ID getResourceId() const;
   {
-    return args_;
+    return resource_id_;
   }
-
+  
   bool isLoaded() const 
   {
-    return is_loaded_;
+    return feature_loaded_;
   }
 
-  void setResourceId(temoto_id::ID resource_id);
-  void setLoaded(bool loaded)
+  bool setLoaded(bool loaded)
   {
-    is_loaded_ = loaded;
+    feature_loaded_ = loaded;
+  }
+
+  void setResourceId(temoto_id::ID id)
+  {
+    resource_id_ = id;
   }
 
 private:
-  FeatureType type_;
+  std::string name_;
   std::string package_name_;
   std::string executable_;
-  std::string args_;
   temoto_id::ID resource_id_;
-  bool is_loaded_;
+  bool feature_loaded_;
+}
 
+class FeatureURDF : public RobotFeature
+{
+  FeatureURDF();
+  FeatureURDF(const YAML::Node& urdf_conf);
 };
 
-typedef std::vector<RobotFeature> RobotFeatures;
+class FeatureManipulation : public RobotFeature
+{
+public:
+  FeatureManipulation();
+  FeatureManipulation(YAML::Node& manip_conf);
 
-bool operator==(const RobotFeature& feature1, const RobotFeature& feature2);
+  std::vector<std::string> getPlanningGroups() const
+  {
+    return planning_groups_;
+  }
+  
+  temoto_id::ID getDriverResourceId() const
+  {
+    return driver_resource_id_;
+  }
+
+  bool isDriverLoaded() const
+  {
+    return driver_loaded_;
+  }
+
+  bool setDriverLoaded(bool loaded)
+  {
+    feature_loaded_ = loaded;
+  }
+
+  void setDriverResourceId(temoto_id::ID id)
+  {
+    driver_resource_id_ = id;
+  }
+
+private:
+  bool driver_loaded_;
+  temoto_id::ID driver_resource_id_;
+  std::vector<std::string> planning_groups_;
+};
 
 
+class FeatureNavigation : public RobotFeature
+{
+public:
+  FeatureNavigation();
+  FeatureNavigation(YAML::Node& nav_conf);
+
+  const std::string& getGlobalPlanner() const
+  {
+    return global_planner_;
+  }
+
+  const std::string& getLocalPlanner() const
+  {
+    return local_planner_;
+  }
+
+  temoto_id::ID getDriverResourceId() const
+  {
+    return driver_resource_id_;
+  }
+
+  bool isDriverLoaded() const
+  {
+    return driver_loaded_;
+  }
+
+  bool setDriverLoaded(bool loaded)
+  {
+    driver_loaded_ = loaded;
+  }
+
+  void setDriverResourceId(temoto_id::ID id)
+  {
+    driver_resource_id_ = id;
+  }
+
+private:
+  bool driver_loaded_;
+  temoto_id::ID driver_resource_id_;
+  std::string global_planner_;
+  std::string local_planner_;
+};
+
+typedef std::vector<RobotFeature> Features;
+
+//bool operator==(const Feature& feature1, const Feature& feature2);
 }
 
 #endif
