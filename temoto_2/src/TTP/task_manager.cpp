@@ -25,16 +25,16 @@ namespace TTP
 
 struct CandidateInterface
 {
-    CandidateInterface(TaskInterface inf, unsigned int score):inf_(inf), score_(score){}
-    TaskInterface inf_;
-    int score_;
+  CandidateInterface(TaskInterface inf, unsigned int score):inf_(inf), score_(score){}
+  TaskInterface inf_;
+  int score_;
 };
 
 struct CandidateTask
 {
-    CandidateTask(TaskDescriptor td, CandidateInterface ci):td_(td), ci_(ci){}
-    TaskDescriptor td_;
-    CandidateInterface ci_;
+  CandidateTask(TaskDescriptor td, CandidateInterface ci):td_(td), ci_(ci){}
+  TaskDescriptor td_;
+  CandidateInterface ci_;
 };
 
 
@@ -44,7 +44,8 @@ struct CandidateTask
 
 TaskManager::TaskManager( std::string subsystem_name
                         , error::Subsystem subsystem_code
-                        , bool nlp_enabled)
+                        , bool nlp_enabled
+                        , std::string ai_libs_path)
   : nlp_enabled_(nlp_enabled)
 {
   try
@@ -59,7 +60,7 @@ TaskManager::TaskManager( std::string subsystem_name
     error_handler_ = error::ErrorHandler(subsystem_code_, "core");
 
     // Initialize the core
-    initCore();
+    initCore(ai_libs_path);
   }
 
   catch (error::ErrorStack& error_stack)
@@ -72,8 +73,8 @@ TaskManager::TaskManager( std::string subsystem_name
  *  CONSTRUCTOR
  * * * * * * * * */
 
-TaskManager::TaskManager(BaseSubsystem& b, bool nlp_enabled)
-  : BaseSubsystem(b)
+TaskManager::TaskManager(BaseSubsystem *b, bool nlp_enabled, std::string ai_libs_path)
+  : BaseSubsystem(*b)
   , nlp_enabled_(nlp_enabled)
 {
   try
@@ -82,7 +83,7 @@ TaskManager::TaskManager(BaseSubsystem& b, bool nlp_enabled)
     class_name_ = __func__;
 
     // Initialize the core
-    initCore();
+    initCore(ai_libs_path);
   }
 
   catch (error::ErrorStack& e)
@@ -92,11 +93,8 @@ TaskManager::TaskManager(BaseSubsystem& b, bool nlp_enabled)
   }
 }
 
-void TaskManager::initCore()
+void TaskManager::initCore(std::string ai_libs_path)
 {
-  // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-
   // Construct the classloader
   class_loader_ = new class_loader::MultiLibraryClassLoader(true);
 
@@ -122,9 +120,20 @@ void TaskManager::initCore()
    * tasks. Later the indexing could be via indexing task.
    * TODO: Read the base path from the parameter server
    */
-  std::cout << prefix << " Indexing the tasks ... " << std::flush;
-  boost::filesystem::directory_entry dir(temoto_path + "/../tasks");
-  indexTasks(dir, 1);
+  std::cout << "Indexing the tasks ... " << std::flush;
+  boost::filesystem::directory_entry dir;
+
+  if (!ai_libs_path.empty())
+  {
+    dir = boost::filesystem::directory_entry(ai_libs_path);
+  }
+
+  else
+  {
+    dir = boost::filesystem::directory_entry(temoto_path + "/../tasks");
+  }
+
+  indexTasks(dir, 2);
   std::cout << "done\n";
 
   // Stop task server
@@ -140,20 +149,17 @@ void TaskManager::initCore()
 
 void TaskManager::humanChatterCb (std_msgs::String chat)
 {
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
+  try
+  {
+    std::cout << BOLDWHITE << "Received: " << chat.data << RESET << std::endl << std::endl;
+    executeVerbalInstruction (chat.data);
+  }
+  catch (error::ErrorStack& error_stack)
+  {
+    FORWARD_ERROR(error_stack);
+  }
 
-    try
-    {
-        std::cout << BOLDWHITE << "Received: " << chat.data << RESET << std::endl << std::endl;
-        executeVerbalInstruction (chat.data);
-    }
-    catch (error::ErrorStack& error_stack)
-    {
-      FORWARD_ERROR(error_stack);
-    }
-
-    std::cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * \n\n";
+  std::cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * \n\n";
 }
 
 
@@ -1384,14 +1390,16 @@ void TaskManager::stopTask(std::string action, std::string what)
               throw CREATE_ERROR(error::Code::SUBJECT_NOT_FOUND, e);
             }
 
-            // Debug
-            TEMOTO_DEBUG_STREAM (prefix << " Found task '" << task_it->first->getAction() << "'. Stopping it");
+            std::string lib_path = task_it->first->getLibPath();
 
-            // Remove the task
-            asynchronous_tasks_.erase(task_it);
+            // Debug
+            TEMOTO_DEBUG_STREAM (prefix << " Found task '" << lib_path << "'. Stopping it");
+
+            // Remove the task, task_it is pointed to the next element
+            task_it = asynchronous_tasks_.erase(task_it);
 
             // TODO: the library should not be unloaded here. It should be done in the unloadTasks method
-            unloadTaskLib(task_it->first->getLibPath());
+            unloadTaskLib(lib_path);
             task_stopped = true;
         }
     }

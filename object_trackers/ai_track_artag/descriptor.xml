@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+
+<task action="track">
+
+  <!--Interface block-->
+  <interface id="0" type="asynchronous">
+    
+    <!--Input block-->
+    <in>
+      <!--Name of the object-->    
+      <what>
+        <arg word=""/>
+      </what>
+
+      <!--Tracker type and required data-->
+      <what>
+        <arg word="artag data"/>
+        <data>
+          <field datatype="topic"/>
+          <field datatype="topic"/>
+          <field datatype="pointer"/>
+        </data>
+      </what> 
+    </in>
+   
+  </interface>
+
+</task>

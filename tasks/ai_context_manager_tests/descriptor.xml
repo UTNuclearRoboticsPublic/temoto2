@@ -3,12 +3,12 @@
 <task action="track" alias="follow">
 
   <!--Interface block-->
-  <interface id="0" type="synchronous">
+  <interface id="0" type="asynchronous">
     
     <!--Input block-->
     <in>    
       <what>
-        <arg word="box"/>
+        <arg word="cylinder"/>
       </what>
     </in>
    

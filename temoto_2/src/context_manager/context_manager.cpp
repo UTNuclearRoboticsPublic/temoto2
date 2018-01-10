@@ -12,6 +12,7 @@ ContextManager::ContextManager()
   , resource_manager_1_(srv_name::MANAGER, this)
   , resource_manager_2_(srv_name::MANAGER_2, this)
   , object_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &ContextManager::objectSyncCb, this)
+  , tracker_core_(this, false, ros::package::getPath(ROS_PACKAGE_NAME) + "/../object_trackers")
 {
   /*
    * Start the servers
@@ -27,7 +28,12 @@ ContextManager::ContextManager()
                                                     , &ContextManager::loadSpeechCb
                                                     , &ContextManager::unloadSpeechCb);
 
-  // Speech recognition service
+  // Object tracking service
+  resource_manager_1_.addServer<temoto_2::TrackObject>(srv_name::TRACK_OBJECT_SERVER
+                                                    , &ContextManager::loadTrackObjectCb
+                                                    , &ContextManager::unloadTrackObjectCb);
+
+  // Tracker setup service
   resource_manager_2_.addServer<temoto_2::LoadTracker>(srv_name::TRACKER_SERVER
                                                     , &ContextManager::loadTrackerCb
                                                     , &ContextManager::unloadTrackerCb);
@@ -109,7 +115,7 @@ void ContextManager::addOrUpdateObjects(const Objects& objects_to_add, bool from
     }
   }
 
-  // If this object was added by own namespace, then advertise this config to other managers
+  // If this object was added by its own namespace, then advertise this config to other managers
   if (!from_other_manager)
   {
     TEMOTO_DEBUG("Advertising the objects to other namespaces.");
@@ -125,29 +131,210 @@ void ContextManager::advertiseAllObjects()
   // Publish all objects
   Objects objects_payload;
 
-  for(auto& object : objects_)
+  for (auto& object : objects_)
   {
     objects_payload.push_back(*object);
   }
 
   // Send to other managers if there is anything to send
-  if(objects_payload.size())
+  if (objects_payload.size())
   {
     object_syncer_.advertise(objects_payload);
   }
 }
 
 /*
+ * Find object
+ */
+ObjectPtr ContextManager::findObject(std::string object_name)
+{
+  for (auto& object : objects_)
+  {
+    if (object->name == object_name)
+    {
+      return object;
+    }
+  }
+
+  // Throw an error if no objects were found
+  throw CREATE_ERROR(error::Code::UNKNOWN_OBJECT, "The requested object is unknown");
+}
+
+
+/*
  * Callback for adding objects
  */
 bool ContextManager::addObjectsCb(temoto_2::AddObjects::Request& req, temoto_2::AddObjects::Response& res)
 {
-  TEMOTO_DEBUG_STREAM("Received a request to add %d objects: \n" << req.objects.size());
+  TEMOTO_DEBUG("Received a request to add %d objects.", req.objects.size());
 
   addOrUpdateObjects(req.objects, false);
 
   return true;
 }
+
+/*
+ * Server for tracking objects
+ */
+void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temoto_2::TrackObject::Response& res)
+{
+  try
+  {
+    TEMOTO_DEBUG_STREAM("Received a request to track an object named: '" << req.object_name << "'");
+
+    // Look if the requested object is described in the object database
+    ObjectPtr requested_object = findObject(req.object_name);
+
+    /*
+     * Start a tracker that can be used to detect the requested object
+     */
+    temoto_2::LoadTracker load_tracker_msg;
+    auto& detection_methods = requested_object->detection_methods;
+    std::string selected_tracker;
+
+    // Loop over different tracker categories and try to load one. The loop is iterated either until
+    // a tracker is succesfully loaded or options are exhausted (failure)
+    for (auto& tracker_category : detection_methods)
+    {
+      try
+      {
+        load_tracker_msg = temoto_2::LoadTracker();
+        load_tracker_msg.request.tracker_category = tracker_category;
+        resource_manager_2_.call<temoto_2::LoadTracker>(context_manager::srv_name::MANAGER_2,
+                                                        context_manager::srv_name::TRACKER_SERVER,
+                                                        load_tracker_msg);
+      }
+      catch (error::ErrorStack& error_stack)
+      {
+        // If a requested tracker was not found but there are other options
+        // available, then continue. Otherwise forward the error
+        if (error_stack.front().code == static_cast<int>(error::Code::NO_TRACKERS_FOUND) &&
+            &tracker_category != &detection_methods.back())
+        {
+          continue;
+        }
+
+        throw FORWARD_ERROR(error_stack);
+      }
+
+      selected_tracker = tracker_category;
+    }
+
+    /*
+     * Start the specific object tracker. Since there are different general object
+     * tracking methods and each tracker outputs different types of data, then
+     * the specific tracking has to be set up based on the general tracker. For example
+     * a general tracker, e.g. AR tag detector, publshes data about detected tags. The
+     * specific tracker has to subscribe to the detected tags topic and since the
+     * tags are differentiated by the tag ID, the specific tracker has to know the ID
+     * beforehand.
+     */
+
+
+    /*
+     * Get the topic where the tracker publishes its output data
+     */
+    TopicContainer tracker_topics;
+    tracker_topics.setOutputTopicsByKeyValue(load_tracker_msg.response.output_topics);
+
+    // Topic where the information about the required object is going to be published
+    std::string tracked_object_topic = common::getAbsolutePath("object_tracker/" + req.object_name);
+
+    /*
+     * AR tag based object tracker setup
+     */
+    if (selected_tracker == "artags")
+    {
+      TEMOTO_DEBUG_STREAM("Using AR-tag based tracking");
+
+      // Get the AR tag data dopic
+      std::string tracker_data_topic = tracker_topics.getOutputTopic("marker_data");
+
+      /*
+       * TTP related stuff up ahead: A semantic frame is manually created. Based on that SF
+       * a SF tree is created, given that an action implementation, that corresponds to the
+       * manually created SF, exists. The specific tracker task is started and it continues
+       * running in the background until its ordered to be stopped.
+       */
+
+      std::string action = "track";
+      TTP::Subjects subjects;
+
+      // Subject that will contain the name of the tracked object.
+      // Necessary when the tracker has to be stopped
+      TTP::Subject sub_0("what", req.object_name);
+
+      // Subject that will contain the data necessary for the specific tracker
+      TTP::Subject sub_1("what", "artag data");
+
+      // Topic from where the raw AR tag tracker data comes from
+      sub_1.addData("topic", tracker_data_topic);
+
+      // Topic where the AImp must publish the data about the tracked object
+      sub_1.addData("topic", tracked_object_topic);
+
+      // This object will be updated inside the tracking AImp (action implementation)
+      sub_1.addData("pointer", boost::any_cast<ObjectPtr>(requested_object));
+
+      subjects.push_back(sub_0);
+      subjects.push_back(sub_1);
+
+      // Create a SF
+      std::vector<TTP::TaskDescriptor> task_descriptors;
+      task_descriptors.emplace_back(action, subjects);
+      task_descriptors[0].setActionStemmed(action);
+
+      // Create a sematiic frame tree
+      TTP::TaskTree sft = TTP::SFTBuilder::build(task_descriptors);
+
+      // Get the root node of the tree
+      TTP::TaskTreeNode& root_node = sft.getRootNode();
+      sft.printTaskDescriptors(root_node);
+
+      // Execute the SFT
+      tracker_core_.executeSFT(std::move(sft));
+
+      // Put the object into the list of tracked objects. This is used later
+      // for stopping the tracker
+      m_tracked_objects_[res.rmp.resource_id] = req.object_name;
+    }
+
+    res.object_topic = tracked_object_topic;
+
+  }
+  catch (error::ErrorStack& error_stack)
+  {
+    throw FORWARD_ERROR(error_stack);
+  }
+}
+
+/*
+ * Unload the track object
+ */
+void ContextManager::unloadTrackObjectCb(temoto_2::TrackObject::Request& req, temoto_2::TrackObject::Response& res)
+{
+  /*
+   * Stopping tracking the object based on its name
+   */
+  try
+  {
+    // Get the name of the tracked object
+    std::string tracked_object = m_tracked_objects_[res.rmp.resource_id];
+
+    TEMOTO_DEBUG_STREAM("Received a request to stop tracking an object named: '" << tracked_object << "'");
+
+    // Stop tracking the object
+    tracker_core_.stopTask("", tracked_object);
+
+    // Erase the object from the map of tracked objects
+    m_tracked_objects_.erase(res.rmp.resource_id);
+  }
+  catch (error::ErrorStack& error_stack)
+  {
+    throw FORWARD_ERROR(error_stack);
+  }
+}
+
 
 /*
  * Load tracker callback
@@ -157,6 +344,8 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
 {
   TEMOTO_INFO_STREAM(" Received a request: \n" << req << std::endl);
 
+  TEMOTO_DEBUG_STREAM("req tracker = " << req.detection_method);
+
   try
   {
     // Get the tracking methods of the requested category
@@ -165,6 +354,8 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
     // Proceed if the requested tracker category exists
     if (trackers != categorized_trackers_.end())
     {
+      TEMOTO_DEBUG_STREAM(" Found the requested tracker.");
+
       // Choose a tracker based on a TODO metric
       const TrackerInfo& tracker = trackers->second.at(0);
 
@@ -409,26 +600,4 @@ void ContextManager::unloadSpeechCb(temoto_2::LoadSpeech::Request& req,
 {
   TEMOTO_INFO("Speech unloaded.");
 }
-
-
-
 }  // namespace context_manager
-
-/**
- * TODO: * Implement parsing multiple type requests: position(xyz) + orientation(rpy) +
- * detected_gesture(str) + ...
- *       * Add "filter" elements. If these make sense ... It might not be a good idea to build pipes
- * based on msgs
- *       * (?) Implement piping: raw_data -> filter_1 -> filter_n -> end_user
- */
-// bool ContextManager::parseGestureSpecifier (temoto_2::gestureSpecifier spec)
-//{
-
-//}
-
-/**
- * TODO: * Implement parsing multiple type requests
- *       * Add "filter" elements. If these make sense ... It might not be a good idea to build pipes
- * based on msgs
- *       * (?) Implement piping: raw_data -> filter_1 -> filter_n -> end_user
- */

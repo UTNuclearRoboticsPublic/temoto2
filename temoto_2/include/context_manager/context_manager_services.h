@@ -7,6 +7,7 @@
 #include "temoto_2/LoadSpeech.h"
 #include "temoto_2/LoadTracker.h"
 #include "temoto_2/AddObjects.h"
+#include "temoto_2/TrackObject.h"
 
 namespace context_manager
 {
@@ -16,6 +17,7 @@ namespace context_manager
     const std::string SYNC_TOPIC = "/temoto_2/"+MANAGER+"/sync_1";
     const std::string GESTURE_SERVER = "load_gesture";
     const std::string SPEECH_SERVER = "load_speech";
+    const std::string TRACK_OBJECT_SERVER = "track_objects";
 
     const std::string MANAGER_2 = "context_manager_2";
     const std::string SYNC_TOPIC_2 = "/temoto_2/"+MANAGER_2+"/sync_2";
@@ -25,10 +27,28 @@ namespace context_manager
   }
 }
 
+/**
+ * @brief operator ==
+ * @param r1
+ * @param r2
+ * @return
+ */
 static bool operator==(const temoto_2::LoadTracker::Request& r1,
                        const temoto_2::LoadTracker::Request& r2)
 {
     return( r1.detection_method == r2.detection_method);
+}
+
+/**
+ * @brief operator ==
+ * @param r1
+ * @param r2
+ * @return
+ */
+static bool operator==(const temoto_2::TrackObject::Request& r1,
+                       const temoto_2::TrackObject::Request& r2)
+{
+    return( r1.object_name == r2.object_name);
 }
 
 static bool operator==(const temoto_2::LoadGesture::Request& r1,

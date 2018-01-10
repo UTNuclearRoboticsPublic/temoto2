@@ -4,7 +4,7 @@ project(temoto_2)
 # SET (CMAKE_C_COMPILER "/usr/bin/clang-4.0")
 # SET (CMAKE_CXX_COMPILER "/usr/bin/clang++-4.0")
 # add_compile_options(-std=c++11 -Wno-deprecated-declarations)
-add_compile_options(-std=c++1y)
+add_compile_options(-std=c++1y -Wno-reorder -Wno-unused-function)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -37,7 +37,7 @@ add_message_files(FILES
   RMPRequest.msg
   RMPResponse.msg
 
-  # Context Manager
+  # Context Manager 
   SpeechSpecifier.msg
   GestureSpecifier.msg
   ObjectContainer.msg
@@ -70,6 +70,7 @@ add_service_files(
   context_manager/LoadGesture.srv
   context_manager/LoadSpeech.srv
   context_manager/AddObjects.srv
+  context_manager/TrackObject.srv
 
   # Output Manager
   output_manager/rviz_manager/LoadRvizPlugin.srv
@@ -125,7 +126,7 @@ add_executable(context_manager src/context_manager/context_manager_node.cpp
                                src/temoto_error/temoto_error.cpp)
 
 add_dependencies(context_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(context_manager ${catkin_LIBRARIES} yaml-cpp )
+target_link_libraries(context_manager ${catkin_LIBRARIES} yaml-cpp ttp)
 
 # # # # # # # # # # # #
 # SENSOR MANAGER
@@ -177,7 +178,7 @@ target_link_libraries(ttp ${catkin_LIBRARIES}
                           meta-classify meta-sequence-analyzers meta-parser-analyzers )
 
 # # # # # # # # # # # #
-# CORE
+# TEMOTO AGENT
 # # # # # # # # # # # #
 add_executable(temoto_agent src/core/temoto_agent.cpp)
 add_dependencies(temoto_agent ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})

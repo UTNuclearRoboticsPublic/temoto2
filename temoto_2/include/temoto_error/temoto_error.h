@@ -94,6 +94,7 @@ enum class Code : int
 
   // Context Manager
   NO_TRACKERS_FOUND,
+  UNKNOWN_OBJECT,
 
   UNHANDLED_EXCEPTION  // Unhandled exception
 };

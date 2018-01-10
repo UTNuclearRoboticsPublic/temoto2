@@ -22,12 +22,12 @@ Subject getSubjectByType(const std::string& type, Subjects& subjects);
  */
 struct Data
 {
-    std::string type = "";
-    boost::any value;
+  std::string type = "";
+  boost::any value;
 
-    Data(){}
+  Data(){}
 
-    Data(std::string type_in, boost::any value_in) : type(type_in), value(value_in){}
+  Data(std::string type_in, boost::any value_in) : type(type_in), value(value_in){}
 };
 
 std::ostream& operator<<( std::ostream& stream, const Data& data);
@@ -56,23 +56,24 @@ class Subject
 {
 public:
 
-    std::string type_;
-    std::string pos_tag_;
-    std::vector<std::string> words_;
-    std::vector<Data> data_;
-    bool is_complete_ = false;
+  std::string type_;
+  std::string pos_tag_;
+  std::vector<std::string> words_;
+  std::vector<Data> data_;
+  bool is_complete_ = false;
 
-    Subject() = default;
+  Subject() = default;
 
-    Subject(std::string type, std::string word);
+  Subject(std::string type, std::string word);
 
-    friend bool operator==(const std::vector<Subject>& subs_1, const std::vector<Subject>& subs_2);
+  friend bool operator==(const std::vector<Subject>& subs_1, const std::vector<Subject>& subs_2);
 
-    void addData(std::string datatype, float data);
-    void addData(std::string datatype, std::string data);
+  void addData(std::string datatype, float data);
+  void addData(std::string datatype, std::string data);
+  void addData(std::string datatype, boost::any data);
 
-    void markIncomplete();
-    void markComplete();
+  void markIncomplete();
+  void markComplete();
 
 private:
 

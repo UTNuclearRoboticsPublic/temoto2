@@ -53,6 +53,8 @@ public:
 
     const Action& getAction() const;
 
+    void setActionStemmed(const std::string& action_stemmed);
+
     std::vector<TaskInterface>& getInterfaces();
 
     std::vector<Subject>& getFirstInputSubjects();

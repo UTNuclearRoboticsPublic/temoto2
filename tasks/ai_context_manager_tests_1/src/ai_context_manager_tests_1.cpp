@@ -15,7 +15,7 @@
 #include <visualization_msgs/Marker.h>
 
 // First implementaton
-class ContextManagerTests: public TTP::BaseTask
+class ContextManagerTests1: public TTP::BaseTask
 {
 public:
 
@@ -23,10 +23,10 @@ public:
  * Inherited methods that have to be implemented /START
  * * * * * * * * * * * * * * * * * * * * * * * * */
 
-ContextManagerTests()
+ContextManagerTests1()
 {
   // Do something here if needed
-  TASK_INFO("ContextManagerTests constructed");
+  TASK_INFO("ContextManagerTests1 constructed");
 }
 
 // startTask with arguments
@@ -39,15 +39,10 @@ void startTask(TTP::TaskInterface task_interface)
   input_subjects = task_interface.input_subjects_;
   switch(task_interface.id_)
   {
-      // Interface 0
-      case 0:
-          startInterface_0();
-      break;
-
-      // Interface 1
-      case 1:
-          startInterface_1();
-      break;
+    // Interface 0
+    case 0:
+      startInterface_0();
+    break;
   }
   // </ AUTO-GENERATED, DO NOT MODIFY >
 }
@@ -79,30 +74,6 @@ void startInterface_0()
   TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
   std::string  what_0_word_in = what_0_in.words_[0];
 
-  // </ AUTO-GENERATED, DO NOT MODIFY >
-
-// -------------------------------< USER CODE >-------------------------------
-
-  // Initialize the sensor manager interface
-  cmi_.initialize(this);
-
-  // Track the object
-  cmi_.trackObject(what_0_word_in);
-
-// -------------------------------</ USER CODE >-------------------------------
-}
-
-/*
- * Interface 1 body
- */
-void startInterface_1()
-{
-  // < AUTO-GENERATED, DO NOT MODIFY >
-
-  // Extracting input subjects
-  TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
-  std::string  what_0_word_in = what_0_in.words_[0];
-
   // Creating output variables
   std::string  what_0_word_out;
 
@@ -113,38 +84,41 @@ void startInterface_1()
   // Name of the method, used for making debugging a bit simpler
   std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
-  try
-  {
-    // Initialize the context manager interface
-    cmi_.initialize(this);
+  // Initialize the sensor manager interface
+  cmi_.initialize(this);
 
-    // Start a tracker
-    TopicContainer tracker_topics = cmi_.startTracker("artags");
+  // Create a cylinder object
+  temoto_2::ObjectContainer cylinder;
+  cylinder.name = "cylinder";
+  cylinder.detection_methods.push_back(temoto_2::ObjectContainer::ARTAG);
+  cylinder.tag_id = 16;
 
-    // Pass the name of the object to the output
-    what_0_word_out = tracker_topics.getOutputTopic("marker_data");
+  shape_msgs::SolidPrimitive primitive;
+  primitive.type = shape_msgs::SolidPrimitive::CYLINDER;
+  primitive.dimensions.push_back(0.2);   // Height
+  primitive.dimensions.push_back(0.06);  // Radius
+  cylinder.primitive = primitive;
 
-    std::cout << "GOT TOPIC: " << what_0_word_out << std::endl;
-  }
-  catch( error::ErrorStack& error_stack )
-  {
-    SEND_ERROR(error_stack);
-  }
+  // Add a new object to the context manager
+  cmi_.addWorldObjects(cylinder);
 
-// -------------------------------</ USER CODE >-------------------------------
+  // Pass the name of the object to the output
+  what_0_word_out = cylinder.name;
 
-    // < AUTO-GENERATED, DO NOT MODIFY >
+  // -------------------------------</ USER CODE >-------------------------------
 
-    TTP::Subject what_0_out("what", what_0_word_out);
-    what_0_out.markComplete();
-    output_subjects.push_back(what_0_out);
+  // < AUTO-GENERATED, DO NOT MODIFY >
 
-    // </ AUTO-GENERATED, DO NOT MODIFY >
+  TTP::Subject what_0_out("what", what_0_word_out);
+  what_0_out.markComplete();
+  output_subjects.push_back(what_0_out);
+
+  // </ AUTO-GENERATED, DO NOT MODIFY >
 }
 
-~ContextManagerTests()
+~ContextManagerTests1()
 {
-    TASK_INFO("ContextManagerTests destructed");
+    TASK_INFO("ContextManagerTests1 destructed");
 }
 
 private:
@@ -153,11 +127,11 @@ private:
 ros::NodeHandle n_;
 
 // Create context manager interface object for context manager manager
-context_manager::ContextManagerInterface <ContextManagerTests> cmi_;
+context_manager::ContextManagerInterface <ContextManagerTests1> cmi_;
 
 std::string task_alias;
 
 };
 
 // Dont forget that part, otherwise this class would not be loadable
-CLASS_LOADER_REGISTER_CLASS(ContextManagerTests, TTP::BaseTask);
+CLASS_LOADER_REGISTER_CLASS(ContextManagerTests1, TTP::BaseTask);

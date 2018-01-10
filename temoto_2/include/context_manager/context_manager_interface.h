@@ -171,6 +171,36 @@ public:
     return topics_to_return;
   }
 
+  void trackObject(std::string object_name)
+  {
+    // Validate the interface
+    try
+    {
+      validateInterface();
+    }
+    catch (error::ErrorStack& error_stack)
+    {
+      throw FORWARD_ERROR(error_stack);
+    }
+
+    // Start filling out the TrackObject message
+    temoto_2::TrackObject track_object_msg;
+    track_object_msg.request.object_name = object_name;
+
+    try
+    {
+      resource_manager_->template call<temoto_2::TrackObject>(context_manager::srv_name::MANAGER,
+                                                              context_manager::srv_name::TRACK_OBJECT_SERVER,
+                                                              track_object_msg);
+
+      TEMOTO_INFO_STREAM("The object is published on topic: " << track_object_msg.response.object_topic);
+    }
+    catch (error::ErrorStack& error_stack)
+    {
+      throw FORWARD_ERROR(error_stack);
+    }
+  }
+
   /**
    * @brief addWorldObjects
    * @param objects

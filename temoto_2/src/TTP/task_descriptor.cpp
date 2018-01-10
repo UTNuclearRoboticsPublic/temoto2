@@ -67,6 +67,11 @@ const Action& TaskDescriptor::getAction() const
     return action_;
 }
 
+void TaskDescriptor::setActionStemmed(const std::string& action_stemmed)
+{
+  action_stemmed_ = action_stemmed;
+}
+
 std::vector<TaskInterface>& TaskDescriptor::getInterfaces()
 {
     return task_interfaces_;
