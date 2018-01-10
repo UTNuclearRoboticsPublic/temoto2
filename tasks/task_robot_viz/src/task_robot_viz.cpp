@@ -55,7 +55,7 @@ public:
   void showRobot()
   {
     std::set<std::string> viz_options{ "robot_model" };
-    omi_.showRobot("ur5", viz_options);
+    omi_.showRobot(viz_options); // Show the active robot model
   }
 
   // Show maps and navigation

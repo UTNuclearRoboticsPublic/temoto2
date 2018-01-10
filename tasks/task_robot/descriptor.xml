@@ -9,6 +9,11 @@
         <arg word="robot"/>
       </what>
     </in>
+    <out>    
+      <what>
+        <arg word="robot"/>
+      </what>
+    </out>
   </interface>
 
   <!--Interface block-->
