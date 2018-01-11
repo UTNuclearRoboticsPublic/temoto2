@@ -88,7 +88,8 @@ Robots:
     controller:
       #package_name: "vaultbot_moveit_config" #Has to contain move_group.launch
       package_name: "vaultbot_tools_moveit_config" #Has to contain move_group.launch
-      planning_groups: ["right_ur5_temoto"]
+      #planning_groups: ["right_ur5_temoto"]
+      planning_groups: ["left_ur5"]
       #planning_groups: ["arms"]
     driver:
       package_name: "task_robot"

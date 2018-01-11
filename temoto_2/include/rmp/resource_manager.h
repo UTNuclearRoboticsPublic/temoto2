@@ -191,7 +191,7 @@ public:
     TEMOTO_DEBUG("Number of clients:%lu", clients_.size());
     for (auto client : clients_)
     {
-      std::map<temoto_id::ID, FailureBehavior> internal_resources = client->getInternalResources();
+      //std::map<temoto_id::ID, FailureBehavior> internal_resources = client->getInternalResources();
       client->unloadResources();
       // TODO: remove all connections in servers
     }

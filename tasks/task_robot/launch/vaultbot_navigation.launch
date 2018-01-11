@@ -10,9 +10,9 @@
   </node>
 
   <!-- start navigation -->
-  <include file="$(find husky_navigation)/launch/move_base.launch">
+  <!--include file="$(find husky_navigation)/launch/move_base.launch">
     <arg name="base_local_planner" value="dwa_local_planner/DWAPlannerROS" />
     <arg name="base_global_planner" value="navfn/NavfnROS" />
-  </include>
+  </include-->
 
 </launch>

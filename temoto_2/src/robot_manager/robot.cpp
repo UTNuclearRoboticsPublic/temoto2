@@ -17,7 +17,38 @@ Robot::Robot(RobotConfigPtr config, rmp::ResourceManager<RobotManager>& resource
 
 Robot::~Robot()
 {
-    TEMOTO_DEBUG("Robot destructed");
+  if(isLocal())
+  {
+    // Unload features
+    if (config_->getFeatureURDF().isEnabled())
+    {
+      TEMOTO_WARN("Unloading URDF Feature.");
+      resource_manager_.unloadClientResource(config_->getFeatureURDF().getResourceId());
+    }
+
+    if (config_->getFeatureManipulation().isEnabled())
+    {
+      TEMOTO_WARN("Unloading Manipulation Feature.");
+      resource_manager_.unloadClientResource(config_->getFeatureManipulation().getResourceId());
+    }
+
+    if (config_->getFeatureManipulation().isDriverEnabled())
+    {
+      TEMOTO_WARN("Unloading Manipulation driver Feature.");
+      resource_manager_.unloadClientResource(config_->getFeatureManipulation().getDriverResourceId());
+    }
+    
+    // Remove parameters
+    if(nh_.deleteParam(config_->getAbsRobotNamespace()+"/*"))
+    {
+      TEMOTO_DEBUG("Parameter(s) removed successfully.");
+    }
+    else
+    {
+      TEMOTO_WARN("Parameter(s) not removed.");
+    }
+  }
+  TEMOTO_DEBUG("Robot destructed");
 }
 
 
@@ -128,7 +159,7 @@ void Robot::loadManipulation()
   try
   {
     FeatureManipulation& ftr = config_->getFeatureManipulation();
-    temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable());
+    temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable(), "fake_execution:=true load_robot_description:=false");
     TEMOTO_DEBUG("Manipulation resource id: %d", res_id);
     ftr.setResourceId(res_id);
 

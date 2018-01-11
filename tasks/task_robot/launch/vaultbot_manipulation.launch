@@ -6,14 +6,11 @@
   </node>
 
   <!-- Given the published joint states, publish tf for the robot links -->
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen">
+  <!--node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen">
     <param name="robot_description" value="/robemoto/robot_manager/robots/vaultbot/robot_description" />
-  </node>
+  </node-->
 
   <!-- publish a TF between /map and /odom -->
   <node name="static_transform_publisher" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 map odom 10"/>
-
-  <!-- publish a TF between /map and /odom -->
-  <node name="static_transform_publisher_2" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 world base_link 10"/>
   
 </launch>
