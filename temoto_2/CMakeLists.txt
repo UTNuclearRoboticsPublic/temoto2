@@ -202,7 +202,7 @@ add_executable(robot_manager src/robot_manager/robot_manager.cpp
 	                           src/robot_manager/robot_manager_node.cpp
                              src/robot_manager/robot.cpp
                              src/robot_manager/robot_config.cpp
-                             src/robot_manager/robot_feature.cpp
+                             src/robot_manager/robot_features.cpp
                              src/common/reliability.cpp
                              src/temoto_error/temoto_error.cpp)
 

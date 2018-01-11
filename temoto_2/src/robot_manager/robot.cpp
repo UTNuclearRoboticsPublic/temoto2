@@ -24,51 +24,32 @@ Robot::~Robot()
 
 void Robot::load()
 {
-  if (config_->getRobotFeatures().size())
+  if (!config_->getFeatureURDF().isEnabled() && !config_->getFeatureManipulation().isEnabled() &&
+      !config_->getFeatureNavigation().isEnabled())
   {
-    TEMOTO_ERROR(
-        "Robot is missing features. Please specify urdf, manipulation, navigation or gripper sections in the configuration file.");
-    TEMOTO_ERROR_STREAM(config_->toString() << "  " << config_->getRobotFeatures().size());
-    // \TODO:: throw
-    return;
+    throw CREATE_ERROR(error::Code::ROBOT_CONFIG_FAIL, "Robot is missing features. Please specify "
+                                                       "urdf, manipulation, navigation sections in "
+                                                       "the configuration file.");
   }
 
-  // Load robot's main launch file
-  // It should bring up joint_state/robot publishers and hw specific nodes
-  loadUrdf();
-  loadHardware();
-
-  if (hasFeature(FeatureType::MANIPULATION))
+  // Load robot features
+  
+  if (config_->getFeatureURDF().isEnabled() and config_->getFeatureManipulation().isDriverEnabled())
   {
+    loadUrdf();
+    loadManipulationDriver();  // We need joint states and robot states to visualize the robot
+  }
+
+  if (config_->getFeatureManipulation().isEnabled() and config_->getFeatureManipulation().isDriverEnabled())
+  {
+    loadManipulationDriver();
     loadManipulation();
   }
   
-  if (hasFeature(FeatureType::NAVIGATION))
+  if (config_->getFeatureNavigation().isEnabled() and config_->getFeatureNavigation().isDriverEnabled())
   {
+    loadNavigationDriver();
     loadNavigation();
-  }
-
-}
-
-// Load robot's hardware
-void Robot::loadHardware()
-{
-  RobotFeature& ftr = config_->getRobotFeature(FeatureType::HARDWARE);
-  try
-  {
-    temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable());
-    TEMOTO_DEBUG("HARDWARE resource id: %d", res_id);
-    ftr.setResourceId(res_id);
-
-    // Wait for robot/joint states become available.
-    // std::string cmd_vel_topic = config->getAbsRobotNamespace() + "/cmd_vel";
-    //waitForTopic(cmd_vel_topic, res_id);
-    ftr.setLoaded(true);
-    TEMOTO_DEBUG("Robot HARDWARE loaded.");
-  }
-  catch(error::ErrorStack& error_stack)
-  {
-    throw FORWARD_ERROR(error_stack);
   }
 }
 
@@ -83,8 +64,9 @@ void Robot::waitForParam(const std::string& param, temoto_id::ID interrupt_res_i
     {
       //throw CREATE_ERROR(robot_error::SERVICE_STATUS_FAIL, "Loading interrupted. A FAILED status was received from process manager.");
     }
-    ros::Duration(0.2).sleep();
+    ros::Duration(1).sleep();
   }
+  TEMOTO_DEBUG("Parameter '%s' was found.", param.c_str());
 }
 
 void Robot::waitForTopic(const std::string& topic, temoto_id::ID interrupt_res_id)
@@ -97,9 +79,9 @@ void Robot::waitForTopic(const std::string& topic, temoto_id::ID interrupt_res_i
     {
       throw CREATE_ERROR(error::Code::SERVICE_STATUS_FAIL, "Loading interrupted. A FAILED status was received from process manager.");
     }
-    ros::Duration(0.2).sleep();
+    ros::Duration(1).sleep();
   }
-  TEMOTO_DEBUG("%s Topic '%s' was found.", topic.c_str());
+  TEMOTO_DEBUG("Topic '%s' was found.", topic.c_str());
 }
 
 bool Robot::isTopicAvailable(const std::string& topic)
@@ -138,12 +120,20 @@ void Robot::loadUrdf()
 // Load move group and move group interfaces
 void Robot::loadManipulation()
 {
+  if (config_->getFeatureManipulation().isLoaded())
+  {
+    return; // Return if already loaded.
+  }
+
   try
   {
     FeatureManipulation& ftr = config_->getFeatureManipulation();
     temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable());
     TEMOTO_DEBUG("Manipulation resource id: %d", res_id);
     ftr.setResourceId(res_id);
+
+    std::string desc_sem_param = config_->getAbsRobotNamespace() + "/robot_description_semantic";
+    waitForParam(desc_sem_param, res_id);
 
     // Add planning groups
     // TODO: read groups from srdf automatically
@@ -152,6 +142,7 @@ void Robot::loadManipulation()
       TEMOTO_DEBUG("Adding planning group %s", group.c_str());
       addPlanningGroup(group);
     }
+
 
     ftr.setLoaded(true);
     TEMOTO_DEBUG("Feature 'manipulation' loaded.");
@@ -165,6 +156,11 @@ void Robot::loadManipulation()
 // Load robot driver that will publish joint states and robot state
 void Robot::loadManipulationDriver()
 {
+  if (config_->getFeatureManipulation().isDriverLoaded())
+  {
+    return; // Return if already loaded.
+  }
+
   try
   {
     FeatureManipulation& ftr = config_->getFeatureManipulation();
@@ -187,24 +183,39 @@ void Robot::loadManipulationDriver()
 // Load Move Base
 void Robot::loadNavigation()
 {
-  FeatureNavigation& ftr = config_->getFeatureNavigation();
-  temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable());
-  TEMOTO_DEBUG("Navigation resource id: %d", res_id);
-  ftr.setResourceId(res_id);
+  if (config_->getFeatureNavigation().isLoaded())
+  {
+    return; // Return if already loaded.
+  }
 
-  ftr.setLoaded(true);
-  TEMOTO_DEBUG("Feature 'navigation' loaded.");
-}
-catch (error::ErrorStack& error_stack)
-{
-  throw FORWARD_ERROR(error_stack);
+  try
+  {
+    FeatureNavigation& ftr = config_->getFeatureNavigation();
+    temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable());
+    TEMOTO_DEBUG("Navigation resource id: %d", res_id);
+    ftr.setResourceId(res_id);
+
+    // wait for command velocity to be published
+    std::string cmd_vel_topic = config_->getAbsRobotNamespace() + "/cmd_vel";
+    waitForTopic(cmd_vel_topic, res_id);
+
+    ftr.setLoaded(true);
+    TEMOTO_DEBUG("Feature 'navigation' loaded.");
+  }
+  catch (error::ErrorStack& error_stack)
+  {
+    throw FORWARD_ERROR(error_stack);
   }
 }
-
 
 // Load robot driver that will publish odom
 void Robot::loadNavigationDriver()
 {
+  if (config_->getFeatureNavigation().isDriverLoaded())
+  {
+    return; // Return if already loaded.
+  }
+
   try
   {
     FeatureNavigation& ftr = config_->getFeatureNavigation();
@@ -223,13 +234,6 @@ void Robot::loadNavigationDriver()
     throw FORWARD_ERROR(error_stack);
   }
 }
-
-// Load Gripper
-void Robot::loadGripper()
-{
-
-}
-
 
 temoto_id::ID Robot::rosExecute(const std::string& package_name, const std::string& executable,
                        const std::string& args)
@@ -339,20 +343,23 @@ std::string Robot::getVizInfo()
   YAML::Node rviz = info["RViz"];
 
   // RViz options
+  //TODO: SYNC info about robot features and if thet are actually loaded or not.
 
-  if (hasFeature(FeatureType::URDF))
+  if (config_->getFeatureURDF().isEnabled())
   {
     rviz["urdf"]["robot_description"] = act_rob_ns + "/robot_description";
   }
 
-  if (hasFeature(FeatureType::MANIPULATION))
+  if (config_->getFeatureManipulation().isEnabled())
   {
     rviz["manipulation"]["move_group_ns"] = act_rob_ns;
   }
 
-  if (hasFeature(FeatureType::NAVIGATION))
+  if (config_->getFeatureNavigation().isEnabled())
   {
     rviz["navigation"]["move_base_ns"] = act_rob_ns;
+    rviz["navigation"]["global_planner"] = config_->getFeatureNavigation().getGlobalPlanner();
+    rviz["navigation"]["local_planner"] = config_->getFeatureNavigation().getLocalPlanner();
   }
   
   return YAML::Dump(info);

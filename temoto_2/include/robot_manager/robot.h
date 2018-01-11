@@ -9,7 +9,7 @@
 #include "rmp/resource_manager.h"
 #include "robot_manager/robot_config.h"
 #include "robot_manager/robot_manager.h"
-#include "robot_manager/robot_feature.h"
+#include "robot_manager/robot_features.h"
 #include <string>
 #include <map>
 #include <vector>
@@ -43,14 +43,6 @@ public:
 
   bool isLocal() const;
 
-  inline bool hasFeature(const std::string& feature_name) const
-  {
-    const auto& features = config_->getRobotFeatures();
-    auto it = find_if(features.begin(), features.end(),
-            [&](const RobotFeature& feature) -> bool { return feature.getName() == feature_name; });
-    return it != features.end();
-  }
-
   // return all the information required to visualize this robot
   std::string getVizInfo();
 
@@ -60,8 +52,9 @@ private:
   void waitForHardware();
   void loadUrdf();
   void loadManipulation();
+  void loadManipulationDriver();
   void loadNavigation();
-  void loadGripper();
+  void loadNavigationDriver();
 
   temoto_id::ID rosExecute(const std::string& package_name, const std::string& executable,
                   const std::string& args = "");

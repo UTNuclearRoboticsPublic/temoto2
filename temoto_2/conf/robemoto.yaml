@@ -86,18 +86,20 @@ Robots:
   manipulation:
     controller:
       package_name: "vaultbot_moveit_config" #Has to contain move_group.launch
-      planning_groups: ["arms, ur5_right_temoto"]
+      #package_name: "vaultbot_tools_moveit_config" #Has to contain move_group.launch
+      #planning_groups: ["arms", "ur5_right_temoto"]
+      planning_groups: ["arms"]
     driver:
       package_name: "task_robot"
       executable: "vaultbot_manipulation.launch"
-  navigation:
-    controller:
-      package_name: "husky_navigation" #Has to contain move_base.launch
-      local_planner: "dwa_local_planner/DWAPlannerROS"
-      global_planner: "navfn/NavfnROS"
-    driver:
-      package_name: "task_robot"
-      executable: "vaultbot_navigation.launch"
+      #  navigation:
+      #    controller:
+      #      package_name: "husky_navigation" #Has to contain move_base.launch
+      #      local_planner: "dwa_local_planner/DWAPlannerROS"
+      #      global_planner: "navfn/NavfnROS"
+      #    driver:
+      #      package_name: "task_robot"
+      #      executable: "vaultbot_navigation.launch"
 
   #- robot_name: "ur3"
   #  package_name: "task_robot"

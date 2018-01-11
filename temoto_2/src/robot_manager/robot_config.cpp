@@ -12,12 +12,10 @@ RobotConfig::RobotConfig(YAML::Node yaml_config, BaseSubsystem& b) : yaml_config
   try
   {
     parseName();
-    parseHardware();
   }
   catch (...)
   {
-    TEMOTO_ERROR("Unable to create robot config: robot_name and hardware section with package_name "
-                 "and executable fields are requred.");
+    CREATE_ERROR(error::Code::ROBOT_CONFIG_FAIL,"Unable to parse robot name.");
     return; //\TODO: throw and skip the rest when requred info is missing
   }
 
@@ -30,7 +28,6 @@ RobotConfig::RobotConfig(YAML::Node yaml_config, BaseSubsystem& b) : yaml_config
   parseUrdf();
   parseManipulation();
   parseNavigation();
-  parseGripper();
 }
 
 void RobotConfig::parseName()
@@ -85,35 +82,11 @@ void RobotConfig::parseReliability()
   }
 }
 
-void RobotConfig::parseHardware() 
-{
-  try
-  {
-    std::string package_name = yaml_config_["hardware"]["package_name"].as<std::string>();
-    std::string executable = yaml_config_["hardware"]["executable"].as<std::string>();
-    features_.emplace_back(FeatureType::HARDWARE, package_name, executable);
-  }
-  catch (...)
-  {
-    TEMOTO_ERROR("CONFIG: hardware: (executable or package_name) NOT FOUND");
-    //\TODO: throw
-  }
-}
-
 void RobotConfig::parseUrdf()
 {
   try
   {
-    std::string package_name = yaml_config_["urdf"]["package_name"].as<std::string>();
-    std::string executable = yaml_config_["urdf"]["executable"].as<std::string>();
-
-    // Ingore pkg_name when executable is defined using absolute path (starts with /)
-    //if (urdf_path.size() && urdf_path.front() != '/')
-    //{
-    //  std::string urdf_pkg = yaml_config_["urdf"]["package_name"].as<std::string>();
-    //  urdf_path = urdf_pkg + '/' + urdf_path;
-    //}
-    features_.emplace_back(FeatureType::URDF, package_name, executable);
+    feature_urdf_ = FeatureURDF(yaml_config_["urdf"]);
   }
   catch (...)
   {
@@ -125,27 +98,11 @@ void RobotConfig::parseManipulation()
 {
   try
   {
-    std::string package_name = yaml_config_["manipulation"]["moveit_config_package"].as<std::string>();
-    std::vector<std::string> groups;
-    try
-    {
-      YAML::Node yaml_groups = yaml_config_["manipulation"]["planning_groups"];
-      for (YAML::const_iterator it = yaml_groups.begin(); it != yaml_groups.end(); ++it)
-      {
-        groups.emplace_back(it->as<std::string>());
-      }
-    }
-    catch (YAML::Exception& e)
-    {
-      TEMOTO_ERROR("CONFIG: manipulation: planning_groups NOT FOUND: %s", e.what());
-    }
-    
-    planning_groups_ = groups;
-    features_.emplace_back(FeatureType::MANIPULATION, package_name, "move_group.launch");
+    feature_manipulation_ = FeatureManipulation(yaml_config_["manipulation"]);
   }
   catch (YAML::Exception& e)
   {
-    //TEMOTO_WARN("CONFIG: manipulation: moveit_package NOT FOUND: %s", e.what());
+    TEMOTO_WARN("CONFIG: error parsing manipulation: %s", e.what());
   }
 }
 
@@ -153,31 +110,12 @@ void RobotConfig::parseNavigation()
 {
   try
   {
-    std::string package_name = yaml_config_["navigation"]["package_name"].as<std::string>();
-    std::string executable = yaml_config_["navigation"]["executable"].as<std::string>();
-    features_.emplace_back(FeatureType::NAVIGATION, package_name, executable);
+    feature_navigation_ = FeatureNavigation(yaml_config_["navigation"]);
   }
   catch (YAML::Exception e)
   {
-    //TEMOTO_ERROR("CONFIG: navigation: (executable or package_path) NOT FOUND");
-    //\TODO: throw
+    TEMOTO_ERROR("CONFIG: error parsing navigation: %s", e.what());
   }
-}
-
-void RobotConfig::parseGripper()
-{
-  //\TODO: IMPLEMENT GRIPPER
-}
-
-RobotFeature& RobotConfig::getRobotFeature(FeatureType type)
-{
-  auto it = std::find_if(features_.begin(), features_.end(),
-                    [&](RobotFeature& f) -> bool { return f.getType() == type; });
-  if (it == features_.end())
-  {
-    throw "TODO: EXCEPTION FEATURE NOT FOUND";
-  }
-  return *it;
 }
 
 std::string RobotConfig::toString() const
@@ -187,10 +125,9 @@ std::string RobotConfig::toString() const
   ret += "  description : " + getDescription() + "\n";
   ret += "  reliability : " + std::to_string(getReliability()) + "\n";
   ret += "  features: \n";
-  for (auto& f : features_)
-  {
-    ret += "    " + f.getName() + "\n";
-  }
+  ret += feature_urdf_.isEnabled() ? "    urdf\n" : "";
+  ret += feature_manipulation_.isEnabled() ? "    manipulation\n" : "";
+  ret += feature_navigation_.isEnabled() ? "    navigation\n" : "";
   return ret;
 }
 

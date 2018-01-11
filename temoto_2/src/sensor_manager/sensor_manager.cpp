@@ -134,14 +134,14 @@ void SensorManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& p
       s->setTemotoNamespace(msg.temoto_namespace);
     }
 
-    for (auto& s : remote_sensors_)
-    {
-      TEMOTO_DEBUG("---------REMOTE SENSOR: \n %s", s->toString().c_str());
-    }
+    //for (auto& s : remote_sensors_)
+    //{
+    //  TEMOTO_DEBUG("---------REMOTE SENSOR: \n %s", s->toString().c_str());
+    //}
 
     for (auto& sensor : sensors)
     {
-      TEMOTO_DEBUG("------ COMPARING Sensor \n %s", sensor->toString().c_str());
+      //TEMOTO_DEBUG("------ COMPARING Sensor \n %s", sensor->toString().c_str());
       // Check if sensor has to be added or updated
       auto it = std::find_if(remote_sensors_.begin(), remote_sensors_.end(),
           [&](const SensorInfoPtr& rs) { return *rs == *sensor; });
@@ -163,7 +163,7 @@ void SensorManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& p
 
 void SensorManager::advertiseSensor(SensorInfoPtr sensor_ptr)
 {
-  TEMOTO_DEBUG("------ Advertising Sensor \n %s", sensor_ptr->toString().c_str());
+  //TEMOTO_DEBUG("------ Advertising Sensor \n %s", sensor_ptr->toString().c_str());
     YAML::Node config;
     config["Sensors"].push_back(*sensor_ptr);
     PayloadType payload;
@@ -468,7 +468,7 @@ SensorInfoPtrs SensorManager::parseSensors(const YAML::Node& config)
       {
         // OK, this is unique pointer, add it to the sensors vector.
         sensors.emplace_back(std::make_shared<SensorInfo>(sensor));
-        TEMOTO_DEBUG_STREAM("####### PARSED SENSOR: #######\n" << sensors.back()->toString());
+        //TEMOTO_DEBUG_STREAM("####### PARSED SENSOR: #######\n" << sensors.back()->toString());
       }
       else
       {

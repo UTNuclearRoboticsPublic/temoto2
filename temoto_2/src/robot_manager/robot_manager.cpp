@@ -52,6 +52,7 @@ RobotManager::RobotManager()
     for (auto& config : local_configs_)
     {
       TEMOTO_DEBUG("Added robot: '%s'.", config->getName().c_str());
+      TEMOTO_DEBUG_STREAM("CONFIG: \n" << config->toString());
     }
 
     // Advertise the parsed local robots

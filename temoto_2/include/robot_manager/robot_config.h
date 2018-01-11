@@ -54,7 +54,6 @@ public:
   void parseUrdf();
   void parseManipulation();
   void parseNavigation();
-  void parseGripper();
 
   std::string getName() const
   {
@@ -71,12 +70,20 @@ public:
     return reliability_.getReliability();
   }
 
-//  const RobotFeatures& getRobotFeatures() const
-//  {
-//    return features_;
-//  }
+  FeatureURDF& getFeatureURDF()
+  {
+    return feature_urdf_;
+  }
 
-//  RobotFeature& getRobotFeature(FeatureType type);
+  FeatureManipulation& getFeatureManipulation()
+  {
+    return feature_manipulation_;
+  }
+
+  FeatureNavigation& getFeatureNavigation()
+  {
+    return feature_navigation_;
+  }
 
   void adjustReliability(float reliability)
   {
@@ -107,6 +114,7 @@ private:
 
   std::string temoto_namespace_;
   YAML::Node yaml_config_;
+
   FeatureURDF feature_urdf_;
   FeatureManipulation feature_manipulation_;
   FeatureNavigation feature_navigation_;
@@ -121,10 +129,13 @@ typedef std::vector<RobotConfigPtr> RobotConfigs;
 
 static bool operator==(const RobotConfig& r1, const RobotConfig& r2)
 {
-  return (r1.getTemotoNamespace() == r2.getTemotoNamespace() && r1.getName() == r2.getName() &&
-          r1.getDescription() == r2.getDescription() &&
-          r1.getPlanningGroups() == r2.getPlanningGroups() &&
-          r1.getRobotFeatures() == r2.getRobotFeatures());
+  //compare if the two configs are created from the same YAML config string
+  return r1.getYAMLConfig() == r2.getYAMLConfig();
+
+//  return (r1.getTemotoNamespace() == r2.getTemotoNamespace() && r1.getName() == r2.getName() &&
+//          r1.getDescription() == r2.getDescription() &&
+//          r1.getPlanningGroups() == r2.getPlanningGroups() &&
+//          r1.getRobotFeatures() == r2.getRobotFeatures());
 }
 
 } // robot_manager namespace
