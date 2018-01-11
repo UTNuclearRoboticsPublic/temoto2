@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   geometry_msgs
   shape_msgs
+  visualization_msgs
   diagnostic_msgs
   class_loader
   cmake_modules
@@ -92,6 +93,7 @@ generate_messages(
   std_msgs
   geometry_msgs
   shape_msgs
+  visualization_msgs
   diagnostic_msgs
   temoto_2
 )

@@ -185,6 +185,8 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
     // Look if the requested object is described in the object database
     ObjectPtr requested_object = findObject(req.object_name);
 
+    TEMOTO_DEBUG_STREAM("The requested object is known, tracking it via: " << requested_object->detection_methods[0]);
+
     /*
      * Start a tracker that can be used to detect the requested object
      */
@@ -200,7 +202,7 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
       {
         load_tracker_msg = temoto_2::LoadTracker();
         load_tracker_msg.request.tracker_category = tracker_category;
-        resource_manager_2_.call<temoto_2::LoadTracker>(context_manager::srv_name::MANAGER_2,
+        resource_manager_1_.call<temoto_2::LoadTracker>(context_manager::srv_name::MANAGER_2,
                                                         context_manager::srv_name::TRACKER_SERVER,
                                                         load_tracker_msg);
       }
@@ -395,6 +397,8 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
          */
         if (pipe.at(i).filter_category_ == "sensor")
         {
+
+          TEMOTO_DEBUG_STREAM(" D0");
           // Compose the LoadSensor message
           temoto_2::LoadSensor load_sensor_msg;
           load_sensor_msg.request.sensor_type = pipe.at(i).filter_type_;
@@ -406,6 +410,8 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
                                                          load_sensor_msg);
 
           required_topics.setInputTopicsByKeyValue(load_sensor_msg.response.output_topics);
+
+          TEMOTO_DEBUG_STREAM(" D1");
         }
 
         /*
@@ -442,12 +448,16 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
           load_algorithm_msg.request.input_topics = required_topics.inputTopicsAsKeyValues();
           load_algorithm_msg.request.output_topics = required_topics.outputTopicsAsKeyValues();
 
+
+          TEMOTO_DEBUG_STREAM(" D2");
           // Call the Algorithm Manager
           resource_manager_2_.call<temoto_2::LoadAlgorithm>(algorithm_manager::srv_name::MANAGER,
                                                             algorithm_manager::srv_name::SERVER,
                                                             load_algorithm_msg);
 
           required_topics.setInputTopicsByKeyValue(load_algorithm_msg.response.output_topics);
+
+          TEMOTO_DEBUG_STREAM(" D3");
         }
       }
 

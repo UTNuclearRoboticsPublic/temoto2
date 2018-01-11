@@ -171,7 +171,7 @@ public:
     return topics_to_return;
   }
 
-  void trackObject(std::string object_name)
+  std::string trackObject(std::string object_name)
   {
     // Validate the interface
     try
@@ -193,7 +193,7 @@ public:
                                                               context_manager::srv_name::TRACK_OBJECT_SERVER,
                                                               track_object_msg);
 
-      TEMOTO_INFO_STREAM("The object is published on topic: " << track_object_msg.response.object_topic);
+      return track_object_msg.response.object_topic;
     }
     catch (error::ErrorStack& error_stack)
     {

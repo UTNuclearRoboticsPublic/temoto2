@@ -179,9 +179,6 @@ public:
 
     // -------------------------------< USER CODE >-------------------------------
 
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
-
     // Initialize the context manager interface
     cmi_.initialize(this);
 

@@ -9,10 +9,15 @@ string name
 # REQUIRED - How this object can be detected
 string[] detection_methods
 
-# Supported types for object detection are: 
-string ARTAG = "artags"     # Requires the "tag_id" field to be filled
-# string SEGMENT = 2   # Requires the "primitive" field to be filled
-# string TEMPLATE = 3  # Requires the "mesh" field to be filled
+# Supported types for object detection are:
+# Requires the "tag_id" field to be filled 
+string ARTAG = artags
+
+# Requires the "primitive" field to be filled 
+# string SEGMENT = 2
+
+# Requires the "mesh" field to be filled    
+# string TEMPLATE = 3   
 
 # REQUIRED IF this object can be detected by a tag
 int16 tag_id
@@ -23,8 +28,10 @@ int16 tag_id
 geometry_msgs/Pose obj_relative_pose
 
 # Describes the shape primitive (e.g., box, cylinder, cone, sphere)
-shape_msgs/SolidPrimitive primitive
+visualization_msgs/Marker marker
+# shape_msgs/SolidPrimitive primitive
 shape_msgs/Mesh mesh
+
 
 ##########################
 #   DYNAMIC PROPERTIES   #

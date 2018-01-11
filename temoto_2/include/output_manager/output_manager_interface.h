@@ -13,6 +13,12 @@
 
 namespace output_manager
 {
+
+namespace generic_topics
+{
+  const std::string MARKER = "marker_topic";
+}
+
 /**
  * @brief The OutputManagerInterface class
  */

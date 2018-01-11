@@ -81,23 +81,36 @@ void startInterface_0()
 
 // -------------------------------< USER CODE >-------------------------------
 
-  // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
-
   // Initialize the sensor manager interface
   cmi_.initialize(this);
 
   // Create a cylinder object
   temoto_2::ObjectContainer cylinder;
   cylinder.name = "cylinder";
-  cylinder.detection_methods.push_back(temoto_2::ObjectContainer::ARTAG);
-  cylinder.tag_id = 16;
 
-  shape_msgs::SolidPrimitive primitive;
-  primitive.type = shape_msgs::SolidPrimitive::CYLINDER;
-  primitive.dimensions.push_back(0.2);   // Height
-  primitive.dimensions.push_back(0.06);  // Radius
-  cylinder.primitive = primitive;
+  TEMOTO_INFO_STREAM("The tracking method for the cylinder is:" << temoto_2::ObjectContainer::ARTAG);
+
+  cylinder.detection_methods.push_back(temoto_2::ObjectContainer::ARTAG);
+  cylinder.tag_id = 17;
+
+  visualization_msgs::Marker marker;
+  marker.type = visualization_msgs::Marker::CYLINDER;
+  marker.scale.x = 0.08;
+  marker.scale.y = 0.08;
+  marker.scale.z = 0.12;
+
+  marker.color.r = 0.0f;
+  marker.color.g = 1.0f;
+  marker.color.b = 0.0f;
+  marker.color.a = 1.0;
+
+  cylinder.marker = marker;
+
+//  shape_msgs::SolidPrimitive primitive;
+//  primitive.type = shape_msgs::SolidPrimitive::CYLINDER;
+//  primitive.dimensions.push_back(0.2);   // Height
+//  primitive.dimensions.push_back(0.06);  // Radius
+//  cylinder.primitive = primitive;
 
   // Add a new object to the context manager
   cmi_.addWorldObjects(cylinder);

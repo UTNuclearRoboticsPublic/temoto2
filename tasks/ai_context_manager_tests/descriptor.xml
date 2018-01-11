@@ -11,6 +11,15 @@
         <arg word="cylinder"/>
       </what>
     </in>
+
+    <out>    
+      <what>
+        <arg word="object container"/>
+        <data>
+          <field datatype="topic"/>
+        </data>
+      </what>
+    </out>
    
   </interface>
 

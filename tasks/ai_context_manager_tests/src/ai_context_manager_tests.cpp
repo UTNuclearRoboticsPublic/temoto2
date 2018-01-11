@@ -79,6 +79,10 @@ void startInterface_0()
   TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
   std::string  what_0_word_in = what_0_in.words_[0];
 
+  // Creating output variables
+  std::string what_0_word_out;
+  std::string what_0_data_0_out;
+
   // </ AUTO-GENERATED, DO NOT MODIFY >
 
 // -------------------------------< USER CODE >-------------------------------
@@ -86,10 +90,20 @@ void startInterface_0()
   // Initialize the sensor manager interface
   cmi_.initialize(this);
 
-  // Track the object
-  cmi_.trackObject(what_0_word_in);
+  // Start tracking the object and return the topic to the object
+  what_0_data_0_out = cmi_.trackObject(what_0_word_in);
+  what_0_word_out = "object container";
 
 // -------------------------------</ USER CODE >-------------------------------
+
+  // < AUTO-GENERATED, DO NOT MODIFY >
+
+  TTP::Subject what_0_out("what", what_0_word_out);
+  what_0_out.markComplete();
+  what_0_out.data_.emplace_back("topic", boost::any_cast<std::string>(what_0_data_0_out));
+  output_subjects.push_back(what_0_out);
+
+  // </ AUTO-GENERATED, DO NOT MODIFY >
 }
 
 /*
@@ -133,13 +147,13 @@ void startInterface_1()
 
 // -------------------------------</ USER CODE >-------------------------------
 
-    // < AUTO-GENERATED, DO NOT MODIFY >
+  // < AUTO-GENERATED, DO NOT MODIFY >
 
-    TTP::Subject what_0_out("what", what_0_word_out);
-    what_0_out.markComplete();
-    output_subjects.push_back(what_0_out);
+  TTP::Subject what_0_out("what", what_0_word_out);
+  what_0_out.markComplete();
+  output_subjects.push_back(what_0_out);
 
-    // </ AUTO-GENERATED, DO NOT MODIFY >
+  // </ AUTO-GENERATED, DO NOT MODIFY >
 }
 
 ~ContextManagerTests()

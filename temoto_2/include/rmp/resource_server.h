@@ -173,7 +173,6 @@ public:
           auto q_it = getQueryByExternalId(ext_resource_id);
           queries_.erase(q_it);
           queries_mutex_.unlock();
-          return true;
         }
         catch(error::ErrorStack& query_error)
         {

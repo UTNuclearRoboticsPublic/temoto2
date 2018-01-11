@@ -55,5 +55,26 @@
 
   </interface>
 
+   <!--Interface block-->
+  <interface id="2" type="asynchronous">
+    
+    <!--Input block-->
+    <in>   
+ 
+      <what>
+        <arg word="object container"/>
+        <data>
+          <field datatype="topic"/>
+        </data>
+      </what>
+      
+      <where>
+        <arg word="RViz,rviz,r-viz,screen"/>
+      </where>
+
+    </in>
+
+  </interface>
+
 
 </task>

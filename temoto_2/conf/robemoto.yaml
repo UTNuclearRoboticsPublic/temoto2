@@ -15,7 +15,7 @@ Sensors:
   topic:  "stt/spoken_text"
   output_topics:
     data: "stt/spoken_text"
-  reliability: 0.9
+#  reliability: 0.9
 
 - sensor_name: "Sensor_0"
   sensor_type: "test_sensor_0"
