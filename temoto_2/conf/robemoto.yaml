@@ -15,7 +15,7 @@ Sensors:
   topic:  "stt/spoken_text"
   output_topics:
     data: "stt/spoken_text"
-  reliability: 0.9
+  #  reliability: 0.9
 
 - sensor_name: "Sensor_0"
   sensor_type: "test_sensor_0"
@@ -82,13 +82,14 @@ Robots:
   reliability: 0.8
   urdf:
     package_name: "vaultbot_description"
-    executable: "urdf/vaultbot_robot.urdf.xacro"
+    #executable: "urdf/vaultbot_robot.urdf.xacro"
+    executable: "urdf/vaultbot_robot_tools.urdf.xacro"
   manipulation:
     controller:
-      package_name: "vaultbot_moveit_config" #Has to contain move_group.launch
-      #package_name: "vaultbot_tools_moveit_config" #Has to contain move_group.launch
-      #planning_groups: ["arms", "ur5_right_temoto"]
-      planning_groups: ["arms"]
+      #package_name: "vaultbot_moveit_config" #Has to contain move_group.launch
+      package_name: "vaultbot_tools_moveit_config" #Has to contain move_group.launch
+      planning_groups: ["right_ur5_temoto"]
+      #planning_groups: ["arms"]
     driver:
       package_name: "task_robot"
       executable: "vaultbot_manipulation.launch"

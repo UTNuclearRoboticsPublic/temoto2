@@ -171,7 +171,7 @@ void Robot::loadManipulationDriver()
     std::string joint_states_topic = config_->getAbsRobotNamespace() + "/joint_states";
     waitForTopic(joint_states_topic, res_id);
 
-    ftr.setLoaded(true);
+    ftr.setDriverLoaded(true);
     TEMOTO_DEBUG("Feature 'manipulation driver' loaded.");
   }
   catch(error::ErrorStack& error_stack)
@@ -226,7 +226,7 @@ void Robot::loadNavigationDriver()
     std::string odom_topic = config_->getAbsRobotNamespace() + "/odom";
     waitForTopic(odom_topic, res_id);
 
-    ftr.setLoaded(true);
+    ftr.setDriverLoaded(true);
     TEMOTO_DEBUG("Feature 'navigation driver' loaded.");
   }
   catch(error::ErrorStack& error_stack)

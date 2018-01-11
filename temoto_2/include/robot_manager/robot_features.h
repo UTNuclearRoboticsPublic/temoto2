@@ -79,7 +79,7 @@ public:
 
   bool setDriverLoaded(bool loaded)
   {
-    feature_loaded_ = loaded;
+    driver_loaded_ = loaded;
   }
 
   bool isDriverEnabled() const
