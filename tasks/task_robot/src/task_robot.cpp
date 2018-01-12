@@ -65,7 +65,8 @@ public:
     std::string prefix = common::generateLogPrefix("", this->getPackageName(), __func__);
     // Load the ur5 robot
     //rmi_.loadRobot("ur5");
-    rmi_.loadRobot("vaultbot");
+    //rmi_.loadRobot("vaultbot");
+    rmi_.loadRobot();
 
     // DO NOT EXIT THIS FUNCTION
     //ros::waitForShutdown();

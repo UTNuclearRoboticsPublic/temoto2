@@ -2,6 +2,7 @@
 #define BASE_RESOURCE_SERVER_H
 
 #include <string>
+#include "temoto_error/temoto_error.h"
 #include "common/temoto_id.h"
 #include "common/base_subsystem.h"
 #include "rmp/resource_manager.h"
@@ -35,7 +36,7 @@ class BaseResourceServer : public BaseSubsystem
 		{
 		}
 
-    virtual void setFailedFlag(temoto_id::ID internal_resource_id) = 0;
+    virtual void setFailedFlag(temoto_id::ID internal_resource_id, error::ErrorStack& error_stack) = 0;
 
     const std::string& getName()
 		{

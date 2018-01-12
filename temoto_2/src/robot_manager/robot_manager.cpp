@@ -579,16 +579,30 @@ void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)
   // Currently we simply remove the loaded robot if it failed
   if (srv.request.status_code == rmp::status_codes::FAILED)
   {
-    auto it = loaded_robots_.find(srv.request.resource_id);
-    if (it != loaded_robots_.end())
+    // was it a remote robot
+    if (loaded_robots_.erase(srv.request.resource_id))
     {
-      RobotConfigPtr config = it->second->getConfig();
-      config->adjustReliability(0.0);
-      YAML::Node yaml_config;
-      yaml_config["Robots"].push_back(config->getYAMLConfig());
-      PayloadType payload;
-      payload.data = YAML::Dump(yaml_config);
-      config_syncer_.advertise(payload);
+      TEMOTO_DEBUG("Removed remote robot, because its status failed.");
+      return;
+    }
+
+    // check if it was a resource related to a robot feature has failed.
+    // unload the robot
+    for (auto it = loaded_robots_.begin(); it != loaded_robots_.end(); ++it)
+    {
+      if (it->second->hasResource(srv.request.resource_id))
+      {
+        RobotConfigPtr config = it->second->getConfig();
+        config->adjustReliability(0.0);
+        YAML::Node yaml_config;
+        yaml_config["Robots"].push_back(config->getYAMLConfig());
+        PayloadType payload;
+        payload.data = YAML::Dump(yaml_config);
+        std::cout<<payload<<std::endl;
+        config_syncer_.advertise(payload);
+        loaded_robots_.erase(it);
+        break;
+      }
     }
   }
 }
@@ -598,9 +612,17 @@ RobotConfigPtr RobotManager::findRobot(const std::string& robot_name, const Robo
   // Local list of devices that follow the requirements
   RobotConfigs candidates;
 
-  // Find the robot that matches the "name" criteria
-  auto it = std::copy_if(configs.begin(), configs.end(), std::back_inserter(candidates),
-                         [&](const RobotConfigPtr& s) { return s->getName() == robot_name; });
+  // If robot name is unspecified, pick the best one from all configs.
+  if (robot_name == "")
+  {
+    candidates = configs;
+  }
+  else
+  {
+    // Find the robot that matches the "name" criteria
+    auto it = std::copy_if(configs.begin(), configs.end(), std::back_inserter(candidates),
+        [&](const RobotConfigPtr& s) { return s->getName() == robot_name; });
+  }
 
   // If the list is empty, leave the req empty
   if (candidates.empty())

@@ -46,6 +46,8 @@ public:
   // return all the information required to visualize this robot
   std::string getVizInfo();
 
+  bool hasResource(temoto_id::ID resource_id);
+
 private:
   void load();
   void loadHardware();
@@ -65,7 +67,7 @@ private:
   bool isTopicAvailable(const std::string& topic);
 
   // General
-  std::string log_class_, log_subsys_, log_group_;
+  //  std::string log_class_, log_subsys_, log_group_;
   ros::NodeHandle nh_;
 
   // Robot configuration

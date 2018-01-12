@@ -166,11 +166,15 @@ public:
       }
       catch(error::ErrorStack& error_stack)
       {
-        // callback threw an exeption, clean up and return.
+        // callback threw an exeption, try to clean up and return.
         try
         {
           waitForLock(queries_mutex_);
           auto q_it = getQueryByExternalId(ext_resource_id);
+          if(q_it->failed_)
+          {
+            res.rmp.error_stack += q_it->getMsg().response.rmp.error_stack;
+          }
           queries_.erase(q_it);
           queries_mutex_.unlock();
         }
@@ -188,6 +192,25 @@ public:
       }
       catch(...)
       {
+        // callback threw an unknown exeption, prevent this for reaching ros callback.
+        // try to clean up and report.
+        try
+        {
+          waitForLock(queries_mutex_);
+          auto q_it = getQueryByExternalId(ext_resource_id);
+          if(q_it->failed_)
+          {
+            res.rmp.error_stack += q_it->getMsg().response.rmp.error_stack;
+          }
+          queries_.erase(q_it);
+          queries_mutex_.unlock();
+        }
+        catch(error::ErrorStack& query_error)
+        {
+          // just send the error when trying to  and continue
+          queries_mutex_.unlock();
+          SEND_ERROR(FORWARD_ERROR(query_error));
+        }
         active_server_mutex_.unlock();
         res.rmp.code = status_codes::FAILED;
         res.rmp.error_stack =
@@ -210,9 +233,23 @@ public:
             });
         if (q_it != queries_.end())
         {
-          // update the query with the response message filled in the callback
-          // make sure the internal_resource_id for that query is not changed.
+          // First, make sure the internal_resource_id for that query is not changed.
           res.rmp.resource_id = int_resource_id;
+
+          // check if the query has not been marked as failed while we were dealing with the owner's callback
+          // if it failed, remove the query. 
+          if(q_it->failed_)
+          {
+            // TODO Potentially some resources were sucessfully loaded, SEND UNLOAD REQUEST TO ALL
+            // LINKED CLIENTS
+            res.rmp.error_stack += q_it->getMsg().response.rmp.error_stack;
+            queries_.erase(q_it);
+            queries_mutex_.unlock();
+            res.rmp.code = status_codes::FAILED;
+            return true;
+          }
+
+          // update the query with the response message filled in the callback
           q_it->setMsgResponse(res);
 
           // prepare the response for the client
@@ -426,7 +463,7 @@ public:
     }
   }
 
-  void setFailedFlag(temoto_id::ID internal_resource_id)
+  void setFailedFlag(temoto_id::ID internal_resource_id, error::ErrorStack& error_stack)
   {
     waitForLock(queries_mutex_);
     const auto found_query_it =
@@ -436,8 +473,8 @@ public:
                      });
     if (found_query_it != queries_.end())
     {
-      // Query found, mark query as failed.
-      found_query_it->failed_ = true;
+      // Query found, mark query as failed and append why did it fail.
+      found_query_it->setFailed(error_stack);
     }
     queries_mutex_.unlock();
   }

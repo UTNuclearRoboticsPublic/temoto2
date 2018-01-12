@@ -8,6 +8,7 @@
 #include <utility>
 #include "common/temoto_id.h"
 #include "common/base_subsystem.h"
+#include "temoto_error/temoto_error.h"
 
 namespace rmp
 {
@@ -102,6 +103,12 @@ public:
   void setMsgResponse(const typename ServiceMsgType::Response& res)
   {
     msg_.response = res;
+  }
+  
+  void setFailed(const error::ErrorStack& error_stack)
+  {
+    failed_ = true;
+    msg_.response.rmp.error_stack += error_stack;
   }
 
 

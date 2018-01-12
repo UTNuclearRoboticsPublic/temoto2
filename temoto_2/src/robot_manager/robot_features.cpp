@@ -33,7 +33,14 @@ FeatureManipulation::FeatureManipulation(const YAML::Node& manip_conf)
   : FeatureWithDriver("manipulation")
 {
   this->package_name_ = manip_conf["controller"]["package_name"].as<std::string>();
-  this->executable_ = "move_group.launch";
+  if (manip_conf["controller"]["executable"].IsNull())
+  {
+    this->executable_ = "move_group.launch";
+  }
+  else
+  {
+    this->executable_ = manip_conf["controller"]["executable"].as<std::string>();
+  }
 
   // parse planning groups
   YAML::Node yaml_groups = manip_conf["controller"]["planning_groups"];

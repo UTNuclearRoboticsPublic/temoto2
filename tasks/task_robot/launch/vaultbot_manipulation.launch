@@ -3,14 +3,16 @@
   <!-- We do not have a robot connected, so publish fake joint states -->
   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
     <param name="/use_gui" value="false"/>
+    <rosparam param="/source_list">[move_group/fake_controller_joint_states]</rosparam>
+    <rosparam command="load" file="$(find vaultbot_tools_moveit_config)/config/initial_states.yaml" />
   </node>
 
   <!-- Given the published joint states, publish tf for the robot links -->
-  <!--node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen">
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen">
     <param name="robot_description" value="/robemoto/robot_manager/robots/vaultbot/robot_description" />
-  </node-->
+  </node>
 
-  <!-- publish a TF between /map and /odom -->
-  <node name="static_transform_publisher" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 map odom 10"/>
+  <!-- publish a TF from /map to /odom -->
+  <!--node name="static_transform_publisher" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 map odom 10"/-->
   
 </launch>

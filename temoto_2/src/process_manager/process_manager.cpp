@@ -133,6 +133,7 @@ void ProcessManager::update(const ros::TimerEvent&)
       std::stringstream ss;
       ss << "The process with pid '" << proc_it->first << "' has stopped.";
       srv.request.message = ss.str();
+      srv.request.error_stack = CREATE_ERROR(error::Code::PROCESS_STOPPED, ss.str());
 
       // store statuses to send
       statuses_to_send.push_back(srv);

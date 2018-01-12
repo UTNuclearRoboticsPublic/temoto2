@@ -77,8 +77,9 @@ Robots:
   #    package_name: "task_robot"
   #    executable: "ur5.launch"
   #
-- robot_name: "vaultbot"
-  description: "Husky base with 2xUR5 manipulators."
+
+- robot_name: "vaultbot_sim"
+  description: "Vaultbot with tools and fake hardware drivers"
   reliability: 0.8
   urdf:
     package_name: "vaultbot_description"
@@ -88,6 +89,7 @@ Robots:
     controller:
       #package_name: "vaultbot_moveit_config" #Has to contain move_group.launch
       package_name: "vaultbot_tools_moveit_config" #Has to contain move_group.launch
+      executable: "move_group.launch fake_execution:=true"
       #planning_groups: ["right_ur5_temoto"]
       planning_groups: ["left_ur5"]
       #planning_groups: ["arms"]

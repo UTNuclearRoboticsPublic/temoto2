@@ -93,7 +93,7 @@ void Robot::waitForParam(const std::string& param, temoto_id::ID interrupt_res_i
     TEMOTO_DEBUG("Waiting for %s ...", param.c_str());
     if (resource_manager_.hasFailed(interrupt_res_id))
     {
-      //throw CREATE_ERROR(robot_error::SERVICE_STATUS_FAIL, "Loading interrupted. A FAILED status was received from process manager.");
+      throw CREATE_ERROR(error::Code::SERVICE_STATUS_FAIL, "Loading interrupted. A FAILED status was received from process manager.");
     }
     ros::Duration(1).sleep();
   }
@@ -394,5 +394,14 @@ std::string Robot::getVizInfo()
   }
   
   return YAML::Dump(info);
+}
+
+bool Robot::hasResource(temoto_id::ID resource_id)
+{
+  return (config_->getFeatureURDF().getResourceId() == resource_id ||
+          config_->getFeatureManipulation().getResourceId() == resource_id ||
+          config_->getFeatureManipulation().getDriverResourceId() == resource_id ||
+          config_->getFeatureNavigation().getResourceId() == resource_id ||
+          config_->getFeatureNavigation().getDriverResourceId() == resource_id);
 }
 }

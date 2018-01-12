@@ -135,6 +135,7 @@ public:
       if (!client_ptr)
       {
         // cast failed
+        clients_mutex_.unlock();
         throw CREATE_ERROR(error::Code::RMP_FAIL, "Dynamic Cast failed, last time the same service was called using different type?");
       }
     }
@@ -254,7 +255,16 @@ public:
       if (srv.request.status_code == rmp::status_codes::FAILED)
       {
         // if this status message is about resource failure, mark the corresponding query as failed.
-        server->setFailedFlag(srv.request.resource_id);
+        server->setFailedFlag(srv.request.resource_id, srv.request.error_stack);
+      }
+
+      // Don't send status when it is adressed to server currently active and still in the middle of
+      // processing the loadCallback. Instead, the above will store the error message in server
+      // query response stack, which is returned when the load callback is processed.
+      if (server == active_server_)
+      {
+        TEMOTO_WARN("Skipping active server.");
+        continue;
       }
       
       // get ext ID's and Topic pairs which correspond to the external resource ID
@@ -266,6 +276,7 @@ public:
       info.srv.request.server_name = server->getName();
       for (const auto& ext_resource : ext_resources)
       {
+        TEMOTO_WARN(" %d, %s ",ext_resource.first,ext_resource.second.c_str());
         // ext_resource.first ==> external resource id
         // ext_resource.second ==> status topic
         info.srv.request.resource_id = ext_resource.first;
@@ -293,11 +304,12 @@ public:
       }
     }
 
-    if (infos.empty())
-    {
-      error_stack += CREATE_ERROR(error::Code::RMP_FAIL, "Internal resource with id %ld was not found from any queries.",
-                                  srv.request.resource_id);
-    }
+    // commented since infos
+   // if (infos.empty())
+   // {
+   //   error_stack += CREATE_ERROR(error::Code::RMP_FAIL, "Internal resource with id %ld was not found from any queries.",
+   //                               srv.request.resource_id);
+   // }
 
     if (!error_stack.empty())
     {

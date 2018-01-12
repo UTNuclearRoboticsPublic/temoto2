@@ -85,11 +85,12 @@ enum class Code : int
   // Process manager
   PROCESS_SPAWN_FAIL,  // Failed to spawn new process
   PROCESS_KILL_FAIL,   // Failed to kill a process
+  PROCESS_STOPPED,      // Resource has stopped
 
   // Robot manager
-  ROBOT_NOT_FOUND,   // The requested robot was not found from local and remote managers.
-  ROBOT_NOT_LOADED,  // The requested robot is not loaded.
-  ROBOT_CONFIG_FAIL, // Error when processing robot config.
+  ROBOT_NOT_FOUND,    // The requested robot was not found from local and remote managers.
+  ROBOT_NOT_LOADED,   // The requested robot is not loaded.
+  ROBOT_CONFIG_FAIL,  // Error when processing robot config.
 
   // Robot manager
   SENSOR_NOT_FOUND,  // The requested robot was not found from local and remote managers.
