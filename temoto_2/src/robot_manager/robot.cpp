@@ -20,19 +20,19 @@ Robot::~Robot()
   if(isLocal())
   {
     // Unload features
-    if (config_->getFeatureURDF().isEnabled())
+    if (config_->getFeatureURDF().isLoaded())
     {
       TEMOTO_WARN("Unloading URDF Feature.");
       resource_manager_.unloadClientResource(config_->getFeatureURDF().getResourceId());
     }
 
-    if (config_->getFeatureManipulation().isEnabled())
+    if (config_->getFeatureManipulation().isLoaded())
     {
       TEMOTO_WARN("Unloading Manipulation Feature.");
       resource_manager_.unloadClientResource(config_->getFeatureManipulation().getResourceId());
     }
 
-    if (config_->getFeatureManipulation().isDriverEnabled())
+    if (config_->getFeatureManipulation().isDriverLoaded())
     {
       TEMOTO_WARN("Unloading Manipulation driver Feature.");
       resource_manager_.unloadClientResource(config_->getFeatureManipulation().getDriverResourceId());
@@ -159,7 +159,7 @@ void Robot::loadManipulation()
   try
   {
     FeatureManipulation& ftr = config_->getFeatureManipulation();
-    temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable(), "fake_execution:=true load_robot_description:=false");
+    temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable(), ftr.getArgs());
     TEMOTO_DEBUG("Manipulation resource id: %d", res_id);
     ftr.setResourceId(res_id);
 
@@ -195,7 +195,7 @@ void Robot::loadManipulationDriver()
   try
   {
     FeatureManipulation& ftr = config_->getFeatureManipulation();
-    temoto_id::ID res_id = rosExecute(ftr.getDriverPackageName(), ftr.getDriverExecutable());
+    temoto_id::ID res_id = rosExecute(ftr.getDriverPackageName(), ftr.getDriverExecutable(), ftr.getDriverArgs());
     TEMOTO_DEBUG("Manipulation driver resource id: %d", res_id);
     ftr.setDriverResourceId(res_id);
 
@@ -222,7 +222,7 @@ void Robot::loadNavigation()
   try
   {
     FeatureNavigation& ftr = config_->getFeatureNavigation();
-    temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable());
+    temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable(), ftr.getArgs());
     TEMOTO_DEBUG("Navigation resource id: %d", res_id);
     ftr.setResourceId(res_id);
 
@@ -250,7 +250,7 @@ void Robot::loadNavigationDriver()
   try
   {
     FeatureNavigation& ftr = config_->getFeatureNavigation();
-    temoto_id::ID res_id = rosExecute(ftr.getDriverPackageName(), ftr.getDriverExecutable());
+    temoto_id::ID res_id = rosExecute(ftr.getDriverPackageName(), ftr.getDriverExecutable(), ftr.getDriverArgs());
     TEMOTO_DEBUG("Manipulation driver resource id: %d", res_id);
     ftr.setDriverResourceId(res_id);
 

@@ -100,7 +100,7 @@ private:
 
   void statusInfoCb(temoto_2::ResourceStatus& srv);
 
-  void loadLocalRobot(RobotConfigPtr info_ptr);
+  void loadLocalRobot(RobotConfigPtr info_ptr, temoto_id::ID resource_id);
 
 
   typedef std::shared_ptr<Robot> RobotPtr;

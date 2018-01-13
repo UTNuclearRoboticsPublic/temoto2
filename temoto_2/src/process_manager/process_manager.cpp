@@ -103,9 +103,11 @@ void ProcessManager::update(const ros::TimerEvent&)
       // Remove the process from the map
       running_processes_.erase(proc_it);
     }
-    else
+    // Process failed and does not exist any more.
+    // Remove it from the failed processes map
+    else if(!failed_processes_.erase(pid))
     {
-      TEMOTO_DEBUG("Unable to normally unload reource with pid: %d. Resource not running any more.", pid);
+      TEMOTO_DEBUG("Unable to unload reource with pid: %d. Resource is not running nor marked as failed.", pid);
     }
   }
   unloading_processes_.clear();
@@ -139,11 +141,10 @@ void ProcessManager::update(const ros::TimerEvent&)
       statuses_to_send.push_back(srv);
       
       // Remove the process from the map
-      // Commented out until proper resource mechanism is implemented.
       // Currently the status is propagated to who ever is using the resource,
       // each of which is responsible to unload the failed resource on its own.
-      //proc_it = running_processes_.erase(proc_it);
-      proc_it++;
+      failed_processes_.insert(*proc_it);
+      proc_it = running_processes_.erase(proc_it);
     }
     else
     {
@@ -168,8 +169,8 @@ void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
   // Validate the action command.
   if (req.action == action::ROS_EXECUTE) //|| action == action::SYS_EXECUTE)
   {
-    TEMOTO_DEBUG("adding '%s' '%s' '%s' to the loading queue.", req.action.c_str(),
-                 req.package_name.c_str(), req.executable.c_str());
+    TEMOTO_DEBUG("adding '%s' '%s' '%s' '%s' to the loading queue.", req.action.c_str(),
+                 req.package_name.c_str(), req.executable.c_str(), req.args.c_str());
 
     temoto_2::LoadProcess srv;
     srv.request = req;

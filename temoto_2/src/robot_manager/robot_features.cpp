@@ -33,13 +33,18 @@ FeatureManipulation::FeatureManipulation(const YAML::Node& manip_conf)
   : FeatureWithDriver("manipulation")
 {
   this->package_name_ = manip_conf["controller"]["package_name"].as<std::string>();
-  if (manip_conf["controller"]["executable"].IsNull())
+  if (manip_conf["controller"]["executable"])
   {
-    this->executable_ = "move_group.launch";
+    this->executable_ = manip_conf["controller"]["executable"].as<std::string>();
   }
   else
   {
-    this->executable_ = manip_conf["controller"]["executable"].as<std::string>();
+    this->executable_ = "move_group.launch";
+  }
+
+  if (manip_conf["controller"]["args"])
+  {
+    this->args_ = manip_conf["controller"]["args"].as<std::string>();
   }
 
   // parse planning groups
@@ -52,6 +57,10 @@ FeatureManipulation::FeatureManipulation(const YAML::Node& manip_conf)
 
   this->driver_package_name_ = manip_conf["driver"]["package_name"].as<std::string>();
   this->driver_executable_ = manip_conf["driver"]["executable"].as<std::string>();
+  if (manip_conf["driver"]["args"])
+  {
+    this->driver_args_ = manip_conf["driver"]["args"].as<std::string>();
+  }
   this->driver_enabled_ = true;
 }
 
@@ -63,12 +72,20 @@ FeatureNavigation::FeatureNavigation(const YAML::Node& nav_conf) : FeatureWithDr
 {
   this->package_name_ = nav_conf["controller"]["package_name"].as<std::string>();
   this->executable_ = "move_base.launch";
+  if (nav_conf["controller"]["args"])
+  {
+    this->args_ = nav_conf["driver"]["args"].as<std::string>();
+  }
   this->global_planner_ = nav_conf["controller"]["global_planner"].as<std::string>();
   this->local_planner_ = nav_conf["controller"]["local_planner"].as<std::string>();
   this->feature_enabled_ = true;
 
   this->driver_package_name_ = nav_conf["driver"]["package_name"].as<std::string>();
   this->driver_executable_ = nav_conf["driver"]["executable"].as<std::string>();
+  if (nav_conf["driver"]["args"])
+  {
+    this->driver_args_ = nav_conf["driver"]["args"].as<std::string>();
+  }
   this->driver_enabled_ = true;
 }
 

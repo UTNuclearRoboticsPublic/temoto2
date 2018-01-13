@@ -46,6 +46,7 @@ AlgorithmManager::AlgorithmManager()
   std::ifstream in(yaml_filename);
   YAML::Node config = YAML::Load(in);
 
+  // Parse the Algorithms section
   if (config["Algorithms"])
   {
     local_algorithms_ = parseAlgorithms(config);
@@ -57,12 +58,6 @@ AlgorithmManager::AlgorithmManager()
 
     // notify other managers about our algorithms
     advertiseLocalAlgorithms();
-  }
-  else
-  {
-    TEMOTO_WARN("Failed to read '%s'. Verify that the file exists and the sequence of algorithms "
-                "is listed under 'Algorithms' node.",
-                yaml_filename.c_str());
   }
   ///////////////////////////////////////////////////////////////////////////////////////
 

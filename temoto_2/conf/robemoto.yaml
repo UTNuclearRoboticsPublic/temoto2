@@ -89,13 +89,15 @@ Robots:
     controller:
       #package_name: "vaultbot_moveit_config" #Has to contain move_group.launch
       package_name: "vaultbot_tools_moveit_config" #Has to contain move_group.launch
-      executable: "move_group.launch fake_execution:=true"
+      executable: "move_group.launch"
+      args: "fake_execution:=true load_robot_description:=false"
       #planning_groups: ["right_ur5_temoto"]
       planning_groups: ["left_ur5"]
       #planning_groups: ["arms"]
     driver:
       package_name: "task_robot"
       executable: "vaultbot_manipulation.launch"
+      #args: ""
       #  navigation:
       #    controller:
       #      package_name: "husky_navigation" #Has to contain move_base.launch

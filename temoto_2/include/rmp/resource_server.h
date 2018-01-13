@@ -162,7 +162,6 @@ public:
       try
       {
         (owner_->*load_callback_)(req, res);
-        //TEMOTO_WARN_STREAM("OWNER CALLBACK:\nREQUEST:" << req << "\nRESPONSE:" << res);
       }
       catch(error::ErrorStack& error_stack)
       {
@@ -185,6 +184,7 @@ public:
           SEND_ERROR(FORWARD_ERROR(query_error));
         }
 
+        this->deactivateServer();
         active_server_mutex_.unlock();
         res.rmp.code = status_codes::FAILED;
         res.rmp.error_stack = FORWARD_ERROR(error_stack);
@@ -211,6 +211,7 @@ public:
           queries_mutex_.unlock();
           SEND_ERROR(FORWARD_ERROR(query_error));
         }
+        this->deactivateServer();
         active_server_mutex_.unlock();
         res.rmp.code = status_codes::FAILED;
         res.rmp.error_stack =

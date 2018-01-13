@@ -44,6 +44,8 @@ RobotManager::RobotManager()
   // \TODO: check
   std::ifstream in(yaml_filename);
   YAML::Node yaml_config = YAML::Load(in);
+
+  // Parse the Robots section
   if (yaml_config["Robots"])
   {
     local_configs_ = parseRobotConfigs(yaml_config);
@@ -58,28 +60,21 @@ RobotManager::RobotManager()
     // Advertise the parsed local robots
     advertiseConfigs(local_configs_);
   }
-  else
-  {
-    TEMOTO_WARN("Failed to read '%s'. Verify that the file exists and the sequence of robots "
-                "is listed under 'Robots' node.",
-                yaml_filename.c_str());
-  }
 
   TEMOTO_INFO("Robot manager is ready.");
 }
 
-void RobotManager::loadLocalRobot(RobotConfigPtr config)
+void RobotManager::loadLocalRobot(RobotConfigPtr config, temoto_id::ID resource_id)
 {
   if (!config)
   {
     throw CREATE_ERROR(error::Code::NULL_PTR, "config == NULL");
   }
 
-  temoto_2::LoadProcess::Response load_proc_res;
   try
   {
     active_robot_ = std::make_shared<Robot>(config, resource_manager_, *this);
-    loaded_robots_.emplace(load_proc_res.rmp.resource_id, active_robot_);
+    loaded_robots_.emplace(resource_id, active_robot_);
     config->adjustReliability(1.0);
     advertiseConfig(config);
     TEMOTO_DEBUG("Robot '%s' loaded.", config->getName().c_str());
@@ -103,7 +98,7 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
   {
     try
     {
-      loadLocalRobot(config);
+      loadLocalRobot(config, res.rmp.resource_id);
       res.rmp.code = rmp::status_codes::OK;
       res.rmp.message = "Robot sucessfully loaded.";
     }
@@ -160,14 +155,21 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
 void RobotManager::unloadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad::Response& res)
 {
   TEMOTO_DEBUG("ROBOT '%s' unloading...", req.robot_name.c_str());
+  TEMOTO_WARN_STREAM(req);
+  TEMOTO_WARN_STREAM(res);
 
 //  ros::Duration(5).sleep();
+for (const auto& r : loaded_robots_)
+{
+  TEMOTO_WARN_STREAM(r.first);
+}
 
   // search for the robot based on its resource id, remove from map,
   // and clear active_robot_ if the unloaded robot was active.
   auto it = loaded_robots_.find(res.rmp.resource_id);
   if (it != loaded_robots_.end())
   {
+    TEMOTO_WARN("REMOVING ROBOT");
     if (active_robot_ == it->second)
     {
       active_robot_ = NULL;

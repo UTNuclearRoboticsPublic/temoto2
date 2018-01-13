@@ -35,8 +35,12 @@ namespace process_manager
 
 
       std::string log_class_, log_subsys_, log_group_;
-			std::vector<temoto_2::LoadProcess> loading_processes_;
+
+      // TODO: This section should be replaced by a single container which also holds
+      // the state of each process.
+      std::vector<temoto_2::LoadProcess> loading_processes_;
       std::map<pid_t, temoto_2::LoadProcess> running_processes_;
+      std::map<pid_t, temoto_2::LoadProcess> failed_processes_;
       std::vector<pid_t> unloading_processes_;
 
       std::mutex loading_mutex_;

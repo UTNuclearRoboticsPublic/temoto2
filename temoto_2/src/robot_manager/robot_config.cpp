@@ -84,6 +84,11 @@ void RobotConfig::parseReliability()
 
 void RobotConfig::parseUrdf()
 {
+  if (!yaml_config_["urdf"].IsDefined())
+  {
+    return;
+  }
+
   try
   {
     feature_urdf_ = FeatureURDF(yaml_config_["urdf"]);
@@ -96,6 +101,11 @@ void RobotConfig::parseUrdf()
 
 void RobotConfig::parseManipulation()
 {
+  if (!yaml_config_["manipulation"].IsDefined())
+  {
+    return;
+  }
+
   try
   {
     feature_manipulation_ = FeatureManipulation(yaml_config_["manipulation"]);
@@ -108,6 +118,11 @@ void RobotConfig::parseManipulation()
 
 void RobotConfig::parseNavigation()
 {
+  if (!yaml_config_["navigation"].IsDefined())
+  {
+    return;
+  }
+
   try
   {
     feature_navigation_ = FeatureNavigation(yaml_config_["navigation"]);

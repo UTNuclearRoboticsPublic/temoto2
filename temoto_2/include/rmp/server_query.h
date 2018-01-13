@@ -40,7 +40,7 @@ public:
     return external_resources_.size();
   }
 
-  // Check if external connection with given resource_id is attached to this query.
+  // Check if external connection with given resource_id is attached to this query.rmp.resource_id = found_query_it->get
   bool hasExternalResource(temoto_id::ID external_resource_id) const
   {
     return external_resources_.find(external_resource_id) != external_resources_.end();
@@ -100,7 +100,7 @@ public:
     return external_resources_;
   }
 
-  void setMsgResponse(const typename ServiceMsgType::Response& res)
+  void setMsgResponse(const typename ServiceMsgType::Response res)
   {
     msg_.response = res;
   }
