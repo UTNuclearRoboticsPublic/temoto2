@@ -7,7 +7,8 @@ from cStringIO import StringIO
 
 def myhook():
       print("Removing robot_description from parameter server")
-      rospy.delete_param("robot_description")
+      if rospy.has_param("robot_description"):
+        rospy.delete_param("robot_description")
 
 rospy.on_shutdown(myhook)
 

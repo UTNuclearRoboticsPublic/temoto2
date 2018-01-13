@@ -217,6 +217,8 @@ public:
       // found the client, unload resource
       (*client_it)->unloadResource(resource_id);
 
+   //   unlinkResource(resource_id);
+
       // when all resources for this client are removed, destroy this client
       if ((*client_it)->getQueryCount() <= 0)
       {

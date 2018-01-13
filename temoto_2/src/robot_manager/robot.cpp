@@ -24,22 +24,39 @@ Robot::~Robot()
     {
       TEMOTO_WARN("Unloading URDF Feature.");
       resource_manager_.unloadClientResource(config_->getFeatureURDF().getResourceId());
+      config_->getFeatureURDF().setLoaded(false);
     }
 
     if (config_->getFeatureManipulation().isLoaded())
     {
       TEMOTO_WARN("Unloading Manipulation Feature.");
       resource_manager_.unloadClientResource(config_->getFeatureManipulation().getResourceId());
+      config_->getFeatureManipulation().setLoaded(false);
     }
 
     if (config_->getFeatureManipulation().isDriverLoaded())
     {
       TEMOTO_WARN("Unloading Manipulation driver Feature.");
       resource_manager_.unloadClientResource(config_->getFeatureManipulation().getDriverResourceId());
+      config_->getFeatureManipulation().setDriverLoaded(false);
+    }
+
+    if (config_->getFeatureNavigation().isLoaded())
+    {
+      TEMOTO_WARN("Unloading Manipulation Feature.");
+      resource_manager_.unloadClientResource(config_->getFeatureNavigation().getResourceId());
+      config_->getFeatureNavigation().setLoaded(false);
+    }
+
+    if (config_->getFeatureNavigation().isDriverLoaded())
+    {
+      TEMOTO_WARN("Unloading Manipulation driver Feature.");
+      resource_manager_.unloadClientResource(config_->getFeatureNavigation().getDriverResourceId());
+      config_->getFeatureNavigation().setDriverLoaded(false);
     }
     
     // Remove parameters
-    if(nh_.deleteParam(config_->getAbsRobotNamespace()+"/*"))
+    if(nh_.deleteParam(config_->getAbsRobotNamespace()))
     {
       TEMOTO_DEBUG("Parameter(s) removed successfully.");
     }
