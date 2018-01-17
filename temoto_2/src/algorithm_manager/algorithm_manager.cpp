@@ -217,10 +217,8 @@ void AlgorithmManager::advertiseLocalAlgorithms()
 void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
                                      , temoto_2::LoadAlgorithm::Response& res)
 {
-  TEMOTO_DEBUG("received a request to load '%s': '%s', '%s'"
-             , req.algorithm_type.c_str()
-             , req.package_name.c_str()
-             , req.executable.c_str());
+  TEMOTO_INFO_STREAM("- - - - - - - - - - - - -\n"
+                     << "Received a request to load an algorithm: \n" << req << std::endl);
 
 //  TEMOTO_DEBUG_STREAM("\n IN MORE DETAIL: \n" << req << "\n");
 

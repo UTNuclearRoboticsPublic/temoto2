@@ -17,6 +17,7 @@
 #include "output_manager/output_manager_interface.h"
 #include "temoto_2/ObjectContainer.h"
 #include <visualization_msgs/Marker.h>
+#include "leap_motion_controller/Set.h"
 
 // First implementaton
 class TaskShow: public TTP::BaseTask
@@ -30,7 +31,7 @@ public:
 TaskShow()
 {
     // Do something here if needed
-    ROS_INFO("TaskShow constructed");
+    TEMOTO_INFO("Action implementation constructed");
 }
 
 // startTask with arguments
@@ -93,8 +94,7 @@ void startInterface_0()
   // Initialize the output manager interface
   omi_.initialize(this);
 
-  std::cout << "D2\n";
-  TASK_INFO(" TaskShow: Showing '%s' in '%s' @ '%s' topic", what_0_word_in.c_str(),
+  TEMOTO_INFO(" TaskShow: Showing '%s' in '%s' @ '%s' topic", what_0_word_in.c_str(),
             where_0_word_in.c_str(), what_0_data_0_in.c_str());
 
   // Show the image in rviz
@@ -116,41 +116,12 @@ void startInterface_0()
   // </ AUTO-GENERATED, DO NOT MODIFY >
 }
 
+
 /*
- * Interface 1 body
+ * Interface 1 body:
+ * Converts object container msgs to visualization marker msgs
  */
 void startInterface_1()
-{
-  // < AUTO-GENERATED, DO NOT MODIFY >
-
-  // Extracting input subjects
-  TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
-  std::string  what_0_word_in = what_0_in.words_[0];
-  std::string  what_0_data_0_in = boost::any_cast<std::string>(what_0_in.data_[0].value);
-
-  TTP::Subject where_0_in = TTP::getSubjectByType("where", input_subjects);
-  std::string  where_0_word_in = where_0_in.words_[0];
-
-  // </ AUTO-GENERATED, DO NOT MODIFY >
-
-  /* --------------------------------< USER CODE >------------------------------- */
-
-  // Initialize the output manager interface
-  omi_.initialize(this);
-
-  TASK_INFO(" TaskShow: Showing '%s' in '%s' @ '%s' topic", what_0_word_in.c_str(),
-            where_0_word_in.c_str(), what_0_data_0_in.c_str());
-
-  // Show the marker in rviz
-  omi_.showInRviz("marker", what_0_data_0_in);
-
-  /* --------------------------------</ USER CODE >------------------------------- */
-}
-
-/*
- * Interface 2 body
- */
-void startInterface_2()
 {
   // < AUTO-GENERATED, DO NOT MODIFY >
 
@@ -177,7 +148,50 @@ void startInterface_2()
   // Advertise the marker topic
   marker_publisher_ = nh_.advertise<visualization_msgs::Marker>(marker_topic, 10);
 
-  TASK_INFO(" TaskShow: Showing '%s' in '%s' @ '%s' topic", what_0_word_in.c_str(),
+  TEMOTO_INFO("Receiving object container data on topic: '%s'", what_0_data_0_in.c_str());
+  TEMOTO_INFO("Showing '%s' in '%s' @ '%s' topic", what_0_word_in.c_str(),
+            where_0_word_in.c_str(), marker_topic.c_str());
+
+  // Show the marker in rviz
+  omi_.showInRviz("marker", marker_topic);
+
+  /* --------------------------------</ USER CODE >------------------------------- */
+}
+
+
+/*
+ * Interface 2 body:
+ * Converts handtracker msgs to visualization marker msgs
+ */
+void startInterface_2()
+{
+  // < AUTO-GENERATED, DO NOT MODIFY >
+
+  // Extracting input subjects
+  TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
+  std::string  what_0_word_in = what_0_in.words_[0];
+  std::string  what_0_data_0_in = boost::any_cast<std::string>(what_0_in.data_[0].value);
+
+  TTP::Subject where_0_in = TTP::getSubjectByType("where", input_subjects);
+  std::string  where_0_word_in = where_0_in.words_[0];
+
+  // </ AUTO-GENERATED, DO NOT MODIFY >
+
+  /* --------------------------------< USER CODE >------------------------------- */
+
+  // Initialize the output manager interface
+  omi_.initialize(this);
+
+  std::string marker_topic = common::getAbsolutePath(output_manager::generic_topics::MARKER);
+
+  // Subscribe to the handtracker topic
+  object_subscriber_ = nh_.subscribe(what_0_data_0_in, 10, &TaskShow::handCb, this);
+
+  // Advertise the marker topic
+  marker_publisher_ = nh_.advertise<visualization_msgs::Marker>(marker_topic, 10);
+
+  TEMOTO_INFO("Receiving handtracker data on topic: '%s'", what_0_data_0_in.c_str());
+  TEMOTO_INFO("Showing '%s' in '%s' @ '%s' topic", what_0_word_in.c_str(),
             where_0_word_in.c_str(), marker_topic.c_str());
 
   // Show the marker in rviz
@@ -198,23 +212,78 @@ std::vector<TTP::Subject> getSolution()
  * Inherited methods that have to be implemented / END
  * * * * * * * * * * * * * * * * * * * * * * * * */
 
+/**
+ * @brief objectContainerCb
+ * @param msg
+ */
 void objectContainerCb(temoto_2::ObjectContainer msg)
 {
-  TEMOTO_INFO_STREAM(" Publishing the marker");
+  TEMOTO_DEBUG_STREAM(" Publishing the marker");
 
-  std::cout << msg.pose << std::endl;
-
+  /*
+   * The ObjectContainer already contains the marker message, but only
+   * its visual parameters are initialized.
+   */
   msg.marker.header = msg.pose.header;
   msg.marker.pose = msg.pose.pose;
-
   msg.marker.ns = msg.name;
   msg.marker.id = 0;
-
   msg.marker.lifetime = ros::Duration();
 
   if (marker_publisher_)
   {
     marker_publisher_.publish(msg.marker);
+  }
+  else
+  {
+    TASK_ERROR("Excepition ERROR kutsuge 112 cobra");
+  }
+}
+
+/**
+ * @brief handCb
+ * @param hand_msg
+ */
+void handCb(leap_motion_controller::Set hand_msg)
+{
+  visualization_msgs::Marker marker;
+  // Set the frame ID and timestamp.  See the TF tutorials for information on these.
+  marker.header = hand_msg.left_hand.palm_pose.header;
+
+  marker.ns = "hand_indicator";
+  marker.id = 0;
+
+  // Set the marker type.  Initially this is CUBE, and cycles between that and SPHERE, ARROW, and
+  // CYLINDER
+  marker.type = visualization_msgs::Marker::CUBE;
+
+  // Set the marker action.  Options are ADD, DELETE, and new in ROS Indigo: 3 (DELETEALL)
+  marker.action = visualization_msgs::Marker::ADD;
+
+  // Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in
+  // the header
+  marker.pose = hand_msg.left_hand.palm_pose.pose;
+  //    double z = marker.pose.position.z;
+  //    marker.pose.position.z = -0.5*marker.pose.position.y;
+  //    marker.pose.position.y = -5*z;
+  //    marker.pose.position.x *= -1.5;
+
+  // Set the scale of the marker -- 1x1x1 here means 1m on a side
+  marker.scale.x = 0.1;
+  marker.scale.y = 0.17;
+  marker.scale.z = 0.05;
+
+  // Set the color -- be sure to set alpha to something non-zero!
+  marker.color.r = 1.0f;
+  marker.color.g = 0.0f;
+  marker.color.b = 0.0f;
+  marker.color.a = 1.0;
+
+  marker.lifetime = ros::Duration();
+
+  if (marker_publisher_)
+  {
+    marker_publisher_.publish(marker);
   }
   else
   {
@@ -235,8 +304,13 @@ output_manager::OutputManagerInterface<TaskShow> omi_;
 // Nodehandle for subscribers and publishers
 ros::NodeHandle nh_;
 
+ros::Timer timer;
+
 // Subscriber to temoto objects
 ros::Subscriber object_subscriber_;
+
+// Subscriber to temoto objects
+ros::Subscriber hand_subscriber_;
 
 // Marker publisher
 ros::Publisher marker_publisher_;

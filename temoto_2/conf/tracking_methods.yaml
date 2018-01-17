@@ -3,6 +3,8 @@ hands:
 - method:
   - filter_category: "sensor"
     filter_type: "hand"
+    output_topic_types:
+      - handtracker_data
 
 - method:
   - filter_category: "sensor"

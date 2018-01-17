@@ -59,6 +59,8 @@ public:
 
     std::vector<Subject>& getFirstInputSubjects();
 
+    std::vector<Subject>& getFirstOutputSubjects(); // TODO !!! remove this thing, its just for debugging purposes
+
     TaskInterface& getFirstInterface();
 
     std::vector<Subject>& getIncompleteSubjects();

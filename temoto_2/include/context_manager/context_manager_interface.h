@@ -118,8 +118,9 @@ public:
     // Call the server
     try
     {
-      resource_manager_->template call<temoto_2::LoadGesture>(
-          context_manager::srv_name::MANAGER, context_manager::srv_name::GESTURE_SERVER, srv_msg);
+      resource_manager_->template call<temoto_2::LoadGesture>(context_manager::srv_name::MANAGER,
+                                                              context_manager::srv_name::GESTURE_SERVER,
+                                                              srv_msg);
       allocated_gestures_.push_back(srv_msg);
     }
     catch(error::ErrorStack& error_stack)
@@ -159,6 +160,7 @@ public:
       resource_manager_->template call<temoto_2::LoadTracker>(context_manager::srv_name::MANAGER_2,
                                                               context_manager::srv_name::TRACKER_SERVER,
                                                               load_tracker_msg);
+      allocated_trackers_.push_back(load_tracker_msg);
     }
     catch (error::ErrorStack& error_stack)
     {
@@ -299,8 +301,7 @@ public:
     // there is a chance that sensor manager gives us better sensor this time
     if (srv.request.status_code == rmp::status_codes::FAILED)
     {
-      TEMOTO_WARN("Context Manager interface detected a sensor failure. Unloading and "
-                                "trying again");
+      TEMOTO_WARN("Received a notification about a resource failure. Unloading and trying again");
       auto gest_it = std::find_if(allocated_gestures_.begin(), allocated_gestures_.end(),
                                   [&](const temoto_2::LoadGesture& sens) -> bool {
                                     return sens.response.rmp.resource_id == srv.request.resource_id;
@@ -310,6 +311,12 @@ public:
                                   [&](const temoto_2::LoadSpeech& sens) -> bool {
                                     return sens.response.rmp.resource_id == srv.request.resource_id;
                                   });
+
+      auto tracker_it = std::find_if(allocated_trackers_.begin(), allocated_trackers_.end(),
+                                  [&](const temoto_2::LoadTracker& sens) -> bool {
+                                    return sens.response.rmp.resource_id == srv.request.resource_id;
+                                  });
+
       if (speech_it != allocated_speeches_.end())
       {
         try
@@ -358,7 +365,38 @@ public:
         gesture_subscriber_ = nh_.subscribe(gest_it->response.topic, 1000, task_gesture_cb_, task_gesture_obj_);
       }
 
-      if (gest_it != allocated_gestures_.end() && speech_it != allocated_speeches_.end())
+      // If the tracker was found then ...
+      if (tracker_it != allocated_trackers_.end())
+      {
+        try
+        {
+          // ... unload it and ...
+          TEMOTO_DEBUG("Unloading the tracker");
+          resource_manager_->unloadClientResource(tracker_it->response.rmp.resource_id);
+
+          // ... copy the output topics from the response into the output topics
+          // of the request (since the user still wants to receive the data on the same topics) ...
+          tracker_it->request.output_topics = tracker_it->response.output_topics;
+          tracker_it->request.pipe_id = tracker_it->response.pipe_id;
+
+          // ... and load an alternative tracker. This call automatically
+          // updates the response in allocated trackers vector
+
+          TEMOTO_DEBUG_STREAM("Trying to load an alternative tracker");
+
+          resource_manager_->template call<temoto_2::LoadTracker>(context_manager::srv_name::MANAGER_2,
+                                                                  context_manager::srv_name::TRACKER_SERVER,
+                                                                  *tracker_it);
+        }
+        catch(error::ErrorStack& error_stack)
+        {
+          throw FORWARD_ERROR(error_stack);
+        }
+      }
+
+      if (gest_it != allocated_gestures_.end() &&
+          speech_it != allocated_speeches_.end() &&
+          tracker_it != allocated_trackers_.end())
       {
         throw CREATE_ERROR(error::Code::RESOURCE_NOT_FOUND, "Got resource_id that is not registered in this interface.");
       }
@@ -395,6 +433,7 @@ private:
 
   std::vector<temoto_2::LoadGesture> allocated_gestures_;
   std::vector<temoto_2::LoadSpeech> allocated_speeches_;
+  std::vector<temoto_2::LoadTracker> allocated_trackers_;
 
   /**
    * @brief validateInterface()

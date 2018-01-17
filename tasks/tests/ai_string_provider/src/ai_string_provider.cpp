@@ -15,7 +15,7 @@
 #include <visualization_msgs/Marker.h>
 
 // First implementaton
-class ContextManagerTests1: public TTP::BaseTask
+class StringProvider: public TTP::BaseTask
 {
 public:
 
@@ -23,10 +23,10 @@ public:
  * Inherited methods that have to be implemented /START
  * * * * * * * * * * * * * * * * * * * * * * * * */
 
-ContextManagerTests1()
+StringProvider()
 {
   // Do something here if needed
-  TASK_INFO("ContextManagerTests1 constructed");
+  TEMOTO_INFO("Object constructed");
 }
 
 // startTask with arguments
@@ -39,10 +39,10 @@ void startTask(TTP::TaskInterface task_interface)
   input_subjects = task_interface.input_subjects_;
   switch(task_interface.id_)
   {
-    // Interface 0
-    case 0:
-      startInterface_0();
-    break;
+      // Interface 0
+      case 0:
+          startInterface_0();
+      break;
   }
   // </ AUTO-GENERATED, DO NOT MODIFY >
 }
@@ -75,76 +75,41 @@ void startInterface_0()
   std::string  what_0_word_in = what_0_in.words_[0];
 
   // Creating output variables
-  std::string  what_0_word_out;
+  std::string what_0_word_out;
+  std::string what_0_data_0_out;
 
   // </ AUTO-GENERATED, DO NOT MODIFY >
 
 // -------------------------------< USER CODE >-------------------------------
 
-  // Initialize the sensor manager interface
-  cmi_.initialize(this);
+  TEMOTO_INFO_STREAM("The word I received: " << what_0_word_in);
+  what_0_data_0_out = "/magnificent_topic_data/over_here";
+  what_0_word_out = what_0_word_in + " " + what_0_word_in;
 
-  // Create a cylinder object
-  temoto_2::ObjectContainer cylinder;
-  cylinder.name = "cylinder";
-
-  TEMOTO_INFO_STREAM("The tracking method for the cylinder is:" << temoto_2::ObjectContainer::ARTAG);
-
-  cylinder.detection_methods.push_back(temoto_2::ObjectContainer::ARTAG);
-  cylinder.tag_id = 9;
-
-  visualization_msgs::Marker marker;
-  marker.type = visualization_msgs::Marker::CYLINDER;
-  marker.scale.x = 0.08;
-  marker.scale.y = 0.08;
-  marker.scale.z = 0.12;
-
-  marker.color.r = 0.0f;
-  marker.color.g = 1.0f;
-  marker.color.b = 0.0f;
-  marker.color.a = 1.0;
-
-  cylinder.marker = marker;
-
-//  shape_msgs::SolidPrimitive primitive;
-//  primitive.type = shape_msgs::SolidPrimitive::CYLINDER;
-//  primitive.dimensions.push_back(0.2);   // Height
-//  primitive.dimensions.push_back(0.06);  // Radius
-//  cylinder.primitive = primitive;
-
-  // Add a new object to the context manager
-  cmi_.addWorldObjects(cylinder);
-
-  // Pass the name of the object to the output
-  what_0_word_out = cylinder.name;
-
-  // -------------------------------</ USER CODE >-------------------------------
+// -------------------------------</ USER CODE >-------------------------------
 
   // < AUTO-GENERATED, DO NOT MODIFY >
 
   TTP::Subject what_0_out("what", what_0_word_out);
   what_0_out.markComplete();
+  what_0_out.data_.emplace_back("topic", boost::any_cast<std::string>(what_0_data_0_out));
   output_subjects.push_back(what_0_out);
 
   // </ AUTO-GENERATED, DO NOT MODIFY >
 }
 
-~ContextManagerTests1()
+
+
+~StringProvider()
 {
-    TASK_INFO("ContextManagerTests1 destructed");
+    TEMOTO_INFO("Object destructed");
 }
 
 private:
-
-// Nodehandle
-ros::NodeHandle n_;
-
-// Create context manager interface object for context manager manager
-context_manager::ContextManagerInterface <ContextManagerTests1> cmi_;
 
 std::string task_alias;
 
 };
 
 // Dont forget that part, otherwise this class would not be loadable
-CLASS_LOADER_REGISTER_CLASS(ContextManagerTests1, TTP::BaseTask);
+CLASS_LOADER_REGISTER_CLASS(StringProvider, TTP::BaseTask);

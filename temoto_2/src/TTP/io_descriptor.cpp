@@ -156,11 +156,15 @@ bool operator==(const std::vector<Subject>& subs_1, const std::vector<Subject>& 
  */
 std::ostream& operator<<( std::ostream& stream, const std::vector<Subject>& subjects)
 {
+
+  //std::cout << "DDD0\n";
   // Print out the whats
   if (!subjects.empty())
   {
+    //std::cout << "DDD1\n";
     for (const auto& subject : subjects)
     {
+      //std::cout << "DDD2\n";
       stream << "| |_ " << subject;
     }
     stream << "|" << std::endl;
@@ -174,7 +178,8 @@ std::ostream& operator<<( std::ostream& stream, const std::vector<Subject>& subj
  */
 std::ostream& operator<<( std::ostream& stream, const Subject& subject)
 {
-    // Print out the type
+  // Print out the type
+  //std::cout << "DDDD0 " << subject.type_ << std::endl;
   stream << subject.type_ << ": ";
 
   // Print out if the subject is complete or not
@@ -189,9 +194,12 @@ std::ostream& operator<<( std::ostream& stream, const Subject& subject)
 
   stream << " [";
 
+  //std::cout << "DDDD1 " << std::endl;
+
   // Print out the word (candidate words)
   for (auto& word : subject.words_)
   {
+    //std::cout << "DDDD2 " << word << std::endl;
     stream << word;
     if (&word != &subject.words_.back())
     {
@@ -199,14 +207,18 @@ std::ostream& operator<<( std::ostream& stream, const Subject& subject)
     }
   }
 
+  //std::cout << "DDDD3 " << std::endl;
+
   stream << "]";
 
   // Print out the data
   if (!subject.data_.empty())
   {
+    //std::cout << "DDDD4 " << std::endl;
     stream << " + data {";
     for (auto& data : subject.data_)
     {
+      //std::cout << "DDDD5 " << std::endl;
       stream << data;
       if (&data != &subject.data_.back())
       {
@@ -215,6 +227,8 @@ std::ostream& operator<<( std::ostream& stream, const Subject& subject)
     }
     stream << "}";
   }
+
+  //std::cout << "DDDD6 " << std::endl;
 
   stream << std::endl;
 
@@ -235,13 +249,20 @@ bool operator==(const std::vector<Data>& dv1, const std::vector<Data>& dv2)
   // Create a copy of dv2
   std::vector<Data> dv2_c = dv2;
 
+  //std::cout << "DDDDD 0 " << std::endl;
+
   for (auto& d1 : dv1)
   {
+
+    //std::cout << "DDDDD 1 " << std::endl;
+
     bool d_match = false;
     for (unsigned int i=0; i<dv2.size(); i++)
     {
+      //std::cout << "DDDDD 2 " << std::endl;
       if (d1 == dv2_c[i])
       {
+        //std::cout << "DDDDD 3 " << std::endl;
         d_match = true;
         dv2_c.erase(dv2_c.begin() + i);
         break;
@@ -260,30 +281,51 @@ bool operator==(const std::vector<Data>& dv1, const std::vector<Data>& dv2)
  */
 std::ostream& operator<<( std::ostream& stream, const Data& data)
 {
+    //std::cout << "DDDDDD 0 " << std::endl;
+
     stream << "[" << data.type;
+
+    //std::cout << "DDDDDD 1 " << std::endl;
     if (!data.value.empty())
     {
+        //std::cout << "DDDDDD 2 " << std::endl;
         try
         {
             if (data.type == "string")
             {
+                //std::cout << "DDDDDD 3 " << std::endl;
                 stream << " : " << boost::any_cast<std::string>(data.value);
             }
 
             if (data.type == "topic")
             {
+                //std::cout << "DDDDDD 4 " << std::endl;
+                //std::cout << "DDDDDD 4.2 " << data.value.type().name() << std::endl;
+                std::string test = boost::any_cast<std::string>(data.value);
+                //std::cout << "DDDDDD 4.5 " << std::endl;
+
                 stream << " : " << boost::any_cast<std::string>(data.value);
             }
 
             if (data.type == "number")
             {
+                //std::cout << "DDDDDD 5 " << std::endl;
                 stream << " : " << boost::any_cast<float>(data.value);
             }
+
+            //std::cout << "DDDDDD 6 " << std::endl;
         }
         catch (boost::bad_any_cast& e)
         {
             stream << " : " << e.what();
         }
+        catch (...)
+        {
+            std::cout << "DDDDDD 7 " << std::endl;
+            throw;
+        }
+
+        //std::cout << "DDDDDD 8 " << std::endl;
     }
     stream << "]";
 

@@ -5,23 +5,30 @@ Sensors:
   package_name: "leap_motion_controller"
   executable:  "leap_motion"
   output_topics:
-    data: "leap_motion_output"
+    handtracker_data: "leap_motion_output"
+
+- sensor_name: "Simulated Hand Tracker"
+  sensor_type: "hand"
+  package_name: "temoto_tests"
+  executable:  "hand_tracker_1.launch"
+  output_topics:
+    handtracker_data: "leap_motion_output"
  
 - sensor_name: "Camera 0"
   sensor_type: "camera"
   package_name: "task_show"
   executable:  "camera0.launch"
   output_topics:
-    camera_info: "usb_cam/camera_info"
-    data: "usb_cam/image_raw"
+#    camera_info: "usb_cam/camera_info"
+    camera_data: "usb_cam/image_raw"
 
 - sensor_name: "Camera 1"
   sensor_type: "camera"
   package_name: "task_show"
   executable:  "camera1.launch"
   output_topics:
-    camera_info: "usb_cam/camera_info"
-    data: "usb_cam/image_raw"
+#    camera_info: "usb_cam/camera_info"
+    camera_data: "usb_cam/image_raw"
 
 - sensor_name: "Lenovo Cam"
   sensor_type: "camera"

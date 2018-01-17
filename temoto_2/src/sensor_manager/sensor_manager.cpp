@@ -194,10 +194,8 @@ void SensorManager::advertiseLocalSensors()
 void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
                                   temoto_2::LoadSensor::Response& res)
 {
-  TEMOTO_DEBUG("received a request to start '%s': '%s', '%s'", req.sensor_type.c_str(),
-               req.package_name.c_str(), req.executable.c_str());
-
-  TEMOTO_DEBUG_STREAM("\n IN MORE DETAIL: \n" << req << "\n");
+  TEMOTO_INFO_STREAM("- - - - - - - - - - - - -\n"
+                     << "Received a request to load a sensor: \n" << req << std::endl);
 
   // Try to find suitable candidate from local sensors
   auto sensor_ptr = findSensor(req, local_sensors_);

@@ -59,7 +59,22 @@ TaskInterface& TaskDescriptor::getFirstInterface()
 
 std::vector<Subject>& TaskDescriptor::getFirstInputSubjects()
 {
-    return task_interfaces_[0].input_subjects_;
+//    std::cout << "Get first input subs\n";
+//    std::cout << "size = " << task_interfaces_.size() << std::endl;
+//    std::cout << "size isub = " << task_interfaces_.at(0).input_subjects_.size() << std::endl;
+//    std::cout << task_interfaces_.at(0).input_subjects_ << std::endl;
+
+    return task_interfaces_.at(0).input_subjects_;
+}
+
+std::vector<Subject>& TaskDescriptor::getFirstOutputSubjects()
+{
+//    std::cout << "Get first input subs\n";
+//    std::cout << "size = " << task_interfaces_.size() << std::endl;
+//    std::cout << "size isub = " << task_interfaces_.at(0).input_subjects_.size() << std::endl;
+//    std::cout << task_interfaces_.at(0).input_subjects_ << std::endl;
+
+    return task_interfaces_.at(0).output_subjects_;
 }
 
 const Action& TaskDescriptor::getAction() const

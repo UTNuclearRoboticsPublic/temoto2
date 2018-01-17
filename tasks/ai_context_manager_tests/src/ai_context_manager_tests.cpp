@@ -26,7 +26,7 @@ public:
 ContextManagerTests()
 {
   // Do something here if needed
-  TASK_INFO("ContextManagerTests constructed");
+  TEMOTO_INFO("Action implementation constructed");
 }
 
 // startTask with arguments
@@ -47,6 +47,11 @@ void startTask(TTP::TaskInterface task_interface)
       // Interface 1
       case 1:
           startInterface_1();
+      break;
+
+      // Interface 1
+      case 2:
+          startInterface_2();
       break;
   }
   // </ AUTO-GENERATED, DO NOT MODIFY >
@@ -119,13 +124,11 @@ void startInterface_1()
 
   // Creating output variables
   std::string  what_0_word_out;
+  std::string  what_0_data_0_out;
 
   // </ AUTO-GENERATED, DO NOT MODIFY >
 
 // -------------------------------< USER CODE >-------------------------------
-
-  // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
 
   try
   {
@@ -136,9 +139,10 @@ void startInterface_1()
     TopicContainer tracker_topics = cmi_.startTracker("artags");
 
     // Pass the name of the object to the output
-    what_0_word_out = tracker_topics.getOutputTopic("marker_data");
+    what_0_word_out = what_0_word_in;
+    what_0_data_0_out = tracker_topics.getOutputTopic("marker_data");
 
-    std::cout << "GOT TOPIC: " << what_0_word_out << std::endl;
+    TEMOTO_INFO_STREAM("Received a topic for AR-tag data: " << what_0_data_0_out);
   }
   catch( error::ErrorStack& error_stack )
   {
@@ -151,6 +155,57 @@ void startInterface_1()
 
   TTP::Subject what_0_out("what", what_0_word_out);
   what_0_out.markComplete();
+  what_0_out.data_.emplace_back("topic", boost::any_cast<std::string>(what_0_data_0_out));
+  output_subjects.push_back(what_0_out);
+
+  // </ AUTO-GENERATED, DO NOT MODIFY >
+}
+
+/*
+ * Interface 2 body
+ */
+void startInterface_2()
+{
+  // < AUTO-GENERATED, DO NOT MODIFY >
+
+  // Extracting input subjects
+  TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
+  std::string  what_0_word_in = what_0_in.words_[0];
+
+  // Creating output variables
+  std::string  what_0_word_out;
+  std::string  what_0_data_0_out;
+
+  // </ AUTO-GENERATED, DO NOT MODIFY >
+
+// -------------------------------< USER CODE >-------------------------------
+
+  try
+  {
+    // Initialize the context manager interface
+    cmi_.initialize(this);
+
+    // Start a tracker
+    TopicContainer tracker_topics = cmi_.startTracker("hands");
+
+    // Pass the name of the object to the output
+    what_0_word_out = what_0_word_in;
+    what_0_data_0_out = tracker_topics.getOutputTopic("handtracker_data");
+
+    TEMOTO_INFO_STREAM("Received a topic for handtracker data: " << what_0_data_0_out);
+  }
+  catch( error::ErrorStack& error_stack )
+  {
+    SEND_ERROR(error_stack);
+  }
+
+// -------------------------------</ USER CODE >-------------------------------
+
+  // < AUTO-GENERATED, DO NOT MODIFY >
+
+  TTP::Subject what_0_out("what", what_0_word_out);
+  what_0_out.markComplete();
+  what_0_out.data_.emplace_back("topic", boost::any_cast<std::string>(what_0_data_0_out));
   output_subjects.push_back(what_0_out);
 
   // </ AUTO-GENERATED, DO NOT MODIFY >
@@ -158,7 +213,7 @@ void startInterface_1()
 
 ~ContextManagerTests()
 {
-    TASK_INFO("ContextManagerTests destructed");
+    TEMOTO_INFO("Action implementation destructed");
 }
 
 private:

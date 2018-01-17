@@ -24,7 +24,7 @@
     <!--Output block-->
     <out>
       <what>
-        <arg word=""/>
+        <arg word="camera"/>
         
         <data>
           <field datatype="topic"/>
@@ -34,33 +34,11 @@
 
   </interface>
 
-  <!--Interface block-->
+   <!--Interface block-->
   <interface id="1" type="asynchronous">
     
     <!--Input block-->
-    <in>    
-      <what>
-        <arg word="hand"/>
-        
-        <data>
-          <field datatype="topic"/>
-        </data>
-      </what>
-      
-      <where>
-        <arg word="RViz,rviz,r-viz,screen"/>
-      </where>
-
-    </in>
-
-  </interface>
-
-   <!--Interface block-->
-  <interface id="2" type="asynchronous">
-    
-    <!--Input block-->
     <in>   
- 
       <what>
         <arg word="object container"/>
         <data>
@@ -71,10 +49,27 @@
       <where>
         <arg word="RViz,rviz,r-viz,screen"/>
       </where>
-
     </in>
 
   </interface>
 
+ <!--Interface block-->
+  <interface id="2" type="asynchronous">
+    
+    <!--Input block-->
+    <in>   
+      <what>
+        <arg word="hands,hand"/>
+        <data>
+          <field datatype="topic"/>
+        </data>
+      </what>
+      
+      <where>
+        <arg word="RViz,rviz,r-viz,screen"/>
+      </where>
+    </in>
+
+  </interface>
 
 </task>

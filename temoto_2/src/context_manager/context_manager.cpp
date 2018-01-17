@@ -337,6 +337,82 @@ void ContextManager::unloadTrackObjectCb(temoto_2::TrackObject::Request& req, te
   }
 }
 
+/**
+ * @brief findTrackers
+ * @param req
+ * @return
+ */
+std::vector<TrackerInfo> ContextManager::findTrackers(temoto_2::LoadTracker::Request& req)
+{
+  // Get the tracking methods of the requested category
+  auto tracker_category = categorized_trackers_.find(req.tracker_category);
+
+  // Throw an error if the requested tracker category does not exist
+  if (tracker_category == categorized_trackers_.end())
+  {
+    throw CREATE_ERROR(error::Code::NO_TRACKERS_FOUND, "No trackers found for the requested category");
+  }
+
+  // Get the trackers
+  auto trackers = tracker_category->second;
+
+  // Check if there are any required types for the output topics of the tracker
+  if (!req.output_topics.empty())
+  {
+    // Loop over trackers
+    for (auto tracker_it = trackers.begin(); tracker_it != trackers.end(); /* empty */)
+    {
+      bool tracker_suitable = true;
+
+      // Create a copy of the required topics
+      std::vector<diagnostic_msgs::KeyValue> req_topic_types = req.output_topics;
+      std::set<std::string> last_filter_topics = tracker_it->getPipe().back().required_output_topic_types_;
+
+      // The topics that the last filter of the pipe provides
+      for (auto& last_filter_topic : last_filter_topics)
+      {
+        bool topic_found = false;
+
+        // Compare the topic of the last filter with the required topics
+        for (auto rtt_it = req_topic_types.begin(); rtt_it != req_topic_types.end(); rtt_it++)
+        {
+          if (rtt_it->key == last_filter_topic)
+          {
+            topic_found = true;
+            req_topic_types.erase(rtt_it);
+            break;
+          }
+        }
+
+        // If the required topic was not found then break the loop and indicate
+        // that the tracker is not suitable
+        if (!topic_found)
+        {
+          tracker_suitable = false;
+          break;
+        }
+      }
+
+      // Remove the tracker if its last filter does not contain the required topic type
+      if (!tracker_suitable)
+      {
+        trackers.erase(tracker_it);
+      }
+      else
+      {
+        tracker_it++;
+      }
+    }
+
+    // If no tracker was suitable, then throw an error
+    if (trackers.empty())
+    {
+      throw CREATE_ERROR(error::Code::NO_TRACKERS_FOUND, "No trackers found for the requested topic types");
+    }
+  }
+
+  return trackers;
+}
 
 /*
  * Load tracker callback
@@ -344,128 +420,136 @@ void ContextManager::unloadTrackObjectCb(temoto_2::TrackObject::Request& req, te
 void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
                                    temoto_2::LoadTracker::Response& res)
 {
-  TEMOTO_INFO_STREAM(" Received a request: \n" << req << std::endl);
-
-  TEMOTO_DEBUG_STREAM("req tracker = " << req.detection_method);
+  TEMOTO_INFO_STREAM("Received a request: \n" << req << std::endl);
 
   try
   {
-    // Get the tracking methods of the requested category
-    auto trackers = categorized_trackers_.find(req.tracker_category);
+    // Get the trackers that follow the requested criteria
+    auto trackers = findTrackers(req);
 
-    // Proceed if the requested tracker category exists
-    if (trackers != categorized_trackers_.end())
+    TEMOTO_DEBUG_STREAM("Found the requested tracker.");
+
+    // Choose a tracker based on a TODO metric
+    const TrackerInfo& tracker = trackers.at(0);
+
+    // Get the id of the pipe, if provided
+    std::string pipe_id = req.pipe_id;
+
+    // Create a new pipe id if it was not specified
+    if (pipe_id == "")
     {
-      TEMOTO_DEBUG_STREAM(" Found the requested tracker.");
-
-      // Choose a tracker based on a TODO metric
-      const TrackerInfo& tracker = trackers->second.at(0);
-
       // Create a unique pipe identifier string
-      std::string pipeID = "pipe_" + std::to_string(pipeIDGenerator.generateID())
-                         + "_at_" + common::getTemotoNamespace();
+      pipe_id = "pipe_" + std::to_string(pipe_id_generator_.generateID())
+              + "_at_" + common::getTemotoNamespace();
+    }
+
+    /*
+     * Build the pipe based on the number of filters. If the pipe
+     * contains only one filter, then there are no constraints on
+     * the ouptut topic types. But if the pipe contains multiple filters
+     * then each preceding filter has to provide the topics that are
+     * required by the proceding filter
+     */
+    TopicContainer required_topics;
+
+    if (tracker.getPipeSize() > 1)
+    {
+      // TODO: If the right hand side of the "req_tops" is directly used in the proceeding
+      // for-loop, then it crashes on the second loop. Not sure why.
+      std::set<std::string> req_tops = tracker.getPipe().at(1).required_input_topic_types_;
+
+      // Loop over requested topics
+      for (auto& topic : req_tops)
+      {
+        required_topics.addOutputTopicType(topic);
+      }
+    }
+    else
+    {
+      // TODO: If the right hand side of the "req_tops" is directly used in the proceeding
+      // for-loop, then it crashes on the second loop. Not sure why.
+      std::set<std::string> req_tops = tracker.getPipe().at(0).required_output_topic_types_;
+
+      // Loop over requested topics
+      for (auto& topic : req_tops)
+      {
+        required_topics.addOutputTopicType(topic);
+      }
+    }
+
+    // Loop over the pipe
+    std::vector<Filter> pipe = tracker.getPipe();
+
+    for (unsigned int i=0; i<pipe.size(); i++)
+    {
+      /*
+       * If the filter is a sensor
+       */
+      if (pipe.at(i).filter_category_ == "sensor")
+      {
+        // Compose the LoadSensor message
+        temoto_2::LoadSensor load_sensor_msg;
+        load_sensor_msg.request.sensor_type = pipe.at(i).filter_type_;
+        load_sensor_msg.request.output_topics = required_topics.outputTopicsAsKeyValues();
+
+        // Call the Sensor Manager
+        resource_manager_2_.call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
+                                                       sensor_manager::srv_name::SERVER,
+                                                       load_sensor_msg);
+
+        required_topics.setInputTopicsByKeyValue(load_sensor_msg.response.output_topics);
+
+        // This line is necessary if the pipe size is 1
+        required_topics.setOutputTopicsByKeyValue(load_sensor_msg.response.output_topics);
+      }
 
       /*
-       * Build the pipe based on the number of filters. If the pipe
-       * contains only one filter, then there are no constraints on
-       * the ouptut topic types. But if the pipe contains multiple filters
-       * then each preceding filter has to provide the topics that are
-       * required by the proceding filter
+       * If the filter is an algorithm
        */
-      TopicContainer required_topics;
-
-      if (tracker.getPipeSize() > 1)
+      else if (pipe.at(i).filter_category_ == "algorithm")
       {
-        // TODO: If the right hand side of the "req_tops" is directly used in the proceeding
-        // for-loop, then it crashes on the second loop. Not sure why.
-        std::set<std::string> req_tops = tracker.getPipe().at(1).required_input_topic_types_;
 
-        // Loop over requested topics
-        for (auto& topic : req_tops)
+        // Clear out the required output topics
+        required_topics.clearOutputTopics();
+
+        // If it is not the last filter then ...
+        if (i != pipe.size()-1)
         {
-          required_topics.addOutputTopicType(topic);
-        }
-      }
-
-      // Loop over the pipe
-      std::vector<Filter> pipe = tracker.getPipe();
-
-      for (unsigned int i=0; i<pipe.size(); i++)
-      {
-        /*
-         * If the filter is a sensor
-         */
-        if (pipe.at(i).filter_category_ == "sensor")
-        {
-
-          TEMOTO_DEBUG_STREAM(" D0");
-          // Compose the LoadSensor message
-          temoto_2::LoadSensor load_sensor_msg;
-          load_sensor_msg.request.sensor_type = pipe.at(i).filter_type_;
-          load_sensor_msg.request.output_topics = required_topics.outputTopicsAsKeyValues();
-
-          // Call the Sensor Manager
-          resource_manager_2_.call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
-                                                         sensor_manager::srv_name::SERVER,
-                                                         load_sensor_msg);
-
-          required_topics.setInputTopicsByKeyValue(load_sensor_msg.response.output_topics);
-
-          TEMOTO_DEBUG_STREAM(" D1");
-        }
-
-        /*
-         * If the filter is an algorithm
-         */
-        else if (pipe.at(i).filter_category_ == "algorithm")
-        {
-
-          // Clear out the required output topics
-          required_topics.clearOutputTopics();
-
-          // If it is not the last filter then ...
-          if (i != pipe.size()-1)
+          // ... get the requirements for the output topic types from the proceding filter
+          for (auto& topic_type : pipe.at(i+1).required_input_topic_types_)
           {
-            // ... get the requirements for the output topics from the proceding filter
-            for (auto& topic : pipe.at(i+1).required_input_topic_types_)
-            {
-              required_topics.addOutputTopic(topic, "/" + pipeID + "/filter_" + std::to_string(i) + "/" + topic);
-            }
+            required_topics.addOutputTopic(topic_type, "/" + pipe_id + "/filter_" + std::to_string(i) + "/" + topic_type);
           }
-          else
-          {
-            // ... get the requirements for the output topics from own output topic requirements
-            // TODO: throw if the "required_output_topic_types_" is empty
-            for (auto& topic : pipe.at(i).required_output_topic_types_)
-            {
-              required_topics.addOutputTopic(topic, "/" + pipeID + "/filter_" + std::to_string(i) + "/" + topic);
-            }
-          }
-
-          // Compose the LoadAlgorithm message
-          temoto_2::LoadAlgorithm load_algorithm_msg;
-          load_algorithm_msg.request.algorithm_type = pipe.at(i).filter_type_;
-          load_algorithm_msg.request.input_topics = required_topics.inputTopicsAsKeyValues();
-          load_algorithm_msg.request.output_topics = required_topics.outputTopicsAsKeyValues();
-
-
-          TEMOTO_DEBUG_STREAM(" D2");
-          // Call the Algorithm Manager
-          resource_manager_2_.call<temoto_2::LoadAlgorithm>(algorithm_manager::srv_name::MANAGER,
-                                                            algorithm_manager::srv_name::SERVER,
-                                                            load_algorithm_msg);
-
-          required_topics.setInputTopicsByKeyValue(load_algorithm_msg.response.output_topics);
-
-          TEMOTO_DEBUG_STREAM(" D3");
         }
+        else
+        {
+          // ... get the requirements for the output topics from own output topic requirements
+          // TODO: throw if the "required_output_topic_types_" is empty
+          for (auto& topic_type : pipe.at(i).required_output_topic_types_)
+          {
+            required_topics.addOutputTopic(topic_type, "/" + pipe_id + "/filter_" + std::to_string(i) + "/" + topic_type);
+          }
+        }
+
+        // Compose the LoadAlgorithm message
+        temoto_2::LoadAlgorithm load_algorithm_msg;
+        load_algorithm_msg.request.algorithm_type = pipe.at(i).filter_type_;
+        load_algorithm_msg.request.input_topics = required_topics.inputTopicsAsKeyValues();
+        load_algorithm_msg.request.output_topics = required_topics.outputTopicsAsKeyValues();
+
+        // Call the Algorithm Manager
+        resource_manager_2_.call<temoto_2::LoadAlgorithm>(algorithm_manager::srv_name::MANAGER,
+                                                          algorithm_manager::srv_name::SERVER,
+                                                          load_algorithm_msg);
+
+        required_topics.setInputTopicsByKeyValue(load_algorithm_msg.response.output_topics);
       }
-
-      // Send the output topics of the last filter back via response
-      res.output_topics = required_topics.outputTopicsAsKeyValues();
-
-      return;
     }
+
+    // Send the output topics of the last filter back via response
+    res.output_topics = required_topics.outputTopicsAsKeyValues();
+
+    return;
   }
   catch (error::ErrorStack& error_stack)
   {

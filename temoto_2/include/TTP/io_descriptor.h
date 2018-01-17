@@ -4,6 +4,7 @@
 #include <boost/any.hpp>
 #include <string>
 #include <vector>
+#include <iostream>
 
 /**
  * Temoto Tasking Protocol
@@ -20,14 +21,25 @@ Subject getSubjectByType(const std::string& type, Subjects& subjects);
 /**
  * @brief The Data struct
  */
-struct Data
+class Data
 {
+public:
+
   std::string type = "";
   boost::any value;
 
   Data(){}
 
   Data(std::string type_in, boost::any value_in) : type(type_in), value(value_in){}
+
+//  Data& operator=(const Data& rhs)
+//  {
+//    std::cout << "OBI DOBO" << std::endl;
+//    type = rhs.type;
+//    value = boost::any(rhs.value);
+
+//    return *this;
+//  }
 };
 
 std::ostream& operator<<( std::ostream& stream, const Data& data);

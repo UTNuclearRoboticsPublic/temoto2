@@ -8,6 +8,13 @@ uint8 ARTAG = 1     # Requires the "tag_id" field to be filled
 #uint8 SEGMENT = 2   # Requires the "primitive" field to be filled
 #uint8 TEMPLATE = 3  # Requires the "mesh" field to be filled
 
+# Normally left empty but when its required that the tracker must publish
+# certain data to specific topics, then these are described in here. 
+diagnostic_msgs/KeyValue[] output_topics
+
+# Normally left empty, used by context manager interface status callback
+string pipe_id
+
 # RMP
 temoto_2/RMPRequest rmp
 
@@ -16,6 +23,9 @@ temoto_2/RMPRequest rmp
 # Topics where raw tracking data is published. By default the data
 # is published on one topic but there could be exceptions.
 diagnostic_msgs/KeyValue[] output_topics
+
+# The id of the pipe, e.g., /pipe_123_at_robot_3/
+string pipe_id
 
 # RMP
 temoto_2/RMPResponse rmp

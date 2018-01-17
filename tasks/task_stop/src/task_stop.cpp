@@ -28,30 +28,30 @@ public:
 
 TaskStop()
 {
-    // Do something here if needed
-    stop_task_client_ = n_.serviceClient<temoto_2::StopTask>("stop_task");
-    ROS_INFO("TaskStop constructed");
+  // Do something here if needed
+  stop_task_client_ = nh_.serviceClient<temoto_2::StopTask>("stop_task");
+  TEMOTO_INFO("Object constructed");
 }
 
 // startTask
 void startTask(TTP::TaskInterface task_interface)
 {
-// * AUTO-GENERATED, DO NOT MODIFY *
-    input_subjects = task_interface.input_subjects_;
+  // * AUTO-GENERATED, DO NOT MODIFY *
+  input_subjects = task_interface.input_subjects_;
 
-    switch(task_interface.id_)
-    {
-    // Interface 0
-    case 0:
-        startInterface_0();
-    break;
+  switch(task_interface.id_)
+  {
+  // Interface 0
+  case 0:
+      startInterface_0();
+  break;
 
-    // Interface 1
-    case 1:
-        startInterface_1();
-    break;
-    }
-// * AUTO-GENERATED, DO NOT MODIFY *
+  // Interface 1
+  case 1:
+      startInterface_1();
+  break;
+  }
+  // * AUTO-GENERATED, DO NOT MODIFY *
 }
 
 /*
@@ -59,60 +59,56 @@ void startTask(TTP::TaskInterface task_interface)
  */
 void startInterface_0()
 {
-    // < AUTO-GENERATED, DO NOT MODIFY >
+  // < AUTO-GENERATED, DO NOT MODIFY >
 
-    // Extracting input subjects
-    TTP::Subject action_0_in = TTP::getSubjectByType("action", input_subjects);
-    std::string  action_0_word_in = action_0_in.words_[0];
+  // Extracting input subjects
+  TTP::Subject action_0_in = TTP::getSubjectByType("action", input_subjects);
+  std::string  action_0_word_in = action_0_in.words_[0];
 
-    TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
-    std::string  what_0_word_in = what_0_in.words_[0];
+  TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
+  std::string  what_0_word_in = what_0_in.words_[0];
 
-    // Creating output variables
-    std::string  what_0_word_out;
+  // Creating output variables
+  std::string  what_0_word_out;
 
-    // </ AUTO-GENERATED, DO NOT MODIFY >
+  // </ AUTO-GENERATED, DO NOT MODIFY >
 
 // --------------------------------< USER CODE >-------------------------------
 
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+  try
+  {
+    TEMOTO_INFO_STREAM("Stopping '" << action_0_word_in << "' with arg '" << what_0_word_in);
+    what_0_word_out = what_0_word_in;
 
-    try
+    temoto_2::StopTask stop_task_srv;
+    stop_task_srv.request.action = action_0_word_in;
+    stop_task_srv.request.what = what_0_word_in;
+
+    // Call the server
+    stop_task_client_.call(stop_task_srv);
+
+    TEMOTO_INFO("'/core/stop_task' service responded: %s", stop_task_srv.response.message.c_str());
+
+    // Check the result
+    if (stop_task_srv.response.code != 0)
     {
-        std::cout << "  TaskStop: Stopping '" << action_0_word_in << "' with arg '" << what_0_word_in << "'\n";
-        what_0_word_out = what_0_word_in;
-
-        temoto_2::StopTask stop_task_srv;
-        stop_task_srv.request.action = action_0_word_in;
-        stop_task_srv.request.what = what_0_word_in;
-
-        // Call the server
-        stop_task_client_.call(stop_task_srv);
-
-        ROS_INFO("[TaskStop::startTask] '/core/stop_task' service respinded: %s", stop_task_srv.response.message.c_str());
-
-        // Check the result
-        if (stop_task_srv.response.code != 0)
-        {
-            // TODO: do something
-        }
+      // TODO: do something
     }
-    catch(error::ErrorStack& error_stack)
-    {
-      FORWARD_ERROR(error_stack);
-    }
-
+  }
+  catch(error::ErrorStack& error_stack)
+  {
+    FORWARD_ERROR(error_stack);
+  }
 
 // --------------------------------</ USER CODE >-------------------------------
 
-    // < AUTO-GENERATED, DO NOT MODIFY >
+  // < AUTO-GENERATED, DO NOT MODIFY >
 
-    TTP::Subject what_0_out("what", what_0_word_out);
-    what_0_out.markComplete();
-    output_subjects.push_back(what_0_out);
+  TTP::Subject what_0_out("what", what_0_word_out);
+  what_0_out.markComplete();
+  output_subjects.push_back(what_0_out);
 
-    // </ AUTO-GENERATED, DO NOT MODIFY >
+  // </ AUTO-GENERATED, DO NOT MODIFY >
 }
 
 /*
@@ -120,23 +116,22 @@ void startInterface_0()
  */
 void startInterface_1()
 {
-    // < AUTO-GENERATED, DO NOT MODIFY >
+  // < AUTO-GENERATED, DO NOT MODIFY >
 
-    // Extracting input subjects
-    TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
-    std::string  what_0_word_in = what_0_in.words_[0];
+  // Extracting input subjects
+  TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
+  std::string  what_0_word_in = what_0_in.words_[0];
 
-    // Creating output variables
-    std::string  what_0_word_out;
+  // Creating output variables
+  std::string  what_0_word_out;
 
-    // </ AUTO-GENERATED, DO NOT MODIFY >
+  // </ AUTO-GENERATED, DO NOT MODIFY >
 
 // --------------------------------< USER CODE >-------------------------------
 
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
-
-    std::cout << "  TaskStop: Stopping '" << what_0_word_in << "'\n";
+  try
+  {
+    TEMOTO_INFO_STREAM("Stopping '" << what_0_word_in);
     what_0_word_out = what_0_word_in;
 
     temoto_2::StopTask stop_task_srv;
@@ -145,34 +140,39 @@ void startInterface_1()
     // Call the server
     stop_task_client_.call(stop_task_srv);
 
-    ROS_INFO("[TaskStop::startTask] '/core/stop_task' service respinded: %s", stop_task_srv.response.message.c_str());
+    TEMOTO_INFO("'/core/stop_task' service responded: %s", stop_task_srv.response.message.c_str());
 
     // Check the result
     if (stop_task_srv.response.code == 0)
     {
-        //bla
+      // TODO: do something
     }
+  }
+  catch(error::ErrorStack& error_stack)
+  {
+    FORWARD_ERROR(error_stack);
+  }
 
 // --------------------------------</ USER CODE >-------------------------------
 
-    // < AUTO-GENERATED, DO NOT MODIFY >
+  // < AUTO-GENERATED, DO NOT MODIFY >
 
-    TTP::Subject what_0_out("what", what_0_word_out);
-    what_0_out.markComplete();
-    output_subjects.push_back(what_0_out);
+  TTP::Subject what_0_out("what", what_0_word_out);
+  what_0_out.markComplete();
+  output_subjects.push_back(what_0_out);
 
-    // </ AUTO-GENERATED, DO NOT MODIFY >
+  // </ AUTO-GENERATED, DO NOT MODIFY >
 }
 
 std::string getStatus()
 {
-    std::string str = "healthy";
-    return str;
+  std::string str = "healthy";
+  return str;
 }
 
 std::vector<TTP::Subject> getSolution()
 {
-    return output_subjects;
+  return output_subjects;
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * *
@@ -181,7 +181,7 @@ std::vector<TTP::Subject> getSolution()
 
 ~TaskStop()
 {
-    std::cout << "TaskStop destructed" << std::endl;
+  TEMOTO_INFO("Object destructed");
 }
 
 private:
@@ -189,12 +189,7 @@ private:
 // Human context interface object
 // HumanContextInterface <TaskStop> hci_;
 
-/**
- * @brief class_name_
- */
-std::string class_name_ = "TaskStop";
-
-ros::NodeHandle n_;
+ros::NodeHandle nh_;
 ros::ServiceClient stop_task_client_;
 
 };

@@ -45,6 +45,13 @@ private:
   void unloadTrackerCb(temoto_2::LoadTracker::Request& req, temoto_2::LoadTracker::Response& res);
 
   /**
+   * @brief findTrackers
+   * @param req
+   * @return
+   */
+  std::vector<TrackerInfo> findTrackers(temoto_2::LoadTracker::Request& req);
+
+  /**
    * @brief loadTrackObjectCb
    * @param req
    * @param res
@@ -134,7 +141,7 @@ private:
 
   std::map<std::string, std::vector<context_manager::TrackerInfo>> categorized_trackers_;
 
-  temoto_id::IDManager pipeIDGenerator;
+  temoto_id::IDManager pipe_id_generator_;
 
   // Configuration syncer that manages external resource descriptions and synchronizes them
   // between all other (context) managers

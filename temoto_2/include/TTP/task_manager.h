@@ -159,7 +159,7 @@ private:
    */
   class_loader::MultiLibraryClassLoader* class_loader_;
 
-  std::map<std::string, class_loader::ClassLoader*> class_loaders_;
+  std::map<std::string, boost::shared_ptr<class_loader::ClassLoader>> class_loaders_;
 
   void initCore(std::string ai_libs_path);
 
