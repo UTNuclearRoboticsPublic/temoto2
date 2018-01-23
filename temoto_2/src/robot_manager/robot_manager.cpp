@@ -1,4 +1,5 @@
 #include "ros/package.h"
+#include "temoto_error/temoto_error.h"
 #include "robot_manager/robot_manager.h"
 #include "process_manager/process_manager_services.h"
 #include <yaml-cpp/yaml.h>
@@ -37,6 +38,10 @@ RobotManager::RobotManager()
                                             &RobotManager::setTargetCb, this);
   server_set_mode_ = nh_.advertiseService(robot_manager::srv_name::SERVER_SET_MODE,
                                           &RobotManager::setModeCb, this);
+
+  //Set the initial default stamped pose to the world frame, until target tracking is not set.
+  default_target_pose_.header.stamp = ros::Time::now();
+  default_target_pose_.header.frame_id = "world";
 
   // Read the robot config for this manager.
   std::string yaml_filename =
@@ -303,53 +308,62 @@ RobotConfigs RobotManager::parseRobotConfigs(const YAML::Node& yaml_config)
 bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan::Response& res)
 {
   TEMOTO_DEBUG("PLANNING...");
-  if (active_robot_)
+  if (!active_robot_)
   {
-    if (active_robot_->isLocal())
+    res.error_stack = CREATE_ERROR(error::Code::ROBOT_PLAN_FAIL, "Unable to plan, because no robot "
+                                                                 "is not loaded.");
+    res.code = rmp::status_codes::FAILED;
+    return true;
+  }
+
+  if (active_robot_->isLocal())
+  {
+    geometry_msgs::PoseStamped pose;
+    if (req.use_default_target)
     {
-      if (req.use_default_target)
-      {
-        geometry_msgs::PoseStamped pose;
-        default_pose_mutex_.lock();
-        pose = default_target_pose_;
-        default_pose_mutex_.unlock();
-        active_robot_->plan(req.planning_group, pose);
-      }
-      else
-      {
-        active_robot_->plan("manipulator", req.target_pose);
-      }
-      TEMOTO_DEBUG("DONE PLANNING...");
-      res.message = "Planning sent to MoveIt";
-      res.code = rmp::status_codes::OK;
+      default_pose_mutex_.lock();
+      pose = default_target_pose_;
+      default_pose_mutex_.unlock();
     }
     else
     {
-      // This robot is present in a remote robotmanager, forward the planning command to there.
-      std::string topic = "/" + active_robot_->getConfig()->getTemotoNamespace() + "/" +
-                          robot_manager::srv_name::SERVER_PLAN;
-      ros::ServiceClient client_plan = nh_.serviceClient<temoto_2::RobotPlan>(topic);
-      temoto_2::RobotPlan fwd_plan_srvc;
-      fwd_plan_srvc.request = req;
-      fwd_plan_srvc.response = res;
-      if (client_plan.call(fwd_plan_srvc))
-      {
-        TEMOTO_DEBUG("Call to remote RobotManager was sucessful.");
-        res = fwd_plan_srvc.response;
-      }
-      else
-      {
-        TEMOTO_ERROR("Call to remote RobotManager service failed.");
-        res.message = "Call to remote RobotManager service failed.";
-        res.code = rmp::status_codes::FAILED;
-      }
+      pose = req.target_pose;
     }
+
+    try
+    {
+      active_robot_->plan(req.planning_group, pose);
+    }
+    catch (error::ErrorStack(e))
+    {
+      res.error_stack = FORWARD_ERROR(e);
+      res.code = rmp::status_codes::OK;
+      return true;
+    }
+
+    TEMOTO_DEBUG("DONE PLANNING...");
+    res.code = rmp::status_codes::OK;
   }
   else
   {
-    TEMOTO_ERROR("Unable to plan, because the robot is not loaded.");
-    res.message = "Unable to plan, because the robot is not loaded.";
-    res.code = rmp::status_codes::FAILED;
+    // This robot is present in a remote robotmanager, forward the planning command to there.
+    std::string topic = "/" + active_robot_->getConfig()->getTemotoNamespace() + "/" +
+                        robot_manager::srv_name::SERVER_PLAN;
+    ros::ServiceClient client_plan = nh_.serviceClient<temoto_2::RobotPlan>(topic);
+    temoto_2::RobotPlan fwd_plan_srvc;
+    fwd_plan_srvc.request = req;
+    fwd_plan_srvc.response = res;
+    if (client_plan.call(fwd_plan_srvc))
+    {
+      res = fwd_plan_srvc.response;
+    }
+    else
+    {
+      res.code = rmp::status_codes::FAILED;
+      res.error_stack = CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Call to remote RobotManager "
+                                                                    "service failed.");
+      return true;
+    }
   }
 
   return true;

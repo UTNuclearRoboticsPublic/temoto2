@@ -344,6 +344,7 @@ void Robot::plan(const std::string& planning_group_name, geometry_msgs::PoseStam
   // Check if default planning group is requested.
   if (planning_group_name == "")
   {
+    TEMOTO_DEBUG("Using default planning group.");
       group_it = planning_groups_.begin();
   }
   else
@@ -357,11 +358,11 @@ void Robot::plan(const std::string& planning_group_name, geometry_msgs::PoseStam
 
   group_it->second->setStartStateToCurrentState();
   group_it->second->setPoseTarget(target_pose);
-  is_plan_valid_ = static_cast<bool>( group_it->second->plan(last_plan) );
+  is_plan_valid_ = static_cast<bool>(group_it->second->plan(last_plan));
   TEMOTO_DEBUG("Plan %s",  is_plan_valid_ ? "FOUND" : "FAILED");
   if(!is_plan_valid_)
   {
-    throw CREATE_ERROR(error::Code::ROBOT_PLAN_FAIL,"Planning with group '%s' failed.", group_it->first);
+    throw CREATE_ERROR(error::Code::ROBOT_PLAN_FAIL,"Planning with group '%s' failed.", group_it->first.c_str());
   }
 }
 

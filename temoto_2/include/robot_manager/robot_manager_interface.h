@@ -72,12 +72,13 @@ public:
     }
   }
 
-  void plan()
+  void plan(std::string planning_group = "")
   {
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
     temoto_2::RobotPlan msg;
     msg.request.use_default_target = true;
+    msg.request.planning_group = planning_group;
 
     if (!client_plan_.call(msg))
     {
@@ -89,13 +90,15 @@ public:
     }
   }
 
-  void plan(const geometry_msgs::PoseStamped& pose)
+  void plan(const geometry_msgs::PoseStamped& pose, std::string planning_group = "")
   {
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
     TEMOTO_DEBUG("%s", prefix.c_str());
 
     temoto_2::RobotPlan msg;
     msg.request.use_default_target = false;
+    msg.request.target_pose = pose;
+    msg.request.planning_group = planning_group;
     if (!client_plan_.call(msg))
     {
       throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");

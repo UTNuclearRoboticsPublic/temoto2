@@ -1,4 +1,5 @@
 bool use_default_target
+string planning_group
 geometry_msgs/PoseStamped target_pose
 
 ---

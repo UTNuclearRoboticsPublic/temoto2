@@ -78,7 +78,7 @@ public:
     TASK_DEBUG("%s PLANNING", prefix.c_str());
     // geometry_msgs::PoseStamped target_pose;
     //rmi_.plan(target_pose);
-    rmi_.plan();
+    rmi_.plan(); //plan with default planning group using default target
     TASK_DEBUG("%s DONE PLANNING", prefix.c_str());
   }
 
