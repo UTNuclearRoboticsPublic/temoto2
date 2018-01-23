@@ -1,21 +1,22 @@
 ---
 hands:
-- method:
-  - filter_category: "sensor"
-    filter_type: "hand"
-    output_topic_types:
-      - handtracker_data
+#- method:
+#  - filter_category: "sensor"
+#    filter_type: "hand"
+#    output_topic_types:
+#      - handtracker_data
 
 - method:
   - filter_category: "sensor"
-    filter_type: "camera"
+    filter_type: "depth camera"
 
   - filter_category: "algorithm"
-    filter_type: "hand detector"
+    filter_type: "handtracker"
     input_topic_types:
-      - data
+      - camera_info
+      - camera_data
     output_topic_types:
-      - data
+      - handtracker_data
   
 artags:
 - method:

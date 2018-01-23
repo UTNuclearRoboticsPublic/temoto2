@@ -17,7 +17,7 @@
 #include "output_manager/output_manager_interface.h"
 #include "temoto_2/ObjectContainer.h"
 #include <visualization_msgs/Marker.h>
-#include "leap_motion_controller/Set.h"
+#include "human_msgs/Hands.h"
 
 // First implementaton
 class TaskShow: public TTP::BaseTask
@@ -244,7 +244,7 @@ void objectContainerCb(temoto_2::ObjectContainer msg)
  * @brief handCb
  * @param hand_msg
  */
-void handCb(leap_motion_controller::Set hand_msg)
+void handCb(human_msgs::Hands hand_msg)
 {
   visualization_msgs::Marker marker;
   // Set the frame ID and timestamp.  See the TF tutorials for information on these.

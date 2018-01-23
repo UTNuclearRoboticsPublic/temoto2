@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   geometry_msgs
   shape_msgs
+  human_msgs
   visualization_msgs
   diagnostic_msgs
   class_loader
@@ -20,7 +21,6 @@ find_package(catkin REQUIRED COMPONENTS
 	message_generation
   rviz_plugin_manager
   moveit_ros_planning_interface
-  leap_motion_controller
 )
 
 find_package(TinyXML REQUIRED)

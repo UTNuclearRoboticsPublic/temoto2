@@ -10,7 +10,6 @@
 #include "std_msgs/Float32.h"
 #include "std_msgs/String.h"
 #include "human_msgs/Hands.h"
-#include "leap_motion_controller/Set.h"
 
 #include "context_manager/context_manager_services.h"
 #include "rmp/resource_manager.h"
@@ -24,7 +23,7 @@ class ContextManagerInterface : public BaseSubsystem
 {
 public:
 
-  typedef void (OwnerTask::*GestureCallbackType)(leap_motion_controller::Set);
+  typedef void (OwnerTask::*GestureCallbackType)(human_msgs::Hands);
   typedef void (OwnerTask::*SpeechCallbackType)(std_msgs::String);
 
   ContextManagerInterface()

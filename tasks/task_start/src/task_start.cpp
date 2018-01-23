@@ -215,7 +215,7 @@ public:
   }
 
   // Callback for processing gestures
-  void gestureCallback(leap_motion_controller::Set gesture)
+  void gestureCallback(human_msgs::Hands gesture)
   {
     visualization_msgs::Marker marker;
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.

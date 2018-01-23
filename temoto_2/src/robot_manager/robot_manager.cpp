@@ -521,7 +521,7 @@ bool RobotManager::setModeCb(temoto_2::RobotSetMode::Request& req,
 
 // Take palm pose of whichever hand is present, prefer left_hand.
 // Store the pose in a class member for later use when planning is requested.
-void RobotManager::targetPoseCb(const leap_motion_controller::Set& set)
+void RobotManager::targetPoseCb(const human_msgs::Hands& set)
 {
   if (set.left_hand.is_present)
   {

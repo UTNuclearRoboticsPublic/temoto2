@@ -14,7 +14,7 @@
 #include "robot_manager/robot_config.h"
 #include "std_msgs/String.h"
 
-#include "leap_motion_controller/Set.h"
+#include "human_msgs/Hands.h"
 
 #include <mutex>
 #include <vector>
@@ -96,7 +96,7 @@ private:
   bool getVizInfoCb(temoto_2::RobotGetVizInfo::Request& req,
                        temoto_2::RobotGetVizInfo::Response& res);
 
-  void targetPoseCb(const leap_motion_controller::Set& set);
+  void targetPoseCb(const human_msgs::Hands& set);
 
   void statusInfoCb(temoto_2::ResourceStatus& srv);
 

@@ -5,10 +5,10 @@ Sensors:
   package_name: "leap_motion_controller"
   executable:  "leap_motion"
   output_topics:
-    handtracker_data: "leap_motion_output"
+    handtracker_data: "hand_tracker_output"
 
 - sensor_name: "Simulated Hand Tracker"
-  sensor_type: "hand"
+  sensor_type: "hand leap"
   package_name: "temoto_tests"
   executable:  "hand_tracker_1.launch"
   output_topics:
