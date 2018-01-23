@@ -1,4 +1,5 @@
 #include "robot_manager/robot.h"
+#include "temoto_error/temoto_error.h"
 #include "ros/package.h"
 
 
@@ -187,10 +188,9 @@ void Robot::loadManipulation()
     // TODO: read groups from srdf automatically
     for (auto group : config_->getFeatureManipulation().getPlanningGroups())
     {
-      TEMOTO_DEBUG("Adding planning group %s", group.c_str());
+      TEMOTO_DEBUG("Adding planning group '%s'.", group.c_str());
       addPlanningGroup(group);
     }
-
 
     ftr.setLoaded(true);
     TEMOTO_DEBUG("Feature 'manipulation' loaded.");
@@ -335,18 +335,33 @@ void Robot::removePlanningGroup(const std::string& planning_group_name)
 
 void Robot::plan(const std::string& planning_group_name, geometry_msgs::PoseStamped& target_pose)
 {
-  auto group_it =
-      planning_groups_.find(planning_group_name);  ///< Will throw if group does not exist
-  if (group_it != planning_groups_.end())
+  if (!planning_groups_.size())
   {
-    group_it->second->setStartStateToCurrentState();
-    group_it->second->setPoseTarget(target_pose);
-    is_plan_valid_ = static_cast<bool>( group_it->second->plan(last_plan) );
-    TEMOTO_DEBUG("Plan %s",  is_plan_valid_ ? "FOUND" : "FAILED");
+    throw CREATE_ERROR(error::Code::ROBOT_PLAN_FAIL,"Robot has no planning groups.");
+  }
+
+  auto group_it = planning_groups_.end();
+  // Check if default planning group is requested.
+  if (planning_group_name == "")
+  {
+      group_it = planning_groups_.begin();
   }
   else
   {
-    TEMOTO_ERROR("Planning group '%s' was not found.", planning_group_name.c_str());
+    group_it = planning_groups_.find(planning_group_name);
+    if (group_it != planning_groups_.end())
+    {
+      TEMOTO_ERROR("Planning group '%s' was not found.", planning_group_name.c_str());
+    }
+  }
+
+  group_it->second->setStartStateToCurrentState();
+  group_it->second->setPoseTarget(target_pose);
+  is_plan_valid_ = static_cast<bool>( group_it->second->plan(last_plan) );
+  TEMOTO_DEBUG("Plan %s",  is_plan_valid_ ? "FOUND" : "FAILED");
+  if(!is_plan_valid_)
+  {
+    throw CREATE_ERROR(error::Code::ROBOT_PLAN_FAIL,"Planning with group '%s' failed.", group_it->first);
   }
 }
 

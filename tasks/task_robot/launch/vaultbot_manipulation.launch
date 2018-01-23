@@ -12,6 +12,7 @@
     <param name="robot_description" value="/robemoto/robot_manager/robots/vaultbot/robot_description" />
   </node>
 
+  <node name="static_transform_publisher" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 world base_link 10"/>
   <!-- publish a TF from /map to /odom -->
   <!--node name="static_transform_publisher" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 map odom 10"/-->
   

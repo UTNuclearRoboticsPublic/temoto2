@@ -90,6 +90,8 @@ enum class Code : int
   // Robot manager
   ROBOT_NOT_FOUND,    // The requested robot was not found from local and remote managers.
   ROBOT_NOT_LOADED,   // The requested robot is not loaded.
+  ROBOT_PLAN_FAIL,   // Unable to plan.
+  ROBOT_EXEC_FAIL,   // Unable to execute the plan.
   ROBOT_CONFIG_FAIL,  // Error when processing robot config.
 
   // Robot manager

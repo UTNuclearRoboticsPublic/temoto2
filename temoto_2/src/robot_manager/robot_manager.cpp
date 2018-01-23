@@ -313,7 +313,7 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
         default_pose_mutex_.lock();
         pose = default_target_pose_;
         default_pose_mutex_.unlock();
-        active_robot_->plan("manipulator", pose);
+        active_robot_->plan(req.planning_group, pose);
       }
       else
       {
