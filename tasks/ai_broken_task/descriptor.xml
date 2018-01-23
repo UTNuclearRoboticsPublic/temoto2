@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+
+<task action="start" alias="initiate">
+
+  <!--Interface block-->
+  <interface id="0" type="asynchronous">
+    
+    <!--Input block-->
+    <in>    
+      <what>
+        <arg word="test"/>
+      </what>
+    </in>
+
+  </interface>
+
+</task>

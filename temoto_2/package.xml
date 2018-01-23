@@ -47,9 +47,10 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>shape_msgs</build_depend>
+  <build_depend>visualization_msgs</build_depend>
   <build_depend>diagnostic_msgs</build_depend>
   <build_depend>human_msgs</build_depend>
-  <build_depend>leap_motion_controller</build_depend>
+  <build_depend>ar_track_alvar_msgs</build_depend>
   <build_depend>cmake_modules</build_depend>
 	<build_depend>message_generation</build_depend>
   <build_depend>rviz_plugin_manager</build_depend>
@@ -61,9 +62,10 @@
   <run_depend>std_msgs</run_depend>
   <run_depend>geometry_msgs</run_depend>
   <run_depend>shape_msgs</run_depend>
+  <run_depend>visualization_msgs</run_depend>
   <run_depend>diagnostic_msgs</run_depend>
   <run_depend>human_msgs</run_depend>
-  <run_depend>leap_motion_controller</run_depend>
+  <run_depend>ar_track_alvar_msgs</run_depend>
 	<run_depend>message_runtime</run_depend>
   <run_depend>rviz_plugin_manager</run_depend>
   <run_depend>yaml-cpp</run_depend>

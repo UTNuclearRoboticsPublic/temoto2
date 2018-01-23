@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 
-<task action="start" alias="initiate,track">
+<task action="start" alias="initiate">
 
   <!--Interface block-->
   <interface id="0" type="synchronous">

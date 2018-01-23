@@ -105,6 +105,18 @@ private:
   AlgorithmInfoPtr findAlgorithm(temoto_2::LoadAlgorithm::Request req
                                , const std::vector<AlgorithmInfoPtr>& algorithms);
 
+  /**
+   * @brief remapArguments
+   * @param req
+   * @param res
+   * @param load_process_msg
+   * @param algorithm_ptr
+   */
+  void remapArguments(std::vector<diagnostic_msgs::KeyValue>& req_topics,
+                      std::vector<diagnostic_msgs::KeyValue>& res_topics,
+                      temoto_2::LoadProcess& load_process_msg,
+                      AlgorithmInfoPtr algorithm_ptr,
+                      bool inputTopics);
 };
 
 } // context_manager namespace

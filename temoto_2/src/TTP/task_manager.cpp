@@ -25,16 +25,16 @@ namespace TTP
 
 struct CandidateInterface
 {
-    CandidateInterface(TaskInterface inf, unsigned int score):inf_(inf), score_(score){}
-    TaskInterface inf_;
-    int score_;
+  CandidateInterface(TaskInterface inf, unsigned int score):inf_(inf), score_(score){}
+  TaskInterface inf_;
+  int score_;
 };
 
 struct CandidateTask
 {
-    CandidateTask(TaskDescriptor td, CandidateInterface ci):td_(td), ci_(ci){}
-    TaskDescriptor td_;
-    CandidateInterface ci_;
+  CandidateTask(TaskDescriptor td, CandidateInterface ci):td_(td), ci_(ci){}
+  TaskDescriptor td_;
+  CandidateInterface ci_;
 };
 
 
@@ -44,7 +44,8 @@ struct CandidateTask
 
 TaskManager::TaskManager( std::string subsystem_name
                         , error::Subsystem subsystem_code
-                        , bool nlp_enabled)
+                        , bool nlp_enabled
+                        , std::string ai_libs_path)
   : nlp_enabled_(nlp_enabled)
 {
   try
@@ -59,7 +60,7 @@ TaskManager::TaskManager( std::string subsystem_name
     error_handler_ = error::ErrorHandler(subsystem_code_, "core");
 
     // Initialize the core
-    initCore();
+    initCore(ai_libs_path);
   }
 
   catch (error::ErrorStack& error_stack)
@@ -72,8 +73,8 @@ TaskManager::TaskManager( std::string subsystem_name
  *  CONSTRUCTOR
  * * * * * * * * */
 
-TaskManager::TaskManager(BaseSubsystem& b, bool nlp_enabled)
-  : BaseSubsystem(b)
+TaskManager::TaskManager(BaseSubsystem *b, bool nlp_enabled, std::string ai_libs_path)
+  : BaseSubsystem(*b)
   , nlp_enabled_(nlp_enabled)
 {
   try
@@ -82,7 +83,7 @@ TaskManager::TaskManager(BaseSubsystem& b, bool nlp_enabled)
     class_name_ = __func__;
 
     // Initialize the core
-    initCore();
+    initCore(ai_libs_path);
   }
 
   catch (error::ErrorStack& e)
@@ -92,11 +93,8 @@ TaskManager::TaskManager(BaseSubsystem& b, bool nlp_enabled)
   }
 }
 
-void TaskManager::initCore()
+void TaskManager::initCore(std::string ai_libs_path)
 {
-  // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-
   // Construct the classloader
   class_loader_ = new class_loader::MultiLibraryClassLoader(true);
 
@@ -122,9 +120,20 @@ void TaskManager::initCore()
    * tasks. Later the indexing could be via indexing task.
    * TODO: Read the base path from the parameter server
    */
-  std::cout << prefix << " Indexing the tasks ... " << std::flush;
-  boost::filesystem::directory_entry dir(temoto_path + "/../tasks");
-  indexTasks(dir, 1);
+  std::cout << "Indexing the tasks ... " << std::flush;
+  boost::filesystem::directory_entry dir;
+
+  if (!ai_libs_path.empty())
+  {
+    dir = boost::filesystem::directory_entry(ai_libs_path);
+  }
+
+  else
+  {
+    dir = boost::filesystem::directory_entry(temoto_path + "/../tasks");
+  }
+
+  indexTasks(dir, 2);
   std::cout << "done\n";
 
   // Stop task server
@@ -140,20 +149,17 @@ void TaskManager::initCore()
 
 void TaskManager::humanChatterCb (std_msgs::String chat)
 {
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
+  try
+  {
+    std::cout << BOLDWHITE << "Received: " << chat.data << RESET << std::endl << std::endl;
+    executeVerbalInstruction (chat.data);
+  }
+  catch (error::ErrorStack& error_stack)
+  {
+    FORWARD_ERROR(error_stack);
+  }
 
-    try
-    {
-        std::cout << BOLDWHITE << "Received: " << chat.data << RESET << std::endl << std::endl;
-        executeVerbalInstruction (chat.data);
-    }
-    catch (error::ErrorStack& error_stack)
-    {
-      FORWARD_ERROR(error_stack);
-    }
-
-    std::cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * \n\n";
+  std::cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * \n\n";
 }
 
 
@@ -163,50 +169,26 @@ void TaskManager::humanChatterCb (std_msgs::String chat)
 
 void TaskManager::executeVerbalInstruction (std::string& verbal_instruction)
 {
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-
-    try
+  try
+  {
+    // First check if NLP is enabled, if not then throw an error
+    if (!nlp_enabled_)
     {
-        // First check if NLP is enabled, if not then throw an error
-        if (!nlp_enabled_)
-        {
-            throw CREATE_ERROR(error::Code::NLP_DISABLED, "NLP cannot be used if its disabled.");
-        }
-
-        // Convert the verbal instruction into a incomplete semantic frame tree
-        TaskTree sft = language_processor_->processText(std::move(verbal_instruction));
-
-//        std::string action = "add";
-//        Subjects subjects;
-
-//        Subject sub_1("numeric", "inch");
-//        sub_1.addData("number", 5.344);
-
-//        Subject sub_2("numeric", "inch");
-//        sub_2.addData("number", 43.22);
-
-//        subjects.push_back(sub_1);
-//        subjects.push_back(sub_2);
-
-//        std::vector<TaskDescriptor> task_descriptors;
-//        task_descriptors.emplace_back(action, subjects);
-//        task_descriptors[0].action_stemmed_ = action;
-
-//        TaskTree sft = SFTBuilder::build(task_descriptors);
-
-//        TaskTreeNode& root_node = sft.getRootNode();
-//        sft.printTaskDescriptors(root_node);
-
-        // Execute the SFT
-        executeSFT(std::move(sft));
-    }
-    catch(error::ErrorStack& error_stack)
-    {
-      FORWARD_ERROR(error_stack);
+      throw CREATE_ERROR(error::Code::NLP_DISABLED, "NLP cannot be used if its disabled.");
     }
 
-    return;
+    // Convert the verbal instruction into a incomplete semantic frame tree
+    TaskTree sft = language_processor_->processText(std::move(verbal_instruction));
+
+    // Execute the SFT
+    executeSFT(std::move(sft));
+  }
+  catch(error::ErrorStack& error_stack)
+  {
+    FORWARD_ERROR(error_stack);
+  }
+
+  return;
 }
 
 /* * * * * * * * *
@@ -215,65 +197,62 @@ void TaskManager::executeVerbalInstruction (std::string& verbal_instruction)
 
 void TaskManager::executeSFT (TaskTree sft)
 {
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
+  // Let others know that action execution engine is busy
+  action_executioner_busy_ = true;
 
-    // Let others know that action execution engine is busy
-    action_executioner_busy_ = true;
+  try
+  {
+    TaskTree sft_new = std::move(sft);
+    TaskTreeNode& root_node = sft_new.getRootNode();
 
-    try
-    {
-        TaskTree sft_new = std::move(sft);
-        TaskTreeNode& root_node = sft_new.getRootNode();
+    // Print out the semantic frame tree
+    std::cout << "SFTree: " << sft_new;
 
-        // Print out the semantic frame tree
-        std::cout << "SFTree: " << sft_new;
+    // Find connecting semantic frames
+    TEMOTO_DEBUG_STREAM("Connecting the task tree");
+    std::vector<TTP::Subject> empty_subs; // stupid hack
+    connectTaskTree(root_node, empty_subs);
 
-        // Find connecting semantic frames
-        TEMOTO_DEBUG_STREAM(prefix << " Connecting the task tree");
-        std::vector<TTP::Subject> empty_subs; // stupid hack
-        connectTaskTree(root_node, empty_subs);
+    // Print task tree task descriptors
+    sft_new.printTaskDescriptors(root_node);
 
-        // Print task tree task descriptors
-        sft_new.printTaskDescriptors(root_node);
+    // Load and initialize the tasks
+    TEMOTO_DEBUG_STREAM("Loadng and initializing the tree");
+    loadAndInitializeTaskTree(root_node);
 
-        // Load and initialize the tasks
-        TEMOTO_DEBUG_STREAM(prefix << " Loadng and initializing the tree");
-        loadAndInitializeTaskTree(root_node);
+    // Create a tbb flow graph
+    TEMOTO_DEBUG_STREAM("Creating an empty flow graph object");
+    tbb::flow::graph flow_graph;
 
-        // Create a tbb flow graph
-        TEMOTO_DEBUG_STREAM(prefix << " Creating an empty flow graph object");
-        tbb::flow::graph flow_graph;
+    // Build flow graph nodes
+    TEMOTO_DEBUG_STREAM("Building flow graph nodes based on SF tree nodes");
+    makeFlowGraph(root_node, flow_graph); // TODO: better name would be populateFlowgraph
 
-        // Build flow graph nodes
-        TEMOTO_DEBUG_STREAM(prefix << " Building flow graph nodes based on SF tree nodes");
-        makeFlowGraph(root_node, flow_graph); // TODO: better name would be populateFlowgraph
+    // Connect flow graph nodes
+    TEMOTO_DEBUG_STREAM("Connecting flow graph nodes");
+    connectFlowGraph(root_node);
 
-        // Connect flow graph nodes
-        TEMOTO_DEBUG_STREAM(prefix << " Connecting flow graph nodes");
-        connectFlowGraph(root_node);
+    // Start the flow graph
+    TEMOTO_DEBUG_STREAM("Starting the flow graph");
+    TTP::Subjects dummy_subjects; // stupid hack
+    root_node.root_fgn_->try_put(dummy_subjects);
+    flow_graph.wait_for_all();
 
-        // Start the flow graph
-        TEMOTO_DEBUG_STREAM(prefix << " Starting the flow graph");
-        TTP::Subjects dummy_subjects; // stupid hack
-        root_node.root_fgn_->try_put(dummy_subjects);
-        flow_graph.wait_for_all();
+    TEMOTO_DEBUG_STREAM("Finished executing the flow graph");
+  }
+  catch(error::ErrorStack& error_stack)
+  {
+    FORWARD_ERROR(error_stack);
+  }
+  catch(...)
+  {
+    throw CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Received an unhandled exception");
+  }
 
-        TEMOTO_DEBUG_STREAM(prefix << " Finished executing the flow graph");
-    }
-    catch(error::ErrorStack& error_stack)
-    {
-      FORWARD_ERROR(error_stack);
-    }
-    catch(...)
-    {
-        throw CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Received an unhandled exception");
-    }
+  // Let others know that action execution engine is not busy
+  action_executioner_busy_ = false;
 
-    // Let others know that action execution engine is not busy
-    action_executioner_busy_ = false;
-
-    return;
+  return;
 }
 
 
@@ -312,9 +291,6 @@ std::vector <TaskDescriptor> TaskManager::findTaskFilesys(std::string task_to_fi
                                                           boost::filesystem::directory_entry base_path,
                                                           int search_depth)
 {
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix("", class_name_, __func__);
-
     boost::filesystem::path current_dir (base_path);
     boost::filesystem::directory_iterator end_itr;
     std::vector <TaskDescriptor> tasks_found;
@@ -379,17 +355,14 @@ std::vector <TaskDescriptor> TaskManager::findTaskFilesys(std::string task_to_fi
 
 void TaskManager::indexTasks (boost::filesystem::directory_entry base_path, int search_depth)
 {
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-
     try
     {
-        TEMOTO_DEBUG_STREAM(prefix << " Indexing the tasks");
+        TEMOTO_DEBUG_STREAM("Indexing the tasks");
         tasks_indexed_ = findTaskFilesys ("", base_path, search_depth);
-        TEMOTO_DEBUG_STREAM(prefix << " Found " << tasks_indexed_.size() << " tasks");
+        TEMOTO_DEBUG_STREAM("Found " << tasks_indexed_.size() << " tasks");
 
         // Unload synchronous task libraries
-        TEMOTO_DEBUG_STREAM(prefix << " Unloading synchronous action libraries");
+        TEMOTO_DEBUG_STREAM("Unloading synchronous action libraries");
 
         for (auto& task_lib : synchronous_task_libs_)
         {
@@ -553,9 +526,6 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
      *
      */
 
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-
     // If its the root node (depth = 0), then dont look for a task
     if (depth == 0)
     {
@@ -594,7 +564,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
     if (!node_task_descriptor.getIncompleteSubjects().empty())
     {
         // Debug
-        TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action
+        TEMOTO_DEBUG_STREAM ("T'" << node_action
                              << "' depends on parent node, retrieving missing information ...");
 
         /*
@@ -630,7 +600,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
             }
 
             // Debug
-            TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "' got: " << n_sub);
+            TEMOTO_DEBUG_STREAM ("T'" << node_action << "' got: " << n_sub);
         }
     }
     /*
@@ -693,7 +663,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
     }
 
     // Debug
-    TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "' has " << incomplete_subjects.size()
+    TEMOTO_DEBUG_STREAM ("T'" << node_action << "' has " << incomplete_subjects.size()
                          << " incomplete subjects from children");
     //for (auto& i_s : ){std::cout << i_s;}
 
@@ -725,7 +695,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
         }
 
         // Debug
-        TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': after eliminating duplicates we have "
+        TEMOTO_DEBUG_STREAM ("T'" << node_action << "': after eliminating duplicates we have "
                              << incomplete_subjects);
         //for (auto& i_s : incomplete_subjects){std::cout << i_s;}
 
@@ -738,7 +708,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
         }
 
         // Debug
-        TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': looking for a suitable task");
+        TEMOTO_DEBUG_STREAM ("T'" << node_action << "': looking for a suitable task");
 
         /*
          * Find task that matches own i-subjects + that has a matching
@@ -747,7 +717,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
         for (auto& task_descriptor : tasks_indexed_)
         {
             // Debug
-            TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': looking at - " << task_descriptor.getAction());
+            TEMOTO_DEBUG_STREAM ("T'" << node_action << "': looking at - " << task_descriptor.getAction());
 
             // Look for the task with the same action type
             if (task_descriptor.action_stemmed_ != node_action)
@@ -759,7 +729,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
                     if (alias == node_action)
                     {
                         // Debug
-                        TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': found action based on it's alias");
+                        TEMOTO_DEBUG_STREAM ("T'" << node_action << "': found action based on it's alias");
                         alias_found = true;
                         break;
                     }
@@ -768,7 +738,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
                 if (!alias_found)
                 {
                     // Debug
-                    TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': action does not match");
+                    TEMOTO_DEBUG_STREAM ("T'" << node_action << "': action does not match");
                     continue;
                 }
             }
@@ -778,14 +748,14 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
             // Loop over the interfaces and ...
             for (auto& interface : task_descriptor.getInterfaces())
             {
-                TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': looking at interface no: " << interface.id_);
+                TEMOTO_DEBUG_STREAM ("T'" << node_action << "': looking at interface no: " << interface.id_);
 
                 // ... look for a word match + STRICT i-subjects match
                 unsigned int word_match_score = findWordMatch (interface.input_subjects_, node_subjects);
                 if (word_match_score == 0)
                 {
                     // Debug
-                    TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': input subjects do not match. "
+                    TEMOTO_DEBUG_STREAM ("T'" << node_action << "': input subjects do not match. "
                                          << " and we are talking about: \n" << interface.input_subjects_
                                          << " and\n" << node_subjects);
                     continue;
@@ -796,7 +766,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
                 if (output_match_score == 0)
                 {
                     // Debug
-                    TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action
+                    TEMOTO_DEBUG_STREAM ("T'" << node_action
                                          << "': output subjects do not match with dep childern"
                                          << " and we are talking about: \n" << interface.output_subjects_
                                          << " and\n" << incomplete_subjects);
@@ -814,7 +784,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
             if (!candidate_interfaces.empty())
             {
                 // Debug
-                TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': IS A SUITABLE CANDIDATE");
+                TEMOTO_DEBUG_STREAM ("T'" << node_action << "': IS A SUITABLE CANDIDATE");
 
                 // Sort the candidates with decreasing score and pick the first candidate
                 std::sort(candidate_interfaces.begin(),
@@ -843,12 +813,12 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
          */
 
         // Debug
-        TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': looking for a suitable task");
+        TEMOTO_DEBUG_STREAM ("T'" << node_action << "': looking for a suitable task");
 
         for (auto& task_descriptor : tasks_indexed_)
         {
             // Debug
-            TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': looking at - " << task_descriptor.getAction());
+            TEMOTO_DEBUG_STREAM ("T'" << node_action << "': looking at - " << task_descriptor.getAction());
 
             // Look for the task with the same action type
             if (task_descriptor.action_stemmed_ != node_action)
@@ -860,7 +830,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
                     if (alias == node_action)
                     {
                         // Debug
-                        TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': found action based on it's alias");
+                        TEMOTO_DEBUG_STREAM ("T'" << node_action << "': found action based on it's alias");
                         alias_found = true;
                         break;
                     }
@@ -869,7 +839,7 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
                 if (!alias_found)
                 {
                     // Debug
-                    TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': action does not match");
+                    TEMOTO_DEBUG_STREAM ("T'" << node_action << "': action does not match");
                     continue;
                 }
             }
@@ -885,14 +855,14 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
                 if (word_match_score == 0)
                 {
                     // Debug
-                    TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "': input subjects do not match. "
+                    TEMOTO_DEBUG_STREAM ("T'" << node_action << "': input subjects do not match. "
                                          << " and we are talking about: " << interface.input_subjects_
                                          << " and " << node_subjects);
                     continue;
                 }
 
                 // Debug
-                TEMOTO_DEBUG_STREAM (prefix << " T'" << node_action << "' strict/word match score: " << word_match_score);
+                TEMOTO_DEBUG_STREAM ("T'" << node_action << "' strict/word match score: " << word_match_score);
 
                 // And we have a candidate
                 candidate_interfaces.emplace_back(interface, word_match_score);
@@ -966,9 +936,6 @@ void TaskManager::connectTaskTree(TaskTreeNode& node, std::vector<Subject> paren
 
 void TaskManager::loadAndInitializeTaskTree(TaskTreeNode& node)
 {
-  // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-
   // Task descriptor of the node
   TaskDescriptor& node_task_descriptor = node.getTaskDescriptor();
 
@@ -978,11 +945,11 @@ void TaskManager::loadAndInitializeTaskTree(TaskTreeNode& node)
     try
     {
       // Load the task
-      TEMOTO_DEBUG_STREAM(prefix << " Loading task '" << node_task_descriptor.getAction() << "'");
+      TEMOTO_DEBUG_STREAM("Loading task '" << node_task_descriptor.getAction() << "'");
       loadTask(node_task_descriptor);
 
       // Initialize the task
-      TEMOTO_DEBUG_STREAM(prefix << " Instatiating the task '" << node_task_descriptor.getAction() << "'");
+      TEMOTO_DEBUG_STREAM("Instatiating the task '" << node_task_descriptor.getAction() << "'");
       instantiateTask(node);
     }
     catch(error::ErrorStack& error_stack)
@@ -1005,9 +972,6 @@ void TaskManager::loadAndInitializeTaskTree(TaskTreeNode& node)
 
 void TaskManager::loadTask(TaskDescriptor& task_descriptor)
 {
-  // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-
   /*
    * Create an empty vector for storing the class names (currently a task
    * could have multiple tasks inside it. but it sounds TROUBLESOME
@@ -1019,17 +983,17 @@ void TaskManager::loadTask(TaskDescriptor& task_descriptor)
 
   try
   {
-    TEMOTO_DEBUG("%s Loading class from path: %s",prefix.c_str(), path_to_lib.c_str());
+    TEMOTO_DEBUG("Loading class from path: %s", path_to_lib.c_str());
 
     if (class_loaders_.find(path_to_lib) == class_loaders_.end())
     {
-      class_loaders_[path_to_lib] = new class_loader::ClassLoader(path_to_lib, false);
+      class_loaders_[path_to_lib] = boost::make_shared<class_loader::ClassLoader>(path_to_lib, false);
 
       // Maintain the name of the synchronous task library, so that it could
       // be unloaded after execution
       if (task_descriptor.getFirstInterface().type_ == "synchronous")
       {
-        TEMOTO_DEBUG_STREAM(prefix << "This is sync task maintaining the library path in a separate set" << std::endl);
+        TEMOTO_DEBUG_STREAM("This is sync task maintaining the library path in a separate set" << std::endl);
         synchronous_task_libs_.push_back(path_to_lib);
       }
     }
@@ -1037,7 +1001,7 @@ void TaskManager::loadTask(TaskDescriptor& task_descriptor)
     classes = class_loaders_[path_to_lib]->getAvailableClasses<BaseTask>();
 
     // Done loading
-    TEMOTO_DEBUG( "%s Loaded %lu classes from %s", prefix.c_str(), classes.size(), path_to_lib.c_str() );
+    TEMOTO_DEBUG( "Loaded %lu classes from %s", classes.size(), path_to_lib.c_str() );
 
     if (classes.empty())
     {
@@ -1063,9 +1027,6 @@ void TaskManager::loadTask(TaskDescriptor& task_descriptor)
 
 void TaskManager::instantiateTask(TaskTreeNode& node)
 {
-  // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-
   TaskDescriptor& task_descriptor = node.getTaskDescriptor();
 
   std::string task_class_name = task_descriptor.getTaskClassName();
@@ -1099,7 +1060,7 @@ void TaskManager::instantiateTask(TaskTreeNode& node)
   try
   {
     // TODO: DO NOT ACCESS PRIVATE MEMBERS DIRECLY ,ie., UNFRIEND THE TASK MANAGER .. or should I?
-    TEMOTO_DEBUG( "%s instatiating task: %s", prefix.c_str(), task_class_name.c_str());
+    TEMOTO_DEBUG( "Instatiating task: %s", task_class_name.c_str());
 
     node.task_pointer_ = class_loaders_[task_descriptor.getLibPath()]->createInstance<BaseTask>(task_class_name);
     node.task_pointer_->task_package_name_ = task_descriptor.getTaskPackageName();
@@ -1115,7 +1076,7 @@ void TaskManager::instantiateTask(TaskTreeNode& node)
     // Check if it is a synchronous or asynchronous task
     if (task_descriptor.getFirstInterface().type_ == "asynchronous")
     {
-        TEMOTO_DEBUG_STREAM(prefix << "This is an async task, making a copy of the shared ptr\n");
+        TEMOTO_DEBUG_STREAM("This is an async task, making a copy of the shared ptr\n");
         asynchronous_tasks_.push_back( {node.task_descriptor_ptr_, node.task_pointer_} );
     }
 
@@ -1134,20 +1095,17 @@ void TaskManager::instantiateTask(TaskTreeNode& node)
 
 void TaskManager::unloadTaskLib(std::string path_to_lib)
 {
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-
-    try
-    {
-        TEMOTO_INFO_STREAM( prefix << " Unloading library: " << path_to_lib );
-        delete class_loaders_[path_to_lib];
-        class_loaders_.erase(path_to_lib);
-    }
-    catch(class_loader::ClassLoaderException& e)
-    {
-        // Rethrow the exception
-        throw CREATE_ERROR(error::Code::CLASS_LOADER_FAIL, e.what());
-    }
+  try
+  {
+    TEMOTO_INFO_STREAM("Unloading library: " << path_to_lib );
+    //delete class_loaders_[path_to_lib];
+    class_loaders_.erase(path_to_lib);
+  }
+  catch(class_loader::ClassLoaderException& e)
+  {
+    // Rethrow the exception
+    throw CREATE_ERROR(error::Code::CLASS_LOADER_FAIL, e.what());
+  }
 }
 
 
@@ -1189,25 +1147,25 @@ void TaskManager::makeFlowGraph(TaskTreeNode& node, tbb::flow::graph& flow_graph
 
 void TaskManager::connectFlowGraph(TaskTreeNode& node)
 {
-    // If its the root node, then create the start edge
-    if (node.getTaskDescriptor().getAction() == "ROOT")
+  // If its the root node, then create the start edge
+  if (node.getTaskDescriptor().getAction() == "ROOT")
+  {
+    // Connect parent flow graph node with child flow graph nodes
+    for (auto& child : node.getChildren())
     {
-        // Connect parent flow graph node with child flow graph nodes
-        for (auto& child : node.getChildren())
-        {
-            tbb::flow::make_edge(*node.root_fgn_, *child.task_fgn_);
-            connectFlowGraph(child);
-        }
+      tbb::flow::make_edge(*node.root_fgn_, *child.task_fgn_);
+      connectFlowGraph(child);
     }
-    else
+  }
+  else
+  {
+    // Connect parent flow graph node with child flow graph nodes
+    for (auto& child : node.getChildren())
     {
-        // Connect parent flow graph node with child flow graph nodes
-        for (auto& child : node.getChildren())
-        {
-            tbb::flow::make_edge(*node.task_fgn_, *child.task_fgn_);
-            connectFlowGraph(child);
-        }
+      tbb::flow::make_edge(*node.task_fgn_, *child.task_fgn_);
+      connectFlowGraph(child);
     }
+  }
 }
 
 
@@ -1218,27 +1176,30 @@ void TaskManager::connectFlowGraph(TaskTreeNode& node)
 bool TaskManager::stopTaskCallback( temoto_2::StopTask::Request& req,
                                     temoto_2::StopTask::Response& res)
 {
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
+  // Debug
+  TEMOTO_DEBUG( "Received a request to stop task. Action = '%s'; what = '%s'"
+             , req.action.c_str(), req.what.c_str());
 
-    // Debug
-    TEMOTO_DEBUG( "%s Received a request to stop task. Action = '%s'; what = '%s'"
-               , prefix.c_str(), req.action.c_str(), req.what.c_str());
+  try
+  {
+    //std::cout << "D0\n";
+    stopTask(req.action, req.what);
 
-    try
-    {
-        stopTask(req.action, req.what);
+    //std::cout << "D1\n";
+    res.code = 0;
+    res.message = "task stopped";
+  }
 
-        res.code = 0;
-        res.message = "task stopped";
-    }
+  catch(error::ErrorStack& error_stack)
+  {
+    FORWARD_ERROR(error_stack);
+  }
+  catch(...)
+  {
+    CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Received an unhandled exception");
+  }
 
-    catch(error::ErrorStack& error_stack)
-    {
-      FORWARD_ERROR(error_stack);
-    }
-
-    return true;
+  return true;
 }
 
 
@@ -1248,161 +1209,228 @@ bool TaskManager::stopTaskCallback( temoto_2::StopTask::Request& req,
 
 void TaskManager::stopTask(std::string action, std::string what)
 {
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
+  bool task_stopped = false;
 
-    bool task_stopped = false;
+  // Debug
+  TEMOTO_DEBUG_STREAM ("No of asynchronous tasks: " << asynchronous_tasks_.size());
 
+  /*
+   * Stop by action and "what"
+   */
+  if( !action.empty() && !what.empty() )
+  {
     // Debug
-    TEMOTO_DEBUG_STREAM (prefix << " No of asynchronous tasks: " << asynchronous_tasks_.size());
+    TEMOTO_DEBUG_STREAM ("Stopping the task based on 'action' and 'what'");
 
-    /*
-     * Stop by action and what
-     */
-    if( !action.empty() && !what.empty() )
+    // Look for the task
+    for (auto task_it = asynchronous_tasks_.begin();
+         task_it != asynchronous_tasks_.end();
+         ++task_it)
     {
-        // Debug
-        TEMOTO_DEBUG_STREAM (prefix << "Stopping the task based on 'action'' and 'what'");
-
-        // Look for the task
-        for (auto task_it = asynchronous_tasks_.begin();
-             task_it != asynchronous_tasks_.end();
-             ++task_it)
+      // Look for the action
+      bool action_found = false;
+      for (auto& alias : task_it->first->aliases_stemmed_)
+      {
+        if (alias == action)
         {
-            // Look for the action
-            bool action_found = false;
-            for (auto& alias : task_it->first->aliases_stemmed_)
-            {
-                if (alias == action)
-                {
-                    action_found = true;
-                    break;
-                }
-            }
-
-            // If the action was not found then continue
-            if (!action_found)
-            {
-                continue;
-            }
-
-            // Look for the what
-            Subjects subjects = task_it->first->getFirstInputSubjects(); // copy
-            try
-            {
-              Subject subject = getSubjectByType("what", subjects);
-
-              if (subject.words_.empty() || subject.words_[0] != what)
-              {
-                continue;
-              }
-            }
-            catch(std::string& e)
-            {
-              throw CREATE_ERROR(error::Code::SUBJECT_NOT_FOUND, e);
-            }
-
-
-            // Debug
-            TEMOTO_DEBUG_STREAM (prefix << " Found the task, stopping it");
-
-            // Remove the task
-            asynchronous_tasks_.erase(task_it);
-            task_stopped = true;
-            break;
+          action_found = true;
+          break;
         }
-    }
+      }
 
-    /*
-     * Stop by action
-     */
-    else if( !action.empty() )
-    {
-        // Debug
-        TEMOTO_DEBUG_STREAM (prefix << "Stopping the task based on 'action'");
+      // If the action was not found then continue
+      if (!action_found)
+      {
+        continue;
+      }
 
-        // Look for the task
-        for (auto task_it = asynchronous_tasks_.begin();
-             task_it != asynchronous_tasks_.end();
-             ++task_it)
+      // Look for the what
+      Subjects subjects = task_it->first->getFirstInputSubjects(); // copy
+      try
+      {
+        Subject subject = getSubjectByType("what", subjects);
+
+        if (subject.words_.empty() || subject.words_[0] != what)
         {
-            // Look for the action
-            bool action_found = false;
-            for (auto& alias : task_it->first->aliases_stemmed_)
-            {
-                if (alias == action)
-                {
-                    action_found = true;
-                    break;
-                }
-            }
-
-            // If the action was not found then continue
-            if (!action_found)
-            {
-                continue;
-            }
-
-            // Debug
-            TEMOTO_DEBUG_STREAM (prefix << " Found the task, stopping it");
-
-            // Remove the task
-            asynchronous_tasks_.erase(task_it);
-            task_stopped = true;
-            break;
+          continue;
         }
+      }
+      catch(std::string& e)
+      {
+        throw CREATE_ERROR(error::Code::SUBJECT_NOT_FOUND, e);
+      }
+
+
+      // Debug
+      TEMOTO_DEBUG_STREAM ("Found the task, stopping it");
+
+      // Remove the task
+      asynchronous_tasks_.erase(task_it);
+      task_stopped = true;
+      break;
     }
+  }
 
-    /*
-     * Stop by what
-     * In this case everything that corresponds to what is closed
-     * ex: "start THE CAMERA and show IT (the camera) in rviz" - both tasks are closed
-     */
-    else if( !what.empty() )
+  /*
+   * Stop by action
+   */
+  else if( !action.empty() )
+  {
+    // Debug
+    TEMOTO_DEBUG_STREAM ("Stopping the task based on 'action'");
+
+    // Look for the task
+    for (auto task_it = asynchronous_tasks_.begin();
+         task_it != asynchronous_tasks_.end();
+         ++task_it)
     {
-        // Debug
-        TEMOTO_DEBUG_STREAM (prefix << "Stopping the task based on 'what'");
-
-        // Look for the task
-        for (auto task_it = asynchronous_tasks_.begin();
-             task_it != asynchronous_tasks_.end();
-             /* empty */)
+      // Look for the action
+      bool action_found = false;
+      for (auto& alias : task_it->first->aliases_stemmed_)
+      {
+        if (alias == action)
         {
-            // Look for the what
-            Subjects subjects = task_it->first->getFirstInputSubjects(); // copy
-            try
-            {
-              Subject subject = getSubjectByType("what", subjects);
-              if (subject.words_.empty() || subject.words_[0] != what)
-              {
-                task_it++;
-                continue;
-              }
-            }
-            catch(std::string& e)
-            {
-              throw CREATE_ERROR(error::Code::SUBJECT_NOT_FOUND, e);
-            }
-
-            std::string lib_path = task_it->first->getLibPath();
-
-            // Debug
-            TEMOTO_DEBUG_STREAM (prefix << " Found task '" << lib_path << "'. Stopping it");
-
-            // Remove the task, task_it is pointed to the next element
-            task_it = asynchronous_tasks_.erase(task_it);
-
-            // TODO: the library should not be unloaded here. It should be done in the unloadTasks method
-            unloadTaskLib(lib_path);
-            task_stopped = true;
+          action_found = true;
+          break;
         }
-    }
+      }
 
-    if (!task_stopped)
-    {
-        // If nothing was specified, then throw error
-        throw CREATE_ERROR(error::Code::UNSPECIFIED_TASK, "Task 'action' and 'what' unspecified.");
+      // If the action was not found then continue
+      if (!action_found)
+      {
+        continue;
+      }
+
+      // Debug
+      TEMOTO_DEBUG_STREAM ("Found the task, stopping it");
+
+      // Remove the task
+      asynchronous_tasks_.erase(task_it);
+      task_stopped = true;
+      break;
     }
+  }
+
+  /*
+   * Stop by "what"
+   * In this case everything that corresponds to what is closed
+   * ex: "start THE CAMERA and show IT (the camera) in rviz" - both tasks are closed
+   */
+  else if( !what.empty() )
+  {
+    // Debug
+    TEMOTO_DEBUG_STREAM ("Stopping the task based on 'what'");
+
+//    for (auto task_it = asynchronous_tasks_.begin();
+//         task_it != asynchronous_tasks_.end();
+//         /* empty */)
+//    {
+
+//      // Look for the what
+//      TEMOTO_ERROR_STREAM("task name = " << task_it->first->getAction());
+//      Subjects subjects = task_it->first->getFirstOutputSubjects(); // copy
+//      TEMOTO_ERROR_STREAM(subjects);
+
+//      if (task_it->first->getAction() == "accept")
+//      {
+//        // task_it->first->task_interfaces_.clear();
+//        std::string libpath = task_it->first->getLibPath();
+//        asynchronous_tasks_.erase(task_it);
+//        class_loaders_.erase(libpath);
+//        //class_loaders_[libpath]->unloadLibrary();
+//        //delete class_loaders_[libpath];
+//      }
+//      else
+//      {
+//        task_it++;
+//      }
+//    }
+
+//    TEMOTO_DEBUG_STREAM ("Second round");
+
+//    for (auto task_it = asynchronous_tasks_.begin();
+//         task_it != asynchronous_tasks_.end();
+//         task_it++)
+//    {
+
+//      // Look for the what
+
+//      if (task_it->first->getAction() == "provide")
+//      {
+//        std::vector<Data>& v_data = task_it->first->getFirstOutputSubjects()[0].data_;
+//        std::cout << "D0\n";
+//        // Data dat = v_data[0];
+//        //dat.value = boost::any(v_data[0].value);
+//        //v_data[0] = dat;
+//        boost::any val = boost::any_cast<std::string>(std::string("Sum data jea"));
+//        v_data[0].value = val;
+//      }
+//      TEMOTO_ERROR_STREAM("task name = " << task_it->first->getAction());
+//      Subjects in_subjects = task_it->first->getFirstInputSubjects(); // copy
+//      Subjects out_subjects = task_it->first->getFirstOutputSubjects(); // copy
+//      TEMOTO_ERROR_STREAM(in_subjects);
+//      TEMOTO_ERROR_STREAM(out_subjects);
+//    }
+
+    // Look for the task
+    for (auto task_it = asynchronous_tasks_.begin();
+         task_it != asynchronous_tasks_.end();
+         /* empty */)
+    {
+
+      // Look for the what
+//      TEMOTO_INFO_STREAM("task name = " << task_it->first->getAction());
+
+      //Subjects subjects2 = task_it->first->getFirstOutputSubjects(); // copy
+      Subjects subjects = task_it->first->getFirstInputSubjects(); // copy
+
+      //TEMOTO_INFO_STREAM(subjects);
+
+      //std::cout << "D0_1\n";
+      try
+      {
+        Subject subject = getSubjectByType("what", subjects);
+//        TEMOTO_ERROR_STREAM("is: '" << subject.words_[0] << "' should be: '" << what << "' ");
+        if (subject.words_.empty() || subject.words_[0] != what)
+        {
+          task_it++;
+          continue;
+        }
+      }
+      catch(std::string& e)
+      {
+        throw CREATE_ERROR(error::Code::SUBJECT_NOT_FOUND, e);
+//        TEMOTO_ERROR_STREAM("this is bs but lets continue");
+//        task_it++;
+//        continue;
+      }
+
+      //std::cout << "D0_2\n";
+
+      std::string lib_path = task_it->first->getLibPath();
+
+      // Debug
+      TEMOTO_DEBUG_STREAM ("Found task '" << lib_path << "'. Stopping it");
+
+      // Remove the task, task_it is pointed to the next element
+      asynchronous_tasks_.erase(task_it);
+
+      //std::cout << "D0_3\n";
+
+      // TODO: the library should not be unloaded here. It should be done in the unloadTasks method
+      // TODO: And even if its unloded here, issue #3 happens (refer to github)
+//      unloadTaskLib(lib_path);
+
+      //std::cout << "D0_4\n";
+      task_stopped = true;
+    }
+  }
+
+  if (!task_stopped)
+  {
+    // If nothing was specified, then throw error
+    throw CREATE_ERROR(error::Code::UNSPECIFIED_TASK, "Task 'action' and 'what' unspecified.");
+  }
 }
 
 
@@ -1412,23 +1440,20 @@ void TaskManager::stopTask(std::string action, std::string what)
 
 void TaskManager::indexTasksCallback(temoto_2::IndexTasks index_msg)
 {
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
-
-    TEMOTO_DEBUG( "%s Received a request to index tasks at '%s'", prefix.c_str(), index_msg.directory.c_str());
+    TEMOTO_DEBUG( "Received a request to index tasks at '%s'", index_msg.directory.c_str());
     try
     {
         // Wait until the action execution engine is not busy
         while (action_executioner_busy_)
         {
             ros::Duration(0.05).sleep();
-            TEMOTO_DEBUG_STREAM(prefix << "Waiting for action executioner ...");
+            TEMOTO_DEBUG_STREAM("Waiting for action executioner ...");
         }
-        TEMOTO_DEBUG_STREAM(prefix << "Done waiting. Starting indexing process");
+        TEMOTO_DEBUG_STREAM("Done waiting. Starting indexing process");
 
         boost::filesystem::directory_entry dir(index_msg.directory);
         indexTasks(dir, 1);
-        TEMOTO_DEBUG_STREAM(prefix << "Browsed and indexed the tasks successfully");
+        TEMOTO_DEBUG_STREAM("Browsed and indexed the tasks successfully");
     }
     catch(error::ErrorStack& error_stack)
     {

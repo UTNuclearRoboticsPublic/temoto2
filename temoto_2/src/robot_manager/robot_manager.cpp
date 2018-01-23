@@ -456,32 +456,27 @@ bool RobotManager::getVizInfoCb(temoto_2::RobotGetVizInfo::Request& req,
 bool RobotManager::setTargetCb(temoto_2::RobotSetTarget::Request& req,
                                temoto_2::RobotSetTarget::Response& res)
 {
-  TEMOTO_INFO("Looking for target of type '%s'", req.target_type.c_str());
+  TEMOTO_INFO("Setting target to object '%s'", req.object_name.c_str());
 
-  // TODO: Only "hand" type is experimentally implemented
-  if (req.target_type == "hand")
+  temoto_2::TrackObject track_object_msg;
+  track_object_msg.request.object_name = req.object_name;
+
+  try
   {
-    std::vector<temoto_2::GestureSpecifier> gesture_specifiers;
-    temoto_2::GestureSpecifier gesture_specifier;
-    gesture_specifier.dev = "device";
-    gesture_specifier.type = "hand";
-    //    gesture_specifiers.push_back(gesture_specifier);
+    resource_manager_.call<temoto_2::TrackObject>(context_manager::srv_name::MANAGER,
+                                                  context_manager::srv_name::TRACK_OBJECT_SERVER,
+                                                  track_object_msg);
 
-    try
-    {
-      hand_srv_msg_.request.gesture_specifiers.push_back(gesture_specifier);
-      resource_manager_.call<temoto_2::LoadGesture>(
-          context_manager::srv_name::MANAGER, context_manager::srv_name::GESTURE_SERVER,
-          hand_srv_msg_, rmp::FailureBehavior::NONE);
-      TEMOTO_DEBUG("Subscribing to '%s'", hand_srv_msg_.response.topic.c_str());
-      target_pose_sub_ =
-        nh_.subscribe(hand_srv_msg_.response.topic, 1, &RobotManager::targetPoseCb, this);
-    }
-    catch(error::ErrorStack& error_stack)
-    {
-      throw FORWARD_ERROR(error_stack);
-    }
+    TEMOTO_DEBUG("Subscribing to '%s'", track_object_msg.response.object_topic.c_str());
+    target_pose_sub_ =
+        nh_.subscribe(track_object_msg.response.object_topic, 1, &RobotManager::targetPoseCb, this);
   }
+  catch (error::ErrorStack& error_stack)
+  {
+    res.error_stack = FORWARD_ERROR(error_stack);
+    res.code = rmp::status_codes::FAILED;
+  }
+
   return true;
 }
 
@@ -538,7 +533,7 @@ bool RobotManager::setModeCb(temoto_2::RobotSetMode::Request& req,
 
 // Take palm pose of whichever hand is present, prefer left_hand.
 // Store the pose in a class member for later use when planning is requested.
-void RobotManager::targetPoseCb(const leap_motion_controller::Set& set)
+void RobotManager::targetPoseCb(const human_msgs::Hands& set)
 {
   if (set.left_hand.is_present)
   {

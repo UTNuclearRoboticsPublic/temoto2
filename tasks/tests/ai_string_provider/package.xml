@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <package>
-  <name>human_msgs</name>
+  <name>ai_string_provider</name>
   <version>0.0.0</version>
-  <description>The human_msgs package</description>
+  <description>The ai_string_provider package</description>
 
-  <!-- One maintainer tag required, multiple allowed, one person per tag -->
+  <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
   <maintainer email="robert@todo.todo">robert</maintainer>
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/human_msgs</url> -->
+  <!-- <url type="website">http://wiki.ros.org/ai_string_provider</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
@@ -40,10 +40,18 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>geometry_msgs</build_depend>
+  <build_depend>class_loader</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
   <build_depend>std_msgs</build_depend>
-  <run_depend>geometry_msgs</run_depend>
+  <build_depend>temoto_2</build_depend>
+  <build_depend>human_msgs</build_depend>
+  <run_depend>class_loader</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>rospy</run_depend>
   <run_depend>std_msgs</run_depend>
+  <run_depend>temoto_2</run_depend>
+  <run_depend>human_msgs</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

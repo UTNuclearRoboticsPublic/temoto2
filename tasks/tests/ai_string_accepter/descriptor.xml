@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+
+<task action="accept" alias="eat">
+
+  <!--Interface block-->
+  <interface id="0" type="asynchronous">
+    
+    <!--Input block-->
+    <in>    
+      <what>
+        <arg word=""/>
+        <data>
+          <field datatype="topic"/>
+        </data>
+      </what>
+    </in>
+   
+  </interface>
+
+</task>

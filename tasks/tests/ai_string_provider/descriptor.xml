@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+
+<task action="provide" alias="generate">
+
+  <!--Interface block-->
+  <interface id="0" type="asynchronous">
+    
+    <!--Input block-->
+    <in>    
+      <what>
+        <arg word=""/>
+      </what>
+    </in>
+
+    <out>    
+      <what>
+        <arg word=""/>
+        <data>
+          <field datatype="topic"/>
+        </data>
+      </what>
+    </out>
+   
+  </interface>
+
+</task>

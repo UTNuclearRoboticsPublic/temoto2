@@ -118,7 +118,7 @@ public:
       std::vector<uint8_t> payload_byte_array;
 
       // Fill out the byte array
-      for (int i=0; i<payload_size; i++)
+      for (uint32_t i=0; i<payload_size; i++)
       {
         payload_byte_array.push_back(buffer.get()[i]);
       }
@@ -156,7 +156,7 @@ private:
         boost::shared_array<uint8_t> buffer(new uint8_t[payload_size]);
 
         // Fill buffer with the serialized payload
-        for (int i=0; i<payload_size; i++)
+        for (uint32_t i=0; i<payload_size; i++)
         {
           (buffer.get())[i] = msg.payload[i];
         }

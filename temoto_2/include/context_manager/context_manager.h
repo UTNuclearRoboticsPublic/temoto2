@@ -7,6 +7,7 @@
 #include "context_manager/context_manager_containers.h"
 #include "context_manager/tracking_method.h"
 #include "context_manager/context_manager_services.h"
+#include "TTP/task_manager.h"
 
 #include "rmp/resource_manager.h"
 #include "rmp/config_synchronizer.h"
@@ -42,6 +43,27 @@ private:
    * @param res
    */
   void unloadTrackerCb(temoto_2::LoadTracker::Request& req, temoto_2::LoadTracker::Response& res);
+
+  /**
+   * @brief findTrackers
+   * @param req
+   * @return
+   */
+  std::vector<TrackerInfo> findTrackers(temoto_2::LoadTracker::Request& req);
+
+  /**
+   * @brief loadTrackObjectCb
+   * @param req
+   * @param res
+   */
+  void loadTrackObjectCb(temoto_2::TrackObject::Request& req, temoto_2::TrackObject::Response& res);
+
+  /**
+   * @brief unloadTrackObjectCb
+   * @param req
+   * @param res
+   */
+  void unloadTrackObjectCb(temoto_2::TrackObject::Request& req, temoto_2::TrackObject::Response& res);
 
   /**
    * @brief parseTrackers
@@ -96,6 +118,9 @@ private:
 
   void addOrUpdateObjects(const Objects& objects_to_add, bool from_other_manager);
 
+  ObjectPtr findObject(std::string object_name);
+
+
   // Resource manager for handling servers and clients
   rmp::ResourceManager<ContextManager> resource_manager_1_;
 
@@ -112,13 +137,17 @@ private:
 
   ObjectPtrs objects_;
 
+  std::map<int, std::string> m_tracked_objects_;
+
   std::map<std::string, std::vector<context_manager::TrackerInfo>> categorized_trackers_;
 
-  temoto_id::IDManager pipeIDGenerator;
+  temoto_id::IDManager pipe_id_generator_;
 
   // Configuration syncer that manages external resource descriptions and synchronizes them
   // between all other (context) managers
   rmp::ConfigSynchronizer<ContextManager, Objects> object_syncer_;
+
+  TTP::TaskManager tracker_core_;
 };
 }
 

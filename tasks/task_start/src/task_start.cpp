@@ -26,7 +26,7 @@ public:
   TaskStart()
   {
     // Do something here if needed
-    TASK_INFO("TaskStart constructed");
+    TEMOTO_INFO("TaskStart constructed");
   }
 
   // startTask with arguments
@@ -136,14 +136,15 @@ public:
     smi_.initialize(this);
 
     SensorTopicsReq requested_topics;
-    requested_topics.addOutputTopicType("data");
+    requested_topics.addOutputTopicType("camera_data");
+    requested_topics.addOutputTopicType("camera_info");
 
-    TASK_INFO(" Starting the camera");
+    TEMOTO_INFO(" Starting the camera");
 
     SensorTopicsRes responded_topics = smi_.startSensor("camera", requested_topics);
-    std::string camera_topic = responded_topics.getOutputTopic("data");
+    std::string camera_topic = responded_topics.getOutputTopic("camera_data");
 
-    TASK_INFO_STREAM("Got camera on topic '" << camera_topic << "'");
+    TEMOTO_INFO_STREAM("Got camera on topic '" << camera_topic << "'");
 
     // Pass the camera topic to the output
     what_0_word_out = what_0_word_in;
@@ -179,13 +180,10 @@ public:
 
     // -------------------------------< USER CODE >-------------------------------
 
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
-
     // Initialize the context manager interface
     cmi_.initialize(this);
 
-    TASK_INFO(" Starting the hand tracker");
+    TEMOTO_INFO(" Starting the hand tracker");
 
     // Build a gesture specifier
     // TODO: This shoud be done via gesture specifier helper class
@@ -217,7 +215,7 @@ public:
   }
 
   // Callback for processing gestures
-  void gestureCallback(leap_motion_controller::Set gesture)
+  void gestureCallback(human_msgs::Hands gesture)
   {
     visualization_msgs::Marker marker;
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
@@ -267,7 +265,7 @@ public:
 
   ~TaskStart()
   {
-    TASK_INFO("TaskStart destructed");
+    TEMOTO_INFO("TaskStart destructed");
   }
 
 private:

@@ -142,13 +142,13 @@ public:
     return msg.response.info;
   }
 
-  void setTarget(std::string target_type)
+  void setTarget(std::string object_name)
   {
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
     TEMOTO_DEBUG("%s", prefix.c_str());
 
     temoto_2::RobotSetTarget msg;
-    msg.request.target_type = target_type;
+    msg.request.object_name = object_name;
     if (!client_set_target_.call(msg))
     {
       throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");

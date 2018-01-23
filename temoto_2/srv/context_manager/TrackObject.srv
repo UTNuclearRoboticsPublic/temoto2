@@ -1,0 +1,18 @@
+# Name of the objec
+string object_name
+
+# RMP
+temoto_2/RMPRequest rmp
+
+---
+
+# Object msg that contains all information about
+# the requested object
+temoto_2/ObjectContainer object
+
+# Topic where the information about the required
+# object is going to be published
+string object_topic
+
+# RMP
+temoto_2/RMPResponse rmp

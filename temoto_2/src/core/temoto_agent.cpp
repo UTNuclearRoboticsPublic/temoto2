@@ -37,8 +37,16 @@ int main(int argc, char **argv)
 
     // Start the spinner and chill
     ros::AsyncSpinner spinner(0);
-    spinner.start();
-    ros::waitForShutdown();
+    try
+    {
+      spinner.start();
+      ros::waitForShutdown();
+    }
+    catch(...)
+    {
+      std::cout << "\n The agent crashed\n";
+    }
+
 
     return 0;
 }

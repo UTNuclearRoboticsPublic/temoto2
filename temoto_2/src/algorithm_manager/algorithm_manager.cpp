@@ -9,10 +9,12 @@
 
 #include "ros/package.h"
 #include "algorithm_manager/algorithm_manager.h"
+
 #include <algorithm>
 #include <utility>
 #include <yaml-cpp/yaml.h>
 #include <fstream>
+#include <regex>
 
 namespace algorithm_manager
 {
@@ -210,10 +212,8 @@ void AlgorithmManager::advertiseLocalAlgorithms()
 void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
                                      , temoto_2::LoadAlgorithm::Response& res)
 {
-  TEMOTO_DEBUG("received a request to load '%s': '%s', '%s'"
-             , req.algorithm_type.c_str()
-             , req.package_name.c_str()
-             , req.executable.c_str());
+  TEMOTO_INFO_STREAM("- - - - - - - - - - - - -\n"
+                     << "Received a request to load an algorithm: \n" << req << std::endl);
 
 //  TEMOTO_DEBUG_STREAM("\n IN MORE DETAIL: \n" << req << "\n");
 
@@ -228,50 +228,10 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
     load_process_msg.request.executable = algorithm_ptr->getExecutable();
 
     // Remap the input topics if requested
-    for (auto& req_topic : req.input_topics)
-    {
-      // And return the input topics via response
-      diagnostic_msgs::KeyValue res_input_topic;
-      res_input_topic.key = req_topic.key;
-      std::string default_topic = algorithm_ptr->getInputTopic(req_topic.key);
-
-      if (req_topic.value != "")
-      {
-        res_input_topic.value = common::getAbsolutePath(req_topic.value);
-        std::string remap_arg = default_topic + ":=" + req_topic.value;
-        load_process_msg.request.args += remap_arg + " ";
-      }
-      else
-      {
-        res_input_topic.value = common::getAbsolutePath(default_topic);
-      }
-
-      // Add the topic to the response message
-      res.input_topics.push_back(res_input_topic);
-    }
+    remapArguments(req.input_topics, res.input_topics, load_process_msg, algorithm_ptr, true);
 
     // Remap the output topics if requested
-    for (auto& req_topic : req.output_topics)
-    {
-      // And return the input topics via response
-      diagnostic_msgs::KeyValue res_output_topic;
-      res_output_topic.key = req_topic.key;
-      std::string default_topic = algorithm_ptr->getOutputTopic(req_topic.key);
-
-      if (req_topic.value != "")
-      {
-        res_output_topic.value = common::getAbsolutePath(req_topic.value);
-        std::string remap_arg = default_topic + ":=" + req_topic.value;
-        load_process_msg.request.args += remap_arg + " ";
-      }
-      else
-      {
-        res_output_topic.value = common::getAbsolutePath(default_topic);
-      }
-
-      // Add the topic to the response message
-      res.output_topics.push_back(res_output_topic);
-    }
+    remapArguments(req.output_topics, res.output_topics, load_process_msg, algorithm_ptr, false);
 
     TEMOTO_DEBUG("Sending arguments: '%s'.", load_process_msg.request.args.c_str());
 
@@ -584,6 +544,71 @@ AlgorithmInfoPtrs AlgorithmManager::parseAlgorithms(const YAML::Node& config)
     }
   }
   return algorithms;
+}
+
+/*
+ *
+ * Other helper functions
+ *
+ */
+
+void AlgorithmManager::remapArguments(std::vector<diagnostic_msgs::KeyValue>& req_topics,
+                                      std::vector<diagnostic_msgs::KeyValue>& res_topics,
+                                      temoto_2::LoadProcess& load_process_msg,
+                                      AlgorithmInfoPtr algorithm_ptr,
+                                      bool inputTopics)
+{
+  /*
+   * Find out it this is a launch file or not. Remapping is different
+   * for executable types (launch files or executables)
+   */
+  bool isLaunchFile;
+  std::regex rx(".*\\.launch$");
+  isLaunchFile = std::regex_match(algorithm_ptr->getExecutable(), rx);
+
+  // Remap the input topics if requested
+  for (auto& req_topic : req_topics)
+  {
+    // And return the input topics via response
+    diagnostic_msgs::KeyValue res_input_topic;
+    res_input_topic.key = req_topic.key;
+    std::string default_topic;
+
+    if (inputTopics)
+    {
+      default_topic = algorithm_ptr->getInputTopic(req_topic.key);
+    }
+    else
+    {
+      default_topic = algorithm_ptr->getOutputTopic(req_topic.key);
+    }
+
+    if (req_topic.value != "")
+    {
+      res_input_topic.value = common::getAbsolutePath(req_topic.value);
+
+      // Remap depending wether it is a launch file or excutable
+      std::string remap_arg;
+
+      if (isLaunchFile)
+      {
+        remap_arg = req_topic.key + ":=" + req_topic.value;
+      }
+      else
+      {
+        remap_arg = default_topic + ":=" + req_topic.value;
+      }
+
+      load_process_msg.request.args += remap_arg + " ";
+    }
+    else
+    {
+      res_input_topic.value = common::getAbsolutePath(default_topic);
+    }
+
+    // Add the topic to the response message
+    res_topics.push_back(res_input_topic);
+  }
 }
 
 }  // algorithm_manager namespace
