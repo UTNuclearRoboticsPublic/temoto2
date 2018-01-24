@@ -94,8 +94,11 @@ void ContextManager::objectSyncCb(const temoto_2::ConfigSync& msg, const Objects
 void ContextManager::addOrUpdateObjects(const Objects& objects_to_add, bool from_other_manager)
 {
   // Loop over the list of provided objects
-  for (auto& object : objects_to_add)
+  for (auto object : objects_to_add)
   {
+    // Replace all spaces in the name with the underscore character
+    std::replace(object.name.begin(), object.name.end(), ' ', '_');
+
     // Check if the object has to be added or updated
     auto it = std::find_if(objects_.begin(), objects_.end(),
         [&](const ObjectPtr& o_ptr) { return *o_ptr == object; });
@@ -182,8 +185,12 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
   {
     TEMOTO_DEBUG_STREAM("Received a request to track an object named: '" << req.object_name << "'");
 
+    // Replace all spaces in the name with the underscore character
+    std::string object_name_no_space = req.object_name;
+    std::replace(object_name_no_space.begin(), object_name_no_space.end(), ' ', '_');
+
     // Look if the requested object is described in the object database
-    ObjectPtr requested_object = findObject(req.object_name);
+    ObjectPtr requested_object = findObject(object_name_no_space);
 
     TEMOTO_DEBUG_STREAM("The requested object is known, tracking it via: " << requested_object->detection_methods[0]);
 
@@ -239,8 +246,8 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
     TopicContainer tracker_topics;
     tracker_topics.setOutputTopicsByKeyValue(load_tracker_msg.response.output_topics);
 
-    // Topic where the information about the required object is going to be published
-    std::string tracked_object_topic = common::getAbsolutePath("object_tracker/" + req.object_name);
+    // Topic where the information about the required object is going to be published.
+    std::string tracked_object_topic = common::getAbsolutePath("object_tracker/" + object_name_no_space);
 
     /*
      * AR tag based object tracker setup
@@ -264,7 +271,7 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
 
       // Subject that will contain the name of the tracked object.
       // Necessary when the tracker has to be stopped
-      TTP::Subject sub_0("what", req.object_name);
+      TTP::Subject sub_0("what", object_name_no_space);
 
       // Subject that will contain the data necessary for the specific tracker
       TTP::Subject sub_1("what", "artag data");
@@ -286,7 +293,7 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
       task_descriptors.emplace_back(action, subjects);
       task_descriptors[0].setActionStemmed(action);
 
-      // Create a sematiic frame tree
+      // Create a sematic frame tree
       TTP::TaskTree sft = TTP::SFTBuilder::build(task_descriptors);
 
       // Get the root node of the tree
@@ -298,7 +305,66 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
 
       // Put the object into the list of tracked objects. This is used later
       // for stopping the tracker
-      m_tracked_objects_[res.rmp.resource_id] = req.object_name;
+      m_tracked_objects_[res.rmp.resource_id] = object_name_no_space;
+    }
+
+    /*
+     * Hand based object tracker setup
+     */
+    if (selected_tracker == "hands")
+    {
+      TEMOTO_DEBUG_STREAM("Using hand based tracking");
+
+      // Get the AR tag data dopic
+      std::string tracker_data_topic = tracker_topics.getOutputTopic("handtracker_data");
+
+      /*
+       * TTP related stuff up ahead: A semantic frame is manually created. Based on that SF
+       * a SF tree is created, given that an action implementation, that corresponds to the
+       * manually created SF, exists. The specific tracker task is started and it continues
+       * running in the background until its ordered to be stopped.
+       */
+
+      std::string action = "track";
+      TTP::Subjects subjects;
+
+      // Subject that will contain the name of the tracked object.
+      // Necessary when the tracker has to be stopped
+      TTP::Subject sub_0("what", object_name_no_space);
+
+      // Subject that will contain the data necessary for the specific tracker
+      TTP::Subject sub_1("what", "hand data");
+
+      // Topic from where the raw hand tracker data comes from
+      sub_1.addData("topic", tracker_data_topic);
+
+      // Topic where the AImp must publish the data about the tracked object
+      sub_1.addData("topic", tracked_object_topic);
+
+      // This object will be updated inside the tracking AImp (action implementation)
+      sub_1.addData("pointer", boost::any_cast<ObjectPtr>(requested_object));
+
+      subjects.push_back(sub_0);
+      subjects.push_back(sub_1);
+
+      // Create a SF
+      std::vector<TTP::TaskDescriptor> task_descriptors;
+      task_descriptors.emplace_back(action, subjects);
+      task_descriptors[0].setActionStemmed(action);
+
+      // Create a sematic frame tree
+      TTP::TaskTree sft = TTP::SFTBuilder::build(task_descriptors);
+
+      // Get the root node of the tree
+      TTP::TaskTreeNode& root_node = sft.getRootNode();
+      sft.printTaskDescriptors(root_node);
+
+      // Execute the SFT
+      tracker_core_.executeSFT(std::move(sft));
+
+      // Put the object into the list of tracked objects. This is used later
+      // for stopping the tracker
+      m_tracked_objects_[res.rmp.resource_id] = object_name_no_space;
     }
 
     res.object_topic = tracked_object_topic;

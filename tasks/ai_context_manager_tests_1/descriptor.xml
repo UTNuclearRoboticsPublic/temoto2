@@ -14,4 +14,16 @@
    
   </interface>
 
+  <!--Interface block-->
+  <interface id="1" type="synchronous">
+    
+    <!--Input block-->
+    <in>    
+      <what>
+        <arg word="right hand"/>
+      </what>
+    </in>
+   
+  </interface>
+
 </task>

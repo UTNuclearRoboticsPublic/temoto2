@@ -26,7 +26,7 @@ public:
 ContextManagerTests1()
 {
   // Do something here if needed
-  TASK_INFO("ContextManagerTests1 constructed");
+  TEMOTO_INFO("Action implementation constructed");
 }
 
 // startTask with arguments
@@ -42,6 +42,11 @@ void startTask(TTP::TaskInterface task_interface)
     // Interface 0
     case 0:
       startInterface_0();
+    break;
+
+    // Interface 0
+    case 1:
+      startInterface_1();
     break;
   }
   // </ AUTO-GENERATED, DO NOT MODIFY >
@@ -129,9 +134,68 @@ void startInterface_0()
   // </ AUTO-GENERATED, DO NOT MODIFY >
 }
 
+/*
+ * Interface 1 body
+ */
+void startInterface_1()
+{
+  // < AUTO-GENERATED, DO NOT MODIFY >
+
+  // Extracting input subjects
+  TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
+  std::string  what_0_word_in = what_0_in.words_[0];
+
+  // Creating output variables
+  std::string  what_0_word_out;
+
+  // </ AUTO-GENERATED, DO NOT MODIFY >
+
+// -------------------------------< USER CODE >-------------------------------
+
+  // Initialize the sensor manager interface
+  cmi_.initialize(this);
+
+  // Create a hand object
+  temoto_2::ObjectContainer hand;
+  hand.name = "right hand";
+
+  TEMOTO_INFO_STREAM("The tracking method for the hand is:" << temoto_2::ObjectContainer::HAND);
+
+  hand.detection_methods.push_back(temoto_2::ObjectContainer::HAND);
+
+  visualization_msgs::Marker marker;
+  marker.type = visualization_msgs::Marker::CUBE;
+  marker.scale.x = 0.08;
+  marker.scale.y = 0.02;
+  marker.scale.z = 0.12;
+
+  marker.color.r = 1.0f;
+  marker.color.g = 0.0f;
+  marker.color.b = 0.0f;
+  marker.color.a = 1.0;
+
+  hand.marker = marker;
+
+  // Add a new object to the context manager
+  cmi_.addWorldObjects(hand);
+
+  // Pass the name of the object to the output
+  what_0_word_out = hand.name;
+
+  // -------------------------------</ USER CODE >-------------------------------
+
+  // < AUTO-GENERATED, DO NOT MODIFY >
+
+  TTP::Subject what_0_out("what", what_0_word_out);
+  what_0_out.markComplete();
+  output_subjects.push_back(what_0_out);
+
+  // </ AUTO-GENERATED, DO NOT MODIFY >
+}
+
 ~ContextManagerTests1()
 {
-    TASK_INFO("ContextManagerTests1 destructed");
+    TEMOTO_INFO("Action implementation destructed");
 }
 
 private:

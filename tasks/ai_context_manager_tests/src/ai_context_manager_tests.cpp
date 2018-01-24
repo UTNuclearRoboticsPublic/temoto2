@@ -46,12 +46,17 @@ void startTask(TTP::TaskInterface task_interface)
 
       // Interface 1
       case 1:
-          startInterface_1();
+          startInterface_0(); // TODO: It is a deliberate hack that the actual interface is 0
       break;
 
-      // Interface 1
+      // Interface 2
       case 2:
           startInterface_2();
+      break;
+
+      // Interface 3
+      case 3:
+          startInterface_3();
       break;
   }
   // </ AUTO-GENERATED, DO NOT MODIFY >
@@ -112,9 +117,9 @@ void startInterface_0()
 }
 
 /*
- * Interface 1 body
+ * Interface 2 body
  */
-void startInterface_1()
+void startInterface_2()
 {
   // < AUTO-GENERATED, DO NOT MODIFY >
 
@@ -162,9 +167,9 @@ void startInterface_1()
 }
 
 /*
- * Interface 2 body
+ * Interface 3 body
  */
-void startInterface_2()
+void startInterface_3()
 {
   // < AUTO-GENERATED, DO NOT MODIFY >
 
