@@ -311,7 +311,7 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
   if (!active_robot_)
   {
     res.error_stack = CREATE_ERROR(error::Code::ROBOT_PLAN_FAIL, "Unable to plan, because no robot "
-                                                                 "is not loaded.");
+                                                                 "is loaded.");
     res.code = rmp::status_codes::FAILED;
     return true;
   }
@@ -329,6 +329,8 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
     {
       pose = req.target_pose;
     }
+
+    TEMOTO_DEBUG_STREAM("Planning goal: " << pose<<std::endl);
 
     try
     {
@@ -456,25 +458,50 @@ bool RobotManager::getVizInfoCb(temoto_2::RobotGetVizInfo::Request& req,
 bool RobotManager::setTargetCb(temoto_2::RobotSetTarget::Request& req,
                                temoto_2::RobotSetTarget::Response& res)
 {
-  TEMOTO_INFO("Setting target to object '%s'", req.object_name.c_str());
-
-  temoto_2::TrackObject track_object_msg;
-  track_object_msg.request.object_name = req.object_name;
-
-  try
+  if (active_robot_->isLocal())
   {
-    resource_manager_.call<temoto_2::TrackObject>(context_manager::srv_name::MANAGER,
-                                                  context_manager::srv_name::TRACK_OBJECT_SERVER,
-                                                  track_object_msg);
+    TEMOTO_INFO("Setting target to object '%s'", req.object_name.c_str());
 
-    TEMOTO_DEBUG("Subscribing to '%s'", track_object_msg.response.object_topic.c_str());
-    target_pose_sub_ =
-        nh_.subscribe(track_object_msg.response.object_topic, 1, &RobotManager::targetPoseCb, this);
+    temoto_2::TrackObject track_object_msg;
+    track_object_msg.request.object_name = req.object_name;
+
+    try
+    {
+      resource_manager_.call<temoto_2::TrackObject>(context_manager::srv_name::MANAGER,
+                                                    context_manager::srv_name::TRACK_OBJECT_SERVER,
+                                                    track_object_msg);
+
+      TEMOTO_DEBUG("Subscribing to '%s'", track_object_msg.response.object_topic.c_str());
+      target_pose_sub_ = nh_.subscribe(track_object_msg.response.object_topic, 1,
+                                       &RobotManager::targetPoseCb, this);
+    }
+    catch (error::ErrorStack& error_stack)
+    {
+      res.error_stack = FORWARD_ERROR(error_stack);
+      res.code = rmp::status_codes::FAILED;
+    }
   }
-  catch (error::ErrorStack& error_stack)
+  else
   {
-    res.error_stack = FORWARD_ERROR(error_stack);
-    res.code = rmp::status_codes::FAILED;
+    // This is remote robot, forward the set target command
+
+    std::string topic = "/" + active_robot_->getConfig()->getTemotoNamespace() + "/" +
+                        robot_manager::srv_name::SERVER_SET_TARGET;
+    ros::ServiceClient client_mode = nh_.serviceClient<temoto_2::RobotSetTarget>(topic);
+    temoto_2::RobotSetTarget fwd_target_srvc;
+    fwd_target_srvc.request = req;
+    fwd_target_srvc.response = res;
+    if (client_mode.call(fwd_target_srvc))
+    {
+      TEMOTO_DEBUG("Call to remote RobotManager was sucessful.");
+      res = fwd_target_srvc.response;
+    }
+    else
+    {
+      TEMOTO_ERROR("Call to remote RobotManager service failed.");
+      res.message = "Call to remote RobotManager service failed.";
+      res.code = rmp::status_codes::FAILED;
+    }
   }
 
   return true;
@@ -535,10 +562,9 @@ bool RobotManager::setModeCb(temoto_2::RobotSetMode::Request& req,
 // Store the pose in a class member for later use when planning is requested.
 void RobotManager::targetPoseCb(const temoto_2::ObjectContainer& msg)
 {
-  TEMOTO_ERROR("here");
     default_pose_mutex_.lock();
     default_target_pose_ = msg.pose;
-    default_target_pose_.pose.position.x = 0.1;
+    default_target_pose_.pose.position.x = 0;
     default_target_pose_.pose.position.y = 0;
     default_target_pose_.pose.position.z = 0;
     default_target_pose_.pose.orientation.x = 0;

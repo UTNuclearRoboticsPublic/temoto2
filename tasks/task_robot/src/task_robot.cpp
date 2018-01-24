@@ -55,11 +55,18 @@ public:
         break;
 
       case 3:
-        setTargetToHand();
+        try
+        {
+          TTP::Subject where_0_in = TTP::getSubjectByType("where", input_subjects);
+          rmi_.setTarget(where_0_in.words_[0]);
+        }
+        catch(...)
+        {
+        }
         break;
 
       case 4:
-        setTargetToHand();
+        rmi_.setTarget("right hand");
         break;
     }
   }
@@ -90,16 +97,6 @@ public:
     geometry_msgs::Pose pose;
     rmi_.execute();
     TEMOTO_DEBUG("DONE EXECUTING");
-  }
-
-  void setTargetToHand()
-  {
-    TEMOTO_DEBUG("SET TARGET TO HAND");
-    TTP::Subject where_0_in = TTP::getSubjectByType("where", input_subjects);
-    std::string where_object = where_0_in.words_[0];
-    where_object = (where_object=="") ? where_object : "right hand";
-    rmi_.setTarget(where_object);
-    TEMOTO_DEBUG("DONE SET TARGET TO HAND");
   }
 
   std::vector<TTP::Subject> getSolution()
