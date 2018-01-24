@@ -30,6 +30,28 @@
     <!--Input block-->
     <in>    
       <what>
+        <arg word="right hand"/>
+      </what>
+    </in>
+
+    <!--Output block-->
+    <out>    
+      <what>
+        <arg word="object container"/>
+        <data>
+          <field datatype="topic"/>
+        </data>
+      </what>
+    </out>
+   
+  </interface>
+
+  <!--Interface block-->
+  <interface id="2" type="asynchronous">
+    
+    <!--Input block-->
+    <in>    
+      <what>
         <arg word="artag"/>
       </what>
     </in>
@@ -47,7 +69,7 @@
   </interface>
 
   <!--Interface block-->
-  <interface id="2" type="asynchronous">
+  <interface id="3" type="asynchronous">
     
     <!--Input block-->
     <in>    

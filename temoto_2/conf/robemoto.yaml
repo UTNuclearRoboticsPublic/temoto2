@@ -48,8 +48,8 @@ Algorithms:
 
 - algorithm_name: "CNN Handtracker"
   algorithm_type: "handtracker"
-  package_name: "hand_tracker_test"
-  executable:  "hand_tracker_test"
+  package_name: "depth_cam_hand_tracker"
+  executable:  "tracker"
   input_topics:
     camera_info: "camera/depth/camera_info"
     camera_data: "camera/depth/image"

@@ -12,6 +12,7 @@ string[] detection_methods
 # Supported types for object detection are:
 # Requires the "tag_id" field to be filled 
 string ARTAG = artags
+string HAND = hands
 
 # Requires the "primitive" field to be filled 
 # string SEGMENT = 2
