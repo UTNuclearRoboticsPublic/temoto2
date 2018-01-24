@@ -110,7 +110,7 @@ std::vector<TTP::Subject> getSolution()
 
 void handDataCb(human_msgs::Hands msg)
 {
-  TEMOTO_DEBUG_STREAM("Updating the pose of the right hand");
+//  TEMOTO_DEBUG_STREAM("Updating the pose of the right hand");
 
   // Update the pose of the object
   tracked_object_->pose = msg.right_hand.palm_pose;

@@ -533,20 +533,20 @@ bool RobotManager::setModeCb(temoto_2::RobotSetMode::Request& req,
 
 // Take palm pose of whichever hand is present, prefer left_hand.
 // Store the pose in a class member for later use when planning is requested.
-void RobotManager::targetPoseCb(const human_msgs::Hands& set)
+void RobotManager::targetPoseCb(const temoto_2::ObjectContainer& msg)
 {
-  if (set.left_hand.is_present)
-  {
+  TEMOTO_ERROR("here");
     default_pose_mutex_.lock();
-    default_target_pose_ = set.left_hand.palm_pose;
+    default_target_pose_ = msg.pose;
+    default_target_pose_.pose.position.x = 0.1;
+    default_target_pose_.pose.position.y = 0;
+    default_target_pose_.pose.position.z = 0;
+    default_target_pose_.pose.orientation.x = 0;
+    default_target_pose_.pose.orientation.y = 0;
+    default_target_pose_.pose.orientation.z = 0;
+    default_target_pose_.pose.orientation.w = 1;
+    default_target_pose_.header.frame_id = "right_ur5_ee_link";
     default_pose_mutex_.unlock();
-  }
-  else if (set.right_hand.is_present)
-  {
-    default_pose_mutex_.lock();
-    default_target_pose_ = set.right_hand.palm_pose;
-    default_pose_mutex_.unlock();
-  }
 }
 
 void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)

@@ -49,6 +49,19 @@
       <what>
         <arg word="target"/>
       </what>
+      <where>
+        <arg word=""/>
+      </where>
+    </in>
+  </interface>
+
+  <!--Interface block-->
+  <interface id="4" type="synchronous">
+    <!--Input block-->
+    <in>    
+      <what>
+        <arg word="target"/>
+      </what>
     </in>
   </interface>
 

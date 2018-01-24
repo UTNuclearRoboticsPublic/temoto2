@@ -218,7 +218,7 @@ std::vector<TTP::Subject> getSolution()
  */
 void objectContainerCb(temoto_2::ObjectContainer msg)
 {
-  TEMOTO_DEBUG_STREAM(" Publishing the marker");
+  //TEMOTO_DEBUG_STREAM(" Publishing the marker");
 
   /*
    * The ObjectContainer already contains the marker message, but only

@@ -188,32 +188,33 @@ void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
                            req.package_name.c_str(), req.executable.c_str());
       }
     }
-    else
-    {
-      // Check if the requested binary exists
-      std::string catkin_find_cmd = "catkin_find " + req.package_name + " " + req.executable;
-      std::shared_ptr<FILE> pipe(popen(catkin_find_cmd.c_str(), "r"), pclose);
-      if(pipe)
-      {
-        std::array<char, 128> buffer;
-        std::string result;
-        while(!feof(pipe.get()))
-        {
-          if (fgets(buffer.data(), 128, pipe.get()) != nullptr)
-          {
-            result += buffer.data();
-          }
-        }
-
-        //catkin find does not write anything to stdout if the binary does not exist.
-        if (!result.size())
-        {
-          throw CREATE_ERROR(error::Code::EXECUTABLE_NOT_FOUND,
-                             "ROS Package: '%s' does not contain the executable '%s'.",
-                             req.package_name.c_str(), req.executable.c_str());
-        }
-      }
-    }
+    // TODO: In whats below, catkin_find is unable to find .py files. That's why its commented out.
+//    else
+//    {
+//      // Check if the requested binary exists
+//      std::string catkin_find_cmd = "catkin_find " + req.package_name + " " + req.executable;
+//      std::shared_ptr<FILE> pipe(popen(catkin_find_cmd.c_str(), "r"), pclose);
+//      if(pipe)
+//      {
+//        std::array<char, 128> buffer;
+//        std::string result;
+//        while(!feof(pipe.get()))
+//        {
+//          if (fgets(buffer.data(), 128, pipe.get()) != nullptr)
+//          {
+//            result += buffer.data();
+//          }
+//        }
+//
+//        //catkin find does not write anything to stdout if the binary does not exist.
+//        if (!result.size())
+//        {
+//          throw CREATE_ERROR(error::Code::EXECUTABLE_NOT_FOUND,
+//                             "ROS Package: '%s' does not contain the executable '%s'.",
+//                             req.package_name.c_str(), req.executable.c_str());
+//        }
+//      }
+//    }
 
     // Yey, the executable and ros package exists. Add it to the loading queue.
 

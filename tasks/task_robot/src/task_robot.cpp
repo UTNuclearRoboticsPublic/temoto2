@@ -57,12 +57,15 @@ public:
       case 3:
         setTargetToHand();
         break;
+
+      case 4:
+        setTargetToHand();
+        break;
     }
   }
 
   void loadRobot()
   {
-    std::string prefix = common::generateLogPrefix("", this->getPackageName(), __func__);
     // Load the ur5 robot
     //rmi_.loadRobot("ur5");
     //rmi_.loadRobot("vaultbot");
@@ -74,29 +77,29 @@ public:
 
   void plan()
   {
-    std::string prefix = common::generateLogPrefix("", this->getPackageName(), __func__);
-    TASK_DEBUG("%s PLANNING", prefix.c_str());
+    TEMOTO_DEBUG("PLANNING");
     // geometry_msgs::PoseStamped target_pose;
     //rmi_.plan(target_pose);
     rmi_.plan(); //plan with default planning group using default target
-    TASK_DEBUG("%s DONE PLANNING", prefix.c_str());
+    TEMOTO_DEBUG("DONE PLANNING");
   }
 
   void execute()
   {
-    std::string prefix = common::generateLogPrefix("", this->getPackageName(), __func__);
-    TASK_DEBUG("%s EXECUTING", prefix.c_str());
+    TEMOTO_DEBUG("EXECUTING");
     geometry_msgs::Pose pose;
     rmi_.execute();
-    TASK_DEBUG("%s DONE EXECUTING", prefix.c_str());
+    TEMOTO_DEBUG("DONE EXECUTING");
   }
 
   void setTargetToHand()
   {
-    std::string prefix = common::generateLogPrefix("", this->getPackageName(), __func__);
-    TASK_DEBUG("%s SET TARGET TO HAND", prefix.c_str());
-    rmi_.setTarget("hand");
-    TASK_DEBUG("%s DONE SET TARGET TO HAND", prefix.c_str());
+    TEMOTO_DEBUG("SET TARGET TO HAND");
+    TTP::Subject where_0_in = TTP::getSubjectByType("where", input_subjects);
+    std::string where_object = where_0_in.words_[0];
+    where_object = (where_object=="") ? where_object : "right hand";
+    rmi_.setTarget(where_object);
+    TEMOTO_DEBUG("DONE SET TARGET TO HAND");
   }
 
   std::vector<TTP::Subject> getSolution()

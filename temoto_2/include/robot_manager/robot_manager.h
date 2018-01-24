@@ -96,7 +96,7 @@ private:
   bool getVizInfoCb(temoto_2::RobotGetVizInfo::Request& req,
                        temoto_2::RobotGetVizInfo::Response& res);
 
-  void targetPoseCb(const human_msgs::Hands& set);
+  void targetPoseCb(const temoto_2::ObjectContainer& msg);
 
   void statusInfoCb(temoto_2::ResourceStatus& srv);
 
