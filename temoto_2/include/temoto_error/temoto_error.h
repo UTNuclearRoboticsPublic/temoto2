@@ -86,6 +86,9 @@ enum class Code : int
   PROCESS_SPAWN_FAIL,  // Failed to spawn new process
   PROCESS_KILL_FAIL,   // Failed to kill a process
   PROCESS_STOPPED,      // Resource has stopped
+  ACTION_UNKNOWN,      // The requested action is undefined
+  PACKAGE_NOT_FOUND,      // Executable has stopped
+  EXECUTABLE_NOT_FOUND,      // Executable has stopped
 
   // Robot manager
   ROBOT_NOT_FOUND,    // The requested robot was not found from local and remote managers.

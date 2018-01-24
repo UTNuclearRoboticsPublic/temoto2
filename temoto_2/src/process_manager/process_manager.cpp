@@ -10,6 +10,8 @@
 
 #include "process_manager/process_manager.h"
 
+#include "ros/package.h"
+
 #include <stdio.h>
 #include <csignal>
 #include <sys/wait.h>
@@ -169,7 +171,53 @@ void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
   // Validate the action command.
   if (req.action == action::ROS_EXECUTE) //|| action == action::SYS_EXECUTE)
   {
-    TEMOTO_DEBUG("adding '%s' '%s' '%s' '%s' to the loading queue.", req.action.c_str(),
+    std::string path = ros::package::getPath(req.package_name);
+    if(path=="")
+    {
+      throw CREATE_ERROR(error::Code::PACKAGE_NOT_FOUND, "ROS Package: '%s' was not found.", req.package_name.c_str());
+    }
+
+    // Check if .launch file exists.
+    std::regex rx(".*\\.launch$");
+    if (std::regex_match(req.executable, rx))
+    {
+      if (!executableExists(path + "/launch/" + req.executable))
+      {
+        throw CREATE_ERROR(error::Code::EXECUTABLE_NOT_FOUND,
+                           "ROS Package: '%s' does not contain the requsted launch file '%s'.",
+                           req.package_name.c_str(), req.executable.c_str());
+      }
+    }
+    else
+    {
+      // Check if the requested binary exists
+      std::string catkin_find_cmd = "catkin_find " + req.package_name + " " + req.executable;
+      std::shared_ptr<FILE> pipe(popen(catkin_find_cmd.c_str(), "r"), pclose);
+      if(pipe)
+      {
+        std::array<char, 128> buffer;
+        std::string result;
+        while(!feof(pipe.get()))
+        {
+          if (fgets(buffer.data(), 128, pipe.get()) != nullptr)
+          {
+            result += buffer.data();
+          }
+        }
+
+        //catkin find does not write anything to stdout if the binary does not exist.
+        if (!result.size())
+        {
+          throw CREATE_ERROR(error::Code::EXECUTABLE_NOT_FOUND,
+                             "ROS Package: '%s' does not contain the executable '%s'.",
+                             req.package_name.c_str(), req.executable.c_str());
+        }
+      }
+    }
+
+    // Yey, the executable and ros package exists. Add it to the loading queue.
+
+    TEMOTO_DEBUG("Adding '%s' '%s' '%s' '%s' to the loading queue.", req.action.c_str(),
                  req.package_name.c_str(), req.executable.c_str(), req.args.c_str());
 
     temoto_2::LoadProcess srv;
@@ -179,18 +227,16 @@ void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
     loading_mutex_.lock();
     loading_processes_.push_back(srv);
     loading_mutex_.unlock();
-
-    // Fill response
-    res.rmp.code = 0;
-    res.rmp.message = "Request added to the loading queue.";
   }
   else
   {
-    res.rmp.code = -1;
-    res.rmp.message = "Action not supported by the process manager.";
-    TEMOTO_ERROR("Action '%s' is not supported.", req.action.c_str());
-    return;  // TODO THROW EXCEPTION TO RMP?
+    throw CREATE_ERROR(error::Code::ACTION_UNKNOWN, "Action '%s' is not supported.",
+                       req.action.c_str());
   }
+
+  // Fill response
+  res.rmp.code = rmp::status_codes::OK;
+  res.rmp.message = "Request added to the loading queue.";
 }
 
 void ProcessManager::unloadCb(temoto_2::LoadProcess::Request& req,

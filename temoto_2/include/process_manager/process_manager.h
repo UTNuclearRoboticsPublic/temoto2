@@ -5,6 +5,7 @@
 #include "rmp/resource_manager.h"
 #include <stdio.h> //pid_t TODO: check where pid_t actually is
 #include <mutex>
+#include <sys/stat.h>
 
 #include "common/base_subsystem.h"
 
@@ -58,6 +59,10 @@ namespace process_manager
 			// Holds clients toi connect and send info to other (Sensor, Context, etc.) managers
 			//ros::ServiceClient resource_status_client_;
       void waitForLock(std::mutex& m);
+      inline bool executableExists (const std::string& name) {
+          struct stat buffer;
+          return (stat(name.c_str(), &buffer) == 0);
+      }
   };
 }
 
