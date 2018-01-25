@@ -250,6 +250,9 @@ void ProcessManager::unloadCb(temoto_2::LoadProcess::Request& req,
   auto proc_it =
       std::find_if(running_processes_.begin(), running_processes_.end(),
                    [&](const std::pair< pid_t, temoto_2::LoadProcess>& p) -> bool { return p.second.request == req; });
+  auto failed_proc_it =
+      std::find_if(failed_processes_.begin(), failed_processes_.end(),
+                   [&](const std::pair< pid_t, temoto_2::LoadProcess>& p) -> bool { return p.second.request == req; });
   if (proc_it != running_processes_.end())
   {
     unloading_processes_.push_back(proc_it->first);
@@ -257,12 +260,19 @@ void ProcessManager::unloadCb(temoto_2::LoadProcess::Request& req,
     res.rmp.message = "Resource added to unload queue.";
     TEMOTO_DEBUG("Resource with id '%ld' added to unload queue.", res.rmp.resource_id);
   }
+  else if (failed_proc_it != failed_processes_.end())
+  {
+    failed_processes_.erase(failed_proc_it);
+    res.rmp.code = 0;
+    res.rmp.message = "Resource unloaded.";
+    TEMOTO_DEBUG("Unloaded failed resource with id '%ld'.", res.rmp.resource_id);
+  }
   else
   {
-    TEMOTO_ERROR("Unable to unload reource with resource_id: %ld. Resource is not running.", res.rmp.resource_id);
+    TEMOTO_ERROR("Unable to unload reource with resource_id: %ld. Resource is not running nor failed.", res.rmp.resource_id);
     // Fill response
     res.rmp.code = rmp::status_codes::FAILED;
-    res.rmp.message = "Resource is not running. Unable to unload.";
+    res.rmp.message = "Resource is not running nor failed. Unable to unload.";
   }
   running_mutex_.unlock();
 
