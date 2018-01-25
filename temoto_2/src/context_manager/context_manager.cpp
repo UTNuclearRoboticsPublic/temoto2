@@ -11,7 +11,8 @@ ContextManager::ContextManager()
   : BaseSubsystem("context_manager", error::Subsystem::CONTEXT_MANAGER, __func__)
   , resource_manager_1_(srv_name::MANAGER, this)
   , resource_manager_2_(srv_name::MANAGER_2, this)
-  , object_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &ContextManager::objectSyncCb, this)
+  , tracked_objects_syncer_(srv_name::MANAGER, srv_name::SYNC_TRACKED_OBJECTS_TOPIC, &ContextManager::trackedObjectsSyncCb, this)
+  , object_syncer_(srv_name::MANAGER, srv_name::SYNC_OBJECTS_TOPIC, &ContextManager::objectSyncCb, this)
   , tracker_core_(this, false, ros::package::getPath(ROS_PACKAGE_NAME) + "/../object_trackers")
 {
   /*
@@ -85,6 +86,30 @@ void ContextManager::objectSyncCb(const temoto_2::ConfigSync& msg, const Objects
   {
     TEMOTO_DEBUG("Received a payload.");
     addOrUpdateObjects(payload, true);
+  }
+}
+
+/*
+ * Tracked objects synchronization callback
+ */
+void ContextManager::trackedObjectsSyncCb(const temoto_2::ConfigSync& msg, const std::string& payload)
+{
+  if (msg.action == rmp::sync_action::ADVERTISE_CONFIG)
+  {
+    TEMOTO_DEBUG_STREAM("Received a message, that '" << payload << "' is tracked by '"
+                        << msg.temoto_namespace << "'.");
+
+    // Add a notion about a object that is being tracked
+    m_tracked_objects_remote_[payload] = msg.temoto_namespace;
+  }
+  else
+  if (msg.action == rmp::sync_action::REMOVE_CONFIG)
+  {
+    TEMOTO_DEBUG_STREAM("Received a message, that '" << payload << "' is not tracked by '"
+                        << msg.temoto_namespace << "' anymore.");
+
+    // Remove a notion about a object that is being tracked
+    m_tracked_objects_remote_.erase(payload);
   }
 }
 
@@ -169,7 +194,7 @@ ObjectPtr ContextManager::findObject(std::string object_name)
  */
 bool ContextManager::addObjectsCb(temoto_2::AddObjects::Request& req, temoto_2::AddObjects::Response& res)
 {
-  TEMOTO_DEBUG("Received a request to add %d objects.", req.objects.size());
+  TEMOTO_DEBUG("Received a request to add %ld objects.", req.objects.size());
 
   addOrUpdateObjects(req.objects, false);
 
@@ -188,6 +213,30 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
     std::replace(object_name_no_space.begin(), object_name_no_space.end(), ' ', '_');
 
     TEMOTO_DEBUG_STREAM("Received a request to track an object named: '" << object_name_no_space << "'");
+
+    /*
+     * Check if this object is already tracked in other temoto namespace
+     */
+    std::string remote_temoto_namespace = m_tracked_objects_remote_[object_name_no_space];
+
+    if (!remote_temoto_namespace.empty())
+    {
+      TEMOTO_DEBUG_STREAM("The object '" << object_name_no_space << "' is alerady tracked by '"
+                          << remote_temoto_namespace << "'. Forwarding the request.");
+
+      temoto_2::TrackObject track_object_msg;
+      track_object_msg.request = req;
+
+      // Send the request to the remote namespace
+      resource_manager_2_.template call<temoto_2::TrackObject>(context_manager::srv_name::MANAGER,
+                                                               context_manager::srv_name::TRACK_OBJECT_SERVER,
+                                                               track_object_msg,
+                                                               rmp::FailureBehavior::NONE,
+                                                               remote_temoto_namespace);
+
+      res = track_object_msg.response;
+      return;
+    }
 
     // Look if the requested object is described in the object database
     ObjectPtr requested_object = findObject(object_name_no_space);
@@ -238,7 +287,6 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
      * tags are differentiated by the tag ID, the specific tracker has to know the ID
      * beforehand.
      */
-
 
     /*
      * Get the topic where the tracker publishes its output data
@@ -305,7 +353,7 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
 
       // Put the object into the list of tracked objects. This is used later
       // for stopping the tracker
-      m_tracked_objects_[res.rmp.resource_id] = object_name_no_space;
+      m_tracked_objects_local_[res.rmp.resource_id] = object_name_no_space;
     }
 
     /*
@@ -364,10 +412,13 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
 
       // Put the object into the list of tracked objects. This is used later
       // for stopping the tracker
-      m_tracked_objects_[res.rmp.resource_id] = object_name_no_space;
+      m_tracked_objects_local_[res.rmp.resource_id] = object_name_no_space;
     }
 
     res.object_topic = tracked_object_topic;
+
+    // Let context managers in other namespaces know, that this object is being tracked
+    tracked_objects_syncer_.advertise(object_name_no_space);
 
   }
   catch (error::ErrorStack& error_stack)
@@ -387,7 +438,7 @@ void ContextManager::unloadTrackObjectCb(temoto_2::TrackObject::Request& req, te
   try
   {
     // Get the name of the tracked object
-    std::string tracked_object = m_tracked_objects_[res.rmp.resource_id];
+    std::string tracked_object = m_tracked_objects_local_[res.rmp.resource_id];
 
     TEMOTO_DEBUG_STREAM("Received a request to stop tracking an object named: '" << tracked_object << "'");
 
@@ -395,7 +446,10 @@ void ContextManager::unloadTrackObjectCb(temoto_2::TrackObject::Request& req, te
     tracker_core_.stopTask("", tracked_object);
 
     // Erase the object from the map of tracked objects
-    m_tracked_objects_.erase(res.rmp.resource_id);
+    m_tracked_objects_local_.erase(res.rmp.resource_id);
+
+    // Let context managers in other namespaces know, that this object is not tracked anymore
+    tracked_objects_syncer_.advertise(tracked_object, rmp::sync_action::REMOVE_CONFIG);
   }
   catch (error::ErrorStack& error_stack)
   {
