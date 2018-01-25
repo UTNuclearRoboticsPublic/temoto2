@@ -14,13 +14,13 @@ namespace context_manager
 	namespace srv_name
 	{
     const std::string MANAGER = "context_manager";
-    const std::string SYNC_TOPIC = "/temoto_2/"+MANAGER+"/sync_1";
+    const std::string SYNC_OBJECTS_TOPIC = "/temoto_2/"+MANAGER+"/sync_objects";
+    const std::string SYNC_TRACKED_OBJECTS_TOPIC= "/temoto_2/"+MANAGER+"/sync_tracked_objects";
     const std::string GESTURE_SERVER = "load_gesture";
     const std::string SPEECH_SERVER = "load_speech";
     const std::string TRACK_OBJECT_SERVER = "track_objects";
 
     const std::string MANAGER_2 = "context_manager_2";
-    const std::string SYNC_TOPIC_2 = "/temoto_2/"+MANAGER_2+"/sync_2";
     const std::string TRACKER_SERVER = "load_tracker";
 
     const std::string SERVER_ADD_OBJECTS = "add_objects";

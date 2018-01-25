@@ -114,6 +114,8 @@ private:
 
   void objectSyncCb(const temoto_2::ConfigSync& msg, const Objects& payload);
 
+  void trackedObjectsSyncCb(const temoto_2::ConfigSync& msg, const std::string& payload);
+
   void advertiseAllObjects();
 
   void addOrUpdateObjects(const Objects& objects_to_add, bool from_other_manager);
@@ -137,7 +139,9 @@ private:
 
   ObjectPtrs objects_;
 
-  std::map<int, std::string> m_tracked_objects_;
+  std::map<int, std::string> m_tracked_objects_local_;
+
+  std::map<std::string, std::string> m_tracked_objects_remote_;
 
   std::map<std::string, std::vector<context_manager::TrackerInfo>> categorized_trackers_;
 
@@ -147,7 +151,7 @@ private:
   // between all other (context) managers
   rmp::ConfigSynchronizer<ContextManager, Objects> object_syncer_;
 
-  //rmp::ConfigSynchronizer<ContextManager, std::string> tracked_objects_syncer_;
+  rmp::ConfigSynchronizer<ContextManager, std::string> tracked_objects_syncer_;
 
   TTP::TaskManager tracker_core_;
 };
