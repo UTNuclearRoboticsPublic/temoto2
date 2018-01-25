@@ -2,7 +2,7 @@
 #define TEMOTO_ID_H
 
 #include <stdlib.h>
-#include <time.h>
+#include <chrono>
 
 namespace temoto_id
 {
@@ -15,7 +15,9 @@ public:
   IDManager()
   {
     // generate random seed for more reliable testing
-    srand (time(NULL));
+    using namespace std::chrono;
+    milliseconds ms = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+    srand (ms.count());
     current_ID_ = rand() % 1000;
   }
   /**

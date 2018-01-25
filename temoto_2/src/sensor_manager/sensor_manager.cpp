@@ -283,10 +283,10 @@ void SensorManager::startSensorCb(temoto_2::LoadSensor::Request& req,
   }
 
   // try remote sensors
-  for (auto& rs : remote_sensors_)
-  {
-    TEMOTO_INFO("Looking from: \n%s", rs->toString().c_str());
-  }
+//  for (auto& rs : remote_sensors_)
+//  {
+//    TEMOTO_INFO("Looking from: \n%s", rs->toString().c_str());
+//  }
 
   sensor_ptr = findSensor(req, remote_sensors_);
   if (sensor_ptr)
