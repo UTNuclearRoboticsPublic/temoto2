@@ -1073,7 +1073,12 @@ void TaskManager::instantiateTask(TaskTreeNode& node)
     // task descriptors are needed for stopping the tasks correctly
     node.task_descriptor_ptr_ = boost::make_shared<TaskDescriptor>(task_descriptor);
 
-    // Check if it is a synchronous or asynchronous task
+    /*
+     * Check if it's a synchronous or an asynchronous task. If it's an asynchronous task, then
+     * a copy of its shared pointer is made. This means that synchronous tasks destruct automatically
+     * after being executed, since the flow graph owns the last shared pointer and flow graph object
+     * is always destructed after execution (see TaskManager::executeSFT).
+     */
     if (task_descriptor.getFirstInterface().type_ == "asynchronous")
     {
         TEMOTO_DEBUG_STREAM("This is an async task, making a copy of the shared ptr\n");

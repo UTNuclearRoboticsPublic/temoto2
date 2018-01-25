@@ -183,11 +183,11 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
 {
   try
   {
-    TEMOTO_DEBUG_STREAM("Received a request to track an object named: '" << req.object_name << "'");
-
     // Replace all spaces in the name with the underscore character
     std::string object_name_no_space = req.object_name;
     std::replace(object_name_no_space.begin(), object_name_no_space.end(), ' ', '_');
+
+    TEMOTO_DEBUG_STREAM("Received a request to track an object named: '" << object_name_no_space << "'");
 
     // Look if the requested object is described in the object database
     ObjectPtr requested_object = findObject(object_name_no_space);
