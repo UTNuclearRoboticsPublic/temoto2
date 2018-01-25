@@ -53,6 +53,10 @@ FeatureManipulation::FeatureManipulation(const YAML::Node& manip_conf)
   {
     planning_groups_.emplace_back(it->as<std::string>());
   }
+  if(planning_groups_.size())
+  {
+    active_planning_group_ = planning_groups_.front();
+  }
   this->feature_enabled_ = true;
 
   this->driver_package_name_ = manip_conf["driver"]["package_name"].as<std::string>();

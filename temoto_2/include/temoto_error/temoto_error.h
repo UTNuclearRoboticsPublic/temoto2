@@ -96,9 +96,10 @@ enum class Code : int
   ROBOT_PLAN_FAIL,   // Unable to plan.
   ROBOT_EXEC_FAIL,   // Unable to execute the plan.
   ROBOT_CONFIG_FAIL,  // Error when processing robot config.
+  PLANNING_GROUP_NOT_FOUND,    // Planning group(s) not found.
 
-  // Robot manager
-  SENSOR_NOT_FOUND,  // The requested robot was not found from local and remote managers.
+  // Sensor manager
+  SENSOR_NOT_FOUND,  // The requested sensor was not found from local and remote managers.
 
   // Algorithm manager
   ALGORITHM_NOT_FOUND,  // The requested algorithm was not found from local and remote managers.

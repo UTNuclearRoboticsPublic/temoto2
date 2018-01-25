@@ -152,9 +152,21 @@ public:
   {
     return planning_groups_;
   }
+
+  std::string getActivePlanningGroup() const
+  {
+    return active_planning_group_;
+  }
+
+  std::string setActivePlanningGroup(std::string planning_group_name)
+  {
+    //TODO: check if group exists
+    active_planning_group_ = planning_group_name;
+  }
   
 private:
   std::vector<std::string> planning_groups_;
+  std::string active_planning_group_;
 };
 
 

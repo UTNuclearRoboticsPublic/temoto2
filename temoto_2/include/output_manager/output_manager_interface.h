@@ -191,11 +191,12 @@ public:
 
     std::string robot_desc_param = urdf_node["robot_description"].as<std::string>();
     std::string move_group_ns = manipulation_node["move_group_ns"].as<std::string>();
+    std::string active_planning_group = manipulation_node["active_planning_group"].as<std::string>();
 
     std::string conf = "{Robot Description: " + robot_desc_param +
                        ", Move Group Namespace: " + move_group_ns + 
                        ", Planning Scene Topic: " + move_group_ns + "/move_group/monitored_planning_scene"
-                       ", Planning Request: {Planning Group: manipulator}"
+                       ", Planning Request: {Planning Group: " + active_planning_group + ", Interactive Marker Size: 0.2}"
                        ", Planned Path: {Trajectory Topic: " + move_group_ns + "/move_group/display_planned_path}}";
     showInRviz("manipulation", "", conf);
   }

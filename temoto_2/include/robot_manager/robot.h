@@ -27,9 +27,9 @@ public:
   virtual ~Robot();
   void addPlanningGroup(const std::string& planning_group_name);
   void removePlanningGroup(const std::string& planning_group_name);
-  void plan(const std::string& planning_group_name, geometry_msgs::PoseStamped& target_pose);
+  void plan(std::string planning_group_name, geometry_msgs::PoseStamped& target_pose);
 
-  void execute(const std::string& planning_group_name);
+  void execute();
 
   std::string getName() const
   {

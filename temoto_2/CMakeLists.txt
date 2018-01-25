@@ -22,6 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
 	message_generation
   rviz_plugin_manager
   moveit_ros_planning_interface
+  tf
 )
 
 find_package(TinyXML REQUIRED)

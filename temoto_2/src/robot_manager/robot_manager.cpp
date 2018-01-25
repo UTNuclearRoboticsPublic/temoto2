@@ -39,9 +39,33 @@ RobotManager::RobotManager()
   server_set_mode_ = nh_.advertiseService(robot_manager::srv_name::SERVER_SET_MODE,
                                           &RobotManager::setModeCb, this);
 
-  //Set the initial default stamped pose to the world frame, until target tracking is not set.
+//      seq: 0
+//      stamp: 
+//        secs: 0
+//        nsecs:         0
+//      frame_id: "/base_link"
+//    pose: 
+//      position: 
+//        x: 0.539124787814
+//        y: -0.592158374795
+//        z: 0.717273819597
+//      orientation: 
+//        x: 0.383115589721
+//        y: 0.0150255505036
+//        z: -0.0361555479561
+//        w: 0.922870226032  
+
+//Set the initial default stamped pose in the world frame, until target tracking is not set.
   default_target_pose_.header.stamp = ros::Time::now();
   default_target_pose_.header.frame_id = "world";
+  default_target_pose_.pose.position.x = 0.539124787814;
+  default_target_pose_.pose.position.y = -0.592158374795;
+  default_target_pose_.pose.position.z = 0.717273819597;
+  default_target_pose_.pose.orientation.x = 0.383115589721;
+  default_target_pose_.pose.orientation.y = 0.0150255505036;
+  default_target_pose_.pose.orientation.z = -0.0361555479561;
+  default_target_pose_.pose.orientation.w = 0.922870226032;
+
 
   // Read the robot config for this manager.
   std::string yaml_filename =
@@ -379,7 +403,7 @@ bool RobotManager::execCb(temoto_2::RobotExecute::Request& req,
   {
     if (active_robot_->isLocal())
     {
-      active_robot_->execute("manipulator");
+      active_robot_->execute();
       TEMOTO_DEBUG("DONE EXECUTING...");
       res.message = "Execute command sent to MoveIt";
       res.code = rmp::status_codes::OK;
@@ -564,14 +588,39 @@ void RobotManager::targetPoseCb(const temoto_2::ObjectContainer& msg)
 {
     default_pose_mutex_.lock();
     default_target_pose_ = msg.pose;
-    default_target_pose_.pose.position.x = 0;
+    default_target_pose_.pose.position.x = 0.1;
     default_target_pose_.pose.position.y = 0;
     default_target_pose_.pose.position.z = 0;
     default_target_pose_.pose.orientation.x = 0;
     default_target_pose_.pose.orientation.y = 0;
     default_target_pose_.pose.orientation.z = 0;
     default_target_pose_.pose.orientation.w = 1;
-    default_target_pose_.header.frame_id = "right_ur5_ee_link";
+ // default_target_pose_.pose.orientation.x = 0.383115589721;
+ // default_target_pose_.pose.orientation.y = 0.0150255505036;
+ // default_target_pose_.pose.orientation.z = -0.0361555479561;
+ // default_target_pose_.pose.orientation.w = 0.922870226032;
+    default_target_pose_.header.frame_id = "world";
+
+    tf::StampedTransform transform;
+    try
+    {
+      tf_listener.lookupTransform("world", "temoto_end_effector", ros::Time(0), transform);
+    }
+    catch(tf::TransformException ex)
+    {
+      TEMOTO_ERROR("%s",ex.what());
+    }
+
+    default_target_pose_.pose.position.x = transform.getOrigin().x() + msg.pose.pose.position.x;
+    default_target_pose_.pose.position.y = transform.getOrigin().y() + msg.pose.pose.position.y;
+    default_target_pose_.pose.position.z = transform.getOrigin().z() + msg.pose.pose.position.z;
+
+    tf::Quaternion q = transform.getRotation().normalized();
+    default_target_pose_.pose.orientation.x = (double)q.getX() + msg.pose.pose.orientation.x;
+    default_target_pose_.pose.orientation.y = (double)q.getY() + msg.pose.pose.orientation.y;
+    default_target_pose_.pose.orientation.z = (double)q.getZ() + msg.pose.pose.orientation.z;
+    default_target_pose_.pose.orientation.w = (double)q.getW() + msg.pose.pose.orientation.w;
+
     default_pose_mutex_.unlock();
 }
 
@@ -590,7 +639,7 @@ void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)
     {
       resource_manager_.unloadClientResource(hand_srv_msg_.response.rmp.resource_id);
     }
-    catch(error::ErrorStack& error_stack)
+    catch (error::ErrorStack& error_stack)
     {
       TEMOTO_ERROR_STREAM(error_stack);
     }
@@ -600,13 +649,12 @@ void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)
     {
       resource_manager_.call<temoto_2::LoadGesture>(context_manager::srv_name::MANAGER,
                                                     context_manager::srv_name::GESTURE_SERVER,
-                                                    hand_srv_msg_,
-                                                    rmp::FailureBehavior::NONE);
+                                                    hand_srv_msg_, rmp::FailureBehavior::NONE);
       TEMOTO_DEBUG("Subscribing to '%s'", hand_srv_msg_.response.topic.c_str());
       target_pose_sub_ =
           nh_.subscribe(hand_srv_msg_.response.topic, 1, &RobotManager::targetPoseCb, this);
     }
-    catch(error::ErrorStack& error_stack)
+    catch (error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -635,7 +683,7 @@ void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)
         yaml_config["Robots"].push_back(config->getYAMLConfig());
         PayloadType payload;
         payload.data = YAML::Dump(yaml_config);
-        std::cout<<payload<<std::endl;
+        std::cout << payload << std::endl;
         config_syncer_.advertise(payload);
         loaded_robots_.erase(it);
         break;
@@ -658,7 +706,7 @@ RobotConfigPtr RobotManager::findRobot(const std::string& robot_name, const Robo
   {
     // Find the robot that matches the "name" criteria
     auto it = std::copy_if(configs.begin(), configs.end(), std::back_inserter(candidates),
-        [&](const RobotConfigPtr& s) { return s->getName() == robot_name; });
+                           [&](const RobotConfigPtr& s) { return s->getName() == robot_name; });
   }
 
   // If the list is empty, leave the req empty

@@ -184,9 +184,11 @@ void Robot::loadManipulation()
     std::string desc_sem_param = config_->getAbsRobotNamespace() + "/robot_description_semantic";
     waitForParam(desc_sem_param, res_id);
 
+    ros::Duration(5).sleep();
+
     // Add planning groups
     // TODO: read groups from srdf automatically
-    for (auto group : config_->getFeatureManipulation().getPlanningGroups())
+    for (auto group : ftr.getPlanningGroups())
     {
       TEMOTO_DEBUG("Adding planning group '%s'.", group.c_str());
       addPlanningGroup(group);
@@ -315,8 +317,8 @@ void Robot::addPlanningGroup(const std::string& planning_group_name)
   moveit::planning_interface::MoveGroupInterface::Options opts(planning_group_name, rob_desc, mg_nh);
   std::unique_ptr<moveit::planning_interface::MoveGroupInterface> group(
       new moveit::planning_interface::MoveGroupInterface(opts));
-  //  group->setPlannerId("RRTConnectkConfigDefault");
-  group->setPlannerId("ESTkConfigDefault");
+  group->setPlannerId("RRTConnectkConfigDefault");
+  //group->setPlannerId("ESTkConfigDefault");
   group->setNumPlanningAttempts(2);
   group->setPlanningTime(5);
 
@@ -324,6 +326,7 @@ void Robot::addPlanningGroup(const std::string& planning_group_name)
   group->setGoalPositionTolerance(0.001);
   group->setGoalOrientationTolerance(0.001);
   group->setGoalJointTolerance(0.001);
+  TEMOTO_DEBUG("Active end effector link: %s", group->getEndEffectorLink().c_str());
 
   planning_groups_.emplace(planning_group_name, std::move(group));
 }
@@ -333,28 +336,24 @@ void Robot::removePlanningGroup(const std::string& planning_group_name)
   planning_groups_.erase(planning_group_name);
 }
 
-void Robot::plan(const std::string& planning_group_name, geometry_msgs::PoseStamped& target_pose)
+void Robot::plan(std::string planning_group_name, geometry_msgs::PoseStamped& target_pose)
 {
   if (!planning_groups_.size())
   {
     throw CREATE_ERROR(error::Code::ROBOT_PLAN_FAIL,"Robot has no planning groups.");
   }
 
-  auto group_it = planning_groups_.end();
-  // Check if default planning group is requested.
-  if (planning_group_name == "")
+  FeatureManipulation& ftr = config_->getFeatureManipulation();
+
+  planning_group_name = (planning_group_name == "") ? ftr.getActivePlanningGroup() : planning_group_name;
+  auto group_it = planning_groups_.find(planning_group_name);
+  if (group_it == planning_groups_.end())
   {
-    TEMOTO_DEBUG("Using default planning group.");
-      group_it = planning_groups_.begin();
+    throw CREATE_ERROR(error::Code::PLANNING_GROUP_NOT_FOUND, "Planning group '%s' was not found.",
+                       planning_group_name.c_str());
   }
-  else
-  {
-    group_it = planning_groups_.find(planning_group_name);
-    if (group_it != planning_groups_.end())
-    {
-      TEMOTO_ERROR("Planning group '%s' was not found.", planning_group_name.c_str());
-    }
-  }
+
+  ftr.setActivePlanningGroup(planning_group_name);
 
   group_it->second->setStartStateToCurrentState();
   group_it->second->setPoseTarget(target_pose);
@@ -366,8 +365,9 @@ void Robot::plan(const std::string& planning_group_name, geometry_msgs::PoseStam
   }
 }
 
-void Robot::execute(const std::string& planning_group_name)
+void Robot::execute()
 {
+  std::string planning_group_name = config_->getFeatureManipulation().getActivePlanningGroup();
   moveit::planning_interface::MoveGroupInterface::Plan empty_plan;
   if (!is_plan_valid_)
   {
@@ -417,6 +417,8 @@ std::string Robot::getVizInfo()
   if (config_->getFeatureManipulation().isEnabled())
   {
     rviz["manipulation"]["move_group_ns"] = act_rob_ns;
+    rviz["manipulation"]["active_planning_group"] =
+        config_->getFeatureManipulation().getActivePlanningGroup();
   }
 
   if (config_->getFeatureNavigation().isEnabled())

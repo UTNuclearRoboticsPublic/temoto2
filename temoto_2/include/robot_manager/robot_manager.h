@@ -20,6 +20,8 @@
 #include <vector>
 #include <map>
 
+#include <tf/transform_listener.h>
+
 
 namespace robot_manager
 {
@@ -137,6 +139,10 @@ private:
   // Resource manager for contacting process manager
   rmp::ResourceManager<RobotManager> resource_manager_;
   std::mutex default_pose_mutex_;
+
+
+  tf::TransformListener tf_listener;
+
 };
 }
 
