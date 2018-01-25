@@ -88,8 +88,8 @@ public:
      */
     bool stopTask()
     {
-        stop_task_ = true;
-        return 0;
+      stop_task_ = true;
+      return 0;
     }
 
     /**

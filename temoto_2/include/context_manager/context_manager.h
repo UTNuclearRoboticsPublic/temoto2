@@ -147,6 +147,8 @@ private:
   // between all other (context) managers
   rmp::ConfigSynchronizer<ContextManager, Objects> object_syncer_;
 
+  //rmp::ConfigSynchronizer<ContextManager, std::string> tracked_objects_syncer_;
+
   TTP::TaskManager tracker_core_;
 };
 }

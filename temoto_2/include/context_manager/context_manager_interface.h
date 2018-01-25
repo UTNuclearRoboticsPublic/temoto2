@@ -194,6 +194,7 @@ public:
                                                               context_manager::srv_name::TRACK_OBJECT_SERVER,
                                                               track_object_msg);
 
+      allocated_track_objects_.push_back(track_object_msg);
       return track_object_msg.response.object_topic;
     }
     catch (error::ErrorStack& error_stack)
@@ -316,6 +317,11 @@ public:
                                     return sens.response.rmp.resource_id == srv.request.resource_id;
                                   });
 
+      auto track_object_it = std::find_if(allocated_track_objects_.begin(), allocated_track_objects_.end(),
+                                  [&](const temoto_2::TrackObject& sens) -> bool {
+                                    return sens.response.rmp.resource_id == srv.request.resource_id;
+                                  });
+
       if (speech_it != allocated_speeches_.end())
       {
         try
@@ -340,7 +346,7 @@ public:
       }
 
 
-      if (gest_it != allocated_gestures_.end())
+      else if (gest_it != allocated_gestures_.end())
       {
         try
         {
@@ -365,7 +371,7 @@ public:
       }
 
       // If the tracker was found then ...
-      if (tracker_it != allocated_trackers_.end())
+      else if (tracker_it != allocated_trackers_.end())
       {
         try
         {
@@ -393,9 +399,31 @@ public:
         }
       }
 
+      // If the tracker was found then ...
+      else if (track_object_it != allocated_track_objects_.end())
+      {
+        try
+        {
+          // ... unload it and ...
+          TEMOTO_DEBUG("Unloading the track object");
+          resource_manager_->unloadClientResource(track_object_it->response.rmp.resource_id);
+
+          TEMOTO_DEBUG_STREAM("Trying to resume tracking the " << track_object_it->request.object_name);
+
+          resource_manager_->template call<temoto_2::TrackObject>(context_manager::srv_name::MANAGER,
+                                                                  context_manager::srv_name::TRACK_OBJECT_SERVER,
+                                                                  *track_object_it);
+        }
+        catch(error::ErrorStack& error_stack)
+        {
+          throw FORWARD_ERROR(error_stack);
+        }
+      }
+
       if (gest_it != allocated_gestures_.end() &&
           speech_it != allocated_speeches_.end() &&
-          tracker_it != allocated_trackers_.end())
+          tracker_it != allocated_trackers_.end() &&
+          track_object_it != allocated_track_objects_.end())
       {
         throw CREATE_ERROR(error::Code::RESOURCE_NOT_FOUND, "Got resource_id that is not registered in this interface.");
       }
@@ -433,6 +461,7 @@ private:
   std::vector<temoto_2::LoadGesture> allocated_gestures_;
   std::vector<temoto_2::LoadSpeech> allocated_speeches_;
   std::vector<temoto_2::LoadTracker> allocated_trackers_;
+  std::vector<temoto_2::TrackObject> allocated_track_objects_;
 
   /**
    * @brief validateInterface()
