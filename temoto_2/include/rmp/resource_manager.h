@@ -104,7 +104,9 @@ public:
   }
 
   template <class ServiceType>
-  void call(std::string resource_manager_name, std::string server_name, ServiceType& msg, rmp::FailureBehavior failure_behavior = rmp::FailureBehavior::NONE, std::string temoto_namespace = ::common::getTemotoNamespace())
+  void call(std::string resource_manager_name, std::string server_name, ServiceType& msg,
+            rmp::FailureBehavior failure_behavior = rmp::FailureBehavior::NONE,
+            std::string temoto_namespace = ::common::getTemotoNamespace())
   {
     using ClientType = ResourceClient<ServiceType, Owner>;
     using ClientPtr = std::shared_ptr<ClientType>;

@@ -604,22 +604,32 @@ void RobotManager::targetPoseCb(const temoto_2::ObjectContainer& msg)
     tf::StampedTransform transform;
     try
     {
-      tf_listener.lookupTransform("world", "temoto_end_effector", ros::Time(0), transform);
+      //tf_listener.lookupTransform("world", "temoto_end_effector", ros::Time(0), transform);
+      tf_listener.lookupTransform("world", msg.pose.header.frame_id, ros::Time(0), transform);
     }
     catch(tf::TransformException ex)
     {
       TEMOTO_ERROR("%s",ex.what());
     }
 
-    default_target_pose_.pose.position.x = transform.getOrigin().x() + msg.pose.pose.position.x;
-    default_target_pose_.pose.position.y = transform.getOrigin().y() + msg.pose.pose.position.y;
-    default_target_pose_.pose.position.z = transform.getOrigin().z() + msg.pose.pose.position.z;
+    //default_target_pose_.pose.position.x = transform.getOrigin().x() + msg.pose.pose.position.x;
+    //default_target_pose_.pose.position.y = transform.getOrigin().y() + msg.pose.pose.position.y;
+    //default_target_pose_.pose.position.z = transform.getOrigin().z() + msg.pose.pose.position.z;
+    
+    default_target_pose_.pose.position.x = transform.getOrigin().x();
+    default_target_pose_.pose.position.y = transform.getOrigin().y();
+    default_target_pose_.pose.position.z = transform.getOrigin().z();
 
     tf::Quaternion q = transform.getRotation().normalized();
-    default_target_pose_.pose.orientation.x = (double)q.getX() + msg.pose.pose.orientation.x;
-    default_target_pose_.pose.orientation.y = (double)q.getY() + msg.pose.pose.orientation.y;
-    default_target_pose_.pose.orientation.z = (double)q.getZ() + msg.pose.pose.orientation.z;
-    default_target_pose_.pose.orientation.w = (double)q.getW() + msg.pose.pose.orientation.w;
+    //default_target_pose_.pose.orientation.x = (double)q.getX() + msg.pose.pose.orientation.x;
+    //default_target_pose_.pose.orientation.y = (double)q.getY() + msg.pose.pose.orientation.y;
+    //default_target_pose_.pose.orientation.z = (double)q.getZ() + msg.pose.pose.orientation.z;
+    //default_target_pose_.pose.orientation.w = (double)q.getW() + msg.pose.pose.orientation.w;
+
+    default_target_pose_.pose.orientation.x = (double)q.getX();
+    default_target_pose_.pose.orientation.y = (double)q.getY();
+    default_target_pose_.pose.orientation.z = (double)q.getZ();
+    default_target_pose_.pose.orientation.w = (double)q.getW();
 
     default_pose_mutex_.unlock();
 }

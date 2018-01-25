@@ -1,11 +1,11 @@
 ---
 Sensors:
-- sensor_name: "Leap Motion Hand Tracker"
-  sensor_type: "hand"
-  package_name: "leap_motion_controller"
-  executable:  "leap_motion"
-  output_topics:
-    handtracker_data: "leap_motion_output"
+  #- sensor_name: "Leap Motion Hand Tracker"
+  #  sensor_type: "hand"
+  #  package_name: "leap_motion_controller"
+  #  executable:  "leap_motion"
+  #  output_topics:
+  #    handtracker_data: "leap_motion_output"
 
 - sensor_name: "Simulated Hand Tracker"
   sensor_type: "hand leap"

@@ -7,6 +7,7 @@
 // Things that have to be included
 #include "TTP/base_task/base_task.h"         // The base task
 #include <class_loader/class_loader.h>       // Class loader includes
+#include <tf/transform_broadcaster.h>
 
 // Task specific includes
 #include "ros/ros.h"
@@ -111,9 +112,19 @@ std::vector<TTP::Subject> getSolution()
 void handDataCb(human_msgs::Hands msg)
 {
 //  TEMOTO_DEBUG_STREAM("Updating the pose of the right hand");
-
+//
   // Update the pose of the object
   tracked_object_->pose = msg.right_hand.palm_pose;
+  tracked_object_->pose.header.frame_id = "hand_workspace";
+
+  // publish tf that translates the workspace center to the endeffector
+  tf::StampedTransform transform;
+  transform.setOrigin(tf::Vector3(0, -0.1, -0.2));
+  transform.setRotation(tf::Quaternion::getIdentity());
+  transform.frame_id_ = msg.right_hand.palm_pose.header.frame_id;
+  transform.child_frame_id_ = tracked_object_->pose.header.frame_id;
+  transform.stamp_ = ros::Time::now();
+  br.sendTransform(transform);
 
   // Publish the tracked object
   tracked_object_publisher_.publish(*tracked_object_);
@@ -130,6 +141,7 @@ ros::NodeHandle nh_;
 ros::Subscriber hand_subscriber_;
 ros::Publisher tracked_object_publisher_;
 context_manager::ObjectPtr tracked_object_;
+tf::TransformBroadcaster br;
 
 };
 

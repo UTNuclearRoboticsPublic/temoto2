@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   human_msgs
   temoto_2
+  tf
 )
 
 catkin_package()
@@ -29,7 +30,7 @@ include_directories(
 add_library(${PROJECT_NAME} src/${PROJECT_NAME}.cpp)
 file(MAKE_DIRECTORY ${TASK_LIB_DIR})
 set_target_properties(${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${TASK_LIB_DIR})
-target_link_libraries(${PROJECT_NAME} ${class_loader_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${class_loader_LIBRARIES} ${catkin_LIBRARIES})
 class_loader_hide_library_symbols(${PROJECT_NAME})
 
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
