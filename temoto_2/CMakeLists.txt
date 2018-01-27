@@ -127,7 +127,8 @@ include_directories(
 add_executable(context_manager src/context_manager/context_manager_node.cpp
 				                       src/context_manager/context_manager.cpp
                                src/context_manager/context_manager_containers.cpp
-                               src/temoto_error/temoto_error.cpp)
+                               src/temoto_error/temoto_error.cpp
+                               src/common/reliability.cpp)
 
 add_dependencies(context_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(context_manager ${catkin_LIBRARIES} yaml-cpp ttp)
@@ -223,9 +224,9 @@ add_executable(language_input src/tools/language_input.cpp
 add_dependencies(language_input ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(language_input ${catkin_LIBRARIES} )
 
-add_executable(tracking_pipes_tests src/tools/tracking_pipes_tests.cpp)
-add_dependencies(tracking_pipes_tests ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(tracking_pipes_tests ${catkin_LIBRARIES} yaml-cpp)
+#add_executable(tracking_pipes_tests src/tools/tracking_pipes_tests.cpp)
+#add_dependencies(tracking_pipes_tests ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+#target_link_libraries(tracking_pipes_tests ${catkin_LIBRARIES} yaml-cpp)
 
 #add_executable(algorithm_info_tests src/tools/algorithm_info_tests.cpp
 #                                    src/algorithm_manager/algorithm_info.cpp)

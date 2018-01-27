@@ -7,6 +7,7 @@
 
 namespace context_manager
 {
+
 ContextManager::ContextManager()
   : BaseSubsystem("context_manager", error::Subsystem::CONTEXT_MANAGER, __func__)
   , resource_manager_1_(srv_name::MANAGER, this)
@@ -39,6 +40,9 @@ ContextManager::ContextManager()
                                                     , &ContextManager::loadTrackerCb
                                                     , &ContextManager::unloadTrackerCb);
 
+  // Register callback for status info
+  resource_manager_1_.registerStatusCb(&ContextManager::statusCb1);
+  resource_manager_2_.registerStatusCb(&ContextManager::statusCb2);
 
   // "Add object" server
   add_objects_server_ = nh_.advertiseService(srv_name::SERVER_ADD_OBJECTS, &ContextManager::addObjectsCb, this);
@@ -430,17 +434,32 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
 /*
  * Unload the track object
  */
-void ContextManager::unloadTrackObjectCb(temoto_2::TrackObject::Request& req, temoto_2::TrackObject::Response& res)
+void ContextManager::unloadTrackObjectCb(temoto_2::TrackObject::Request& req,
+                                         temoto_2::TrackObject::Response& res)
 {
   /*
    * Stopping tracking the object based on its name
    */
   try
   {
+    // Check if the object is tracked locally or by a remote manager
+    if (!m_tracked_objects_remote_[req.object_name].empty())
+    {
+      // The object is tracked by a remote manager
+      return;
+    }
+
     // Get the name of the tracked object
     std::string tracked_object = m_tracked_objects_local_[res.rmp.resource_id];
 
-    TEMOTO_DEBUG_STREAM("Received a request to stop tracking an object named: '" << tracked_object << "'");
+    if (tracked_object.empty())
+    {
+      throw CREATE_ERROR(error::Code::NO_TRACKERS_FOUND, std::string("The object '") +
+                         req.object_name + "' is not tracked");
+    }
+
+    TEMOTO_DEBUG_STREAM("Received a request to stop tracking an object named: '"
+                        << tracked_object << "'");
 
     // Stop tracking the object
     tracker_core_.stopTask("", tracked_object);
@@ -462,7 +481,7 @@ void ContextManager::unloadTrackObjectCb(temoto_2::TrackObject::Request& req, te
  * @param req
  * @return
  */
-std::vector<TrackerInfo> ContextManager::findTrackers(temoto_2::LoadTracker::Request& req)
+TrackerInfoPtrs ContextManager::findTrackers(temoto_2::LoadTracker::Request& req)
 {
   // Get the tracking methods of the requested category
   auto tracker_category = categorized_trackers_.find(req.tracker_category);
@@ -474,7 +493,7 @@ std::vector<TrackerInfo> ContextManager::findTrackers(temoto_2::LoadTracker::Req
   }
 
   // Get the trackers
-  auto trackers = tracker_category->second;
+  TrackerInfoPtrs trackers = tracker_category->second;
 
   // Check if there are any required types for the output topics of the tracker
   if (!req.output_topics.empty())
@@ -486,7 +505,7 @@ std::vector<TrackerInfo> ContextManager::findTrackers(temoto_2::LoadTracker::Req
 
       // Create a copy of the required topics
       std::vector<diagnostic_msgs::KeyValue> req_topic_types = req.output_topics;
-      std::set<std::string> last_filter_topics = tracker_it->getPipe().back().required_output_topic_types_;
+      std::set<std::string> last_filter_topics = (*tracker_it)->getPipe().back().required_output_topic_types_;
 
       // The topics that the last filter of the pipe provides
       for (auto& last_filter_topic : last_filter_topics)
@@ -545,12 +564,22 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
   try
   {
     // Get the trackers that follow the requested criteria
-    auto trackers = findTrackers(req);
+    TrackerInfoPtrs trackers = findTrackers(req);
 
-    TEMOTO_DEBUG_STREAM("Found the requested tracker.");
+    TEMOTO_DEBUG_STREAM("Found the requested tracker category.");
 
-    // Choose a tracker based on a TODO metric
-    const TrackerInfo& tracker = trackers.at(0);
+    /*
+     * Choose a tracker based on a TODO metric. Currently the tracker that has the
+     * highest reliability value is chosen
+     */
+    TrackerInfoPtr tracker = *(std::max_element(trackers.begin(), trackers.end(),
+                               [](const TrackerInfoPtr lhs, const TrackerInfoPtr rhs)
+                               {
+                                 return lhs->reliability_.getReliability() <
+                                        rhs->reliability_.getReliability();
+                               }));
+
+    TEMOTO_DEBUG_STREAM("The following tracking method was chosen: \n" << tracker->toString().c_str());
 
     // Get the id of the pipe, if provided
     std::string pipe_id = req.pipe_id;
@@ -572,11 +601,11 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
      */
     TopicContainer required_topics;
 
-    if (tracker.getPipeSize() > 1)
+    if (tracker->getPipeSize() > 1)
     {
       // TODO: If the right hand side of the "req_tops" is directly used in the proceeding
       // for-loop, then it crashes on the second loop. Not sure why.
-      std::set<std::string> req_tops = tracker.getPipe().at(1).required_input_topic_types_;
+      std::set<std::string> req_tops = tracker->getPipe().at(1).required_input_topic_types_;
 
       // Loop over requested topics
       for (auto& topic : req_tops)
@@ -588,7 +617,7 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
     {
       // TODO: If the right hand side of the "req_tops" is directly used in the proceeding
       // for-loop, then it crashes on the second loop. Not sure why.
-      std::set<std::string> req_tops = tracker.getPipe().at(0).required_output_topic_types_;
+      std::set<std::string> req_tops = tracker->getPipe().at(0).required_output_topic_types_;
 
       // Loop over requested topics
       for (auto& topic : req_tops)
@@ -598,7 +627,10 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
     }
 
     // Loop over the pipe
-    std::vector<Filter> pipe = tracker.getPipe();
+    std::vector<Filter> pipe = tracker->getPipe();
+
+    // TODO: REMOVE AFTER RMP HAS THIS FUNCTIONALITY
+    std::vector<int> sub_resource_ids;
 
     for (unsigned int i=0; i<pipe.size(); i++)
     {
@@ -616,6 +648,9 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
         resource_manager_2_.call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
                                                        sensor_manager::srv_name::SERVER,
                                                        load_sensor_msg);
+
+        // TODO: REMOVE AFTER RMP HAS THIS FUNCTIONALITY
+        sub_resource_ids.push_back(load_sensor_msg.response.rmp.resource_id);
 
         required_topics.setInputTopicsByKeyValue(load_sensor_msg.response.output_topics);
 
@@ -662,12 +697,20 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
                                                           algorithm_manager::srv_name::SERVER,
                                                           load_algorithm_msg);
 
+        // TODO: REMOVE AFTER RMP HAS THIS FUNCTIONALITY
+        sub_resource_ids.push_back(load_algorithm_msg.response.rmp.resource_id);
+
         required_topics.setInputTopicsByKeyValue(load_algorithm_msg.response.output_topics);
       }
     }
 
     // Send the output topics of the last filter back via response
     res.output_topics = required_topics.outputTopicsAsKeyValues();
+
+    // Add the tracker to allocated trackers + increase its reliability
+    tracker->reliability_.adjustReliability();
+    //allocated_trackers_[res.rmp.resource_id] = tracker;
+    allocated_trackers_hack_[res.rmp.resource_id] = std::pair<TrackerInfoPtr, std::vector<int>>(tracker, sub_resource_ids);
 
     return;
   }
@@ -676,7 +719,7 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
     throw FORWARD_ERROR(error_stack);
   }
 
-  throw CREATE_ERROR(error::Code::NO_TRACKERS_FOUND, "No trackers found for the requested category");
+  throw CREATE_ERROR(error::Code::NO_TRACKERS_FOUND, "Could not find trackers for the requested category");
 }
 
 /*
@@ -684,7 +727,18 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
  */
 void ContextManager::unloadTrackerCb(temoto_2::LoadTracker::Request& req, temoto_2::LoadTracker::Response& res)
 {
-  // POOLELI
+  // Remove the tracker from the list of allocated trackers
+  auto it = allocated_trackers_hack_.find(res.rmp.resource_id);
+  if (it != allocated_trackers_hack_.end())
+  {
+    TEMOTO_DEBUG_STREAM("Erasing a tracker from the list of allocated trackers");
+    allocated_trackers_hack_.erase(it);
+  }
+  else
+  {
+    throw CREATE_ERROR(error::Code::RESOURCE_NOT_FOUND, "Could not unload the tracker, because"
+                       " it does not exist in the list of allocated trackers");
+  }
 }
 
 /*
@@ -759,7 +813,7 @@ void ContextManager::parseTrackers(std::string config_path)
         context_manager::TrackerInfo tracker_info = method_it->as<context_manager::TrackerInfo>();
 
         // Add the tracking method into the map of locally known trackers
-        categorized_trackers_[tracker_category].push_back(tracker_info);
+        categorized_trackers_[tracker_category].push_back(std::make_shared<context_manager::TrackerInfo>(tracker_info));
 
         // TODO: Print via TEMOTO_DEBUG
         // std::cout << tracker_info.toString() << std::endl;
@@ -814,4 +868,56 @@ void ContextManager::unloadSpeechCb(temoto_2::LoadSpeech::Request& req,
 {
   TEMOTO_INFO("Speech unloaded.");
 }
+
+/*
+ * Status callback 1
+ */
+void ContextManager::statusCb1(temoto_2::ResourceStatus& srv)
+{
+  /* TODO */
+}
+
+/*
+ * Status callback 2
+ */
+void ContextManager::statusCb2(temoto_2::ResourceStatus& srv)
+{
+  TEMOTO_DEBUG("Received a status message.");
+
+  // If local sensor failed, adjust package reliability and advertise to other managers via
+  // synchronizer.
+  if (srv.request.status_code == rmp::status_codes::FAILED)
+  {
+    TEMOTO_DEBUG("A resource, that a running tracker depends on, has failed");
+
+//    auto it = allocated_trackers_.find(srv.request.resource_id);
+//    if (it != allocated_trackers_.end())
+
+    int val = srv.request.resource_id;
+
+    auto it = std::find_if(allocated_trackers_hack_.begin(), allocated_trackers_hack_.end(),
+              [val](const std::pair<int, std::pair<TrackerInfoPtr, std::vector<int>>>& pair_in)
+              {
+                for (const auto& client_id : pair_in.second.second)
+                {
+                  if (client_id == val)
+                  {
+                    return true;
+                  }
+                }
+                return false;
+              });
+
+    if (it != allocated_trackers_hack_.end())
+    {
+      TEMOTO_DEBUG("Tracker of type '%s' (pipe size: %d) has stopped working",
+                   (it->second.first)->getType().c_str(),
+                   (it->second.first)->getPipeSize());
+
+      // Reduce the reliability of the tracker
+      (it->second.first)->reliability_.adjustReliability(0);
+    }
+  }
+}
+
 }  // namespace context_manager

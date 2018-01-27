@@ -1,18 +1,3 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *
- *          MASSIVE TODO:
- *          * CATCH ALL EXEPTIONS !!!
- *          * ADD A SERVICE PROCESSING QUEUEINSTEAD OF WAITING
- *          * MOST OF THE CODE IS COMPLETELY INITIAL AND
- *            HAS ONLY SINGLE FUNCTIONALITY, I.E. LAUNCHFILES
- *            ARE NOT SUPPORTED, ETC.
- *          * CHANGE THE "start_sensor_cb" to "start_sensor_cb"
- *          * KEEP TRACK ON WHAT SENSORS ARE CURRENTLY RUNNING
- *            (sensors, registered subscribers. if subs = 0 then
- *             shut the sensor down)
- *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
 #include "ros/package.h"
 #include "sensor_manager/sensor_manager.h"
 #include <algorithm>
@@ -24,11 +9,12 @@ namespace sensor_manager
 {
 SensorManager::SensorManager()
   : BaseSubsystem("sensor_manager", error::Subsystem::SENSOR_MANAGER, __func__)
-  ,  resource_manager_(srv_name::MANAGER, this)
+  , resource_manager_(srv_name::MANAGER, this)
   , config_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &SensorManager::syncCb, this)
 {
   // Start the server
-  resource_manager_.addServer<temoto_2::LoadSensor>(srv_name::SERVER, &SensorManager::startSensorCb,
+  resource_manager_.addServer<temoto_2::LoadSensor>(srv_name::SERVER,
+                                                    &SensorManager::startSensorCb,
                                                     &SensorManager::stopSensorCb);
   // Register callback for status info
   resource_manager_.registerStatusCb(&SensorManager::statusCb);
@@ -55,7 +41,6 @@ SensorManager::SensorManager()
     TEMOTO_WARN("Failed to read '%s'. Verify that the file exists and the sequence of sensors "
                 "is listed under 'Sensors' node.", yaml_filename.c_str());
   }
-
 
   TEMOTO_INFO("Sensor manager is ready.");
 }

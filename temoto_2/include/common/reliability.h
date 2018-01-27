@@ -3,7 +3,6 @@
 
 #include <array>
 
-
 class Reliability
 {
 public:

@@ -18,6 +18,9 @@
 namespace context_manager
 {
 
+typedef std::shared_ptr<context_manager::TrackerInfo> TrackerInfoPtr;
+typedef std::vector<TrackerInfoPtr> TrackerInfoPtrs;
+
 class ContextManager : public BaseSubsystem
 {
 public:
@@ -49,7 +52,7 @@ private:
    * @param req
    * @return
    */
-  std::vector<TrackerInfo> findTrackers(temoto_2::LoadTracker::Request& req);
+  TrackerInfoPtrs findTrackers(temoto_2::LoadTracker::Request& req);
 
   /**
    * @brief loadTrackObjectCb
@@ -122,6 +125,13 @@ private:
 
   ObjectPtr findObject(std::string object_name);
 
+  void statusCb1(temoto_2::ResourceStatus& srv);
+
+  void statusCb2(temoto_2::ResourceStatus& srv);
+
+
+
+
 
   // Resource manager for handling servers and clients
   rmp::ResourceManager<ContextManager> resource_manager_1_;
@@ -143,7 +153,9 @@ private:
 
   std::map<std::string, std::string> m_tracked_objects_remote_;
 
-  std::map<std::string, std::vector<context_manager::TrackerInfo>> categorized_trackers_;
+  std::map<std::string, TrackerInfoPtrs> categorized_trackers_;
+
+  std::map<int, TrackerInfoPtr> allocated_trackers_;
 
   temoto_id::IDManager pipe_id_generator_;
 
@@ -154,6 +166,11 @@ private:
   rmp::ConfigSynchronizer<ContextManager, std::string> tracked_objects_syncer_;
 
   TTP::TaskManager tracker_core_;
+
+  /*
+   * TODO: A DATA STRUCTURE THAT IS A TEMPORARY HACK UNTIL RMP IS IMPROVED
+   */
+  std::map<int, std::pair<TrackerInfoPtr, std::vector<int>>>  allocated_trackers_hack_;
 };
 }
 

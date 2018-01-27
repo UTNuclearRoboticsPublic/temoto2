@@ -8,7 +8,7 @@
 #include <ctype.h>
 #include <memory>                     // shared_ptr
 #include "common/temoto_log_macros.h"
-//#include "common/reliability.h"
+#include "common/reliability.h"
 #include <yaml-cpp/yaml.h>
 
 #include <iostream>                   // TODO: remove
@@ -123,6 +123,8 @@ class TrackerInfo
 {
 public:
 
+  Reliability reliability_;
+
   /*
    * Getters
    */
@@ -165,6 +167,7 @@ public:
   {
     std::string str;
     str += "type: " + std::string("TODO") + "\n";
+    str += "reliability: " + std::to_string(reliability_.getReliability()) + "\n";
 
     for (auto& filter : pipe_)
     {
@@ -194,7 +197,6 @@ private:
   
   std::string type_;
   std::vector<Filter> pipe_;
-  //Reliability reliability_;
 };
 
 
