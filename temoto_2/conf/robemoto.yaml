@@ -42,6 +42,14 @@ Sensors:
     camera_info: "camera/depth/camera_info"
     camera_data: "camera/depth/image"
 
+- sensor_name: "Lenovo Cam"
+  sensor_type: "camera"
+  package_name: "usb_cam"
+  executable:  "y50_70_calib.launch"
+  output_topics:
+    camera_info: "usb_cam/camera_info"
+    camera_data: "usb_cam/image_raw"
+
 Algorithms:
 - algorithm_name: "AR Tag detector"
   algorithm_type: "artag"
