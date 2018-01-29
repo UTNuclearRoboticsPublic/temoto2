@@ -22,7 +22,9 @@ find_package(catkin REQUIRED COMPONENTS
 	message_generation
   rviz_plugin_manager
   moveit_ros_planning_interface
-  tf
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
 )
 
 find_package(TinyXML REQUIRED)

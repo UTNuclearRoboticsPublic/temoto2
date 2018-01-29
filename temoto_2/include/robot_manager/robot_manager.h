@@ -20,7 +20,9 @@
 #include <vector>
 #include <map>
 
-#include <tf/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_ros/transform_listener.h>
+#include <geometry_msgs/TransformStamped.h>
 
 
 namespace robot_manager
@@ -141,7 +143,10 @@ private:
   std::mutex default_pose_mutex_;
 
 
-  tf::TransformListener tf_listener;
+  tf2_ros::TransformListener tf2_listener;
+  tf2_ros::Buffer tf2_buffer;
+
+  ros::Publisher marker_publisher_;
 
 };
 }

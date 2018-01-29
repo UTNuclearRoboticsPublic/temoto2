@@ -7,7 +7,10 @@
 // Things that have to be included
 #include "TTP/base_task/base_task.h"         // The base task
 #include <class_loader/class_loader.h>       // Class loader includes
-#include <tf/transform_broadcaster.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+//#include <geometry_msgs/TransformStamped.h>
 
 // Task specific includes
 #include "ros/ros.h"
@@ -113,18 +116,36 @@ void handDataCb(human_msgs::Hands msg)
 {
 //  TEMOTO_DEBUG_STREAM("Updating the pose of the right hand");
 //
-  // Update the pose of the object
-  tracked_object_->pose = msg.right_hand.palm_pose;
-  tracked_object_->pose.header.frame_id = "hand_workspace";
 
-  // publish tf that translates the workspace center to the endeffector
-  tf::StampedTransform transform;
-  transform.setOrigin(tf::Vector3(0, -0.1, -0.2));
-  transform.setRotation(tf::Quaternion::getIdentity());
-  transform.frame_id_ = msg.right_hand.palm_pose.header.frame_id;
-  transform.child_frame_id_ = tracked_object_->pose.header.frame_id;
-  transform.stamp_ = ros::Time::now();
-  br.sendTransform(transform);
+  // Use tf2 to transform hand pose from its optical frame to the camera_link
+  geometry_msgs::Point pt = msg.right_hand.palm_pose.pose.position;
+  tf2::Vector3 vec_orig(pt.x, pt.y, pt.z);
+  geometry_msgs::Quaternion q_msg = msg.right_hand.palm_pose.pose.orientation;
+  tf2::Quaternion q_orig(q_msg.x, q_msg.y, q_msg.z, q_msg.w);
+  tf2::Transform transform(q_orig, vec_orig);
+
+  tf2::Quaternion q2;
+  q2.setRPY(3.14, 0, 1.57);
+  tf2::Quaternion q3;
+  q3.setRPY(-1.57, -1.57, 0);
+  tf2::Transform transform2(q2, tf2::Vector3(0, -0.05, 0.3)); // translate hand to the center of the workspace
+  tf2::Vector3 vec = transform2*vec_orig;
+  tf2::Quaternion q = q2*q_orig*q3;
+
+  geometry_msgs::Point position2;
+  position2.x = vec.x();
+  position2.y = vec.y();
+  position2.z = vec.z();
+  tracked_object_->pose.pose.position = position2;
+
+  geometry_msgs::Quaternion q_msg2;
+  q_msg2.x = q.x();
+  q_msg2.y = q.y();
+  q_msg2.z = q.z();
+  q_msg2.w = q.w();
+  tracked_object_->pose.pose.orientation = q_msg2;
+  tracked_object_->pose.header = msg.right_hand.palm_pose.header;
+  tracked_object_->pose.header.frame_id = "camera_link";
 
   // Publish the tracked object
   tracked_object_publisher_.publish(*tracked_object_);
@@ -141,7 +162,7 @@ ros::NodeHandle nh_;
 ros::Subscriber hand_subscriber_;
 ros::Publisher tracked_object_publisher_;
 context_manager::ObjectPtr tracked_object_;
-tf::TransformBroadcaster br;
+//tf::TransformBroadcaster br;
 
 };
 
