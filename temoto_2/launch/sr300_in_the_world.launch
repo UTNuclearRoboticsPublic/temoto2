@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <launch>
   <include file="$(find realsense_camera)/launch/sr300_nodelet_rgbd.launch" />
-  <node name="static_transform_publisher2" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 right_ur5_ee_link camera_link 10" />
+  <node required="true" name="static_transform_publisher2" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 left_ur5_ee_link camera_link 10" />
+  <!--node required="true" name="static_transform_publisher2" pkg="tf" type="static_transform_publisher" args="0 0 0 0.5 -0.5 0.5 0.5 left_ur5_ee_link camera_link 10" /-->
 </launch>

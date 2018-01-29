@@ -164,10 +164,10 @@ void startInterface_1()
   hand.detection_methods.push_back(temoto_2::ObjectContainer::HAND);
 
   visualization_msgs::Marker marker;
-  marker.type = visualization_msgs::Marker::CUBE;
-  marker.scale.x = 0.08;
-  marker.scale.y = 0.02;
-  marker.scale.z = 0.12;
+  marker.type = visualization_msgs::Marker::ARROW;
+  marker.scale.x = 0.1;
+  marker.scale.y = 0.05;
+  marker.scale.z = 0.02;
 
   marker.color.r = 1.0f;
   marker.color.g = 0.0f;

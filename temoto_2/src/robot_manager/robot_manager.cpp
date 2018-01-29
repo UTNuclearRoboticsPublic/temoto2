@@ -6,6 +6,8 @@
 #include <fstream>
 #include <sstream>
 
+#include "output_manager/output_manager_services.h"
+
 namespace robot_manager
 {
 RobotManager::RobotManager()
@@ -13,6 +15,7 @@ RobotManager::RobotManager()
   , resource_manager_(srv_name::MANAGER, this)
   , config_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &RobotManager::syncCb, this)
   , mode_(modes::AUTO)
+  , tf2_listener(tf2_buffer)
 {
 
   //\TODO:Remove, deprecated
@@ -39,6 +42,7 @@ RobotManager::RobotManager()
   server_set_mode_ = nh_.advertiseService(robot_manager::srv_name::SERVER_SET_MODE,
                                           &RobotManager::setModeCb, this);
 
+  //TODO: TEMPORARY, REMOVE!
 //      seq: 0
 //      stamp: 
 //        secs: 0
@@ -54,6 +58,12 @@ RobotManager::RobotManager()
 //        y: 0.0150255505036
 //        z: -0.0361555479561
 //        w: 0.922870226032  
+  std::string marker_topic = common::getAbsolutePath("world_to_target_marker");
+  // Advertise the marker topic
+  marker_publisher_ = nh_.advertise<visualization_msgs::Marker>(marker_topic, 10);
+
+
+
 
 //Set the initial default stamped pose in the world frame, until target tracking is not set.
   default_target_pose_.header.stamp = ros::Time::now();
@@ -588,38 +598,58 @@ void RobotManager::targetPoseCb(const temoto_2::ObjectContainer& msg)
 {
     default_pose_mutex_.lock();
     default_target_pose_ = msg.pose;
-    default_target_pose_.pose.position.x = 0.1;
-    default_target_pose_.pose.position.y = 0;
-    default_target_pose_.pose.position.z = 0;
-    default_target_pose_.pose.orientation.x = 0;
-    default_target_pose_.pose.orientation.y = 0;
-    default_target_pose_.pose.orientation.z = 0;
-    default_target_pose_.pose.orientation.w = 1;
- // default_target_pose_.pose.orientation.x = 0.383115589721;
- // default_target_pose_.pose.orientation.y = 0.0150255505036;
- // default_target_pose_.pose.orientation.z = -0.0361555479561;
- // default_target_pose_.pose.orientation.w = 0.922870226032;
-    default_target_pose_.header.frame_id = "world";
 
-    tf::StampedTransform transform;
+    geometry_msgs::TransformStamped tf_world_to_target;
     try
     {
-      tf_listener.lookupTransform("world", "temoto_end_effector", ros::Time(0), transform);
+      tf_world_to_target =
+          tf2_buffer.lookupTransform("world", msg.pose.header.frame_id, ros::Time(0));
+      tf2::doTransform(msg.pose, default_target_pose_, tf_world_to_target);
+      default_target_pose_.header.frame_id = "world";
     }
-    catch(tf::TransformException ex)
+    catch(tf2::TransformException ex)
     {
       TEMOTO_ERROR("%s",ex.what());
     }
 
-    default_target_pose_.pose.position.x = transform.getOrigin().x() + msg.pose.pose.position.x;
-    default_target_pose_.pose.position.y = transform.getOrigin().y() + msg.pose.pose.position.y;
-    default_target_pose_.pose.position.z = transform.getOrigin().z() + msg.pose.pose.position.z;
+//    tf::StampedTransform transform;
+//    //default_target_pose_.pose.position.x = transform.getOrigin().x() + msg.pose.pose.position.x;
+//    //default_target_pose_.pose.position.y = transform.getOrigin().y() + msg.pose.pose.position.y;
+//    //default_target_pose_.pose.position.z = transform.getOrigin().z() + msg.pose.pose.position.z;
+//    
+//    default_target_pose_.pose.position.x = transform.getOrigin().x();
+//    default_target_pose_.pose.position.y = transform.getOrigin().y();
+//    default_target_pose_.pose.position.z = transform.getOrigin().z();
+//
+//    tf::Quaternion q = transform.getRotation().normalized();
+//    //default_target_pose_.pose.orientation.x = (double)q.getX() + msg.pose.pose.orientation.x;
+//    //default_target_pose_.pose.orientation.y = (double)q.getY() + msg.pose.pose.orientation.y;
+//    //default_target_pose_.pose.orientation.z = (double)q.getZ() + msg.pose.pose.orientation.z;
+//    //default_target_pose_.pose.orientation.w = (double)q.getW() + msg.pose.pose.orientation.w;
+//
+//    default_target_pose_.pose.orientation.x = (double)q.getX();
+//    default_target_pose_.pose.orientation.y = (double)q.getY();
+//    default_target_pose_.pose.orientation.z = (double)q.getZ();
+//    default_target_pose_.pose.orientation.w = (double)q.getW();
 
-    tf::Quaternion q = transform.getRotation().normalized();
-    default_target_pose_.pose.orientation.x = (double)q.getX() + msg.pose.pose.orientation.x;
-    default_target_pose_.pose.orientation.y = (double)q.getY() + msg.pose.pose.orientation.y;
-    default_target_pose_.pose.orientation.z = (double)q.getZ() + msg.pose.pose.orientation.z;
-    default_target_pose_.pose.orientation.w = (double)q.getW() + msg.pose.pose.orientation.w;
+    temoto_2::ObjectContainer msg2 = msg;
+    msg2.marker.header = default_target_pose_.header;
+    msg2.marker.pose = default_target_pose_.pose;
+    msg2.marker.ns = "blah2346";
+    msg2.marker.id = 0;
+    //  msg2.marker.type = visualization_msgs::Marker::CUBE;
+    // msg2.marker.color.g = 1.0;
+    msg2.marker.lifetime = ros::Duration();
+
+    if (marker_publisher_)
+    {
+      marker_publisher_.publish(msg2.marker);
+  }
+  else
+  {
+    TEMOTO_ERROR("no marker publisher");
+  }
+//    TEMOTO_DEBUG_STREAM(default_target_pose_);
 
     default_pose_mutex_.unlock();
 }
