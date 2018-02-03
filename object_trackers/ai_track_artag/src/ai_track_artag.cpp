@@ -13,6 +13,10 @@
 #include "ar_track_alvar_msgs/AlvarMarkers.h"
 #include "context_manager/context_manager_containers.h"
 
+#include "tf2/LinearMath/Quaternion.h"
+#include "tf2/LinearMath/Vector3.h"
+#include <tf2/LinearMath/Transform.h>
+
 // First implementaton
 class TrackArtag: public TTP::BaseTask
 {
@@ -75,6 +79,9 @@ void startInterface_0()
     // Get the tag id
     tag_id_ = what_1_data_2_in->tag_id;
 
+    // Get the tag id
+    obj_relative_pose_ = what_1_data_2_in->obj_relative_pose;
+
     // Subscribe to the AR tag data topic
     artag_subscriber_ = nh_.subscribe(what_1_data_0_in, 10, &TrackArtag::artagDataCb, this);
 
@@ -122,7 +129,27 @@ void artagDataCb(ar_track_alvar_msgs::AlvarMarkers msg)
       TEMOTO_DEBUG_STREAM( "AR tag with id = " << tag_id_ << " found");
 
       // Update the pose of the object
-      tracked_object_->pose.pose = artag.pose.pose;
+      geometry_msgs::Point tag_pos_msg = artag.pose.pose.position;
+      geometry_msgs::Quaternion tag_ori_msg = artag.pose.pose.orientation;
+      geometry_msgs::Point obj_pos_msg = obj_relative_pose_.position;
+      geometry_msgs::Quaternion obj_ori_msg = obj_relative_pose_.orientation;
+      tf2::Vector3 tag_pos(tag_pos_msg.x, tag_pos_msg.y, tag_pos_msg.z);
+      tf2::Quaternion tag_ori(tag_ori_msg.x, tag_ori_msg.y, tag_ori_msg.z, tag_ori_msg.w);
+      tf2::Vector3 obj_pos(obj_pos_msg.x, obj_pos_msg.y, obj_pos_msg.z);
+      tf2::Quaternion obj_ori(obj_ori_msg.x, obj_ori_msg.y, obj_ori_msg.z, obj_ori_msg.w);
+      
+      obj_ori = tag_ori*obj_ori;
+      tf2::Transform transform(obj_ori,tf2::Vector3(0,0,0));
+      obj_pos = tag_pos+transform*obj_pos;
+
+      
+      tracked_object_->pose.pose.position.x = obj_pos.x();
+      tracked_object_->pose.pose.position.y = obj_pos.y();
+      tracked_object_->pose.pose.position.z = obj_pos.z();
+      tracked_object_->pose.pose.orientation.x = obj_ori.x();
+      tracked_object_->pose.pose.orientation.y = obj_ori.y();
+      tracked_object_->pose.pose.orientation.z = obj_ori.z();
+      tracked_object_->pose.pose.orientation.w = obj_ori.w();
       tracked_object_->pose.header = artag.header;
 
       // Publish the tracked object
@@ -145,6 +172,7 @@ ros::Subscriber artag_subscriber_;
 ros::Publisher tracked_object_publisher_;
 context_manager::ObjectPtr tracked_object_;
 uint32_t tag_id_;
+geometry_msgs::Pose obj_relative_pose_;
 
 };
 

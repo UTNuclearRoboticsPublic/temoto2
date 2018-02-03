@@ -3,5 +3,5 @@
     <remap from="/leap_motion_output"  to="leap_motion_output" />
   </node>
 
-  <node pkg="tf" type="static_transform_publisher" name="leap_to_world_publisher" output="screen" args="0.3 0.3 0.3 0 0 0 /world leap_motion 1000"/>
+  <node pkg="tf" type="static_transform_publisher" name="leap_to_world_publisher" output="screen" args="0.3 0.3 0.3 0 0 0 left_ur5_ee_link leap_motion 1000"/>
 </launch>

@@ -13,6 +13,8 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   temoto_2
   human_msgs
+  tf2
+  tf2_msgs
 )
 
 catkin_package()

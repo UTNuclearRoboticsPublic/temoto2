@@ -13,6 +13,8 @@
 #include "ros/ros.h"
 #include "context_manager/context_manager_interface.h"
 #include <visualization_msgs/Marker.h>
+#include <geometry_msgs/Quaternion.h>
+#include <tf2/LinearMath/Quaternion.h>
 
 // First implementaton
 class ContextManagerTests1: public TTP::BaseTask
@@ -99,10 +101,10 @@ void startInterface_0()
   cylinder.tag_id = 9;
 
   visualization_msgs::Marker marker;
-  marker.type = visualization_msgs::Marker::CYLINDER;
-  marker.scale.x = 0.08;
-  marker.scale.y = 0.08;
-  marker.scale.z = 0.12;
+  marker.type = visualization_msgs::Marker::ARROW;
+  marker.scale.x = 0.1;
+  marker.scale.y = 0.05;
+  marker.scale.z = 0.02;
 
   marker.color.r = 0.0f;
   marker.color.g = 1.0f;
@@ -110,6 +112,15 @@ void startInterface_0()
   marker.color.a = 1.0;
 
   cylinder.marker = marker;
+
+
+  tf2::Quaternion q;
+  q.setRPY(-1.57, 1.57, 1.57);
+  cylinder.obj_relative_pose.position.x = -0.2;
+  cylinder.obj_relative_pose.orientation.x = q.x();
+  cylinder.obj_relative_pose.orientation.y = q.y();
+  cylinder.obj_relative_pose.orientation.z = q.z();
+  cylinder.obj_relative_pose.orientation.w = q.w();
 
 //  shape_msgs::SolidPrimitive primitive;
 //  primitive.type = shape_msgs::SolidPrimitive::CYLINDER;

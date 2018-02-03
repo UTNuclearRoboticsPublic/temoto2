@@ -66,7 +66,7 @@ public:
         break;
 
       case 4:
-        rmi_.setTarget("right hand");
+        rmi_.setTarget("cylinder");
         break;
     }
   }

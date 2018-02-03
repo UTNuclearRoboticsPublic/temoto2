@@ -1,0 +1,44 @@
+---
+Sensors:
+- sensor_name: "Le Terminal pour TeMoto"
+  sensor_type: "speech"
+  package_name: "temoto_2"
+  executable:  "test_2.launch"
+  topic:  "/terminal_text"
+  output_topics:
+    data: "/terminal_text"
+
+- sensor_name: "Google Speech"
+  sensor_type: "speech"
+  package_name: "google_speech_to_text"
+  executable:  "en-US.launch"
+  topic:  "stt/spoken_text"
+  output_topics:
+    data: "stt/spoken_text"
+  #  reliability: 0.9
+
+#- sensor_name: "Leap Motion Hand Tracker"
+#  sensor_type: "hand"
+#  package_name: "leap_motion_controller"
+#  executable:  "leap_motion"
+#  output_topics:
+#    handtracker_data: "leap_motion_output"
+
+- sensor_name: "Simulated Hand Tracker"
+  sensor_type: "hand"
+  package_name: "temoto_tests"
+  executable:  "hand_tracker_right_hand_0.launch"
+  output_topics:
+    handtracker_data: "leap_motion_output"
+	
+Algorithms:
+- algorithm_name: "AR Tag detector"
+  algorithm_type: "artag"
+  package_name: "temoto_tests"
+  executable:  "ar_track_algorithm.launch"
+  input_topics:
+    camera_info: "camera_info"
+    camera_data: "usb_cam/raw"
+  output_topics:
+    visualization_data: "visualization_marker"
+    marker_data: "ar_pose_marker"

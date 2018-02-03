@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<launch>
+  <node required="true" name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >
+    <param name="video_device" value="/dev/video1" />
+    <param name="image_width" value="640" />
+    <param name="image_height" value="480" />
+    <param name="pixel_format" value="yuyv" />
+    <param name="camera_frame_id" value="usb_cam" />
+    <param name="io_method" value="mmap"/>
+    <param name="camera_info_url" value="file://$(find temoto_tests)/camera_calibration/vaultbot_cam_calibration.yaml" />
+  </node>
+
+  <node required="true" name="world__usb_cam_link__pub" pkg="tf" type="static_transform_publisher" args="0.22 -0.85 0.9 0.98 0.28 0 world usb_cam_link 10"/>
+  <node required="true" name="usb_cam_link__usb_cam__pub" pkg="tf" type="static_transform_publisher" args="0 0 0 -1.57 0 -1.57 usb_cam_link usb_cam 10"/>
+</launch>

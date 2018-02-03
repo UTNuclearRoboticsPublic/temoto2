@@ -115,6 +115,7 @@ void handDataCb(human_msgs::Hands msg)
 
   // Update the pose of the tracked object
   tracked_object_->pose = msg.right_hand.palm_pose;
+  tracked_object_->pose.header.stamp = ros::Time::now();
 
   // Publish the tracked object
   tracked_object_publisher_.publish(*tracked_object_);
