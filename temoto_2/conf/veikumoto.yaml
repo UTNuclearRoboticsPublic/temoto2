@@ -31,6 +31,14 @@ Sensors:
 #    camera_info: "usb_cam/camera_info"
     camera_data: "usb_cam/image_raw"
 
+- sensor_name: "Logitech Cam"
+  sensor_type: "camera"
+  package_name: "usb_cam"
+  executable:  "usb_cam-test.launch"
+  output_topics:
+    camera_info: "usb_cam/camera_info"
+    camera_data: "usb_cam/image_raw"
+
 - sensor_name: "Lenovo Cam"
   sensor_type: "camera"
   package_name: "usb_cam"
