@@ -81,8 +81,8 @@ echo -e $RESET $GREEN $NL"Downloading the language model files ..." $RESET
 META_MODELS_DIR=$TEMOTO_DIR/language_processors/meta/models
 mkdir -p $META_MODELS_DIR
 
-echo -e $RESET $GREEN"- Downloading the parser model to "$META_MODELS_DIR $RESET
-wget -qO- https://github.com/meta-toolkit/meta/releases/download/v3.0.2/greedy-constituency-parser.tar.gz | tar zxv -C $MODELS_DIR
+echo -e $RESET $GREEN"* Downloading the parser model to "$META_MODELS_DIR $RESET
+wget -qO- https://github.com/meta-toolkit/meta/releases/download/v3.0.2/greedy-constituency-parser.tar.gz | tar zxv -C $META_MODELS_DIR
 
 # Check if the download was successful or not
 if [[ $? != 0 ]]; then
@@ -90,8 +90,8 @@ if [[ $? != 0 ]]; then
   exit
 fi
 
-echo -e $RESET $GREEN"- Downloading the tagger model to "$META_MODELS_DIR $RESET
-wget -qO- https://github.com/meta-toolkit/meta/releases/download/v3.0.2/greedy-perceptron-tagger.tar.gz | tar zxv -C $MODELS_DIR
+echo -e $RESET $GREEN"* Downloading the tagger model to "$META_MODELS_DIR $RESET
+wget -qO- https://github.com/meta-toolkit/meta/releases/download/v3.0.2/greedy-perceptron-tagger.tar.gz | tar zxv -C $META_MODELS_DIR
 
 # Check if the download was successful or not
 if [[ $? != 0 ]]; then
