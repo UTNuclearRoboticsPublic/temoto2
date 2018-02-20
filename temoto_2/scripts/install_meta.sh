@@ -68,7 +68,7 @@ fi
 # # # # # # # # # # # # # # # # # #
 
 echo -e $RESET $GREEN $NL"Downloading the language model files ..." $RESET
-MODELS_DIR=$TEMOTO_DIR/include/TTP/language_processors/meta/models/test
+MODELS_DIR=$TEMOTO_DIR/include/TTP/language_processors/meta/models
 wget -qO- https://github.com/meta-toolkit/meta/releases/download/v3.0.2/greedy-constituency-parser.tar.gz | tar zxv -C $MODELS_DIR
 wget -qO- https://github.com/meta-toolkit/meta/releases/download/v3.0.2/greedy-perceptron-tagger.tar.gz | tar zxv -C $MODELS_DIR
 
