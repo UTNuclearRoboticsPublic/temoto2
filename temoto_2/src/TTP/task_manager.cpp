@@ -107,7 +107,7 @@ void TaskManager::initCore(std::string ai_libs_path)
    */
   if (nlp_enabled_)
   {
-    language_processor_ = new MetaLP(temoto_path + "/include/TTP/language_processors/meta/models/", *this);
+    language_processor_ = new MetaLP(temoto_path + "/language_processors/meta/models/", *this);
 
     // Subscribe to human chatter topic. This triggers the callback that processes text
     // messages and trys to find and execute tasks based on the text
