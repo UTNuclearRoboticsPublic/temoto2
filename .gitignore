@@ -5,6 +5,9 @@ lib/
 # Ignore vim temp files
 *.swp
 
+# Ignore gedit temp files
+*~
+
 # Ignore docs
 */doc/html
 */doc/manifest.yaml
