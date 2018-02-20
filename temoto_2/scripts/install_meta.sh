@@ -7,7 +7,7 @@ BOLD="\e[1m"
 NL="\n"
 RESET="\e[39m\e[0m"
 
-TEMOTO_DIR=$(rospack find temoto_2)
+TEMOTO_DIR=$(rospack find temoto_2) > /dev/null
 
 # Check if the package was found or not
 if [[ $? = 1 ]]; then
@@ -15,7 +15,7 @@ if [[ $? = 1 ]]; then
   exit
 fi
 
-META_SRC_DIR=TEMOTO_DIR/language_processors/meta
+META_SRC_DIR=$TEMOTO_DIR/language_processors/meta
 
 # Update and install the dependancies
 echo -e $YELLOW$NL"Insert your sudo password to update and install the dependencies (g++, git, cmake, make, libjemalloc-dev, zlib1g-dev, wget)"$RESET
@@ -44,17 +44,29 @@ cd $META_SRC_DIR/build
 cmake ../ -DCMAKE_BUILD_TYPE=Release
 make -j8
 
+# Check if the build was successful or not
+if [[ $? != 0 ]]; then
+  echo -e $RED $BOLD"Building MeTA failed. Exiting"$RESET
+  exit
+fi
+
+# # # # # # # # #
 # Run the unit tests
+# # # # # # # # #
+
 echo -e $RESET $GREEN $NL"Running MeTA unit tests ..." $RESET
 ./unit-test --reporter=spec
 
 # Check if the unit tests were successful or not
-if [[ $? = 1 ]]; then
+if [[ $? != 0 ]]; then
   echo -e $RED $BOLD"MeTA unit tests failed. Exiting"$RESET
   exit
 fi
 
+# # # # # # # # # # # # # # # # # #
 # Download the language model files
+# # # # # # # # # # # # # # # # # #
+
 echo -e $RESET $GREEN $NL"Downloading the language model files ..." $RESET
 MODELS_DIR=$TEMOTO_DIR/include/TTP/language_processors/meta/models/test
 wget -qO- https://github.com/meta-toolkit/meta/releases/download/v3.0.2/greedy-constituency-parser.tar.gz | tar zxv -C $MODELS_DIR

@@ -25,10 +25,10 @@ mkdir -p $CW_DIR
 cd $CW_DIR
 
 # Check if the rviz_plugin_manager package exists
-rospack find rviz_plugin_manager
+rospack find rviz_plugin_manager > /dev/null
 
 if [[ $? = 0 ]]; then
-  echo -e $GREEN$BOLD"* rviz_plugin_manager" $RESET$GREEN"package is already installed."$RESET $NL
+  echo -e $GREEN$BOLD"* rviz_plugin_manager" $RESET$GREEN"package is already installed."$RESET
 else
   # Clone the rviz_plugin_manager package
   echo -e $RESET"\n\e[32mCloning the rviz_plugin_manager package to\e[1m" $CW_DIR $RESET
@@ -36,10 +36,10 @@ else
 fi
 
 # Check if the human_msgs package exists
-rospack find human_msgs
+rospack find human_msgs > /dev/null
 
 if [[ $? = 0 ]]; then
-  echo -e $GREEN$BOLD"* human_msgs" $RESET$GREEN"package is already installed."$RESET $NL
+  echo -e $GREEN$BOLD"* human_msgs" $RESET$GREEN"package is already installed."$RESET
 else
   # Clone the rviz_plugin_manager package
   echo -e $RESET"\n\e[32mCloning the human_msgs package to\e[1m" $CW_DIR $RESET
@@ -48,3 +48,4 @@ fi
 
 cd $PREV_DIR
 
+echo -e $NL"Dependencies are installed, run" $BOLD"catkin_make."
