@@ -19,9 +19,13 @@ else
   CW_DIR=$P1
 fi
 
+if [[ -z $CW_DIR ]]; then
+  echo -e $RED$BOLD"Could not find the catkin workspace, have you sourced it? Exiting."$RESET
+  exit
+fi
+
 # Save the currend directory and go to the catcin_ws/src directory
 PREV_DIR=$(pwd)
-mkdir -p $CW_DIR
 cd $CW_DIR
 
 # Check if the rviz_plugin_manager package exists
@@ -31,7 +35,7 @@ if [[ $? = 0 ]]; then
   echo -e $GREEN$BOLD"* rviz_plugin_manager" $RESET$GREEN"package is already installed."$RESET
 else
   # Clone the rviz_plugin_manager package
-  echo -e $RESET"\n\e[32mCloning the rviz_plugin_manager package to\e[1m" $CW_DIR $RESET
+  echo -e $RESET$GREEN"Cloning the rviz_plugin_manager package to"$BOLD $CW_DIR $RESET
   git clone https://github.com/UTNuclearRoboticsPublic/rviz_plugin_manager
 fi
 
@@ -42,10 +46,10 @@ if [[ $? = 0 ]]; then
   echo -e $GREEN$BOLD"* human_msgs" $RESET$GREEN"package is already installed."$RESET
 else
   # Clone the rviz_plugin_manager package
-  echo -e $RESET"\n\e[32mCloning the human_msgs package to\e[1m" $CW_DIR $RESET
+  echo -e $RESET$GREEN"Cloning the human_msgs package to"$BOLD $CW_DIR $RESET
   git clone https://github.com/ut-ims-robotics/human_msgs
 fi
 
 cd $PREV_DIR
 
-echo -e $NL"Dependencies are installed."
+echo -e $NL"Dependencies are installed, you are good to go."
