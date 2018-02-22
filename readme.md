@@ -16,9 +16,11 @@ TeMoto is a framework that helps to create and manage applications that tend to 
 
 Applications developed in ROS are traditionally managed solely by the user. An application in ROS can be a simple executable/node or a complex combination of different nodes that work together. Typically the latter is the case and in order to start the application, the user would need to either run each node manually (rosrun) or use launch files (roslaunch). After doing so, the node graph (configuration of running nodes) essentially remains static.
 
-![Node graph in ROS](https://github.com/UTNuclearRobotics/temoto2/tree/context_manager/doc/images/ros.png)
+<img align="center" src="doc/images/ros.png">
 
-![TeMoto](https://github.com/UTNuclearRobotics/temoto2/tree/context_manager/doc/images/temoto.png)
+<img align="center" src="doc/images/temoto.png">
+
+![TeMoto](doc/images/temoto.png)
 
  Although ROS inherently promotes code reusability (the nodes can be reused in a different application), it provides no tools for managing the nodes during the run-time. 
 
