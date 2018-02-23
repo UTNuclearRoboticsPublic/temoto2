@@ -64,7 +64,7 @@ The layered architecture reduces the system specific knowledge required from the
 **1. Clone TeMoto to your catkin_workspace/src directory**
 ```
 cd <your_catkin_ws>/src
-git clone https://github.com/UTNuclearRobotics/temoto2.git
+git clone https://github.com/UTNuclearRoboticsPublic/temoto2.git
 ```
 
 **2. Install TeMoto dependancies via installer script**
