@@ -39,6 +39,8 @@ private:
     meta::parser::sr_parser parser_;
 
     TaskTree task_tree_;
+
+    std::shared_ptr<nummap> str_int_map_;
 };
 
 }// END of TTP namespace

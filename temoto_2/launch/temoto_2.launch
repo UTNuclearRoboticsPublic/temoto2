@@ -1,16 +1,19 @@
 <?xml version="1.0"?>
 <launch>
+  <arg name="temoto_namespace" default="$(anon temoto)" />
+
+  <!--env name="ROSCONSOLE_FORMAT" value="${logger} [${function}] ${message}" /-->
+  <env name="ROSCONSOLE_FORMAT" value="[${function}] ${message}" />
   <env name="ROSCONSOLE_CONFIG_FILE" value="$(find temoto_2)/conf/console.conf" />  
-  <env name="ROSCONSOLE_FORMAT" value="${logger} ${message}" />
-  <env name="TEMOTO_NAME" value="veikumoto" />
-  <node name="process_manager" pkg="temoto_2" type="process_manager" output="screen" />
 
-  <node name="sensor_manager" pkg="temoto_2" type="sensor_manager" output="screen" />
-
-  <node name="context_manager" pkg="temoto_2" type="context_manager" output="screen" />
-
-  <node name="output_manager" pkg="temoto_2" type="output_manager" output="screen" />
-
-  <node name="robot_manager" pkg="temoto_2" type="robot_manager" output="screen" />
+  <group ns="$(arg temoto_namespace)">
+    <node name="process_manager" pkg="temoto_2" type="process_manager" output="screen" />
+    <node name="sensor_manager" pkg="temoto_2" type="sensor_manager" output="screen" />
+    <node name="algorithm_manager" pkg="temoto_2" type="algorithm_manager" output="screen" />
+    <node name="output_manager" pkg="temoto_2" type="output_manager" output="screen" />
+    <node name="context_manager" pkg="temoto_2" type="context_manager" output="screen" />
+    <node name="robot_manager" pkg="temoto_2" type="robot_manager" output="screen" />
+    <node name="temoto_agent" pkg="temoto_2" type="temoto_agent" output="screen" />
+  </group>
 
 </launch>

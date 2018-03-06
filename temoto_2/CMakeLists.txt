@@ -170,6 +170,7 @@ target_link_libraries(output_manager ${catkin_LIBRARIES})
 # TTP
 # # # # # # # # # # # #
 add_library(ttp STATIC src/TTP/language_processors/meta/meta_lp.cpp
+                src/TTP/language_processors/nlp_tools/number_operations.cpp
                 src/TTP/language_processors/meta/branch_finder.cpp
                 src/TTP/task_manager.cpp
                 src/TTP/task_descriptor_processor.cpp
