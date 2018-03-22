@@ -34,13 +34,28 @@ Sensors:
   #    camera_info: "camera/depth/camera_info"
   #    camera_data: "camera/depth/image"
 
-- sensor_name: "Realsense SR300"
+- sensor_name: "Realsense R200"
   sensor_type: "depth camera"
   package_name: "temoto_2"
-  executable:  "sr300_in_the_world.launch"
+  executable:  "r200.launch"
   output_topics:
-    camera_info: "camera/depth/camera_info"
-    camera_data: "camera/depth/image"
+    camera_info: "camera/depth_registered/sw_registered/camera_info"
+    camera_data: "camera/depth_registered/points"
+
+- sensor_name: "Hokuyo lidar"
+  sensor_type: "lidar"
+  package_name: "temoto_2"
+  executable:  "hokuyo.launch"
+  output_topics:
+    lidar_data: "scan"
+
+#- sensor_name: "Realsense SR300"
+#  sensor_type: "depth camera"
+#  package_name: "temoto_2"
+#  executable:  "sr300_in_the_world.launch"
+#  output_topics:
+#    camera_info: "camera/depth/camera_info"
+#    camera_data: "camera/depth/image"
 
 - sensor_name: "Lenovo Cam"
   sensor_type: "camera"

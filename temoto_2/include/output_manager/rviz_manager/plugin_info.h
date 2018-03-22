@@ -19,8 +19,10 @@ public:
 
  //   PluginInfo (std::string type, std::string class_name, std::string rviz_name);
 
-    PluginInfo (std::string type, std::string class_name, 
-				std::string rviz_name = "", std::string data_type = "");
+    PluginInfo (std::string type,
+                std::string class_name,
+                std::string rviz_name = "",
+                std::string data_type = "");
 
     void setDescription (std::string description);
 

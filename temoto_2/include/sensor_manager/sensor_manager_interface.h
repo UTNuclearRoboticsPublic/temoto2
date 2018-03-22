@@ -46,8 +46,13 @@ public:
     class_name_ = __func__;
   }
 
-  void initialize(TTP::BaseTask* task)
+  /**
+   * @brief initialize
+   * @param task
+   */
+  void initialize(OwnerTask* task)
   {
+    owner_instance_ = task;
     initializeBase(task);
     log_group_ = "interfaces." + task->getPackageName();
     name_ = task->getName() + "/sensor_manager_interface";
@@ -201,11 +206,22 @@ public:
       throw FORWARD_ERROR(error_stack);
     }
 
-    TEMOTO_DEBUG("status info was received");
-    TEMOTO_DEBUG_STREAM(srv.request);
+    TEMOTO_INFO_STREAM("status info was received");
+    TEMOTO_INFO_STREAM(srv.request);
 
-    // if any resource should fail, just unload it and try again
-    // there is a chance that sensor manager gives us better sensor this time
+    /*
+     * Check if the owner action has a status routine defined
+     */
+    if (update_callback_)
+    {
+      (owner_instance_->*update_callback_)(false);
+      return;
+    }
+
+    /*
+     * if any resource should fail, just unload it and load it again
+     * there is a chance that sensor manager gives us better sensor this time
+     */
     if (srv.request.status_code == rmp::status_codes::FAILED)
     {
       TEMOTO_WARN("Sensor manager interface detected a sensor failure. Unloading and "
@@ -223,12 +239,13 @@ public:
         // this call automatically updates the response in allocated sensors vec
         try
         {
-          resource_manager_->template call<temoto_2::LoadSensor>(
-              sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, *sens_it);
+          resource_manager_->template call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
+                                                                 sensor_manager::srv_name::SERVER,
+                                                                 *sens_it);
         }
         catch(error::ErrorStack& error_stack)
         {
-          throw FORWARD_ERROR(error_stack);
+          SEND_ERROR(error_stack);
         }
       }
       else
@@ -237,6 +254,14 @@ public:
                                                             "resource that does not exist.");
       }
     }
+  }
+
+  /**
+   * @brief registerUpdateCallback
+   */
+  void registerUpdateCallback( void (OwnerTask::*callback )(bool))
+  {
+    update_callback_ = callback;
   }
 
   ~SensorManagerInterface()
@@ -252,6 +277,9 @@ private:
   std::string name_;
   std::vector<temoto_2::LoadSensor> allocated_sensors_;
   std::unique_ptr<rmp::ResourceManager<SensorManagerInterface>> resource_manager_;
+
+  void(OwnerTask::*update_callback_)(bool) = NULL;
+  OwnerTask* owner_instance_;
 
   /**
    * @brief validateInterface

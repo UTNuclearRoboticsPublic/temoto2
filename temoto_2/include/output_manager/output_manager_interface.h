@@ -92,24 +92,26 @@ public:
     req.topic = topic;
     req.config = display_config;
 
-    auto cur_plugin_it = plugins_.begin();
-    while (cur_plugin_it != plugins_.end())
+    bool plugin_unloaded = false;
+
+    for (auto cur_plugin_it = plugins_.begin(); cur_plugin_it != plugins_.end(); /* empty */)
     {
-      // The == operator used in the lambda function is defined in
-      // rviz manager services header
-      auto found_plugin_it = std::find_if(
-          cur_plugin_it, plugins_.end(),
-          [&](const temoto_2::LoadRvizPlugin& srv_msg) -> bool { return srv_msg.request == req; });
-      if (found_plugin_it != plugins_.end())
+      // The == operator used in the lambda function is defined in output_manager_services.h
+      if ( !(cur_plugin_it->request == req) )
       {
-        // do the unloading
-        resource_manager_->unloadClientResource(found_plugin_it->response.rmp.resource_id);
-        cur_plugin_it = found_plugin_it;
+        cur_plugin_it++;
+        continue;
       }
-      else if (cur_plugin_it == plugins_.begin())
-      {
-        throw CREATE_ERROR(error::Code::RESOURCE_UNLOAD_FAIL, "Unable to unload resource that is not loaded.");
-      }
+
+      // do the unloading
+      resource_manager_->unloadClientResource(cur_plugin_it->response.rmp.resource_id);
+      plugins_.erase(cur_plugin_it);
+      plugin_unloaded = true;
+    }
+
+    if (!plugin_unloaded)
+    {
+      throw CREATE_ERROR(error::Code::RESOURCE_UNLOAD_FAIL, "Unable to unload resource that is not loaded.");
     }
   }
 

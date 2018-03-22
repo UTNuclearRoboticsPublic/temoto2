@@ -44,6 +44,8 @@ RvizManager::RvizManager()
   plugin_info_handler_.plugins_.emplace_back("camera", "rviz_textured_sphere/SphereDisplay",
                                              "Temoto camera");
   plugin_info_handler_.plugins_.emplace_back("image", "rviz/Image", "Temoto Image", "sensor_msgs/Image");
+  plugin_info_handler_.plugins_.emplace_back("depth image", "rviz/PointCloud2", "Temoto Pointcloud", "sensor_msgs/PointCloud2");
+  plugin_info_handler_.plugins_.emplace_back("laser scan", "rviz/LaserScan", "Temoto Laser Scan", "sensor_msgs/LaserScan");
   plugin_info_handler_.plugins_.emplace_back("path", "rviz/Path", "Path plugin", "");
   plugin_info_handler_.plugins_.emplace_back("robot_model", "rviz/RobotModel", "Robot model plugin", "");
   plugin_info_handler_.plugins_.emplace_back("manipulation", "moveit_rviz_plugin/MotionPlanning", "Moveit Motion Planning", "");
