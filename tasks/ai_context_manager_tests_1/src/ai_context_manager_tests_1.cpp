@@ -98,6 +98,7 @@ void startInterface_0()
   TEMOTO_INFO_STREAM("The tracking method for the cylinder is:" << temoto_2::ObjectContainer::ARTAG);
 
   cylinder.detection_methods.push_back(temoto_2::ObjectContainer::ARTAG);
+  //cylinder.tag_id = 4;
   cylinder.tag_id = 9;
 
   visualization_msgs::Marker marker;

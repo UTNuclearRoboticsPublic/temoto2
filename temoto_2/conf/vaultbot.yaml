@@ -107,7 +107,8 @@ Robots:
       package_name: "vaultbot_tools_moveit_config" #Has to contain move_group.launch
       executable: "move_group.launch"
       args: "fake_execution:=false load_robot_description:=false"
-      planning_groups: ["left_ur5"]
+      #planning_groups: ["left_ur5"]
+      planning_groups: ["right_ur5_temoto"]
     driver:
       package_name: "task_robot"
       executable: "vaultbot_manipulation.launch"
