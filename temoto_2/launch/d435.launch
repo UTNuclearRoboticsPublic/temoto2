@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- D435 on R arm -->
+  <include file="$(find vaultbot_drivers)/launch/right_rs2_rgbd.launch"/>
+
+</launch>

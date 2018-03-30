@@ -118,7 +118,7 @@ public:
       /*
        * Load a depth camera
        */
-      case ActiveDevice::CAMERA:
+      case ActiveDevice::SICK_LIDAR:
       {
         active_device = ActiveDevice::DEPTHCAMERA;
 
@@ -136,8 +136,7 @@ public:
         TEMOTO_INFO("Showing depth camera feed in RViz @ '%s' topic", depth_camera_topic.c_str());
 
         // Show the image in rviz
-        omi_.hideInRviz("image", camera_topic);
-        //ros::Duration(3).sleep();
+        omi_.hideInRviz("laser scan", sick_lidar_topic);
         omi_.showInRviz("depth image", depth_camera_topic);
 
         break;
@@ -148,24 +147,26 @@ public:
        */
       case ActiveDevice::DEPTHCAMERA:
       {
-        active_device = ActiveDevice::LIDAR;
+        active_device = ActiveDevice::HOKUYO_LIDAR;
 
-        // Request a depthcamera
         SensorTopicsReq requested_topics;
         requested_topics.addOutputTopicType("lidar_data");
+        requested_topics.addOutputTopicType("cloud_data");
 
-        TEMOTO_INFO("Starting the lidar");
+        TEMOTO_INFO("Starting the hokuyo lidar");
 
         SensorTopicsRes responded_topics = smi_.startSensor("lidar", requested_topics);
-        lidar_topic = responded_topics.getOutputTopic("lidar_data");
+        hokuyo_lidar_topic = responded_topics.getOutputTopic("lidar_data");
+        hokuyo_cloud_topic = responded_topics.getOutputTopic("cloud_data");
 
         // Show the camera image in rviz
-        TEMOTO_INFO("Showing lidar feed in RViz @ '%s' topic", lidar_topic.c_str());
+        TEMOTO_INFO("Showing hokuyo lidar feed in RViz @ '%s' and '%s'", hokuyo_lidar_topic.c_str(), hokuyo_cloud_topic.c_str());
 
         // Show the image in rviz
         omi_.hideInRviz("depth image", depth_camera_topic);
         //ros::Duration(3).sleep();
-        omi_.showInRviz("laser scan", lidar_topic);
+        omi_.showInRviz("laser scan", hokuyo_lidar_topic);
+        omi_.showInRviz("point cloud", hokuyo_cloud_topic);
 
         break;
       }
@@ -173,27 +174,26 @@ public:
       /*
        * Load a camera
        */
-      case ActiveDevice::LIDAR:
+      case ActiveDevice::HOKUYO_LIDAR:
       {
-        active_device = ActiveDevice::CAMERA;
+        active_device = ActiveDevice::SICK_LIDAR;
 
-        // Request a camera
         SensorTopicsReq requested_topics;
-        requested_topics.addOutputTopicType("camera_data");
-        requested_topics.addOutputTopicType("camera_info");
+        requested_topics.addOutputTopicType("lidar_data");
 
-        TEMOTO_INFO("Starting the camera");
+        TEMOTO_INFO("Starting the sick lidar");
 
-        SensorTopicsRes responded_topics = smi_.startSensor("camera", requested_topics);
-        camera_topic = responded_topics.getOutputTopic("camera_data");
+        //SensorTopicsRes responded_topics = smi_.startSensor("camera", requested_topics);
+        SensorTopicsRes responded_topics = smi_.startSensor("lidar", requested_topics);
+        sick_lidar_topic = responded_topics.getOutputTopic("lidar_data");
 
-        // Show the camera image in rviz
-        TEMOTO_INFO("Showing camera feed in RViz @ '%s' topic", camera_topic.c_str());
+        // Show the lidar in rviz
+        TEMOTO_INFO("Showing a sick lidar feed in RViz @ '%s' topic", sick_lidar_topic.c_str());
 
         // Show the image in rviz
-        omi_.hideInRviz("laser scan", lidar_topic);
-        //ros::Duration(3).sleep();
-        omi_.showInRviz("image", camera_topic);
+        omi_.hideInRviz("laser scan", hokuyo_lidar_topic);
+        omi_.hideInRviz("point cloud", hokuyo_cloud_topic);
+        omi_.showInRviz("laser scan", sick_lidar_topic);
 
         break;
       }
@@ -219,11 +219,11 @@ private:
   output_manager::OutputManagerInterface<ShowEnv> omi_;
 
   // Create an enum for storing the knowledge about the active device
-  enum class ActiveDevice {DEPTHCAMERA, CAMERA, LIDAR};
+  enum class ActiveDevice {DEPTHCAMERA, SICK_LIDAR, HOKUYO_LIDAR};
 
   ActiveDevice active_device = ActiveDevice::DEPTHCAMERA;
 
-  std::string camera_topic, depth_camera_topic, lidar_topic;
+  std::string depth_camera_topic, sick_lidar_topic, hokuyo_lidar_topic, hokuyo_cloud_topic;
 
   std::string task_alias;
 };

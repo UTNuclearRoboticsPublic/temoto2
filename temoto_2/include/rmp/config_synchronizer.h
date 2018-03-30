@@ -73,7 +73,7 @@ public:
       {
         break;
       }
-      ros::Duration(0.1).sleep();
+      ros::Duration(1).sleep();
     }
 
     TEMOTO_INFO("ConfigSynchronizer created.");

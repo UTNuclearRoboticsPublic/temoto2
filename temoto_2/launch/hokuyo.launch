@@ -1,7 +1,18 @@
+<?xml version="1.0"?>
 <launch>
 
-  <node required="true" name="static_transform_publisher2" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 world laser 10" />
+<node required="true" name="map_tf_pub" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 map world 20" />
+  <!--node required="true" name="static_transform_publisher3" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 hokuyo_lidar 10" /-->
 
-  <node required="true" name="hokuyo_lidar" pkg="urg_node" type="urg_node" output="screen" />
+  <!--include file="$(find vaultbot_drivers)/launch/robot_setup.launch"/-->
+<group ns="robot_manager/robots/vaultbot">
+  <include file="$(find urg_node)/launch/urg_lidar.launch"/>
+
+  <!--include file="$(find husky_navigation)/launch/hector_nav.launch">
+    <arg name="rviz" value="false" />
+  </include-->
+
+  <include file="$(find laser_stitcher)/launch/urscript_manager.launch"/>
+</group>
 
 </launch>

@@ -1,0 +1,167 @@
+---
+Sensors:
+- sensor_name: "Webcam"
+  sensor_type: "camera"
+  package_name: "temoto_tests"
+  executable:  "vaultbot_camera.launch"
+  output_topics:
+    camera_info: "usb_cam/camera_info"
+    camera_data: "usb_cam/image_raw"
+
+- sensor_name: "Realsense D435"
+  sensor_type: "depth camera"
+  package_name: "temoto_2"
+  executable:  "d435.launch"
+  output_topics:
+    camera_info: "camera_ee/depth_registered/sw_registered/camera_info"
+    camera_data: "camera_ee/depth_registered/points"
+
+- sensor_name: "Hokuyo lidar"
+  sensor_type: "lidar"
+  package_name: "temoto_2"
+  executable:  "hokuyo.launch"
+  output_topics:
+    lidar_data: "robot_manager/robots/vaultbot/hokuyo_scan"
+    cloud_data: "robot_manager/robots/vaultbot/laser_stitcher/map_cloud"
+
+- sensor_name: "Sick lidar"
+  sensor_type: "lidar"
+  package_name: "temoto_2"
+  executable:  "sick.launch"
+  output_topics:
+    lidar_data: "lidar/scan"
+
+#- sensor_name: "Le Terminal pour TeMoto"
+#  sensor_type: "speech"
+#  package_name: "temoto_2"
+#  executable:  "test_2.launch"
+#  topic:  "/terminal_text"
+#  output_topics:
+#    data: "/terminal_text"
+#
+#- sensor_name: "Google Speech"
+#  sensor_type: "speech"
+#  package_name: "google_speech_to_text"
+#  executable:  "en-US.launch"
+#  topic:  "stt/spoken_text"
+#  output_topics:
+#    data: "stt/spoken_text"
+#  #  reliability: 0.9
+#
+#- sensor_name: "Sensor_0"
+#  sensor_type: "test_sensor_0"
+#  package_name: "temoto_tests"
+#  executable:  "sensor_0"
+#  topic:  "deprecated_stuff"
+#  output_topics:
+#    type_0: "sensor_0_pub_0"
+#    type_1: "sensor_0_pub_1"
+#
+#- sensor_name: "Realsense SR300"
+#  sensor_type: "depth camera"
+#  package_name: "realsense_camera"
+#  executable:  "sr300_nodelet_rgbd.launch"
+#  output_topics:
+#    camera_info: "camera/depth/camera_info"
+#    camera_data: "camera/depth/image"
+
+#- sensor_name: "Realsense SR300"
+#  sensor_type: "depth camera"
+#  package_name: "temoto_2"
+#  executable:  "sr300_in_the_world.launch"
+#  output_topics:
+#    camera_info: "camera/depth/camera_info"
+#    camera_data: "camera/depth/image"
+#
+
+#Algorithms:
+#- algorithm_name: "AR Tag detector"
+#  algorithm_type: "artag"
+#  package_name: "ar_track_alvar"
+#  executable:  "monocular_temoto.launch"
+#  input_topics:
+#    camera_info: "camera_info"
+#    camera_data: "usb_cam/raw"
+#  output_topics:
+#    visualization_data: "visualization_marker"
+#    marker_data: "ar_pose_marker"
+#
+#- algorithm_name: "CNN Handtracker"
+#  algorithm_type: "handtracker"
+#  package_name: "depth_cam_hand_tracker"
+#  executable:  "tracker"
+#  input_topics:
+#    camera_info: "camera/depth/camera_info"
+#    camera_data: "camera/depth/image"
+#  output_topics:
+#    handtracker_data: "hand_tracker_output"
+#
+#- algorithm_name: "Algorithm_0"
+#  algorithm_type: "test_algorithm_0"
+#  package_name: "temoto_tests"
+#  executable:  "algorithm_0"
+#  input_topics:
+#    type_0: "algorithm_0_sub_0"
+#    type_1: "algorithm_0_sub_1"
+#  output_topics:
+#    type_2: "algorithm_0_pub_0"
+#    type_3: "algorithm_0_pub_1"
+#
+#- algorithm_name: "Algorithm_1"
+#  algorithm_type: "test_algorithm_1"
+#  package_name: "temoto_tests"
+#  executable:  "algorithm_1"
+#  input_topics:
+#    type_2: "algorithm_1_sub_0"
+#    type_3: "algorithm_1_sub_1"
+#  output_topics:
+#    type_0: "algorithm_1_pub_0"
+#    type_1: "algorithm_1_pub_1"
+
+Robots:
+- robot_name: "vaultbot"
+  description: "Vaultbot with tools and physical hardware"
+  reliability: 0.8
+  urdf:
+    package_name: "vaultbot_description"
+    executable: "urdf/vaultbot_robot_tools.urdf.xacro"
+  manipulation:
+    controller:
+      package_name: "vaultbot_tools_moveit_config" #Has to contain move_group.launch
+      executable: "move_group.launch"
+      args: "fake_execution:=false load_robot_description:=false"
+      #planning_groups: ["left_ur5"]
+      planning_groups: ["right_ur5_temoto"]
+    driver:
+      package_name: "task_robot"
+      executable: "vaultbot_manipulation.launch"
+
+
+#- robot_name: "vaultbot_sim"
+#  description: "Vaultbot with tools and fake hardware drivers"
+#  reliability: 0.8
+#  urdf:
+#    package_name: "vaultbot_description"
+#    #executable: "urdf/vaultbot_robot.urdf.xacro"
+#    executable: "urdf/vaultbot_robot_tools.urdf.xacro"
+#  manipulation:
+#    controller:
+#      #package_name: "vaultbot_moveit_config" #Has to contain move_group.launch
+#      package_name: "vaultbot_tools_moveit_config" #Has to contain move_group.launch
+#      executable: "move_group.launch"
+#      args: "fake_execution:=true load_robot_description:=false"
+#      #planning_groups: ["right_ur5_temoto"]
+#      planning_groups: ["left_ur5"]
+#      #planning_groups: ["arms"]
+#    driver:
+#      package_name: "task_robot"
+#      executable: "vaultbot_fake_manipulation.launch"
+      #args: ""
+    #navigation:
+    #  controller:
+    #    package_name: "husky_navigation" #Has to contain move_base.launch
+    #    local_planner: "dwa_local_planner/DWAPlannerROS"
+    #    global_planner: "navfn/NavfnROS"
+    #  driver:
+    #    package_name: "task_robot"
+    #    executable: "vaultbot_navigation.launch"
