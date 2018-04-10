@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+
+<f_template extension=".test">
+
+  <arg name="interface_nr" default="x" />
+  <body>
+
+<![CDATA[    
+    // Interface $(arg interface_nr)
+    case $(arg interface_nr):
+      startInterface_$(arg interface_nr)();
+      break;
+]]>
+
+  </body>
+</f_template>
+
+

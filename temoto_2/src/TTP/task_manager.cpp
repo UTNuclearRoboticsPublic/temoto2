@@ -262,15 +262,15 @@ void TaskManager::executeSFT (TaskTree sft)
 
 std::vector <TaskDescriptor> TaskManager::findTask(std::string task_to_find, const std::vector <TaskDescriptor>& tasks)
 {
-    std::vector <TaskDescriptor> tasks_found;
-    for (auto& task : tasks)
+  std::vector <TaskDescriptor> tasks_found;
+  for (auto& task : tasks)
+  {
+    if (task_to_find == task.getAction())
     {
-        if (task_to_find == task.getAction())
-        {
-            tasks_found.push_back(task);
-        }
+      tasks_found.push_back(task);
     }
-    return tasks_found;
+  }
+  return tasks_found;
 }
 
 
@@ -280,7 +280,7 @@ std::vector <TaskDescriptor> TaskManager::findTask(std::string task_to_find, con
 
 std::vector <TaskDescriptor> TaskManager::findTaskLocal(std::string task_to_find)
 {
-    return findTask(task_to_find, tasks_indexed_);
+  return findTask(task_to_find, tasks_indexed_);
 }
 
 /* * * * * * * * *

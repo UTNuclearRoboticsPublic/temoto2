@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+
+<f_template extension=".test">
+
+  <arg name="interface_nr" default="x" />
+  <arg name="subjects_in" default="x" />
+  <arg name="subjects_out" default="x" />
+  <body>
+
+<![CDATA[    
+/*
+ * Interface $(arg interface_nr) body
+ */
+void startInterface_$(arg interface_nr)()
+{
+  $(arg subjects_in)
+
+  /* * * * * * * * * * * 
+   *                   *
+   *  YOUR CODE HERE   *
+   *                   *
+   * * * * * * * * * * */
+
+  $(arg subjects_out)
+}
+]]>
+
+  </body>
+</f_template>
+
+

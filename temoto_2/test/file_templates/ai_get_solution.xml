@@ -1,0 +1,19 @@
+
+<?xml version="1.0" ?>
+
+<f_template extension=".test" args="false">
+
+  <body>
+
+<![CDATA[
+/* REQUIRED BY TEMOTO */
+std::vector<TTP::Subject> getSolution()
+{
+  return output_subjects;
+}
+]]>
+
+  </body>
+</f_template>
+
+

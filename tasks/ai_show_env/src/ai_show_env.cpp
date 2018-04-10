@@ -137,7 +137,6 @@ public:
 
         // Show the image in rviz
         omi_.hideInRviz("image", camera_topic);
-        //ros::Duration(3).sleep();
         omi_.showInRviz("depth image", depth_camera_topic);
 
         break;
@@ -164,7 +163,6 @@ public:
 
         // Show the image in rviz
         omi_.hideInRviz("depth image", depth_camera_topic);
-        //ros::Duration(3).sleep();
         omi_.showInRviz("laser scan", lidar_topic);
 
         break;
@@ -192,7 +190,6 @@ public:
 
         // Show the image in rviz
         omi_.hideInRviz("laser scan", lidar_topic);
-        //ros::Duration(3).sleep();
         omi_.showInRviz("image", camera_topic);
 
         break;

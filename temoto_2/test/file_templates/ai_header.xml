@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+
+<f_template extension=".test">
+
+  <arg name="ai_class_name" default="err_noname_err" />
+  <body>
+
+<![CDATA[
+// Things that have to be included
+#include "TTP/base_task/base_task.h"    // The base task
+#include <class_loader/class_loader.h>  // Class loader includes
+
+/* ACTION IMPLEMENTATION of $(arg ai_class_name) */
+class $(arg ai_class_name) : public TTP::BaseTask
+{
+public:
+
+/* REQUIRED BY TEMOTO */
+$(arg ai_class_name)()
+{
+  /*
+   * Do something here if needed
+   */
+  TEMOTO_INFO("$(arg ai_class_name) constructed");
+}
+]]>
+
+  </body>
+
+</f_template>
+
+

@@ -79,7 +79,10 @@ public:
   }
 
   /**
-   * @brief stopAllocatedServices
+   * @brief hideInRviz
+   * @param display_type
+   * @param topic
+   * @param display_config
    */
   void hideInRviz(std::string display_type, std::string topic = "", std::string display_config = "")
   {
@@ -94,6 +97,7 @@ public:
 
     bool plugin_unloaded = false;
 
+    // Iterate over each plugin that has been loaded
     for (auto cur_plugin_it = plugins_.begin(); cur_plugin_it != plugins_.end(); /* empty */)
     {
       // The == operator used in the lambda function is defined in output_manager_services.h

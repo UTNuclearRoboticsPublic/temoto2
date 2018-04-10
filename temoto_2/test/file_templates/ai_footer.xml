@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+
+<f_template extension=".test">
+
+  <arg name="ai_class_name" default="err_noname_err" />
+  <body>
+
+<![CDATA[
+~$(arg ai_class_name)()
+{
+  TEMOTO_INFO("$(arg ai_class_name) destructed");
+}
+
+private:
+
+  /*
+   * Do some private stuff if needed
+   */
+
+};
+
+/* REQUIRED BY CLASS LOADER */
+CLASS_LOADER_REGISTER_CLASS($(arg ai_class_name), TTP::BaseTask);
+]]>
+
+  </body>
+
+</f_template>
+
+

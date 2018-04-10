@@ -1,0 +1,27 @@
+<task action="track">
+    <interface id="0" type="synchronous">
+        <in>
+            <what word="apple" />
+            <what word="orange">
+                <data datatype="topic" />
+                <data datatype="number" />
+            </what>
+        </in>
+        <out>
+            <what word="apple" />
+            <what word="orange">
+                <data datatype="topic" />
+                <data datatype="number" />
+            </what>
+        </out>
+    </interface>
+    <interface id="1" type="synchronous">
+        <in>
+            <what word="apple" />
+            <what word="orange">
+                <data datatype="topic" />
+                <data datatype="number" />
+            </what>
+        </in>
+    </interface>
+</task>

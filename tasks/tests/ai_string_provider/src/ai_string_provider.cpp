@@ -2,16 +2,14 @@
  *
  *	Sample Task class that utilizes the Temoto 2.0 architecture.
  *
- *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // Things that have to be included
-#include "TTP/base_task/base_task.h"                 				 // The base task
-#include <class_loader/class_loader.h>                                   // Class loader includes
+#include "TTP/base_task/base_task.h"              // The base task
+#include <class_loader/class_loader.h>            // Class loader includes
 
 // Task specific includes
 #include "ros/ros.h"
-#include "context_manager/context_manager_interface.h"
 #include <visualization_msgs/Marker.h>
 
 // First implementaton
@@ -23,41 +21,41 @@ public:
  * Inherited methods that have to be implemented /START
  * * * * * * * * * * * * * * * * * * * * * * * * */
 
+/*
+ * Constructor
+ */
 StringProvider()
 {
   // Do something here if needed
   TEMOTO_INFO("Object constructed");
 }
 
-// startTask with arguments
+/*
+ * Start task
+ */
 void startTask(TTP::TaskInterface task_interface)
 {
-  // TODO: This is a hack for Veiko
-  task_alias = task_interface.alias_;
-
   // < AUTO-GENERATED, DO NOT MODIFY >
   input_subjects = task_interface.input_subjects_;
   switch(task_interface.id_)
   {
-      // Interface 0
-      case 0:
-          startInterface_0();
+    // Interface 0
+    case 0:
+    {
+      startInterface_0();
       break;
+    }
   }
   // </ AUTO-GENERATED, DO NOT MODIFY >
 }
 
-std::string getStatus()
-{
-  std::string str = "healthy";
-  return str;
-}
-
+/*
+ * Get solution method
+ */
 std::vector<TTP::Subject> getSolution()
 {
   return output_subjects;
 }
-
 
 /* * * * * * * * * * * * * * * * * * * * * * * * *
  * Inherited methods that have to be implemented / END
@@ -80,13 +78,13 @@ void startInterface_0()
 
   // </ AUTO-GENERATED, DO NOT MODIFY >
 
-// -------------------------------< USER CODE >-------------------------------
+  // -------------------------------< USER CODE >-------------------------------
 
   TEMOTO_INFO_STREAM("The word I received: " << what_0_word_in);
   what_0_data_0_out = "/magnificent_topic_data/over_here";
   what_0_word_out = what_0_word_in + " " + what_0_word_in;
 
-// -------------------------------</ USER CODE >-------------------------------
+  // -------------------------------</ USER CODE >-------------------------------
 
   // < AUTO-GENERATED, DO NOT MODIFY >
 
@@ -98,16 +96,13 @@ void startInterface_0()
   // </ AUTO-GENERATED, DO NOT MODIFY >
 }
 
-
-
+/*
+ * Destructor
+ */
 ~StringProvider()
 {
-    TEMOTO_INFO("Object destructed");
+  TEMOTO_INFO("Object destructed");
 }
-
-private:
-
-std::string task_alias;
 
 };
 

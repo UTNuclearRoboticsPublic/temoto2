@@ -29,6 +29,7 @@ TaskDescriptor::TaskDescriptor( Action action, std::vector<Subject>& input_subje
 {
     // Create an interface
     TaskInterface task_interface;
+    task_interface.id_ = task_interfaces_.size();
     task_interface.input_subjects_ = input_subjects;
 
     // Push it to the local task interfaces storage
@@ -87,7 +88,7 @@ void TaskDescriptor::setActionStemmed(const std::string& action_stemmed)
   action_stemmed_ = action_stemmed;
 }
 
-std::vector<TaskInterface>& TaskDescriptor::getInterfaces()
+std::vector<TaskInterface> &TaskDescriptor::getInterfaces()
 {
     return task_interfaces_;
 }
@@ -134,6 +135,11 @@ void TaskDescriptor::setTaskClassName(std::string task_class_name)
     }
 
     task_class_name_ = task_class_name;
+}
+
+void TaskDescriptor::setTaskPackageName(std::string task_package_name)
+{
+  task_package_name_ = task_package_name;
 }
 
 const std::string& TaskDescriptor::getTaskPackageName() const

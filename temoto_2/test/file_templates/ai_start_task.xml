@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+
+<f_template extension=".test">
+
+  <arg name="cases" default="x" />
+  <body>
+
+<![CDATA[    
+/* REQUIRED BY TEMOTO */
+void startTask(TTP::TaskInterface task_interface)
+{
+  input_subjects = task_interface.input_subjects_;
+  switch (task_interface.id_)
+  {
+    $(arg cases)
+  }
+}
+]]>
+
+  </body>
+</f_template>
+
+

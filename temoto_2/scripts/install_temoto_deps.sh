@@ -29,6 +29,8 @@ PREV_DIR=$(pwd)
 cd $CW_DIR
 
 # Check if the rviz_plugin_manager package exists
+# ------------------------------------------------
+
 rospack find rviz_plugin_manager &> /dev/null
 
 if [[ $? = 0 ]]; then
@@ -40,6 +42,8 @@ else
 fi
 
 # Check if the human_msgs package exists
+# ------------------------------------------------
+
 rospack find human_msgs &> /dev/null
 
 if [[ $? = 0 ]]; then
@@ -48,6 +52,19 @@ else
   # Clone the rviz_plugin_manager package
   echo -e $RESET$GREEN"Cloning the human_msgs package to"$BOLD $CW_DIR $RESET
   git clone https://github.com/ut-ims-robotics/human_msgs
+fi
+
+# Check if the file_template_parser package exists
+# -------------------------------------------------
+
+rospack find file_template_parser &> /dev/null
+
+if [[ $? = 0 ]]; then
+  echo -e $GREEN$BOLD"* file_template_parser" $RESET$GREEN"package is already installed."$RESET
+else
+  # Clone the rviz_plugin_manager package
+  echo -e $RESET$GREEN"Cloning the file_template_parser package to"$BOLD $CW_DIR $RESET
+  git clone https://github.com/ut-ims-robotics/file_template_parser
 fi
 
 cd $PREV_DIR

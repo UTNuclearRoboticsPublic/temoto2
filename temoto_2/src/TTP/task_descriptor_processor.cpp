@@ -6,6 +6,7 @@
 #include <vector>
 #include <boost/any.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <stdexcept>
 
 namespace TTP
 {
@@ -544,6 +545,288 @@ std::vector<Data> TaskDescriptorProcessor::getData(TiXmlElement* data_element)
 TaskDescriptorProcessor::~TaskDescriptorProcessor()
 {
     desc_file_.Clear();
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ *
+ *
+ *      Tools for converting AI descriptors to xml files
+ *
+ *
+ *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+/**
+ * @brief validateAIData
+ * @param ai_datas
+ */
+void validateAIData(const std::vector<Data>& ai_datas)
+{
+  for (const auto& data : ai_datas)
+  {
+    // Check if the given datatype is amongst valid datatypes
+    if (std::find(valid_datatypes.begin(), valid_datatypes.end(), data.type) == valid_datatypes.end())
+    {
+      throw std::runtime_error("Invalid datatype: '" + data.type + "'.");
+    }
+  }
+}
+
+/**
+ * @brief validateAISubject
+ * @param ai_subject
+ */
+void validateAISubjects(const Subjects& ai_subjects)
+{
+  // Iterate through the subjects
+  unsigned int subject_nr = 0;
+  for (auto ai_subject = ai_subjects.begin();
+       ai_subject != ai_subjects.end();
+       ai_subject++, subject_nr++)
+  {
+    // Subject must contain at least 1 word
+    if (ai_subject->words_.empty())
+    {
+      throw std::runtime_error("The subject" + std::to_string(subject_nr) + "is missing a word");
+    }
+
+    // If the subject contains data portion, then validate it
+    if (!ai_subject->data_.empty())
+    {
+      try
+      {
+        validateAIData(ai_subject->data_);
+      }
+      catch(std::runtime_error e)
+      {
+        throw std::runtime_error("The subject" + std::to_string(subject_nr) + "contains invalid data");
+      }
+    }
+  }
+}
+
+/**
+ * @brief validateAIInterface
+ * @param ai_interface
+ */
+void validateAIInterfaces(const std::vector<TaskInterface>& ai_interfaces)
+{
+  // AI descriptor must contain at least 1 interface
+  if (ai_interfaces.empty())
+  {
+    throw std::runtime_error("The given AI descriptor does not contain any interfaces");
+  }
+
+  // Loop through the interfaces
+  unsigned int test_id = 0;
+  for (auto ai_interface = ai_interfaces.begin();
+       ai_interface != ai_interfaces.end();
+       ai_interface++, test_id++)
+  {
+    // Check the interface ID
+    if (ai_interface->id_ != test_id)
+    {
+      throw std::runtime_error("Interface " + std::to_string(test_id) + " has an invalid ID");
+    }
+
+    // Check the interface type
+    if (std::find(interface_types.begin(), interface_types.end(), ai_interface->type_)
+        == interface_types.end())
+    {
+      throw std::runtime_error("Interface " + std::to_string(test_id) + " has invalid type");
+    }
+
+    // Each interface must have an input section
+    if (ai_interface->input_subjects_.empty())
+    {
+      throw std::runtime_error("Interface " + std::to_string(test_id) + " is missing an input section");
+    }
+
+    // Validate the input subjects
+    try
+    {
+      validateAISubjects(ai_interface->input_subjects_);
+    }
+    catch(std::runtime_error& e)
+    {
+      throw std::runtime_error("'" + std::string(e.what()) + "' in input section of interface "
+                               + std::to_string(test_id));
+    }
+
+    // Validate the output subjects
+    try
+    {
+      validateAISubjects(ai_interface->output_subjects_);
+    }
+    catch(std::runtime_error& e)
+    {
+      throw std::runtime_error("'" + std::string(e.what()) + "' in output section of interface "
+                               + std::to_string(test_id));
+    }
+  }
+}
+
+/**
+ * @brief validateAIDescriptor
+ * @param ai_descriptor
+ */
+void validateAIDescriptor(TaskDescriptor& ai_descriptor)
+{
+  /*
+   * Get the AI related parameters
+   */
+  const std::vector<TaskInterface>& ai_interfaces = ai_descriptor.getInterfaces();
+  const Action& ai_lexical_unit = ai_descriptor.getAction();
+  const std::string& ai_package_name = ai_descriptor.getTaskPackageName();
+
+  /*
+   * Check the lexical unit
+   */
+  if (ai_lexical_unit.empty())
+  {
+    throw std::runtime_error("The given AI descriptor does not contain a lexical unit");
+  }
+
+  /*
+   * Check the name of the package
+   */
+  if (ai_package_name.empty())
+  {
+    throw std::runtime_error("The given AI descriptor does not contain the name of the package");
+  }
+
+  /*
+   * Check if the interfaces are valid
+   */
+  validateAIInterfaces(ai_interfaces);
+}
+
+/**
+ * @brief saveAIDescriptorFile
+ * @param ai_descriptor
+ */
+void saveAIDescriptor(TaskDescriptor& ai_descriptor, std::string path)
+{
+  /*
+   * Check if the AI descriptor is valid
+   */
+  validateAIDescriptor(ai_descriptor);
+  std::cout << "The given AI Descriptor is valid" << std::endl;
+
+  /*
+   * Get the AI related parameters
+   */
+  const std::vector<TaskInterface>& ai_interfaces = ai_descriptor.getInterfaces();
+  const Action& ai_lexical_unit = ai_descriptor.getAction();
+  const std::string ai_package_name = ai_descriptor.getTaskPackageName();
+
+  /*
+   * Create xml document and fill out the root element
+   */
+  TiXmlDocument doc;
+  doc.SetTabSize(4);
+  TiXmlElement* root_element = new TiXmlElement("task");
+  root_element->SetAttribute("action", ai_lexical_unit);
+  doc.LinkEndChild(root_element);
+
+  /*
+   * Add the interface elements
+   */
+  for (const auto &ai_interface : ai_interfaces)
+  {
+    // Create interface element
+    TiXmlElement* interface_element = new TiXmlElement("interface");
+    root_element->LinkEndChild(interface_element);
+    interface_element->SetAttribute("id", std::to_string(ai_interface.id_));
+    interface_element->SetAttribute("type", ai_interface.type_);
+
+    /*
+     * Create and add input element
+     */
+    TiXmlElement* in_element = new TiXmlElement("in");
+    interface_element->LinkEndChild(in_element);
+
+    // Add the subject elements
+    for (const auto &ai_in_subject : ai_interface.input_subjects_)
+    {
+      TiXmlElement* subject_element = new TiXmlElement(ai_in_subject.type_);
+      in_element->LinkEndChild(subject_element);
+
+      // Add the word attribute
+      std::string words;
+      for (auto word = ai_in_subject.words_.begin();
+           word != ai_in_subject.words_.end();
+           word++)
+      {
+        if (word == ai_in_subject.words_.begin())
+        {
+          words += *word;
+        }
+        else
+        {
+          words += "," + *word;
+        }
+      }
+      subject_element->SetAttribute("word", words);
+
+      // Add data elements
+      for (const auto &data : ai_in_subject.data_)
+      {
+        TiXmlElement* data_element = new TiXmlElement("data");
+        subject_element->LinkEndChild(data_element);
+        data_element->SetAttribute("datatype", data.type);
+      }
+    }
+
+    /*
+     * Add the output element, if there is one
+     */
+    if (ai_interface.output_subjects_.empty())
+    {
+      continue;
+    }
+
+    // Create and add output element
+    TiXmlElement* out_element = new TiXmlElement("out");
+    interface_element->LinkEndChild(out_element);
+
+    // Add the subject elements
+    for (const auto &ai_out_subject : ai_interface.output_subjects_)
+    {
+      TiXmlElement* subject_element = new TiXmlElement(ai_out_subject.type_);
+      out_element->LinkEndChild(subject_element);
+
+      // Add the word attribute
+      std::string words;
+      for (auto word = ai_out_subject.words_.begin();
+           word != ai_out_subject.words_.end();
+           word++)
+      {
+        if (word == ai_out_subject.words_.begin())
+        {
+          words += *word;
+        }
+        else
+        {
+          words += "," + *word;
+        }
+      }
+      subject_element->SetAttribute("word", words);
+
+      // Add data elements
+      for (const auto &data : ai_out_subject.data_)
+      {
+        TiXmlElement* data_element = new TiXmlElement("data");
+        subject_element->LinkEndChild(data_element);
+        data_element->SetAttribute("datatype", data.type);
+      }
+    }
+
+  }
+
+  bool success = doc.SaveFile(path);
+  doc.Clear();
 }
 
 } // End of TTP namespace

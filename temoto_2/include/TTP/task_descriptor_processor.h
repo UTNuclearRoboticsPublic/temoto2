@@ -70,5 +70,18 @@ private:
      */
 };
 
+/**
+ * @brief validateAIDescriptor
+ * @param ai_descriptor
+ */
+void validateAIDescriptor(TaskDescriptor& ai_descriptor);
+
+/**
+ * @brief saveAIDescriptorFile
+ * @param ai_descriptor
+ */
+void saveAIDescriptor(TaskDescriptor &ai_descriptor, std::string path);
+
+
 } // END of TTP namespace
 #endif

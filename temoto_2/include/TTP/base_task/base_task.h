@@ -18,7 +18,7 @@
 #include <exception>
 
 /*
- *basic log management, everything put under temoto_2.tasks for easier level control
+ * basic log management, everything put under temoto_2.tasks for easier level control
  */
 #define TASK_CONSOLE_PREFIX ROSCONSOLE_ROOT_LOGGER_NAME "."+::common::getTemotoNamespace()+".tasks." + this->getPackageName()
 #define TASK_DEBUG(...) ROS_LOG(::ros::console::levels::Debug, TASK_CONSOLE_PREFIX, __VA_ARGS__)
@@ -44,132 +44,132 @@ friend class TaskManager;
 
 public:
 
-    /**
-     * @brief Task default constructor.
-     */
-    BaseTask() : task_package_name_("task_unknown")
-    {}
+  /**
+   * @brief Task default constructor.
+   */
+  BaseTask() : task_package_name_("task_unknown")
+  {}
 
-    /**
-     * @brief startTaskWrapped
-     * @param task_interface
-     * @return
-     */
-    void startTaskWrapped(TaskInterface task_interface)
+  /**
+   * @brief startTaskWrapped
+   * @param task_interface
+   * @return
+   */
+  void startTaskWrapped(TaskInterface task_interface)
+  {
+    try
     {
-      try
-      {
-        startTask(task_interface);
-      }
-      catch(error::ErrorStack& error_stack)
-      {
-        SEND_ERROR(FORWARD_ERROR(error_stack));
-      }
-      catch(std::exception& e)
-      {
-        SEND_ERROR(CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Caught unhandled std exception: " + std::string(e.what())));
-      }
-      catch(...)
-      {
-        SEND_ERROR(CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Caught unhandled exception."));
-      }
+      startTask(task_interface);
     }
-
-    /**
-     * @brief startTask
-     * @param task_interface
-     * @return
-     */
-    virtual void startTask(TaskInterface task_interface) = 0;
-
-    /**
-     * @brief stopTask
-     * @return
-     */
-    bool stopTask()
+    catch(error::ErrorStack& error_stack)
     {
-      stop_task_ = true;
-      return 0;
+      SEND_ERROR(FORWARD_ERROR(error_stack));
     }
+    catch(std::exception& e)
+    {
+      SEND_ERROR(CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Caught unhandled std exception: " + std::string(e.what())));
+    }
+    catch(...)
+    {
+      SEND_ERROR(CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Caught unhandled exception."));
+    }
+  }
 
-    /**
-     * @brief getStatus
-     * @return
-     */
-	  virtual std::string getStatus()
-	  {
-		  return "healthy";
-	  }
+  /**
+   * @brief startTask
+   * @param task_interface
+   * @return
+   */
+  virtual void startTask(TaskInterface task_interface) = 0;
 
-    /**
+  /**
+   * @brief stopTask
+   * @return
+   */
+  bool stopTask()
+  {
+    stop_task_ = true;
+    return 0;
+  }
+
+  /**
+   * @brief getStatus
+   * @return
+   */
+  virtual std::string getStatus()
+  {
+    return "healthy";
+  }
+
+  /**
    * @brief getID
    * @return
    */
-    TemotoID::ID getID() const
-    {
-      return task_id_;
-    }
+  TemotoID::ID getID() const
+  {
+    return task_id_;
+  }
 
-    /**
-     * @brief getName
-     * @return Unique name that consists of package name and task ID
-     */
-    std::string getName() const
-    {
-      std::stringstream ss;
-      ss << getPackageName() << "_" << getID();
-      return ss.str();
-    }
+  /**
+   * @brief getName
+   * @return Unique name that consists of package name and task ID
+   */
+  std::string getName() const
+  {
+    std::stringstream ss;
+    ss << getPackageName() << "_" << getID();
+    return ss.str();
+  }
 
-    const std::string& getPackageName() const
-    {
-      return task_package_name_;
-    }
+  const std::string& getPackageName() const
+  {
+    return task_package_name_;
+  }
 
 
-    /**
-     * @brief getSolution
-     * @return
-     */
-    virtual std::vector<Subject> getSolution() = 0;
+  /**
+   * @brief getSolution
+   * @return
+   */
+  virtual std::vector<Subject> getSolution() = 0;
 
-    /**
-     * @brief ~Task Implemented virtual constructor. If it would not be implemented,
-     * a magical undefined .so reference error will appear if the task is destructed
-     */
-    virtual ~BaseTask(){};
+  /**
+   * @brief ~Task Implemented virtual constructor. If it would not be implemented,
+   * a magical undefined .so reference error will appear if the task is destructed
+   */
+  virtual ~BaseTask(){};
 
-    std::vector<TTP::Subject> input_subjects;
+  std::vector<TTP::Subject> input_subjects;
 
-    std::vector<TTP::Subject> output_subjects;
+  std::vector<TTP::Subject> output_subjects;
 
 protected:
 
-    std::string description;
-    bool stop_task_ = false;
+  std::string description;
+  bool stop_task_ = false;
 
 private:
 
-    std::string task_package_name_;
+  std::string task_package_name_;
 
-    /**
-     * @brief task_n_
-     */
-    ros::NodeHandle task_nodehandle_;
+  /**
+   * @brief task_n_
+   */
+  ros::NodeHandle task_nodehandle_;
 
-    /**
-     * @brief task_id_
-     */
-    TemotoID::ID task_id_ = TemotoID::UNASSIGNED_ID;
+  /**
+   * @brief task_id_
+   */
+  TemotoID::ID task_id_ = TemotoID::UNASSIGNED_ID;
 
-    /**
-     * @brief setID
-     * @param task_id
-     */
-    void setID( TemotoID::ID task_id )
-    {
-        task_id_ = task_id;
-    }
+  /**
+   * @brief setID
+   * @param task_id
+   */
+  void setID( TemotoID::ID task_id )
+  {
+    task_id_ = task_id;
+  }
 
 };
 }// END of TTP namespace

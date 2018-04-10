@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
 	message_generation
   rviz_plugin_manager
+  file_template_parser
   moveit_ros_planning_interface
   tf2
   tf2_ros
@@ -104,7 +105,7 @@ generate_messages(
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES yaml-cpp
+  LIBRARIES yaml-cpp ft_parser
   # LIBRARIES temoto_2
   CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs message_runtime human_msgs diagnostic_msgs
   DEPENDS 
@@ -114,8 +115,7 @@ catkin_package(
 
 include_directories(SYSTEM ${Boost_INCLUDE_DIR} ${EIGEN_INCLUDE_DIRS})
 include_directories(
-  include/
-  /tmp/usr/local/include/
+  include
   ${catkin_INCLUDE_DIRS}
   ${TinyXML_INCLUDE_DIRS}
   ${TBB_INCLUDE_DIRS}
@@ -226,6 +226,10 @@ add_executable(language_input src/tools/language_input.cpp
                               src/temoto_error/temoto_error.cpp)
 add_dependencies(language_input ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(language_input ${catkin_LIBRARIES} )
+
+add_executable(ai_package_generator src/tools/ai_package_generator.cpp )
+add_dependencies(ai_package_generator ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(ai_package_generator ${catkin_LIBRARIES} ttp ft_parser)
 
 #add_executable(tracking_pipes_tests src/tools/tracking_pipes_tests.cpp)
 #add_dependencies(tracking_pipes_tests ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
