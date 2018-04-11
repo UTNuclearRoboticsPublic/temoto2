@@ -15,11 +15,11 @@ void startInterface_$(arg interface_nr)()
 {
   $(arg subjects_in)
 
-  /* * * * * * * * * * * 
-   *                   *
-   *  YOUR CODE HERE   *
-   *                   *
-   * * * * * * * * * * */
+  /* * * * * * * * * * * * * * * 
+   *                           *
+   * ===> YOUR CODE HERE <===  *
+   *                           *
+   * * * * * * * * * * * * * * */
 
   $(arg subjects_out)
 }

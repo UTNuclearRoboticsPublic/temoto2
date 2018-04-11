@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+
+<f_template extension=".test">
+
+  <arg name="subject_type" default="x" />
+  <arg name="subject_number" default="x" />
+  <arg name="data" default="x" />
+  <body>
+
+<![CDATA[
+  TTP::Subject $(arg subject_type)_$(arg subject_number)_out("$(arg subject_type)", $(arg subject_type)_$(arg subject_number)_word_out);
+  $(arg subject_type)_$(arg subject_number)_out.markComplete();
+$(arg data)
+  output_subjects.push_back($(arg subject_type)_$(arg subject_number)_out);
+]]>
+
+  </body>
+</f_template>
+
+

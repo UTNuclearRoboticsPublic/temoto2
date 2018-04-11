@@ -1,9 +1,33 @@
 
-// Things that have to be included
+/*##############################################################
+ *
+ *  The basis of this file has been automatically generated
+ *  by the TeMoto action package generator. Modify this file
+ *  as you wish but please note:
+ *
+ *    WE HIGHLIY RECOMMEND TO REFER TO THE TeMoto ACTION
+ *    IMPLEMENTATION TUTORIAL IF YOU ARE UNFAMILIAR WITH
+ *    THE PROCESS OF CREATING CUSTOM TeMoto ACTION PACKAGES
+ *    
+ *  because there are plenty of components that should not be
+ *  modified or which do not make sence at the first glance.
+ *
+ *  See TeMoto documentation & tutorials at: 
+ *    https://utnuclearroboticspublic.github.io/temoto2
+ *
+ ##############################################################*/
+
+/* REQUIRED BY TEMOTO */
 #include "TTP/base_task/base_task.h"    // The base task
 #include <class_loader/class_loader.h>  // Class loader includes
 
-/* ACTION IMPLEMENTATION of TestAI */
+
+// ---> YOUR HEADER FILES HERE <--- //
+
+
+/* 
+ * ACTION IMPLEMENTATION of TestAI 
+ */
 class TestAI : public TTP::BaseTask
 {
 public:
@@ -11,9 +35,7 @@ public:
 /* REQUIRED BY TEMOTO */
 TestAI()
 {
-  /*
-   * Do something here if needed
-   */
+  // ---> YOUR CONSTRUCTION ROUTINES HERE <--- //
   TEMOTO_INFO("TestAI constructed");
 }
     
@@ -42,6 +64,24 @@ std::vector<TTP::Subject> getSolution()
 {
   return output_subjects;
 }
+
+~$(arg ai_class_name)()
+{
+  TEMOTO_INFO("$(arg ai_class_name) destructed");
+}
+
+//#################### END OF REQUIRED PUBLIC INTERFACE ####################//
+
+
+private:
+
+/* * * * * * * * * * * * * * * * * * 
+ *                                 *
+ * ===> YOUR CUSTOM VARIABLES <=== *
+ *       AND FUNCTIONS HERE        *
+ *                                 *
+ * * * * * * * * * * * * * * * * * */
+
     
 /*
  * Interface 0 body
@@ -65,11 +105,11 @@ void startInterface_0()
   float        where_1_data_1_out;
 
 
-  /* * * * * * * * * * * 
-   *                   *
-   *  YOUR CODE HERE   *
-   *                   *
-   * * * * * * * * * * */
+  /* * * * * * * * * * * * * * * 
+   *                           *
+   * ===> YOUR CODE HERE <===  *
+   *                           *
+   * * * * * * * * * * * * * * */
 
   
   TTP::Subject what_0_out("what", what_0_word_out);
@@ -101,25 +141,14 @@ void startInterface_1()
   float        where_1_data_1_in = boost::any_cast<float>(where_1_in.data_[1].value);
 
 
-  /* * * * * * * * * * * 
-   *                   *
-   *  YOUR CODE HERE   *
-   *                   *
-   * * * * * * * * * * */
+  /* * * * * * * * * * * * * * * 
+   *                           *
+   * ===> YOUR CODE HERE <===  *
+   *                           *
+   * * * * * * * * * * * * * * */
 
   
 }
-
-~TestAI()
-{
-  TEMOTO_INFO("TestAI destructed");
-}
-
-private:
-
-  /*
-   * Do some private stuff if needed
-   */
 
 };
 

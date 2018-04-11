@@ -6,11 +6,35 @@
   <body>
 
 <![CDATA[
-// Things that have to be included
+/*##############################################################
+ *
+ *  The basis of this file has been automatically generated
+ *  by the TeMoto action package generator. Modify this file
+ *  as you wish but please note:
+ *
+ *    WE HIGHLIY RECOMMEND TO REFER TO THE TeMoto ACTION
+ *    IMPLEMENTATION TUTORIAL IF YOU ARE UNFAMILIAR WITH
+ *    THE PROCESS OF CREATING CUSTOM TeMoto ACTION PACKAGES
+ *    
+ *  because there are plenty of components that should not be
+ *  modified or which do not make sence at the first glance.
+ *
+ *  See TeMoto documentation & tutorials at: 
+ *    https://utnuclearroboticspublic.github.io/temoto2
+ *
+ ##############################################################*/
+
+/* REQUIRED BY TEMOTO */
 #include "TTP/base_task/base_task.h"    // The base task
 #include <class_loader/class_loader.h>  // Class loader includes
 
-/* ACTION IMPLEMENTATION of $(arg ai_class_name) */
+
+// ---> YOUR HEADER FILES HERE <--- //
+
+
+/* 
+ * ACTION IMPLEMENTATION of $(arg ai_class_name) 
+ */
 class $(arg ai_class_name) : public TTP::BaseTask
 {
 public:
@@ -18,9 +42,7 @@ public:
 /* REQUIRED BY TEMOTO */
 $(arg ai_class_name)()
 {
-  /*
-   * Do something here if needed
-   */
+  // ---> YOUR CONSTRUCTION ROUTINES HERE <--- //
   TEMOTO_INFO("$(arg ai_class_name) constructed");
 }
 ]]>

@@ -6,10 +6,11 @@
   <arg name="subject_number" default="x" />
   <arg name="data_type" default="x" />
   <arg name="data_number" default="x" />
+  <arg name="data_padding" default="x" />
   
   <body>
 
-<![CDATA[  $(arg data_type) $(arg subject_type)_$(arg subject_number)_data_$(arg data_number)_in = boost::any_cast<$(arg data_type)>($(arg subject_type)_$(arg subject_number)_in.data_[$(arg data_number)].value);
+<![CDATA[  $(arg data_type)$(arg data_padding) $(arg subject_type)_$(arg subject_number)_data_$(arg data_number)_out;
 ]]>
 
   </body>

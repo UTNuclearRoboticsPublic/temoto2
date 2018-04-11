@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+
+<f_template extension=".test">
+
+  <arg name="subject_type" default="x" />
+  <arg name="subject_number" default="x" />
+  
+  <body>
+
+<![CDATA[
+  std::string  $(arg subject_type)_$(arg subject_number)_word_out;
+]]>
+
+  </body>
+</f_template>
+
+

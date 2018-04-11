@@ -6,17 +6,6 @@
   <body>
 
 <![CDATA[
-~$(arg ai_class_name)()
-{
-  TEMOTO_INFO("$(arg ai_class_name) destructed");
-}
-
-private:
-
-  /*
-   * Do some private stuff if needed
-   */
-
 };
 
 /* REQUIRED BY CLASS LOADER */

@@ -8,7 +8,7 @@
 
 <![CDATA[
   TTP::Subject $(arg type)_$(arg number)_in = TTP::getSubjectByType("$(arg type)", input_subjects);
-  std::string $(arg type)_$(arg number)_word_in = $(arg type)_$(arg number)_in.words_[0];
+  std::string  $(arg type)_$(arg number)_word_in = $(arg type)_$(arg number)_in.words_[0];
 ]]>
 
   </body>
