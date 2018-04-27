@@ -1,5 +1,5 @@
 
-/*##############################################################
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
  *
  *  The basis of this file has been automatically generated
  *  by the TeMoto action package generator. Modify this file
@@ -15,7 +15,7 @@
  *  See TeMoto documentation & tutorials at: 
  *    https://utnuclearroboticspublic.github.io/temoto2
  *
- ##############################################################*/
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 /* REQUIRED BY TEMOTO */
 #include "TTP/base_task/base_task.h"    // The base task
@@ -70,7 +70,7 @@ std::vector<TTP::Subject> getSolution()
   TEMOTO_INFO("$(arg ai_class_name) destructed");
 }
 
-//#################### END OF REQUIRED PUBLIC INTERFACE ####################//
+/********************* END OF REQUIRED PUBLIC INTERFACE *********************/
 
 
 private:
@@ -150,7 +150,7 @@ void startInterface_1()
   
 }
 
-};
+}; // TestAI class
 
 /* REQUIRED BY CLASS LOADER */
 CLASS_LOADER_REGISTER_CLASS(TestAI, TTP::BaseTask);

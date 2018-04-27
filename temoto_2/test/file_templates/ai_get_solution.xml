@@ -17,7 +17,7 @@ std::vector<TTP::Subject> getSolution()
   TEMOTO_INFO("$(arg ai_class_name) destructed");
 }
 
-//#################### END OF REQUIRED PUBLIC INTERFACE ####################//
+/********************* END OF REQUIRED PUBLIC INTERFACE *********************/
 
 
 private:

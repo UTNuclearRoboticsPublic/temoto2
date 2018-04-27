@@ -25,9 +25,6 @@ public:
   // startTask with arguments
   void startTask(TTP::TaskInterface task_interface)
   {
-    // TODO: This is a hack for Veiko
-    task_alias = task_interface.alias_;
-
     // < AUTO-GENERATED, DO NOT MODIFY >
     input_subjects = task_interface.input_subjects_;
     switch (task_interface.id_)
@@ -38,12 +35,6 @@ public:
         break;
     }
     // </ AUTO-GENERATED, DO NOT MODIFY >
-  }
-
-  std::string getStatus()
-  {
-    std::string str = "healthy";
-    return str;
   }
 
   std::vector<TTP::Subject> getSolution()
@@ -222,7 +213,6 @@ private:
 
   std::string camera_topic, depth_camera_topic, lidar_topic;
 
-  std::string task_alias;
 };
 
 // Dont forget that part, otherwise this class would not be loadable

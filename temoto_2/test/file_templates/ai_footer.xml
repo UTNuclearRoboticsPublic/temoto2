@@ -6,7 +6,7 @@
   <body>
 
 <![CDATA[
-};
+}; // $(arg ai_class_name) class
 
 /* REQUIRED BY CLASS LOADER */
 CLASS_LOADER_REGISTER_CLASS($(arg ai_class_name), TTP::BaseTask);
