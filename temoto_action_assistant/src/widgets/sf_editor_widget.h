@@ -47,6 +47,7 @@
 #include <QStackedLayout>
 #include <QString>
 #include <QComboBox>
+#include <QTreeWidget>
 
 // SA
 #ifndef Q_MOC_RUN
@@ -54,11 +55,27 @@
 #endif
 
 #include "header_widget.h"
-#include "double_list_widget.h"
 #include "setup_screen_widget.h"  // a base class for screens in the setup assistant
+#include "boost/any.hpp"
+#include "temoto_action_assistant/semantic_frame.h"
+
 
 namespace temoto_action_assistant
 {
+
+//struct interface_di
+
+
+// Custom Type
+enum class ElementType
+{
+  INTERFACE,
+  INPUT,
+  OUTPUT,
+  SUBJECT,
+  DATA
+};
+
 class SFEditorWidget : public SetupScreenWidget
 {
   Q_OBJECT
@@ -82,6 +99,12 @@ private Q_SLOTS:
   // ******************************************************************************************
   void selectionUpdated();
 
+  /// Edit whatever element is selected in the tree view
+  void editSelected();
+
+  /// Create a new, empty group
+  void addInterface();
+
 
 private:
   // ******************************************************************************************
@@ -90,9 +113,54 @@ private:
 
   /// Contains all the configuration data for the setup assistant
   temoto_action_assistant::MoveItConfigDataPtr config_data_;
+  temoto_action_assistant::ActionDescriptor action_descriptor_;
+
+  /// Remember whethere we're editing a group or adding a new one
+  bool adding_new_interface_;
+
+  /// Main table for holding groups
+  QTreeWidget* interfaces_tree_;
+  QWidget* interfaces_tree_widget_;
+  QPushButton* btn_edit_;
+  QPushButton* btn_delete_;
+
+  // ******************************************************************************************
+  // Private Functions
+  // ******************************************************************************************
+
+  /// Builds the main screen list widget
+  QWidget* createContentsWidget();
+
+  /// Populates the interfaces tree
+  void populateInterfacesTree();
+
+//  void loadGroupScreen(srdf::Model::Group* this_group);
+
 
 };
 
+// ******************************************************************************************
+// ******************************************************************************************
+// Metatype Class For Holding Points to Group Parts
+// ******************************************************************************************
+// ******************************************************************************************
+
+
 }  // namespace
 
+class InterfaceTreeData
+{
+public:
+  //  explicit PlanGroupType();
+  InterfaceTreeData()
+  {
+  }
+  InterfaceTreeData(const temoto_action_assistant::ElementType type, boost::any payload);
+  virtual ~InterfaceTreeData(){}
+
+  temoto_action_assistant::ElementType type_;
+  boost::any payload_;
+};
+
+Q_DECLARE_METATYPE(InterfaceTreeData);
 #endif
