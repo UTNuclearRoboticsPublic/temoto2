@@ -359,6 +359,8 @@ void SFEditorWidget::populateInterfacesTree()
                                       boost::any_cast<DataInstance*>(&data_instance_sf));
         data_instance_item->setData(0, Qt::UserRole, QVariant::fromValue(data_instance_tdata));
         subject_item->addChild(data_instance_item);
+        
+        data_instance_item
       }
 
     }
