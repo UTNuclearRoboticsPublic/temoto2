@@ -91,6 +91,9 @@ private Q_SLOTS:
   /// Create a new, empty group
   void addInterface();
 
+  /// Remove the active tree element
+  void removeActiveTreeElement();
+
 private:
   // ******************************************************************************************
   // Variables
@@ -111,7 +114,7 @@ private:
   /// Main table for holding groups
   QTreeWidget* interfaces_tree_;
   QWidget* interfaces_tree_widget_;
-  QPushButton* btn_edit_;
+  QPushButton* btn_add_;
   QPushButton* btn_delete_;
 
   QStackedLayout* edit_screen_content_;
@@ -128,6 +131,9 @@ private:
 
   /// Populates the interfaces tree
   void populateInterfacesTree();
+
+  /// Removes the data that interfaces tree element points to
+  void removeData(InterfaceTreeData &parent, InterfaceTreeData &child);
 
 //  void loadGroupScreen(srdf::Model::Group* this_group);
 

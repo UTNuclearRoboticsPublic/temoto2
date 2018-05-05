@@ -42,7 +42,6 @@ public:
   QLineEdit* subject_word_field_;
   QComboBox* subject_type_field_;
   QPushButton* btn_add_data_;
-  QPushButton* btn_remove_subject_;
 
 private Q_SLOTS:
 

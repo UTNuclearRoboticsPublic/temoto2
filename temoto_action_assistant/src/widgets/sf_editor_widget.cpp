@@ -41,6 +41,8 @@
 #include <QMessageBox>
 #include <QTreeWidgetItem>
 
+#include <algorithm>
+
 namespace temoto_action_assistant
 {
 // ******************************************************************************************
@@ -54,7 +56,7 @@ SFEditorWidget::SFEditorWidget(QWidget* parent, temoto_action_assistant::MoveItC
   QHBoxLayout* layout_e_t = new QHBoxLayout();
 
   /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   *                            Create content for the top layer
+   *                                Create content for the top layer
    * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
   // Add header
@@ -62,10 +64,16 @@ SFEditorWidget::SFEditorWidget(QWidget* parent, temoto_action_assistant::MoveItC
   layout->addWidget(header);
 
   /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   *                           Create content for the edit screen
+   *                               Create content for the edit screen
    * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+  QVBoxLayout* edit_screen_top_layout = new QVBoxLayout();
   edit_screen_content_ = new QStackedLayout();
-  layout_e_t->addLayout(edit_screen_content_);
+  layout_e_t->addLayout(edit_screen_top_layout);
+  edit_screen_top_layout->addLayout(edit_screen_content_);
+
+  // Insert a blank page via dummy widget
+  QWidget* dummy_widget = new QWidget();
+  edit_screen_content_->addWidget(dummy_widget);
 
   /*
    * Subject editor page
@@ -84,6 +92,16 @@ SFEditorWidget::SFEditorWidget(QWidget* parent, temoto_action_assistant::MoveItC
   /* DO STUFF */
 
   edit_screen_content_->addWidget(subjects_editor_widget);
+
+  /*
+   * Create remove subject button
+   */
+//  btn_remove_selected_ = new QPushButton("&Remove \nSelected", this);
+//  btn_remove_selected_->setMinimumWidth(120);
+//  btn_remove_selected_->setMinimumHeight(40);
+//  edit_screen_top_layout->addWidget(btn_remove_selected_);
+
+//  connect(btn_remove_selected_, SIGNAL(clicked()), this, SLOT(removeActiveTreeElement()));
 
   /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    *                           Create content for the interfaces tree
@@ -142,8 +160,8 @@ QWidget* SFEditorWidget::createContentsWidget()
 
   interfaces_tree_ = new QTreeWidget(this);
   interfaces_tree_->setHeaderLabel("Interfaces");
-  connect(interfaces_tree_, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), this, SLOT(editSelected()));
-  //connect(interfaces_tree_, SIGNAL(itemClicked(QTreeWidgetItem*, int)), this, SLOT(previewSelected()));
+  connect(interfaces_tree_, SIGNAL(itemClicked(QTreeWidgetItem*, int)), this, SLOT(editSelected()));
+  //connect(interfaces_tree_, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), this, SLOT(previewSelected()));
   layout->addWidget(interfaces_tree_);
 
   // Bottom Controls -------------------------------------------------------------
@@ -165,26 +183,17 @@ QWidget* SFEditorWidget::createContentsWidget()
   btn_delete_ = new QPushButton("&Delete Selected", this);
   btn_delete_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   btn_delete_->setMaximumWidth(300);
-  connect(btn_delete_, SIGNAL(clicked()), this, SLOT(deleteGroup()));
+  connect(btn_delete_, SIGNAL(clicked()), this, SLOT(removeActiveTreeElement()));
   controls_layout->addWidget(btn_delete_);
   controls_layout->setAlignment(btn_delete_, Qt::AlignRight);
 
-  //  Edit Selected Button
-  btn_edit_ = new QPushButton("&Edit Selected", this);
-  btn_edit_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-  btn_edit_->setMaximumWidth(300);
-  btn_edit_->hide();  // show once we know if there are existing groups
-  connect(btn_edit_, SIGNAL(clicked()), this, SLOT(editSelected()));
-  controls_layout->addWidget(btn_edit_);
-  controls_layout->setAlignment(btn_edit_, Qt::AlignRight);
-
   // Add Group Button
-  QPushButton* btn_add = new QPushButton("&Add Interface", this);
-  btn_add->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-  btn_add->setMaximumWidth(300);
-  connect(btn_add, SIGNAL(clicked()), this, SLOT(addInterface()));
-  controls_layout->addWidget(btn_add);
-  controls_layout->setAlignment(btn_add, Qt::AlignRight);
+  btn_add_ = new QPushButton("&Add to \nSelected", this);
+  btn_add_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  btn_add_->setMaximumWidth(300);
+  connect(btn_add_, SIGNAL(clicked()), this, SLOT(addInterface()));
+  controls_layout->addWidget(btn_add_);
+  controls_layout->setAlignment(btn_add_, Qt::AlignRight);
 
   // Add Controls to layout
   layout->addLayout(controls_layout);
@@ -239,14 +248,14 @@ void SFEditorWidget::editSelected()
     case (InterfaceTreeData::INPUT):
     {
       std::cout << "input" << std::endl;
-      edit_screen_content_->setCurrentIndex(1);
+      edit_screen_content_->setCurrentIndex(2);
     }
     break;
 
     case (InterfaceTreeData::OUTPUT):
     {
       std::cout << "output" << std::endl;
-      edit_screen_content_->setCurrentIndex(1);
+      edit_screen_content_->setCurrentIndex(2);
     }
     break;
 
@@ -256,7 +265,7 @@ void SFEditorWidget::editSelected()
       sew_->focusGiven(active_tree_item_);
 
       // Show subject editor
-      edit_screen_content_->setCurrentIndex(0);
+      edit_screen_content_->setCurrentIndex(1);
     }
     break;
 
@@ -360,9 +369,118 @@ void SFEditorWidget::populateInterfacesTree()
         data_instance_item->setData(0, Qt::UserRole, QVariant::fromValue(data_instance_tdata));
         subject_item->addChild(data_instance_item);
       }
+    }
+  }
+}
+
+// ******************************************************************************************
+//
+// ******************************************************************************************
+void SFEditorWidget::removeActiveTreeElement()
+{
+  // Get the active tree item
+  active_tree_item_ = interfaces_tree_->currentItem();
+  active_tree_element_ = active_tree_item_->data(0, Qt::UserRole).value<InterfaceTreeData>();
+
+  // Get the parent of the item
+  QTreeWidgetItem* parent_item = active_tree_item_->parent();
+  InterfaceTreeData parent_element = parent_item->data(0, Qt::UserRole).value<InterfaceTreeData>();
+
+  removeData(parent_element, active_tree_element_);
+
+  // Refresh the tree
+  interfaces_tree_->clear();
+  edit_screen_content_->setCurrentIndex(0);
+  populateInterfacesTree();
+  interfaces_tree_->expandAll();
+}
+
+// ******************************************************************************************
+//
+// ******************************************************************************************
+void SFEditorWidget::removeData(InterfaceTreeData& parent, InterfaceTreeData& child)
+{
+  switch(child.type_)
+  {
+    case (InterfaceTreeData::INTERFACE):
+    {
 
     }
+    break;
 
+    /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+     * Remove a subject.
+     * The procedure is the same for the input and output
+     * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+    case (InterfaceTreeData::SUBJECT):
+    {
+      Subjects* subjects = boost::any_cast<Subjects*>(parent.payload_);
+      Subject* subject = boost::any_cast<Subject*>(child.payload_);
+
+      // Find the index where the subject resides inside the subjects vector
+      uint32_t index = 0;
+      for (auto& subject_tmp : *subjects)
+      {
+        if (&subject_tmp == subject)
+        {
+          break;
+        }
+        index++;
+      }
+
+      // Check if the element was found
+      if (index >= subjects->size())
+      {
+        // The element was not found
+        // TODO: throw error
+        std::cout << "element not found" << std::endl;
+        return;
+      }
+
+      // Remove the element
+      (*subjects).erase(subjects->begin() + index);
+    }
+    break;
+
+    /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+     * Remove data.
+     * The data vecctor is contained by the parent subject
+     * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+    case (InterfaceTreeData::DATA):
+    {
+      Subject* subject = boost::any_cast<Subject*>(parent.payload_);
+      std::vector<DataInstance>* data = &(subject->data_);
+      DataInstance* data_instance = boost::any_cast<DataInstance*>(child.payload_);
+
+      // Find the index where the subject resides inside the subjects vector
+      uint32_t index = 0;
+      for (auto& data_tmp : *data)
+      {
+        if (&data_tmp == data_instance)
+        {
+          break;
+        }
+        index++;
+      }
+
+      // Check if the element was found
+      if (index >= data->size())
+      {
+        // The element was not found
+        // TODO: throw error
+        std::cout << "element not found" << std::endl;
+        return;
+      }
+
+      // Remove the element
+      (*data).erase(data->begin() + index);
+    }
+    break;
+
+    default:
+    {
+      QMessageBox::critical(this, "Error Loading", "An internal error has occured while loading.");
+    }
   }
 }
 

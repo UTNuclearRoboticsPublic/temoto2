@@ -51,20 +51,10 @@ SubjectEditWidget::SubjectEditWidget(QWidget *parent)
   btn_add_data_->setMinimumWidth(120);
   btn_add_data_->setMinimumHeight(30);
   buttons_layout->addWidget(btn_add_data_);
-  buttons_layout->setAlignment(btn_add_data_, Qt::AlignCenter-);
+  buttons_layout->setAlignment(btn_add_data_, Qt::AlignTop);
   subject_editor_layout->addLayout(buttons_layout);
 
   //connect(btn_add_data_, SIGNAL(clicked()), this, SLOT(loadFilesClick()));
-
-  /*
-   * Create remove subject button
-   */
-  btn_remove_subject_ = new QPushButton("&Remove \nsubject", this);
-  btn_remove_subject_->setMinimumWidth(120);
-  btn_add_data_->setMinimumHeight(40);
-  subject_editor_layout->addWidget(btn_remove_subject_);
-
-  //connect(btn_remove_subject_, SIGNAL(clicked()), this, SLOT(removeSubject()));
 
   this->setLayout(subject_editor_layout);
 }
@@ -120,5 +110,6 @@ void SubjectEditWidget::focusGiven(QTreeWidgetItem* tree_item_ptr)
 
   subject_type_field_->setCurrentIndex(index);
 }
+
 
 } // temoto_action_assistant namespace
