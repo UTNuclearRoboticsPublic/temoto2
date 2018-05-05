@@ -135,10 +135,13 @@ TTP::Subject branch_finder::parseToNumericSubject(parser::parse_tree& tree)
     {
       float num_float;
 
+      // check if the number is in number format
       try
       {
         num_float = std::stof(*leaf->word());
       }
+
+      // check if the number is in letter format
       catch(std::invalid_argument e)
       {
         num_float = (*num_str_map_)[*leaf->word()];
