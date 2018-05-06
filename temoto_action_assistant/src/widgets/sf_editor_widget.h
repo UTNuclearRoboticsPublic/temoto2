@@ -57,6 +57,7 @@
 #include "header_widget.h"
 #include "setup_screen_widget.h"  // a base class for screens in the setup assistant
 #include "subject_edit_widget.h"
+#include "data_instance_edit_widget.h"
 #include "boost/any.hpp"
 #include "temoto_action_assistant/semantic_frame.h"
 #include "interface_tree_data.h"
@@ -88,19 +89,23 @@ private Q_SLOTS:
   /// Edit whatever element is selected in the tree view
   void editSelected();
 
-  /// Create a new, empty group
-  void addInterface();
-
   /// Remove the active tree element
   void removeActiveTreeElement();
+
+  /// Add a child element to the active tree element
+  void addToActiveTreeElement();
 
 private:
   // ******************************************************************************************
   // Variables
   // ******************************************************************************************
 
+  /// Fonts
+  const QFont top_level_font_;
+  const QFont type_font_;
+
   /// Contains all the configuration data for the setup assistant
-  temoto_action_assistant::MoveItConfigDataPtr config_data_;
+  temoto_action_assistant::MoveItConfigDataPtr config_data_; // TODO: remove
   temoto_action_assistant::ActionDescriptor action_descriptor_;
 
   /// Variables for maintaining editing information
@@ -110,6 +115,7 @@ private:
 
   /// Widgets for editing the contents of the interfaces tree
   SubjectEditWidget* sew_;
+  DataInstanceEditWidget* diew_;
 
   /// Main table for holding groups
   QTreeWidget* interfaces_tree_;
@@ -132,8 +138,14 @@ private:
   /// Populates the interfaces tree
   void populateInterfacesTree();
 
+  /// Populate subjects
+  void populateSubjects(QTreeWidgetItem* parent_item, Subjects& subjects);
+
   /// Removes the data that interfaces tree element points to
   void removeData(InterfaceTreeData &parent, InterfaceTreeData &child);
+
+  /// Builds a new tree based on updated action descriptor
+  void refreshTree();
 
 //  void loadGroupScreen(srdf::Model::Group* this_group);
 

@@ -34,6 +34,12 @@ struct DataInstance
                                                            {DataInstance::NUMBER, "number"},
                                                            {DataInstance::POINTER, "pointer"}};
 
+  /// Map that translates Strings to Types
+  std::map<std::string, DataInstance::Type> str_to_type_ = {{"string", DataInstance::STRING},
+                                                            {"topic", DataInstance::TOPIC},
+                                                            {"number", DataInstance::NUMBER},
+                                                            {"pointer", DataInstance::POINTER}};
+
   Type type_;
 
   /**
@@ -43,6 +49,12 @@ struct DataInstance
   std::string getTypeStr()
   {
     return type_to_str[type_];
+  }
+
+  DataInstance::Type setTypeByStr(std::string type_str)
+  {
+    type_ = str_to_type_[type_str];
+    return type_;
   }
 };
 
@@ -68,7 +80,7 @@ struct Subject
 
   /// Map that translates Strings to Types
   std::map<std::string, Subject::Type> str_to_type_ = {{"what", Subject::WHAT},
-                                                       {"where", Subject::WHERE,},
+                                                       {"where", Subject::WHERE},
                                                        {"numeric", Subject::NUMERIC}};
 
   /// Type of the subject

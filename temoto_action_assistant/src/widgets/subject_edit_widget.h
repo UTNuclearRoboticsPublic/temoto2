@@ -41,7 +41,6 @@ public:
   QLabel* title_;  // specify the title from the parent widget
   QLineEdit* subject_word_field_;
   QComboBox* subject_type_field_;
-  QPushButton* btn_add_data_;
 
 private Q_SLOTS:
 

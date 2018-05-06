@@ -42,20 +42,6 @@ SubjectEditWidget::SubjectEditWidget(QWidget *parent)
 
   connect(subject_word_field_, SIGNAL(returnPressed()), this, SLOT(modifyWord()));
 
-  /*
-   * Create add data button
-   */
-  QHBoxLayout* buttons_layout = new QHBoxLayout();
-
-  btn_add_data_ = new QPushButton("&Add Data", this);
-  btn_add_data_->setMinimumWidth(120);
-  btn_add_data_->setMinimumHeight(30);
-  buttons_layout->addWidget(btn_add_data_);
-  buttons_layout->setAlignment(btn_add_data_, Qt::AlignTop);
-  subject_editor_layout->addLayout(buttons_layout);
-
-  //connect(btn_add_data_, SIGNAL(clicked()), this, SLOT(loadFilesClick()));
-
   this->setLayout(subject_editor_layout);
 }
 

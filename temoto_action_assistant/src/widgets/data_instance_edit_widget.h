@@ -39,20 +39,13 @@ public:
   // ******************************************************************************************
 
   QLabel* title_;  // specify the title from the parent widget
-  QLineEdit* subject_word_field_;
-  QComboBox* subject_type_field_;
-  QPushButton* btn_delete_;      // this button is hidden for new groups
-  QPushButton* btn_save_;        // this button is hidden for new groups
-  QWidget* new_buttons_widget_;  // for showing/hiding the new group buttons
+  QComboBox* data_type_field_;
 
 private Q_SLOTS:
 
   // ******************************************************************************************
   // Slot Event Functions
   // ******************************************************************************************
-
-  /// Modifies the word variable
-  void modifyWord();
 
   /// Modify the type variable
   void modifyType(const QString &text);
