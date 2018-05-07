@@ -1,5 +1,8 @@
 #include "subject_edit_widget.h"
-#include <iostream>
+
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QFormLayout>
 
 namespace temoto_action_assistant
 {
@@ -10,6 +13,8 @@ namespace temoto_action_assistant
 SubjectEditWidget::SubjectEditWidget(QWidget *parent)
 : QWidget(parent)
 {
+  // TODO: add a description element to the widget
+
   QVBoxLayout* subject_editor_layout = new QVBoxLayout();
   // TODO: align it to the top
 

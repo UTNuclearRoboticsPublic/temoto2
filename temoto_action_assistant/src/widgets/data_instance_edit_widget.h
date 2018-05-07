@@ -3,12 +3,7 @@
 
 #include <QWidget>
 #include <QLabel>
-#include <QLineEdit>
 #include <QComboBox>
-#include <QPushButton>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QFormLayout>
 #include <QTreeWidget>
 
 #ifndef Q_MOC_RUN

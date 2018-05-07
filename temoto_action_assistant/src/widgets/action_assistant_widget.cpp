@@ -58,13 +58,37 @@ namespace temoto_action_assistant
 ActionAssistantWidget::ActionAssistantWidget(QWidget* parent, boost::program_options::variables_map args)
   : QWidget(parent)
 {
-
   // Create object to hold all moveit configuration data
-  config_data_.reset(new MoveItConfigData());
 
-  // Set debug mode flag if necessary
-  if (args.count("debug"))
-    config_data_->debug_ = true;
+  /* ACTION DESCRIPTOR TEST */
+
+  // Create an action descriptor
+  Subject subject_0, subject_1;
+  subject_0.type_ = Subject::WHAT;
+  subject_1.type_ = Subject::WHERE;
+  subject_0.words_.push_back("dog");
+  subject_1.words_.push_back("table");
+
+  DataInstance data_0_sub_0;
+  data_0_sub_0.type_ = DataInstance::TOPIC;
+  subject_0.data_.push_back(data_0_sub_0);
+
+  DataInstance data_1_sub_0;
+  data_1_sub_0.type_ = DataInstance::POINTER;
+  subject_0.data_.push_back(data_1_sub_0);
+
+  Interface interface_0;
+  interface_0.input_subjects_.push_back(subject_0);
+  interface_0.input_subjects_.push_back(subject_1);
+
+  ActionDescriptor new_action_descriptor;
+  new_action_descriptor.interfaces_.push_back(interface_0);
+  new_action_descriptor.action_pkg_path_ = ros::package::getPath("temoto_action_assistant");
+
+  action_descriptor_ = std::make_shared<ActionDescriptor>(new_action_descriptor);
+
+  /* ACTION DESCRIPTOR TEST end */
+
 
   // Basic widget container -----------------------------------------
   QHBoxLayout* layout = new QHBoxLayout();
@@ -82,7 +106,7 @@ ActionAssistantWidget::ActionAssistantWidget(QWidget* parent, boost::program_opt
   // Screens --------------------------------------------------------
 
   // Start Screen
-  ssw_ = new StartScreenWidget(this, config_data_);
+  ssw_ = new StartScreenWidget(this, action_descriptor_);
   ssw_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
   connect(ssw_, SIGNAL(readyToProgress()), this, SLOT(progressPastStartScreen()));
   main_content_->addWidget(ssw_);
@@ -108,6 +132,8 @@ ActionAssistantWidget::ActionAssistantWidget(QWidget* parent, boost::program_opt
     pwdir.append(pwd);
     ssw_->stack_path_->setPath(pwdir);
   }
+
+  // Packgage generation screen
 
   // Add Navigation Buttons (but do not load widgets yet except start screen)
   nav_name_list_ << "Start";
@@ -195,13 +221,13 @@ void ActionAssistantWidget::progressPastStartScreen()
   // Load all widgets ------------------------------------------------
 
   // Semantic Frame Editor
-  sfew_ = new SFEditorWidget(this, config_data_);
+  sfew_ = new SFEditorWidget(this, action_descriptor_);
   main_content_->addWidget(sfew_);
   connect(sfew_, SIGNAL(isModal(bool)), this, SLOT(setModalMode(bool)));
 
-//  // Configuration Files
-//  cfw_ = new ConfigurationFilesWidget(this, config_data_);
-//  main_content_->addWidget(cfw_);
+  // Package generator widget
+  gpw_ = new GeneratePackageWidget(this, action_descriptor_);
+  main_content_->addWidget(gpw_);
 
   // Enable all nav buttons -------------------------------------------
   for (int i = 0; i < nav_name_list_.count(); ++i)
@@ -211,12 +237,6 @@ void ActionAssistantWidget::progressPastStartScreen()
 
   // Enable navigation
   navs_view_->setDisabled(false);
-
-  // Move to next screen in debug mode
-  if (config_data_->debug_)
-  {
-    moveToScreen(3);
-  }
 }
 
 // ******************************************************************************************
@@ -232,16 +252,12 @@ void ActionAssistantWidget::updateTimer()
 // ******************************************************************************************
 void ActionAssistantWidget::closeEvent(QCloseEvent* event)
 {
-  // Only prompt to close if not in debug mode
-  if (!config_data_->debug_)
+  if (QMessageBox::question(this, "Exit Setup Assistant",
+                            QString("Are you sure you want to exit the TeMoto Action Assistant?"),
+                            QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Cancel)
   {
-    if (QMessageBox::question(this, "Exit Setup Assistant",
-                              QString("Are you sure you want to exit the TeMoto Action Assistant?"),
-                              QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Cancel)
-    {
-      event->ignore();
-      return;
-    }
+    event->ignore();
+    return;
   }
 
   // Shutdown app

@@ -32,36 +32,29 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#ifndef TEMOTO_ACTION_ASSISTANT_SEMANTIC_FRAME_EDIT_WIDGET
-#define TEMOTO_ACTION_ASSISTANT_SEMANTIC_FRAME_EDIT_WIDGET
 
-// Qt
+#ifndef TEMOTO_ACTION_ASSISTANT_GENERATE_PACKAGE_WIDGET
+#define TEMOTO_ACTION_ASSISTANT_GENERATE_PACKAGE_WIDGET
+
 #include <QWidget>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QLabel>
+#include <QLineEdit>
 #include <QPushButton>
-#include <QStackedLayout>
-#include <QString>
-#include <QTreeWidget>
+#include <QLabel>
+#include <QProgressBar>
 
-// SA
 #ifndef Q_MOC_RUN
-#include <moveit/setup_assistant/tools/moveit_config_data.h>
 #endif
 
-#include "header_widget.h"
 #include "setup_screen_widget.h"  // a base class for screens in the setup assistant
-#include "subject_edit_widget.h"
-#include "data_instance_edit_widget.h"
-#include "boost/any.hpp"
 #include "temoto_action_assistant/semantic_frame.h"
-#include "interface_tree_data.h"
 
 namespace temoto_action_assistant
 {
 
-class SFEditorWidget : public SetupScreenWidget
+/**
+ * \brief Start screen user interface for MoveIt Configuration Assistant
+ */
+class GeneratePackageWidget : public SetupScreenWidget
 {
   Q_OBJECT
 
@@ -70,83 +63,42 @@ public:
   // Public Functions
   // ******************************************************************************************
 
-  SFEditorWidget(QWidget* parent, temoto_action_assistant::ActionDescriptorPtr action_descriptor);
+  /**
+   * \brief Start screen user interface for MoveIt Configuration Assistant
+   */
+  GeneratePackageWidget(QWidget* parent, ActionDescriptorPtr action_descriptor);
 
-  /// Recieved when this widget is chosen from the navigation menu
-  virtual void focusGiven();
+  // ******************************************************************************************
+  // Qt Components
+  // ******************************************************************************************
+
+  QPushButton* btn_load_;
+  QLabel* next_label_;
+  QProgressBar* progress_bar_;
+
+  /// Contains the data related to the action
+  temoto_action_assistant::ActionDescriptorPtr action_descriptor_;
 
 private Q_SLOTS:
 
   // ******************************************************************************************
   // Slot Event Functions
   // ******************************************************************************************
-  void selectionUpdated();
 
-  /// Edit whatever element is selected in the tree view
-  void editSelected();
-
-  /// Remove the active tree element
-  void removeActiveTreeElement();
-
-  /// Add a child element to the active tree element
-  void addToActiveTreeElement();
-
-  /// Add a new interface
-  void addInterface();
 
 private:
   // ******************************************************************************************
   // Variables
   // ******************************************************************************************
 
-  /// Fonts
-  const QFont top_level_font_;
-  const QFont type_font_;
-
-  /// Contains all the configuration data for the semantic frame
-  temoto_action_assistant::ActionDescriptorPtr action_descriptor_;
-
-  /// Variables for maintaining editing information
-  InterfaceTreeData active_tree_element_;
-  QTreeWidgetItem* active_tree_item_;
-
-  /// Widgets for editing the contents of the interfaces tree
-  SubjectEditWidget* sew_;
-  DataInstanceEditWidget* diew_;
-
-  /// Main table for holding groups
-  QTreeWidget* interfaces_tree_;
-  QWidget* interfaces_tree_widget_;
-  QPushButton* btn_add_;
-  QPushButton* btn_delete_;
-  QPushButton* btn_add_interface_;
-
-  QStackedLayout* edit_screen_content_;
-  QLineEdit* lexical_unit_field_;
-
-
 
   // ******************************************************************************************
   // Private Functions
   // ******************************************************************************************
 
-  /// Builds the main screen list widget
-  QWidget* createContentsWidget();
-
-  /// Populates the interfaces tree
-  void populateInterfacesTree();
-
-  /// Populate subjects
-  void populateSubjects(QTreeWidgetItem* parent_item, Subjects& subjects);
-
-  /// Removes the data that interfaces tree element points to
-  void removeData(InterfaceTreeData &parent, InterfaceTreeData &child);
-
-  /// Builds a new tree based on updated action descriptor
-  void refreshTree();
-
 };
 
-}  // namespace
+} // temoto action assistant namespace
+
 
 #endif

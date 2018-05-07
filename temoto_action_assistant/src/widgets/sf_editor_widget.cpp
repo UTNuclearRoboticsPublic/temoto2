@@ -39,22 +39,21 @@
 // Qt
 #include <QFormLayout>
 #include <QMessageBox>
-#include <QTreeWidgetItem>
-
-#include <algorithm>
 
 namespace temoto_action_assistant
 {
 // ******************************************************************************************
 // Constructor
 // ******************************************************************************************
-SFEditorWidget::SFEditorWidget(QWidget* parent, temoto_action_assistant::MoveItConfigDataPtr config_data)
+SFEditorWidget::SFEditorWidget(QWidget* parent, ActionDescriptorPtr action_descriptor)
   : SetupScreenWidget(parent),
-    config_data_(config_data),
+    action_descriptor_(action_descriptor),
     top_level_font_(QFont(QFont().defaultFamily(), 11, QFont::Bold)),
     type_font_(QFont(QFont().defaultFamily(), 11, QFont::Normal, QFont::StyleItalic))
 
 {
+  // TODO: add a description element to the widget
+
   // Basic widget container
   QVBoxLayout* layout = new QVBoxLayout();
   QHBoxLayout* layout_e_t = new QHBoxLayout();
@@ -117,31 +116,6 @@ SFEditorWidget::SFEditorWidget(QWidget* parent, temoto_action_assistant::MoveItC
   layout->setAlignment(Qt::AlignTop);
   this->setLayout(layout);
 
-  /* TEST */
-
-  // Create an action descriptor
-  Subject subject_0, subject_1;
-  subject_0.type_ = Subject::WHAT;
-  subject_1.type_ = Subject::WHERE;
-  subject_0.words_.push_back("dog");
-  subject_1.words_.push_back("table");
-
-  DataInstance data_0_sub_0;
-  data_0_sub_0.type_ = DataInstance::TOPIC;
-  subject_0.data_.push_back(data_0_sub_0);
-
-  DataInstance data_1_sub_0;
-  data_1_sub_0.type_ = DataInstance::POINTER;
-  subject_0.data_.push_back(data_1_sub_0);
-
-  Interface interface_0;
-  interface_0.id_ = 0;
-  interface_0.input_subjects_.push_back(subject_0);
-  interface_0.input_subjects_.push_back(subject_1);
-
-  action_descriptor_.interfaces_.push_back(interface_0);
-  // Action descriptor end
-
   populateInterfacesTree();
   interfaces_tree_->expandAll();
 }
@@ -156,6 +130,29 @@ QWidget* SFEditorWidget::createContentsWidget()
 
   // Basic widget container
   QVBoxLayout* layout = new QVBoxLayout(this);
+
+  // Layout for "add/remove selected" buttons
+  QHBoxLayout* add_delete_btn_layout = new QHBoxLayout(this);
+
+  // Add to Selected Button
+  btn_add_ = new QPushButton("&Add to Selected", this);
+  btn_add_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  //btn_add_->setMaximumWidth(400);
+  btn_add_->setDisabled(true);
+  connect(btn_add_, SIGNAL(clicked()), this, SLOT(addToActiveTreeElement()));
+  add_delete_btn_layout->addWidget(btn_add_);
+  add_delete_btn_layout->setAlignment(btn_add_, Qt::AlignCenter);
+
+  // Delete Selected Button
+  btn_delete_ = new QPushButton("&Delete Selected", this);
+  btn_delete_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  //btn_delete_->setMaximumWidth(400);
+  btn_delete_->setDisabled(true);
+  connect(btn_delete_, SIGNAL(clicked()), this, SLOT(removeActiveTreeElement()));
+  add_delete_btn_layout->addWidget(btn_delete_);
+  add_delete_btn_layout->setAlignment(btn_delete_, Qt::AlignCenter);
+
+  layout->addLayout(add_delete_btn_layout);
 
   // Tree Box ----------------------------------------------------------------------
 
@@ -172,7 +169,7 @@ QWidget* SFEditorWidget::createContentsWidget()
   // Expand/Contract controls
   QLabel* expand_controls = new QLabel(this);
   expand_controls->setText("<a href='expand'>Expand All</a> <a href='contract'>Collapse All</a>");
-  connect(expand_controls, SIGNAL(linkActivated(const QString)), this, SLOT(alterTree(const QString)));
+  //connect(expand_controls, SIGNAL(linkActivated(const QString)), this, SLOT(alterTree(const QString)));
   controls_layout->addWidget(expand_controls);
 
   // Spacer
@@ -180,23 +177,12 @@ QWidget* SFEditorWidget::createContentsWidget()
   spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   controls_layout->addWidget(spacer);
 
-  // Add to Selected Button
-  btn_add_ = new QPushButton("&Add to \nSelected", this);
-  btn_add_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-  btn_add_->setMaximumWidth(300);
-  btn_add_->setDisabled(true);
-  connect(btn_add_, SIGNAL(clicked()), this, SLOT(addToActiveTreeElement()));
-  controls_layout->addWidget(btn_add_);
-  controls_layout->setAlignment(btn_add_, Qt::AlignRight);
-
-  // Delete Selected Button
-  btn_delete_ = new QPushButton("&Delete \nSelected", this);
-  btn_delete_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-  btn_delete_->setMaximumWidth(300);
-  btn_delete_->setDisabled(true);
-  connect(btn_delete_, SIGNAL(clicked()), this, SLOT(removeActiveTreeElement()));
-  controls_layout->addWidget(btn_delete_);
-  controls_layout->setAlignment(btn_delete_, Qt::AlignRight);
+  // Add interface button
+  btn_add_interface_ = new QPushButton("&Add Interface", this);
+  btn_add_interface_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  connect(btn_add_interface_, SIGNAL(clicked()), this, SLOT(addInterface()));
+  controls_layout->addWidget(btn_add_interface_);
+  controls_layout->setAlignment(btn_add_interface_, Qt::AlignRight);
 
   // Add Controls to layout
   layout->addLayout(controls_layout);
@@ -300,9 +286,10 @@ void SFEditorWidget::editSelected()
 void SFEditorWidget::populateInterfacesTree()
 {
   // Loop over interfaces
-  for (Interface& interface_sf : action_descriptor_.interfaces_)
+  uint32_t index = 0; // TODO: Remove this indexing hack - embed it into the loop header
+  for (Interface& interface_sf : action_descriptor_->interfaces_)
   {
-    std::string interface_id_str =  std::string("Interface ") + std::to_string(interface_sf.id_);
+    std::string interface_id_str =  std::string("Interface ") + std::to_string(index);
     QString interface_id_qstr = QString::fromStdString(interface_id_str);
 
     /*
@@ -327,6 +314,9 @@ void SFEditorWidget::populateInterfacesTree()
       return;
     }
 
+    // TODO: Remove this indexing hack - embed it into the loop header
+    index++;
+
     QTreeWidgetItem* input_subjects_item = new QTreeWidgetItem(interface_item);
     input_subjects_item->setText(0, "Input");
     input_subjects_item->setFont(0, type_font_);
@@ -345,7 +335,7 @@ void SFEditorWidget::populateInterfacesTree()
     if (interface_sf.output_subjects_.empty())
     {
       // Interface is not required to have output subjects
-      break;
+      continue;
     }
 
     QTreeWidgetItem* output_subjects_item = new QTreeWidgetItem(interface_item);
@@ -431,7 +421,7 @@ void SFEditorWidget::removeActiveTreeElement()
 
       // Loop through the interfaces and find which interface must be erased
       uint32_t index = 0;
-      for (Interface& interface_sf : action_descriptor_.interfaces_)
+      for (Interface& interface_sf : action_descriptor_->interfaces_)
       {
         if (&interface_sf == interface)
         {
@@ -441,7 +431,7 @@ void SFEditorWidget::removeActiveTreeElement()
       }
 
       // Check if the element was found
-      if (index >= action_descriptor_.interfaces_.size())
+      if (index >= action_descriptor_->interfaces_.size())
       {
         // The element was not found
         // TODO: throw error
@@ -450,7 +440,7 @@ void SFEditorWidget::removeActiveTreeElement()
       }
 
       // Remove the element
-      action_descriptor_.interfaces_.erase(action_descriptor_.interfaces_.begin() + index);
+      action_descriptor_->interfaces_.erase(action_descriptor_->interfaces_.begin() + index);
     }
     break;
 
@@ -625,6 +615,23 @@ void SFEditorWidget::addToActiveTreeElement()
   }
 
   // Refresh the tree
+  refreshTree();
+}
+
+// ******************************************************************************************
+//
+// ******************************************************************************************
+void SFEditorWidget::addInterface()
+{
+  // Add a new interface with one uninitialized subject
+  Subject new_subject;
+  new_subject.type_ = Subject::WHAT;
+  new_subject.words_.push_back("<modify me please>");
+
+  Interface new_interface;
+  new_interface.input_subjects_.push_back(new_subject);
+
+  action_descriptor_->interfaces_.push_back(new_interface);
   refreshTree();
 }
 

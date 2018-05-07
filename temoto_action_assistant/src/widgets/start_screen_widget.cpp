@@ -69,8 +69,9 @@ namespace fs = boost::filesystem;
 // ******************************************************************************************
 // Start screen user interface for MoveIt Configuration Assistant
 // ******************************************************************************************
-StartScreenWidget::StartScreenWidget(QWidget* parent, temoto_action_assistant::MoveItConfigDataPtr config_data)
-  : SetupScreenWidget(parent), config_data_(config_data)
+StartScreenWidget::StartScreenWidget(QWidget* parent, temoto_action_assistant::ActionDescriptorPtr action_descriptor)
+  : SetupScreenWidget(parent),
+    action_descriptor_(action_descriptor)
 {
   // Basic widget container
   QVBoxLayout* layout = new QVBoxLayout(this);
@@ -87,7 +88,7 @@ StartScreenWidget::StartScreenWidget(QWidget* parent, temoto_action_assistant::M
   logo_image_label_ = new QLabel(this);
   std::string image_path = "./resources/temoto_logo.png";
 
-  if (chdir(config_data_->setup_assistant_path_.c_str()) != 0)
+  if (chdir(action_descriptor_->action_pkg_path_.c_str()) != 0)
   {
     ROS_ERROR("FAILED TO CHANGE PACKAGE TO temoto_action_assistant");
   }
@@ -195,17 +196,6 @@ StartScreenWidget::StartScreenWidget(QWidget* parent, temoto_action_assistant::M
 
   this->setLayout(layout);
   //  this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-  // Debug mode: auto load the configuration file by clicking button after a timeout
-  if (config_data_->debug_)
-  {
-    // select_mode_->btn_exist_->click();
-
-    QTimer* update_timer = new QTimer(this);
-    update_timer->setSingleShot(true);  // only run once
-    connect(update_timer, SIGNAL(timeout()), btn_load_, SLOT(click()));
-    update_timer->start(100);
-  }
 }
 
 // ******************************************************************************************
@@ -300,60 +290,60 @@ void StartScreenWidget::loadFilesClick()
 
 void StartScreenWidget::onPackagePathChanged(const QString& path)
 {
-  if (!loadPackageSettings(false))
-    return;
-  // set xacro args from loaded settings
-  stack_path_->setArgs(QString::fromStdString(config_data_->xacro_args_));
+//  if (!loadPackageSettings(false))
+//    return;
+//  // set xacro args from loaded settings
+//  stack_path_->setArgs(QString::fromStdString(config_data_->xacro_args_));
 }
 
 void StartScreenWidget::onUrdfPathChanged(const QString& path)
 {
-  urdf_file_->setArgsEnabled(rdf_loader::RDFLoader::isXacroFile(path.toStdString()));
+//  urdf_file_->setArgsEnabled(rdf_loader::RDFLoader::isXacroFile(path.toStdString()));
 }
 
 bool StartScreenWidget::loadPackageSettings(bool show_warnings)
 {
-  // Get the package path
-  std::string package_path_input = stack_path_->getPath();
-  // Check that input is provided
-  if (package_path_input.empty())
-  {
-    if (show_warnings)
-      QMessageBox::warning(this, "Error Loading Files", "Please specify a configuration package path to load.");
-    return false;
-  }
+//  // Get the package path
+//  std::string package_path_input = stack_path_->getPath();
+//  // Check that input is provided
+//  if (package_path_input.empty())
+//  {
+//    if (show_warnings)
+//      QMessageBox::warning(this, "Error Loading Files", "Please specify a configuration package path to load.");
+//    return false;
+//  }
 
-  // check that the folder exists
-  if (!config_data_->setPackagePath(package_path_input))
-  {
-    if (show_warnings)
-      QMessageBox::critical(this, "Error Loading Files", "The specified path is not a directory or is not accessable");
-    return false;
-  }
+//  // check that the folder exists
+//  if (!config_data_->setPackagePath(package_path_input))
+//  {
+//    if (show_warnings)
+//      QMessageBox::critical(this, "Error Loading Files", "The specified path is not a directory or is not accessable");
+//    return false;
+//  }
 
-  std::string setup_assistant_path;
+//  std::string setup_assistant_path;
 
-  // Check if the old package is a setup assistant package. If it is not, quit
-  if (!config_data_->getSetupAssistantYAMLPath(setup_assistant_path))
-  {
-    if (show_warnings)
-      QMessageBox::warning(
-          this, "Incorrect Directory/Package",
-          QString("The chosen package location exists but was not created using TeMoto Action Assistant. "
-                  "If this is a mistake, provide the missing file: ")
-              .append(setup_assistant_path.c_str()));
-    return false;
-  }
+//  // Check if the old package is a setup assistant package. If it is not, quit
+//  if (!config_data_->getSetupAssistantYAMLPath(setup_assistant_path))
+//  {
+//    if (show_warnings)
+//      QMessageBox::warning(
+//          this, "Incorrect Directory/Package",
+//          QString("The chosen package location exists but was not created using TeMoto Action Assistant. "
+//                  "If this is a mistake, provide the missing file: ")
+//              .append(setup_assistant_path.c_str()));
+//    return false;
+//  }
 
-  // Get setup assistant data
-  if (!config_data_->inputSetupAssistantYAML(setup_assistant_path))
-  {
-    if (show_warnings)
-      QMessageBox::warning(this, "Setup Assistant File Error",
-                           QString("Unable to correctly parse the setup assistant configuration file: ")
-                               .append(setup_assistant_path.c_str()));
-    return false;
-  }
+//  // Get setup assistant data
+//  if (!config_data_->inputSetupAssistantYAML(setup_assistant_path))
+//  {
+//    if (show_warnings)
+//      QMessageBox::warning(this, "Setup Assistant File Error",
+//                           QString("Unable to correctly parse the setup assistant configuration file: ")
+//                               .append(setup_assistant_path.c_str()));
+//    return false;
+//  }
   return true;
 }
 
@@ -362,75 +352,75 @@ bool StartScreenWidget::loadPackageSettings(bool show_warnings)
 // ******************************************************************************************
 bool StartScreenWidget::loadExistingFiles()
 {
-  // Progress Indicator
-  progress_bar_->setValue(10);
-  QApplication::processEvents();
+//  // Progress Indicator
+//  progress_bar_->setValue(10);
+//  QApplication::processEvents();
 
-  if (!loadPackageSettings(true))
-    return false;
+//  if (!loadPackageSettings(true))
+//    return false;
 
-  // Progress Indicator
-  progress_bar_->setValue(30);
-  QApplication::processEvents();
+//  // Progress Indicator
+//  progress_bar_->setValue(30);
+//  QApplication::processEvents();
 
-  // Get the URDF path using the loaded .setup_assistant data and check it
-  if (!createFullURDFPath())
-    return false;  // error occured
+//  // Get the URDF path using the loaded .setup_assistant data and check it
+//  if (!createFullURDFPath())
+//    return false;  // error occured
 
-  // use xacro args from GUI
-  config_data_->xacro_args_ = stack_path_->getArgs().toStdString();
+//  // use xacro args from GUI
+//  config_data_->xacro_args_ = stack_path_->getArgs().toStdString();
 
-  // Load the URDF
-  if (!loadURDFFile(config_data_->urdf_path_, config_data_->xacro_args_))
-    return false;  // error occured
+//  // Load the URDF
+//  if (!loadURDFFile(config_data_->urdf_path_, config_data_->xacro_args_))
+//    return false;  // error occured
 
-  // Get the SRDF path using the loaded .setup_assistant data and check it
-  if (!createFullSRDFPath(config_data_->config_pkg_path_))
-    return false;  // error occured
+//  // Get the SRDF path using the loaded .setup_assistant data and check it
+//  if (!createFullSRDFPath(config_data_->config_pkg_path_))
+//    return false;  // error occured
 
-  // Progress Indicator
-  progress_bar_->setValue(50);
-  QApplication::processEvents();
+//  // Progress Indicator
+//  progress_bar_->setValue(50);
+//  QApplication::processEvents();
 
-  // Load the SRDF
-  if (!loadSRDFFile(config_data_->srdf_path_))
-    return false;  // error occured
+//  // Load the SRDF
+//  if (!loadSRDFFile(config_data_->srdf_path_))
+//    return false;  // error occured
 
-  // Progress Indicator
-  progress_bar_->setValue(60);
-  QApplication::processEvents();
+//  // Progress Indicator
+//  progress_bar_->setValue(60);
+//  QApplication::processEvents();
 
-  // Load the allowed collision matrix
-  config_data_->loadAllowedCollisionMatrix();
+//  // Load the allowed collision matrix
+//  config_data_->loadAllowedCollisionMatrix();
 
-  // Load kinematics yaml file if available --------------------------------------------------
-  fs::path kinematics_yaml_path = config_data_->config_pkg_path_;
-  kinematics_yaml_path /= "config/kinematics.yaml";
+//  // Load kinematics yaml file if available --------------------------------------------------
+//  fs::path kinematics_yaml_path = config_data_->config_pkg_path_;
+//  kinematics_yaml_path /= "config/kinematics.yaml";
 
-  if (!config_data_->inputKinematicsYAML(kinematics_yaml_path.make_preferred().native().c_str()))
-  {
-    QMessageBox::warning(this, "No Kinematic YAML File",
-                         QString("Failed to parse kinematics yaml file. This file is not critical but any previous "
-                                 "kinematic solver settings have been lost. To re-populate this file edit each "
-                                 "existing planning group and choose a solver, then save each change. \n\nFile error "
-                                 "at location ")
-                             .append(kinematics_yaml_path.make_preferred().native().c_str()));
-  }
+//  if (!config_data_->inputKinematicsYAML(kinematics_yaml_path.make_preferred().native().c_str()))
+//  {
+//    QMessageBox::warning(this, "No Kinematic YAML File",
+//                         QString("Failed to parse kinematics yaml file. This file is not critical but any previous "
+//                                 "kinematic solver settings have been lost. To re-populate this file edit each "
+//                                 "existing planning group and choose a solver, then save each change. \n\nFile error "
+//                                 "at location ")
+//                             .append(kinematics_yaml_path.make_preferred().native().c_str()));
+//  }
 
-  // DONE LOADING --------------------------------------------------------------------------
+//  // DONE LOADING --------------------------------------------------------------------------
 
-  // Call a function that enables navigation
-  Q_EMIT readyToProgress();
+//  // Call a function that enables navigation
+//  Q_EMIT readyToProgress();
 
-  // Progress Indicator
-  progress_bar_->setValue(70);
-  QApplication::processEvents();
+//  // Progress Indicator
+//  progress_bar_->setValue(70);
+//  QApplication::processEvents();
 
-  // Progress Indicator
-  progress_bar_->setValue(100);
-  QApplication::processEvents();
+//  // Progress Indicator
+//  progress_bar_->setValue(100);
+//  QApplication::processEvents();
 
-  next_label_->show();  // only show once the files have been loaded
+//  next_label_->show();  // only show once the files have been loaded
 
   ROS_INFO("Loading Setup Assistant Complete");
   return true;  // success!
@@ -514,248 +504,6 @@ bool StartScreenWidget::loadNewFiles()
   return true;  // success!
 }
 
-// ******************************************************************************************
-// Load URDF File to Parameter Server
-// ******************************************************************************************
-bool StartScreenWidget::loadURDFFile(const std::string& urdf_file_path, const std::string& xacro_args)
-{
-  const std::vector<std::string> xacro_args_ = { xacro_args };
-
-  std::string urdf_string;
-  if (!rdf_loader::RDFLoader::loadXmlFileToString(urdf_string, urdf_file_path, xacro_args_))
-  {
-    QMessageBox::warning(this, "Error Loading Files",
-                         QString("URDF/COLLADA file not found: ").append(urdf_file_path.c_str()));
-    return false;
-  }
-
-  if (urdf_string.empty() && rdf_loader::RDFLoader::isXacroFile(urdf_file_path))
-  {
-    QMessageBox::warning(this, "Error Loading Files", "Running xacro failed.\nPlease check console for errors.");
-    return false;
-  }
-
-  // Verify that file is in correct format / not an XACRO by loading into robot model
-  if (!config_data_->urdf_model_->initString(urdf_string))
-  {
-    QMessageBox::warning(this, "Error Loading Files", "URDF/COLLADA file is not a valid robot model.");
-    return false;
-  }
-  config_data_->urdf_from_xacro_ = rdf_loader::RDFLoader::isXacroFile(urdf_file_path);
-
-  ROS_INFO_STREAM("Loaded " << config_data_->urdf_model_->getName() << " robot model.");
-
-  // Load the robot model to the parameter server
-  ros::NodeHandle nh;
-  int steps = 0;
-  while (!nh.ok() && steps < 4)
-  {
-    ROS_WARN("Waiting for node handle");
-    sleep(1);
-    steps++;
-    ros::spinOnce();
-  }
-
-  ROS_INFO("Setting Param Server with Robot Description");
-  // ROS_WARN("Ignore the following error message 'Failed to contact master'. This is a known issue.");
-  nh.setParam("/robot_description", urdf_string);
-
-  return true;
-}
-
-// ******************************************************************************************
-// Load SRDF File to Parameter Server
-// ******************************************************************************************
-bool StartScreenWidget::loadSRDFFile(const std::string& srdf_file_path)
-{
-  const std::vector<std::string> xacro_args;
-
-  std::string srdf_string;
-  if (!rdf_loader::RDFLoader::loadXmlFileToString(srdf_string, srdf_file_path, xacro_args))
-  {
-    QMessageBox::warning(this, "Error Loading Files", QString("SRDF file not found: ").append(srdf_file_path.c_str()));
-    return false;
-  }
-
-  // Put on param server
-  return setSRDFFile(srdf_string);
-}
-
-// ******************************************************************************************
-// Put SRDF File on Parameter Server
-// ******************************************************************************************
-bool StartScreenWidget::setSRDFFile(const std::string& srdf_string)
-{
-  // Verify that file is in correct format / not an XACRO by loading into robot model
-  if (!config_data_->srdf_->initString(*config_data_->urdf_model_, srdf_string))
-  {
-    QMessageBox::warning(this, "Error Loading Files", "SRDF file not a valid semantic robot description model.");
-    return false;
-  }
-  ROS_INFO_STREAM("Robot semantic model successfully loaded.");
-
-  // Load to param server
-  ros::NodeHandle nh;
-  int steps = 0;
-  while (!nh.ok() && steps < 4)
-  {
-    ROS_WARN("Waiting for node handle");
-    sleep(1);
-    steps++;
-    ros::spinOnce();
-  }
-
-  ROS_INFO("Setting Param Server with Robot Semantic Description");
-  nh.setParam("/robot_description_semantic", srdf_string);
-
-  return true;
-}
-
-// ******************************************************************************************
-// Extract the package/stack name and relative path to urdf from an absolute path name
-// Input:  cofig_data_->urdf_path_
-// Output: cofig_data_->urdf_pkg_name_
-//         cofig_data_->urdf_pkg_relative_path_
-// ******************************************************************************************
-bool StartScreenWidget::extractPackageNameFromPath()
-{
-  // Get the path to urdf, save filename
-  fs::path urdf_path = config_data_->urdf_path_;
-  fs::path urdf_directory = urdf_path;
-  urdf_directory.remove_filename();
-
-  fs::path sub_path;         // holds the directory less one folder
-  fs::path relative_path;    // holds the path after the sub_path
-  std::string package_name;  // result
-
-  // Paths for testing if files exist
-  fs::path package_path;
-
-  std::vector<std::string> path_parts;  // holds each folder name in vector
-
-  // Copy path into vector of parts
-  for (fs::path::iterator it = urdf_directory.begin(); it != urdf_directory.end(); ++it)
-    path_parts.push_back(it->native());
-
-  bool packageFound = false;
-
-  // reduce the generated directoy path's folder count by 1 each loop
-  for (int segment_length = path_parts.size(); segment_length > 0; --segment_length)
-  {
-    // Reset the sub_path
-    sub_path.clear();
-
-    // Create a subpath based on the outer loops length
-    for (int segment_count = 0; segment_count < segment_length; ++segment_count)
-    {
-      sub_path /= path_parts[segment_count];
-
-      // decide if we should remember this directory name because it is topmost, in case it is the package/stack name
-      if (segment_count == segment_length - 1)
-      {
-        package_name = path_parts[segment_count];
-      }
-    }
-
-    // check if this directory has a package.xml
-    package_path = sub_path;
-    package_path /= "package.xml";
-    ROS_DEBUG_STREAM("Checking for " << package_path.make_preferred().native());
-
-    // Check if the files exist
-    if (fs::is_regular_file(package_path) || fs::is_regular_file(sub_path / "manifest.xml"))
-    {
-      // now generate the relative path
-      for (size_t relative_count = segment_length; relative_count < path_parts.size(); ++relative_count)
-        relative_path /= path_parts[relative_count];
-
-      // add the URDF filename at end of relative path
-      relative_path /= urdf_path.filename();
-
-      // end the search
-      segment_length = 0;
-      packageFound = true;
-      break;
-    }
-  }
-
-  // Assign data to moveit_config_data
-  if (!packageFound)
-  {
-    // No package name found, we must be outside ROS
-    config_data_->urdf_pkg_name_ = "";
-    config_data_->urdf_pkg_relative_path_ = config_data_->urdf_path_;  // just the absolute path
-  }
-  else
-  {
-    // Check that ROS can find the package
-    const std::string robot_desc_pkg_path = ros::package::getPath(config_data_->urdf_pkg_name_) + "/";
-
-    if (robot_desc_pkg_path.empty())
-    {
-      QMessageBox::warning(this, "Package Not Found In ROS Workspace",
-                           QString("ROS was unable to find the package name '")
-                               .append(config_data_->urdf_pkg_name_.c_str())
-                               .append("' within the ROS workspace. This may cause issues later."));
-    }
-
-    // Success
-    config_data_->urdf_pkg_name_ = package_name;
-    config_data_->urdf_pkg_relative_path_ = relative_path.make_preferred().native();
-  }
-
-  ROS_DEBUG_STREAM("URDF Package Name: " << config_data_->urdf_pkg_name_);
-  ROS_DEBUG_STREAM("URDF Package Path: " << config_data_->urdf_pkg_relative_path_);
-
-  return true;  // success
-}
-
-// ******************************************************************************************
-// Make the full URDF path using the loaded .setup_assistant data
-// ******************************************************************************************
-bool StartScreenWidget::createFullURDFPath()
-{
-  if (!config_data_->createFullURDFPath())
-  {
-    if (config_data_->urdf_path_.empty())  // no path could be resolved
-    {
-      QMessageBox::warning(this, "Error Loading Files", QString("ROS was unable to find the package name '")
-                                                            .append(config_data_->urdf_pkg_name_.c_str())
-                                                            .append("'. Verify this package is inside your ROS "
-                                                                    "workspace and is a proper ROS package."));
-    }
-    else
-    {
-      QMessageBox::warning(this, "Error Loading Files",
-                           QString("Unable to locate the URDF file in package. Expected File: \n")
-                               .append(config_data_->urdf_path_.c_str()));
-    }
-    return false;
-  }
-
-  // Check if a package name was provided
-  if (config_data_->urdf_pkg_name_.empty())
-  {
-    ROS_WARN("The URDF path is absolute to the filesystem and not relative to a ROS package/stack");
-  }
-
-  return true;  // success
-}
-
-// ******************************************************************************************
-// Make the full SRDF path using the loaded .setup_assistant data
-// ******************************************************************************************
-bool StartScreenWidget::createFullSRDFPath(const std::string& package_path)
-{
-  if (!config_data_->createFullSRDFPath(package_path))
-  {
-    QMessageBox::warning(this, "Error Loading Files",
-                         QString("Unable to locate the SRDF file: ").append(config_data_->srdf_path_.c_str()));
-    return false;
-  }
-
-  return true;  // success
-}
 
 // ******************************************************************************************
 // ******************************************************************************************

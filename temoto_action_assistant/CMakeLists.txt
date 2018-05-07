@@ -65,6 +65,7 @@ set(HEADERS
   src/widgets/sf_editor_widget.h
   src/widgets/subject_edit_widget.h
   src/widgets/data_instance_edit_widget.h
+  src/widgets/generate_package_widget.h
 
   src/widgets/planning_groups_widget.h
   src/widgets/double_list_widget.h
@@ -101,6 +102,7 @@ add_library(${PROJECT_NAME}_widgets
   src/widgets/sf_editor_widget.cpp
   src/widgets/subject_edit_widget.cpp
   src/widgets/data_instance_edit_widget.cpp
+  src/widgets/generate_package_widget.cpp
 
   src/widgets/planning_groups_widget.cpp
   src/widgets/double_list_widget.cpp

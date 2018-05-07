@@ -4,12 +4,16 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <memory>
 
 namespace temoto_action_assistant
 {
 
-// Forward declare the Subject structure
+// Forward declare the Subject and ActionDescriptor structure
+struct ActionDescriptor;
 struct Subject;
+
+typedef std::shared_ptr<ActionDescriptor> ActionDescriptorPtr;
 typedef std::vector<Subject> Subjects ;
 
 /**

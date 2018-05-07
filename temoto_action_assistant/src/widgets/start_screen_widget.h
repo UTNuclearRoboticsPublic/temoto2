@@ -32,10 +32,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-/* Author: Dave Coleman */
-
-#ifndef MOVEIT_MOVEIT_SETUP_ASSISTANT_WIDGETS_START_SCREEN_WIDGET_
-#define MOVEIT_MOVEIT_SETUP_ASSISTANT_WIDGETS_START_SCREEN_WIDGET_
+#ifndef TEMOTO_ACTION_ASSISTANT_START_SCREEN_WIDGET
+#define TEMOTO_ACTION_ASSISTANT_START_SCREEN_WIDGET
 
 #include <QWidget>
 #include <QLineEdit>
@@ -44,12 +42,10 @@
 #include <QProgressBar>
 
 #ifndef Q_MOC_RUN
-#include <urdf/model.h>                                       // for testing a valid urdf is loaded
-#include <srdfdom/model.h>                                    // for testing a valid srdf is loaded
-#include <moveit/setup_assistant/tools/moveit_config_data.h>  // common datastructure class
 #endif
 
 #include "setup_screen_widget.h"  // a base class for screens in the setup assistant
+#include "temoto_action_assistant/semantic_frame.h"
 
 namespace temoto_action_assistant
 {
@@ -72,7 +68,7 @@ public:
   /**
    * \brief Start screen user interface for MoveIt Configuration Assistant
    */
-  StartScreenWidget(QWidget* parent, temoto_action_assistant::MoveItConfigDataPtr config_data);
+  StartScreenWidget(QWidget* parent, temoto_action_assistant::ActionDescriptorPtr action_descriptor);
 
   ~StartScreenWidget();
 
@@ -91,7 +87,7 @@ public:
   QLabel* logo_image_label_;
 
   /// Contains all the configuration data for the setup assistant
-  temoto_action_assistant::MoveItConfigDataPtr config_data_;
+  temoto_action_assistant::ActionDescriptorPtr action_descriptor_;
 
 private Q_SLOTS:
 
@@ -144,24 +140,6 @@ private:
 
   /// Load exisiting package files
   bool loadExistingFiles();
-
-  /// Load URDF File to Parameter Server
-  bool loadURDFFile(const std::string& urdf_file_path, const std::string& xacro_args);
-
-  /// Load SRDF File
-  bool loadSRDFFile(const std::string& srdf_file_path);
-
-  /// Put SRDF File on Parameter Server
-  bool setSRDFFile(const std::string& srdf_string);
-
-  //// Extract the package/stack name and relative path to urdf from an absolute path name
-  bool extractPackageNameFromPath();
-
-  /// Make the full URDF path using the loaded .setup_assistant data
-  bool createFullURDFPath();
-
-  /// Make the full SRDF path using the loaded .setup_assistant data
-  bool createFullSRDFPath(const std::string& package_path);
 };
 
 // ******************************************************************************************

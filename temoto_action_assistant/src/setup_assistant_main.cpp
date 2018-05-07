@@ -94,12 +94,12 @@ int main(int argc, char** argv)
   setlocale(LC_NUMERIC, "C");
 
   // Load Qt Widget
-  temoto_action_assistant::ActionAssistantWidget saw(NULL, vm);
-  saw.setMinimumWidth(500);
-  saw.setMinimumHeight(550);
-  //  saw.setWindowState( Qt::WindowMaximized );
+  temoto_action_assistant::ActionAssistantWidget aaw(NULL, vm);
+  aaw.setMinimumWidth(500);
+  aaw.setMinimumHeight(550);
+  //  aaw.setWindowState( Qt::WindowMaximized );
 
-  saw.show();
+  aaw.show();
 
   signal(SIGINT, siginthandler);
 

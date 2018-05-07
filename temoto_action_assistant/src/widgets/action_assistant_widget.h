@@ -34,8 +34,8 @@
 
 /* Author: Dave Coleman */
 
-#ifndef MOVEIT_ROS_MOVEIT_SETUP_ASSISTANT_WIDGETS_SETUP_ASSISTANT_WIDGET_
-#define MOVEIT_ROS_MOVEIT_SETUP_ASSISTANT_WIDGETS_SETUP_ASSISTANT_WIDGET_
+#ifndef TEMOTO_ACTION_ASSISTANT_ACTION_ASSISTANT_WIDGET
+#define TEMOTO_ACTION_ASSISTANT_ACTION_ASSISTANT_WIDGET
 
 // Qt
 #include <QWidget>
@@ -53,9 +53,9 @@
 #include "navigation_widget.h"
 #include "start_screen_widget.h"
 #include "sf_editor_widget.h"
+#include "generate_package_widget.h"
 
 #ifndef Q_MOC_RUN
-#include <moveit/setup_assistant/tools/moveit_config_data.h>
 
 // Other
 #include <ros/ros.h>
@@ -163,9 +163,10 @@ private:
   // Screen Widgets
   StartScreenWidget* ssw_;
   SFEditorWidget* sfew_;
+  GeneratePackageWidget* gpw_;
 
-  /// Contains all the configuration data for the setup assistant
-  temoto_action_assistant::MoveItConfigDataPtr config_data_;
+  /// Contains all the configuration data
+  ActionDescriptorPtr action_descriptor_;
 
   // ******************************************************************************************
   // Private Functions
