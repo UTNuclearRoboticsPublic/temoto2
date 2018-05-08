@@ -72,7 +72,7 @@ public:
   // Qt Components
   // ******************************************************************************************
 
-  QPushButton* btn_load_;
+  QPushButton* btn_generate_package_;
   QLabel* next_label_;
   QProgressBar* progress_bar_;
 
@@ -85,6 +85,8 @@ private Q_SLOTS:
   // Slot Event Functions
   // ******************************************************************************************
 
+  /// Generate package
+  void generatePackage();
 
 private:
   // ******************************************************************************************

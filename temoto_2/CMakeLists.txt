@@ -22,6 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
 	message_generation
   rviz_plugin_manager
   file_template_parser
+  temoto_action_assistant
   moveit_ros_planning_interface
   tf2
   tf2_ros
@@ -227,9 +228,10 @@ add_executable(language_input src/tools/language_input.cpp
 add_dependencies(language_input ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(language_input ${catkin_LIBRARIES} )
 
-add_executable(ai_package_generator src/tools/ai_package_generator.cpp )
+add_executable(ai_package_generator src/tools/ai_package_generator.cpp 
+                                    src/common/semantic_frame_legacy.cpp)
 add_dependencies(ai_package_generator ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(ai_package_generator ${catkin_LIBRARIES} ttp ft_parser)
+target_link_libraries(ai_package_generator ${catkin_LIBRARIES} ttp ft_parser yaml-cpp)
 
 #add_executable(tracking_pipes_tests src/tools/tracking_pipes_tests.cpp)
 #add_dependencies(tracking_pipes_tests ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})

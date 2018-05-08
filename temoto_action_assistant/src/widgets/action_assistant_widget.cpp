@@ -78,10 +78,12 @@ ActionAssistantWidget::ActionAssistantWidget(QWidget* parent, boost::program_opt
   subject_0.data_.push_back(data_1_sub_0);
 
   Interface interface_0;
+  interface_0.type_ = Interface::SYNCHRONOUS;
   interface_0.input_subjects_.push_back(subject_0);
   interface_0.input_subjects_.push_back(subject_1);
 
   ActionDescriptor new_action_descriptor;
+  new_action_descriptor.lexical_unit_ = "Test action";
   new_action_descriptor.interfaces_.push_back(interface_0);
   new_action_descriptor.action_pkg_path_ = ros::package::getPath("temoto_action_assistant");
 

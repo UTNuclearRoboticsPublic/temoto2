@@ -17,13 +17,9 @@ include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
 find_package(catkin REQUIRED COMPONENTS
-  moveit_ros_planning
-  moveit_ros_visualization
-  rviz
-  urdf
   rosconsole
   roscpp
-  srdfdom
+  roslib
 )
 include_directories(${catkin_INCLUDE_DIRS})
 link_directories(${catkin_LIBRARY_DIRS})
@@ -50,10 +46,8 @@ catkin_package(
   INCLUDE_DIRS
     include
   LIBRARIES
-    ${PROJECT_NAME}_tools
+    #${PROJECT_NAME}_tools
   CATKIN_DEPENDS
-    moveit_ros_planning
-    moveit_ros_visualization
 )
 
 # Header files that need Qt Moc pre-processing for use with Qt signals, etc:
@@ -63,66 +57,50 @@ set(HEADERS
   src/widgets/action_assistant_widget.h
   src/widgets/start_screen_widget.h
   src/widgets/sf_editor_widget.h
+  src/widgets/interface_edit_widget.h
   src/widgets/subject_edit_widget.h
   src/widgets/data_instance_edit_widget.h
   src/widgets/generate_package_widget.h
-
-  src/widgets/planning_groups_widget.h
-  src/widgets/double_list_widget.h
-  src/widgets/kinematic_chain_widget.h
-  src/widgets/group_edit_widget.h
-  src/widgets/default_collisions_widget.h
-  src/widgets/robot_poses_widget.h
-  src/widgets/end_effectors_widget.h
-  src/widgets/virtual_joints_widget.h
-  src/widgets/configuration_files_widget.h
+  #src/widgets/configuration_files_widget.h
   src/widgets/setup_screen_widget.h
-  src/widgets/author_information_widget.h
+  #src/widgets/author_information_widget.h
 )
 
 # Tools Library
-add_library(${PROJECT_NAME}_tools
-  src/tools/compute_default_collisions.cpp
-  src/tools/moveit_config_data.cpp
-  src/tools/collision_linear_model.cpp
-  src/tools/collision_matrix_model.cpp
-  src/tools/rotated_header_view.cpp
-)
-set_target_properties(${PROJECT_NAME}_tools PROPERTIES VERSION ${${PROJECT_NAME}_VERSION})
-target_link_libraries(${PROJECT_NAME}_tools
-  ${YAMLCPP_LIBRARIES}
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${QT_LIBRARIES}
-)
+#add_library(${PROJECT_NAME}_tools
+#  src/tools/compute_default_collisions.cpp
+#  src/tools/moveit_config_data.cpp
+#  src/tools/collision_linear_model.cpp
+#  src/tools/collision_matrix_model.cpp
+#  src/tools/rotated_header_view.cpp
+#)
+#set_target_properties(${PROJECT_NAME}_tools PROPERTIES VERSION ${${PROJECT_NAME}_VERSION})
+#target_link_libraries(${PROJECT_NAME}_tools
+#  ${YAMLCPP_LIBRARIES}
+#  ${catkin_LIBRARIES}
+#  ${Boost_LIBRARIES}
+#  ${QT_LIBRARIES}
+#)
 
 # Main Widgets Library - all screens (navigation options)
 add_library(${PROJECT_NAME}_widgets
   src/widgets/start_screen_widget.cpp
   src/widgets/sf_editor_widget.cpp
+  src/widgets/interface_edit_widget.cpp
   src/widgets/subject_edit_widget.cpp
   src/widgets/data_instance_edit_widget.cpp
   src/widgets/generate_package_widget.cpp
-
-  src/widgets/planning_groups_widget.cpp
-  src/widgets/double_list_widget.cpp
-  src/widgets/kinematic_chain_widget.cpp
-  src/widgets/group_edit_widget.cpp
-  src/widgets/default_collisions_widget.cpp
-  src/widgets/robot_poses_widget.cpp
-  src/widgets/end_effectors_widget.cpp
-  src/widgets/virtual_joints_widget.cpp
-  src/widgets/configuration_files_widget.cpp
+  #src/widgets/configuration_files_widget.cpp
   src/widgets/navigation_widget.cpp
   src/widgets/header_widget.cpp
   src/widgets/action_assistant_widget.cpp
   src/widgets/setup_screen_widget.cpp
-  src/widgets/author_information_widget.cpp
+  #src/widgets/author_information_widget.cpp
   ${HEADERS}
 )
 set_target_properties(${PROJECT_NAME}_widgets PROPERTIES VERSION ${${PROJECT_NAME}_VERSION})
 target_link_libraries(${PROJECT_NAME}_widgets
-  ${PROJECT_NAME}_tools
+ # ${PROJECT_NAME}_tools
   ${QT_LIBRARIES}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
@@ -131,17 +109,12 @@ target_link_libraries(${PROJECT_NAME}_widgets
 # executables
 add_executable(${PROJECT_NAME} src/setup_assistant_main.cpp)
 target_link_libraries(${PROJECT_NAME}
-  ${PROJECT_NAME}_widgets ${PROJECT_NAME}_tools
-  ${QT_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} log4cxx)
+  ${PROJECT_NAME}_widgets 
+  #${PROJECT_NAME}_tools
+  ${QT_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} log4cxx yaml-cpp)
 
-add_executable(${PROJECT_NAME}_updater src/collisions_updater.cpp )
-target_link_libraries(${PROJECT_NAME}_updater
-  ${PROJECT_NAME}_tools ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-set_target_properties(${PROJECT_NAME}_updater
-                      PROPERTIES OUTPUT_NAME collisions_updater
-                      PREFIX "")
-
-install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_widgets ${PROJECT_NAME}_tools ${PROJECT_NAME}_updater
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_widgets 
+  #${PROJECT_NAME}_tools
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 install(DIRECTORY include/ DESTINATION include)

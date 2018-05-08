@@ -307,7 +307,7 @@ struct convert<context_manager::TrackerInfo>
       }
       catch (YAML::InvalidNode e)
       {
-        // REPORT OR DO SOMETHING
+        // TODO: REPORT OR DO SOMETHING
       }
 
       // Get the output topic types (if there are any)

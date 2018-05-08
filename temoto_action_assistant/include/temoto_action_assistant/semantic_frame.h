@@ -122,9 +122,53 @@ struct Subject
  */
 struct Interface
 {
+  /**
+   * @brief The Type enum
+   */
+  enum Type
+  {
+    SYNCHRONOUS,
+    ASYNCHRONOUS
+  };
+
+  /// Map that translates Types to Strings
+  std::map<Interface::Type, std::string> type_to_str =
+      {{Interface::ASYNCHRONOUS, "asynchronous"},
+       {Interface::SYNCHRONOUS, "synchronous"}};
+
+  /// Map that translates Strings to Types
+  std::map<std::string, Interface::Type> str_to_type_ =
+      {{"synchronous", Interface::SYNCHRONOUS},
+       {"asynchronous", Interface::ASYNCHRONOUS}};
+
+
+  /// Type of the interface
+  Interface::Type type_;
+
   Subjects input_subjects_;
   Subjects output_subjects_;
+
   uint32_t id_;
+
+  /**
+   * @brief getTypeStr
+   * @return
+   */
+  std::string getTypeStr()
+  {
+    return type_to_str[type_];
+  }
+
+  /**
+   * @brief setTypeByStr
+   * @param type_str
+   * @return
+   */
+  Interface::Type setTypeByStr(std::string type_str)
+  {
+    type_ = str_to_type_[type_str];
+    return type_;
+  }
 };
 
 /**
@@ -135,6 +179,7 @@ struct ActionDescriptor
   std::string lexical_unit_;
   std::vector<Interface> interfaces_;
   std::string action_pkg_name_;
+  std::string action_class_name_;
   std::string action_pkg_path_;
 };
 

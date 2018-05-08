@@ -47,11 +47,11 @@
 
 // SA
 #ifndef Q_MOC_RUN
-#include <moveit/setup_assistant/tools/moveit_config_data.h>
 #endif
 
 #include "header_widget.h"
 #include "setup_screen_widget.h"  // a base class for screens in the setup assistant
+#include "interface_edit_widget.h"
 #include "subject_edit_widget.h"
 #include "data_instance_edit_widget.h"
 #include "boost/any.hpp"
@@ -101,6 +101,7 @@ private:
 
   /// Fonts
   const QFont top_level_font_;
+  const QFont io_font_;
   const QFont type_font_;
 
   /// Contains all the configuration data for the semantic frame
@@ -111,6 +112,7 @@ private:
   QTreeWidgetItem* active_tree_item_;
 
   /// Widgets for editing the contents of the interfaces tree
+  InterfaceEditWidget* iew_;
   SubjectEditWidget* sew_;
   DataInstanceEditWidget* diew_;
 

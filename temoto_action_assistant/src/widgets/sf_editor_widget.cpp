@@ -39,6 +39,7 @@
 // Qt
 #include <QFormLayout>
 #include <QMessageBox>
+#include <iostream>
 
 namespace temoto_action_assistant
 {
@@ -49,6 +50,7 @@ SFEditorWidget::SFEditorWidget(QWidget* parent, ActionDescriptorPtr action_descr
   : SetupScreenWidget(parent),
     action_descriptor_(action_descriptor),
     top_level_font_(QFont(QFont().defaultFamily(), 11, QFont::Bold)),
+    io_font_(QFont(QFont().defaultFamily(), 11, QFont::StyleNormal)),
     type_font_(QFont(QFont().defaultFamily(), 11, QFont::Normal, QFont::StyleItalic))
 
 {
@@ -79,6 +81,12 @@ SFEditorWidget::SFEditorWidget(QWidget* parent, ActionDescriptorPtr action_descr
    */
   QWidget* dummy_widget = new QWidget();
   edit_screen_content_->addWidget(dummy_widget);
+
+  /*
+   * Interface editor page
+   */
+  iew_ = new InterfaceEditWidget(parent);
+  edit_screen_content_->addWidget(iew_);
 
   /*
    * Subjects editor page: TODO
@@ -220,7 +228,8 @@ void SFEditorWidget::editSelected()
      * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
     case (InterfaceTreeData::INTERFACE):
     {
-
+      iew_->focusGiven(active_tree_item_);
+      edit_screen_content_->setCurrentIndex(1);
     }
     break;
 
@@ -231,7 +240,7 @@ void SFEditorWidget::editSelected()
     {
       // Disable the delete button since input is a required component of the interface
       btn_delete_->setDisabled(true);
-      edit_screen_content_->setCurrentIndex(1);
+      edit_screen_content_->setCurrentIndex(2);
     }
     break;
 
@@ -240,7 +249,7 @@ void SFEditorWidget::editSelected()
      * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
     case (InterfaceTreeData::OUTPUT):
     {
-      edit_screen_content_->setCurrentIndex(1);
+      edit_screen_content_->setCurrentIndex(2);
     }
     break;
 
@@ -253,7 +262,7 @@ void SFEditorWidget::editSelected()
       sew_->focusGiven(active_tree_item_);
 
       // Show subject editor
-      edit_screen_content_->setCurrentIndex(2);
+      edit_screen_content_->setCurrentIndex(3);
     }
     break;
 
@@ -269,7 +278,7 @@ void SFEditorWidget::editSelected()
       btn_add_->setDisabled(true);
 
       // Show the data instance editor
-      edit_screen_content_->setCurrentIndex(3);
+      edit_screen_content_->setCurrentIndex(4);
     }
     break;
 
@@ -289,8 +298,12 @@ void SFEditorWidget::populateInterfacesTree()
   uint32_t index = 0; // TODO: Remove this indexing hack - embed it into the loop header
   for (Interface& interface_sf : action_descriptor_->interfaces_)
   {
-    std::string interface_id_str =  std::string("Interface ") + std::to_string(index);
+    std::string interface_id_str =  std::string("Interface ") + std::to_string(index) +
+                                    ": " + interface_sf.getTypeStr();
     QString interface_id_qstr = QString::fromStdString(interface_id_str);
+
+    // Set the index
+    interface_sf.id_ = index;
 
     /*
      * Create interface item for the tree
@@ -319,7 +332,7 @@ void SFEditorWidget::populateInterfacesTree()
 
     QTreeWidgetItem* input_subjects_item = new QTreeWidgetItem(interface_item);
     input_subjects_item->setText(0, "Input");
-    input_subjects_item->setFont(0, type_font_);
+    input_subjects_item->setFont(0, io_font_);
     InterfaceTreeData input_subjects_tdata = InterfaceTreeData(
                                   InterfaceTreeData::INPUT,
                                   boost::any_cast<Subjects*>(&interface_sf.input_subjects_));
@@ -340,7 +353,7 @@ void SFEditorWidget::populateInterfacesTree()
 
     QTreeWidgetItem* output_subjects_item = new QTreeWidgetItem(interface_item);
     output_subjects_item->setText(0, "Output");
-    output_subjects_item->setFont(0, type_font_);
+    output_subjects_item->setFont(0, io_font_);
     InterfaceTreeData output_subjects_tdata = InterfaceTreeData(
                                   InterfaceTreeData::OUTPUT,
                                   boost::any_cast<Subjects*>(&interface_sf.output_subjects_));
@@ -629,6 +642,7 @@ void SFEditorWidget::addInterface()
   new_subject.words_.push_back("<modify me please>");
 
   Interface new_interface;
+  new_interface.type_ = Interface::SYNCHRONOUS;
   new_interface.input_subjects_.push_back(new_subject);
 
   action_descriptor_->interfaces_.push_back(new_interface);

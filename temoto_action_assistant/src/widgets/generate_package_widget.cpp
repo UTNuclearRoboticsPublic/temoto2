@@ -33,6 +33,9 @@
  *********************************************************************/
 
 #include "generate_package_widget.h"
+#include "temoto_action_assistant/semantic_frame_yaml.h"
+#include <iostream>
+#include <QVBoxLayout>
 
 namespace temoto_action_assistant
 {
@@ -41,6 +44,34 @@ GeneratePackageWidget::GeneratePackageWidget(QWidget* parent, ActionDescriptorPt
 : SetupScreenWidget(parent),
   action_descriptor_(action_descriptor)
 {
+  // Layout for "add/remove selected" buttons
+  QVBoxLayout* layout = new QVBoxLayout(this);
+
+  // Add to Selected Button
+  btn_generate_package_ = new QPushButton("&Generate", this);
+  btn_generate_package_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  //btn_add_->setMaximumWidth(400);
+  connect(btn_generate_package_, SIGNAL(clicked()), this, SLOT(generatePackage()));
+  layout->addWidget(btn_generate_package_);
+  layout->setAlignment(btn_generate_package_, Qt::AlignCenter);
+
+  this->setLayout(layout);
+}
+
+void GeneratePackageWidget::generatePackage()
+{
+  YAML::Node action_descriptor_node = YAML::Node(*action_descriptor_);
+
+  std::cout << action_descriptor_node << std::endl;
+
+  ActionDescriptor new_action_descriptor = action_descriptor_node.as<ActionDescriptor>();
+
+  std::cout << "-----------------*-*-******************" << std::endl;
+
+  YAML::Node new_action_descriptor_node = YAML::Node(new_action_descriptor);
+
+  std::cout << new_action_descriptor_node << std::endl;
+
 
 }
 

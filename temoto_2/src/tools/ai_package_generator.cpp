@@ -1,6 +1,10 @@
 #include "ros/ros.h"
 #include "ros/package.h"
+#include "std_msgs/String.h"
+
 #include "TTP/task_descriptor_processor.h"
+#include "temoto_action_assistant/semantic_frame_yaml.h"
+#include "common/semantic_frame_legacy.h"
 #include "file_template_parser/file_template_parser.h"
 #include <boost/filesystem.hpp>
 
@@ -16,6 +20,20 @@ std::map<std::string, std::string> data_padding_map = {
   {"topic", " "},
   {"pointer", "    "}};
 
+void generatePackage(const std_msgs::String& ad_yaml_str)
+{
+  // Convert the yaml string to an action descriptor
+  temoto_action_assistant::ActionDescriptor action_descriptor =
+    YAML::Load(ad_yaml_str.data).as<temoto_action_assistant::ActionDescriptor>();
+
+  // Convert the action descriptor to legacy format
+  TTP::TaskDescriptor task_descriptor = toLegacyTaskDescriptor(action_descriptor);
+
+
+}
+
+
+
 // main
 int main(int argc, char **argv)
 {
@@ -24,6 +42,8 @@ int main(int argc, char **argv)
   std::string base_template_path = ros::package::getPath(ROS_PACKAGE_NAME) + "/test/";
   std::string base_dst_path = base_template_path;
 
+  // Subscriber that generates the action implementation package
+  ros::Subscriber ad_subscriber = n.subscribe("action_descriptor", 10, generatePackage);
 
   /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
