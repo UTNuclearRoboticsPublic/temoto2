@@ -34,6 +34,9 @@ TTP::TaskDescriptor toLegacyTaskDescriptor(temoto_action_assistant::ActionDescri
   {
     TTP::TaskInterface td_interface;
 
+    // Convert id
+    td_interface.id_ = ad_interface.id_;
+
     // Convert the type
     td_interface.type_ = ad_interface.getTypeStr();
 
@@ -50,6 +53,7 @@ TTP::TaskDescriptor toLegacyTaskDescriptor(temoto_action_assistant::ActionDescri
   TTP::TaskDescriptor task_descriptor(action_descriptor.lexical_unit_, td_interfaces);
   task_descriptor.setTaskPackageName(action_descriptor.action_pkg_name_);
   task_descriptor.setTaskClassName(action_descriptor.action_class_name_);
+  task_descriptor.setLibPath(action_descriptor.action_pkg_path_);
 
   return task_descriptor;
 }

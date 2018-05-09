@@ -43,10 +43,13 @@
 #include <QProgressBar>
 
 #ifndef Q_MOC_RUN
+#include <ros/ros.h>
 #endif
 
+#include "header_widget.h"
 #include "setup_screen_widget.h"  // a base class for screens in the setup assistant
 #include "temoto_action_assistant/semantic_frame.h"
+
 
 namespace temoto_action_assistant
 {
@@ -72,12 +75,17 @@ public:
   // Qt Components
   // ******************************************************************************************
 
+  QPushButton* btn_root_dir_;
   QPushButton* btn_generate_package_;
   QLabel* next_label_;
   QProgressBar* progress_bar_;
+  QLineEdit* package_name_field_;
+  QLineEdit* package_path_field_;
 
   /// Contains the data related to the action
   temoto_action_assistant::ActionDescriptorPtr action_descriptor_;
+
+  const std::string ACTION_DESCRIPTOR_TOPIC = "action_descriptor";
 
 private Q_SLOTS:
 
@@ -85,14 +93,24 @@ private Q_SLOTS:
   // Slot Event Functions
   // ******************************************************************************************
 
+  /// Modify the name of the package
+  void modifyPackageName(const QString &text);
+
   /// Generate package
   void generatePackage();
+
+  /// Set the root directory where the package will be generated
+  void setRootDir();
+
+  ///
+  void modifyRootDir();
 
 private:
   // ******************************************************************************************
   // Variables
   // ******************************************************************************************
-
+  ros::NodeHandle nh_;
+  ros::Publisher action_descriptor_publisher_;
 
   // ******************************************************************************************
   // Private Functions

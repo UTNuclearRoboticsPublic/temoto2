@@ -85,6 +85,9 @@ private Q_SLOTS:
   /// Edit whatever element is selected in the tree view
   void editSelected();
 
+  /// Modifies the lexical unit string
+  void modifyLexicalUnit();
+
   /// Remove the active tree element
   void removeActiveTreeElement();
 

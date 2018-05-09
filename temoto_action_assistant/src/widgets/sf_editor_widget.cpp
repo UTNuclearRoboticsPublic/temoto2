@@ -139,6 +139,22 @@ QWidget* SFEditorWidget::createContentsWidget()
   // Basic widget container
   QVBoxLayout* layout = new QVBoxLayout(this);
 
+  // Add the lexical unit edit field
+  QFormLayout* form_layout = new QFormLayout();
+  lexical_unit_field_ = new QLineEdit();
+  form_layout->addRow("Lexical Unit:", lexical_unit_field_);
+  connect(lexical_unit_field_, SIGNAL(returnPressed()), this, SLOT(modifyLexicalUnit()));
+  layout->addLayout(form_layout);
+
+
+  // Tree Box ----------------------------------------------------------------------
+
+  interfaces_tree_ = new QTreeWidget(this);
+  interfaces_tree_->setHeaderLabel("Interfaces");
+  connect(interfaces_tree_, SIGNAL(itemClicked(QTreeWidgetItem*, int)), this, SLOT(editSelected()));
+  //connect(interfaces_tree_, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), this, SLOT(previewSelected()));
+  layout->addWidget(interfaces_tree_);
+
   // Layout for "add/remove selected" buttons
   QHBoxLayout* add_delete_btn_layout = new QHBoxLayout(this);
 
@@ -149,7 +165,7 @@ QWidget* SFEditorWidget::createContentsWidget()
   btn_add_->setDisabled(true);
   connect(btn_add_, SIGNAL(clicked()), this, SLOT(addToActiveTreeElement()));
   add_delete_btn_layout->addWidget(btn_add_);
-  add_delete_btn_layout->setAlignment(btn_add_, Qt::AlignCenter);
+  add_delete_btn_layout->setAlignment(btn_add_, Qt::AlignRight);
 
   // Delete Selected Button
   btn_delete_ = new QPushButton("&Delete Selected", this);
@@ -158,20 +174,18 @@ QWidget* SFEditorWidget::createContentsWidget()
   btn_delete_->setDisabled(true);
   connect(btn_delete_, SIGNAL(clicked()), this, SLOT(removeActiveTreeElement()));
   add_delete_btn_layout->addWidget(btn_delete_);
-  add_delete_btn_layout->setAlignment(btn_delete_, Qt::AlignCenter);
+  add_delete_btn_layout->setAlignment(btn_delete_, Qt::AlignLeft);
+
+  // Add interface button
+  btn_add_interface_ = new QPushButton("&Add Interface", this);
+  btn_add_interface_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  connect(btn_add_interface_, SIGNAL(clicked()), this, SLOT(addInterface()));
+  add_delete_btn_layout->addWidget(btn_add_interface_);
+  add_delete_btn_layout->setAlignment(btn_add_interface_, Qt::AlignRight);
 
   layout->addLayout(add_delete_btn_layout);
 
-  // Tree Box ----------------------------------------------------------------------
-
-  interfaces_tree_ = new QTreeWidget(this);
-  interfaces_tree_->setHeaderLabel("Interfaces");
-  connect(interfaces_tree_, SIGNAL(itemClicked(QTreeWidgetItem*, int)), this, SLOT(editSelected()));
-  //connect(interfaces_tree_, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), this, SLOT(previewSelected()));
-  layout->addWidget(interfaces_tree_);
-
   // Bottom Controls -------------------------------------------------------------
-
   QHBoxLayout* controls_layout = new QHBoxLayout();
 
   // Expand/Contract controls
@@ -185,12 +199,12 @@ QWidget* SFEditorWidget::createContentsWidget()
   spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   controls_layout->addWidget(spacer);
 
-  // Add interface button
-  btn_add_interface_ = new QPushButton("&Add Interface", this);
-  btn_add_interface_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-  connect(btn_add_interface_, SIGNAL(clicked()), this, SLOT(addInterface()));
-  controls_layout->addWidget(btn_add_interface_);
-  controls_layout->setAlignment(btn_add_interface_, Qt::AlignRight);
+//  // Add interface button
+//  btn_add_interface_ = new QPushButton("&Add Interface", this);
+//  btn_add_interface_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+//  connect(btn_add_interface_, SIGNAL(clicked()), this, SLOT(addInterface()));
+//  controls_layout->addWidget(btn_add_interface_);
+//  controls_layout->setAlignment(btn_add_interface_, Qt::AlignRight);
 
   // Add Controls to layout
   layout->addLayout(controls_layout);
@@ -661,6 +675,14 @@ void SFEditorWidget::refreshTree()
   // Disable the add/delete buttons, since there is no active tree element after refresh
   btn_add_->setDisabled(true);
   btn_delete_->setDisabled(true);
+}
+
+// ******************************************************************************************
+//
+// ******************************************************************************************
+void SFEditorWidget::modifyLexicalUnit()
+{
+  action_descriptor_->lexical_unit_ = lexical_unit_field_->text().toStdString();
 }
 
 // ******************************************************************************************

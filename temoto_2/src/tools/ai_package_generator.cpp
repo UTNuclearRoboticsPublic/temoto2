@@ -8,6 +8,8 @@
 #include "file_template_parser/file_template_parser.h"
 #include <boost/filesystem.hpp>
 
+const std::string ACTION_DESCRIPTOR_TOPIC = "action_descriptor";
+
 std::map<std::string, std::string> data_map = {
   {"number", "float"},
   {"string", "std::string"},
@@ -20,101 +22,33 @@ std::map<std::string, std::string> data_padding_map = {
   {"topic", " "},
   {"pointer", "    "}};
 
-void generatePackage(const std_msgs::String& ad_yaml_str)
-{
-  // Convert the yaml string to an action descriptor
-  temoto_action_assistant::ActionDescriptor action_descriptor =
-    YAML::Load(ad_yaml_str.data).as<temoto_action_assistant::ActionDescriptor>();
+// "Declaring" the templates
+tp::TemplateContainer t_cmakelists;
+tp::TemplateContainer t_packagexml;
 
+tp::TemplateContainer t_header;
+tp::TemplateContainer t_start_task;
+tp::TemplateContainer t_case;
+tp::TemplateContainer t_get_solution;
+tp::TemplateContainer t_start_interface;
+
+tp::TemplateContainer t_subject_in;
+tp::TemplateContainer t_subject_in_data_in;
+tp::TemplateContainer t_subject_in_word_out;
+tp::TemplateContainer t_subject_in_data_out;
+
+tp::TemplateContainer t_subject_out;
+tp::TemplateContainer t_subject_out_data_out;
+
+tp::TemplateContainer t_footer;
+
+// ******************************************************************************************
+// Generate Package function
+// ******************************************************************************************
+void generatePackage(temoto_action_assistant::ActionDescriptor& action_descriptor)
+{
   // Convert the action descriptor to legacy format
-  TTP::TaskDescriptor task_descriptor = toLegacyTaskDescriptor(action_descriptor);
-
-
-}
-
-
-
-// main
-int main(int argc, char **argv)
-{
-  ros::init(argc, argv, "ai_package_generator");
-  ros::NodeHandle n;
-  std::string base_template_path = ros::package::getPath(ROS_PACKAGE_NAME) + "/test/";
-  std::string base_dst_path = base_template_path;
-
-  // Subscriber that generates the action implementation package
-  ros::Subscriber ad_subscriber = n.subscribe("action_descriptor", 10, generatePackage);
-
-  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
-  /*
-   * Create a dummy task descriptor
-   */
-
-  std::string action = "track";
-  TTP::Subjects subjects;
-
-  TTP::Subject sub_0("what", "apple");
-  TTP::Subject sub_1("where", "table");
-
-  sub_1.addData("topic", std::string("no_data"));
-  sub_1.addData("number", 12.4);
-
-  subjects.push_back(sub_0);
-  subjects.push_back(sub_1);
-
-  TTP::TaskInterface interface_0;
-  interface_0.id_ = 0;
-  interface_0.type_ = "synchronous";
-  interface_0.input_subjects_ = subjects;
-  interface_0.output_subjects_ = subjects;
-
-  TTP::TaskInterface interface_1;
-  interface_1.id_ = 1;
-  interface_1.type_ = "synchronous";
-  interface_1.input_subjects_ = subjects;
-
-  std::vector<TTP::TaskInterface> interfaces;
-  interfaces.push_back(interface_0);
-  interfaces.push_back(interface_1);
-
-  TTP::TaskDescriptor ai_descriptor(action, interfaces);
-  ai_descriptor.setTaskPackageName("generated_test_action");
-  ai_descriptor.setTaskClassName("TestAI");
-
-  std::cout << ai_descriptor << std::endl;
-
-  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
-
-
-  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   *                           IMPORT THE TEMPLATES
-   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
-  // Import the CMakeLists template
-  tp::TemplateContainer t_cmakelists(base_template_path + "file_templates/temoto_ai_cmakelists.xml");
-
-  // Import the package.xml template
-  tp::TemplateContainer t_packagexml(base_template_path + "file_templates/temoto_ai_packagexml.xml");
-
-  // Import the action implementation c++ code templates
-  tp::TemplateContainer t_header(base_template_path + "file_templates/ai_header.xml");
-  tp::TemplateContainer t_start_task(base_template_path + "file_templates/ai_start_task.xml");
-  tp::TemplateContainer t_case(base_template_path + "file_templates/ai_start_task_case.xml");
-  tp::TemplateContainer t_get_solution(base_template_path + "file_templates/ai_get_solution.xml");
-  tp::TemplateContainer t_start_interface(base_template_path + "file_templates/ai_start_interface.xml");
-
-  tp::TemplateContainer t_subject_in(base_template_path + "file_templates/ai_subject_in.xml");
-  tp::TemplateContainer t_subject_in_data_in(base_template_path + "file_templates/ai_subject_in_data_in.xml");
-  tp::TemplateContainer t_subject_in_word_out(base_template_path + "file_templates/ai_subject_in_word_out.xml");
-  tp::TemplateContainer t_subject_in_data_out(base_template_path + "file_templates/ai_subject_in_data_out.xml");
-
-  tp::TemplateContainer t_subject_out(base_template_path + "file_templates/ai_subject_out.xml");
-  tp::TemplateContainer t_subject_out_data_out(base_template_path + "file_templates/ai_subject_out_data_out.xml");
-
-  tp::TemplateContainer t_footer(base_template_path + "file_templates/ai_footer.xml");
-
+  TTP::TaskDescriptor ai_descriptor = toLegacyTaskDescriptor(action_descriptor);
 
   /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    *                    CREATE AI PACKAGE DIRECTORY STRUCTURE
@@ -122,7 +56,7 @@ int main(int argc, char **argv)
 
   // Get the name of the package
   const std::string ai_package_name = ai_descriptor.getTaskPackageName();
-  const std::string ai_dst_path = base_dst_path + "ai_" + ai_package_name + "/";
+  const std::string ai_dst_path = ai_descriptor.getLibPath() + "/" + ai_package_name + "/";
 
   // Create a package directory
   boost::filesystem::create_directories(ai_dst_path + "/src");
@@ -300,5 +234,66 @@ int main(int argc, char **argv)
    * Save the generated c++ content
    */
   tp::saveStrToFile(generated_content_cpp, ai_dst_path + "/src", ai_package_name, ".cpp");
+}
 
+// ******************************************************************************************
+// Generate Package callback
+// ******************************************************************************************
+void generatePackageCb(const std_msgs::String& ad_yaml_str)
+{
+
+  // Convert the yaml string to an action descriptor
+  temoto_action_assistant::ActionDescriptor action_descriptor =
+    YAML::Load(ad_yaml_str.data).as<temoto_action_assistant::ActionDescriptor>();
+
+  YAML::Node tst = YAML::Node(action_descriptor);
+  std::cout << tst << std::endl;
+
+  generatePackage(action_descriptor);
+}
+
+// ******************************************************************************************
+// Main
+// ******************************************************************************************
+int main(int argc, char **argv)
+{
+  ros::init(argc, argv, "ai_package_generator");
+  ros::NodeHandle n;
+  std::string base_template_path = ros::package::getPath(ROS_PACKAGE_NAME) + "/test/";
+
+  // Subscriber that generates the action implementation package
+  ros::Subscriber ad_subscriber = n.subscribe(ACTION_DESCRIPTOR_TOPIC, 10, generatePackageCb);
+
+
+  /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+   *                           IMPORT THE TEMPLATES
+   * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+  // Import the CMakeLists template
+  t_cmakelists           = tp::TemplateContainer(base_template_path + "file_templates/temoto_ai_cmakelists.xml");
+
+  // Import the package.xml template
+  t_packagexml           = tp::TemplateContainer(base_template_path + "file_templates/temoto_ai_packagexml.xml");
+
+  // Import the action implementation c++ code templates
+  t_header               = tp::TemplateContainer(base_template_path + "file_templates/ai_header.xml");
+  t_start_task           = tp::TemplateContainer(base_template_path + "file_templates/ai_start_task.xml");
+  t_case                 = tp::TemplateContainer(base_template_path + "file_templates/ai_start_task_case.xml");
+  t_get_solution         = tp::TemplateContainer(base_template_path + "file_templates/ai_get_solution.xml");
+  t_start_interface      = tp::TemplateContainer(base_template_path + "file_templates/ai_start_interface.xml");
+
+  t_subject_in           = tp::TemplateContainer(base_template_path + "file_templates/ai_subject_in.xml");
+  t_subject_in_data_in   = tp::TemplateContainer(base_template_path + "file_templates/ai_subject_in_data_in.xml");
+  t_subject_in_word_out  = tp::TemplateContainer(base_template_path + "file_templates/ai_subject_in_word_out.xml");
+  t_subject_in_data_out  = tp::TemplateContainer(base_template_path + "file_templates/ai_subject_in_data_out.xml");
+
+  t_subject_out          = tp::TemplateContainer(base_template_path + "file_templates/ai_subject_out.xml");
+  t_subject_out_data_out = tp::TemplateContainer(base_template_path + "file_templates/ai_subject_out_data_out.xml");
+
+  t_footer               = tp::TemplateContainer(base_template_path + "file_templates/ai_footer.xml");
+
+  // Spin
+  ros::spin();
+
+  return 0;
 }

@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
   rosconsole
   roscpp
   roslib
+  std_msgs
 )
 include_directories(${catkin_INCLUDE_DIRS})
 link_directories(${catkin_LIBRARY_DIRS})

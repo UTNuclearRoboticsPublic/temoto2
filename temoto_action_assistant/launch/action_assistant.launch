@@ -1,14 +1,10 @@
 <!-- Launch the TeMoto Action Assistant, or just use rosrun -->
 <launch>
 
-  <!-- Debug Info -->
-  <arg name="debug" default="false" />
-  <arg unless="$(arg debug)" name="launch_prefix" value="" />
-  <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
-
   <!-- Run -->
   <node pkg="temoto_action_assistant" type="temoto_action_assistant" name="temoto_action_assistant"
-	launch-prefix="$(arg launch_prefix)"
         output="screen"  required="true" />
+
+  <node pkg="temoto_2" type="ai_package_generator" name="ai_package_generator" output="screen" required="true" />
 
 </launch>

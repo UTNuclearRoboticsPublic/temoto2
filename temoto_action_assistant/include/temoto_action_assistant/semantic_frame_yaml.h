@@ -21,6 +21,9 @@ struct convert<temoto_action_assistant::ActionDescriptor>
     // Action descriptor yaml node
     Node action_descriptor_node;
     action_descriptor_node["lexical_unit"] = action_descriptor.lexical_unit_;
+    action_descriptor_node["package_name"] = action_descriptor.action_pkg_name_;
+    action_descriptor_node["class_name"]   = action_descriptor.action_class_name_;
+    action_descriptor_node["package_path"] = action_descriptor.action_pkg_path_;
 
     // Interfaces yaml node
     Node interfaces_node;
@@ -88,7 +91,10 @@ struct convert<temoto_action_assistant::ActionDescriptor>
     }
 
     // Get the lexical unit
-    action_descriptor.lexical_unit_ = node["lexical_unit"].as<std::string>();
+    action_descriptor.lexical_unit_      = node["lexical_unit"].as<std::string>();
+    action_descriptor.action_pkg_name_   = node["package_name"].as<std::string>();
+    action_descriptor.action_class_name_ = node["class_name"].as<std::string>();
+    action_descriptor.action_pkg_path_   = node["package_path"].as<std::string>();
 
     // Get the interfaces
     YAML::Node interfaces_node = node["interfaces"];
