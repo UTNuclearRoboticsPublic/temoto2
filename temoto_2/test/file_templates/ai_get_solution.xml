@@ -1,8 +1,9 @@
 
 <?xml version="1.0" ?>
 
-<f_template extension=".test" args="false">
+<f_template extension=".test">
 
+  <arg name="ai_class_name" default="err_noname_err" />
   <body>
 
 <![CDATA[

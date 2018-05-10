@@ -82,7 +82,7 @@ void generatePackage(temoto_action_assistant::ActionDescriptor& action_descripto
    * Generate CMakeLists.txt
    */
   t_cmakelists.setArgument("ai_name", ai_package_name);
-  t_cmakelists.processAndSaveTemplate(ai_dst_path, "CmakeLists");
+  t_cmakelists.processAndSaveTemplate(ai_dst_path, "CMakeLists");
 
   /*
    * Generate package.xml
@@ -115,6 +115,7 @@ void generatePackage(temoto_action_assistant::ActionDescriptor& action_descripto
   generated_content_cpp += t_start_task.processTemplate();
 
   // Insert the "get solution" method
+  t_get_solution.setArgument("ai_class_name", ai_class_name);
   generated_content_cpp += t_get_solution.processTemplate();
 
   /*
