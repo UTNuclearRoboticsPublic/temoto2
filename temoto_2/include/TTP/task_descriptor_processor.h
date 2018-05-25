@@ -55,7 +55,7 @@ private:
 
     Subject getSubject(TiXmlElement* subject_element);
 
-    std::vector<Data> getData(TiXmlElement* data_element);
+    std::vector<Data> getData(TiXmlElement* first_data_element);
 
     std::vector<Action> getTaskActionAliases();
 

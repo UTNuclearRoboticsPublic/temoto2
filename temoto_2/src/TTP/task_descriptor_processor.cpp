@@ -400,20 +400,8 @@ Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
         // Get the type
         subject.type_ = std::string(subject_element->Value());
 
-        /*
-         * Get the arg element. If it's missing, then that's not good
-         */
-        TiXmlElement* arg_element = subject_element->FirstChildElement("arg");
-
-        // Check if this element is valid. REQUIRED
-        if (arg_element == NULL)
-        {
-            // Throw error
-            throw CREATE_ERROR(error::Code::DESC_NO_ATTR, "Missing 'arg' attribute in: " + desc_file_path_);
-        }
-
         // Get the word attribute. REQUIRED
-        const char* word_attribute = arg_element->Attribute("word");
+        const char* word_attribute = subject_element->Attribute("word");
         if ( word_attribute == NULL )
         {
             // Throw error
@@ -423,7 +411,7 @@ Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
         subject.words_ = std::move(parseString(std::string(word_attribute), ',')); // TODO: allow ', ' default expressions
 
         // Get the Part Of Speech Tag (pos_tag) attribute. NOT REQUIRED
-        const char* pos_tag_attribute = arg_element->Attribute("pos_tag");
+        const char* pos_tag_attribute = subject_element->Attribute("pos_tag");
         if ( pos_tag_attribute != NULL )
         {
             /*
@@ -460,7 +448,7 @@ Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
  *  GET DATA
  * * * * * * * * */
 
-std::vector<Data> TaskDescriptorProcessor::getData(TiXmlElement* data_element)
+std::vector<Data> TaskDescriptorProcessor::getData(TiXmlElement* first_data_element)
 {
     // Name of the method, used for making debugging a bit simpler
     std::string prefix = common::generateLogPrefix("", class_name_, __func__);
@@ -470,12 +458,12 @@ std::vector<Data> TaskDescriptorProcessor::getData(TiXmlElement* data_element)
     try
     {
         // Extract the datafields
-        for(TiXmlElement* field_element = data_element->FirstChildElement("field");
-            field_element != NULL;
-            field_element = field_element->NextSiblingElement("field"))
+        for(TiXmlElement* data_element = first_data_element;
+            data_element != NULL;
+            data_element = data_element->NextSiblingElement("data"))
         {
             // Get the datatype attribute. REQUIRED
-            const char* datatype_attribute = field_element->Attribute("datatype");
+            const char* datatype_attribute = data_element->Attribute("datatype");
             if ( datatype_attribute == NULL )
             {
                 // Throw error
@@ -495,7 +483,7 @@ std::vector<Data> TaskDescriptorProcessor::getData(TiXmlElement* data_element)
             data.type = datatype;
 
             // Get the value attribute. NOT REQUIRED
-            const char* value_attribute = field_element->Attribute("value");
+            const char* value_attribute = data_element->Attribute("value");
             if ( value_attribute != NULL )
             {
                 std::string value_str = std::string(value_attribute);

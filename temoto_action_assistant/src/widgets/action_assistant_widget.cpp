@@ -63,24 +63,24 @@ ActionAssistantWidget::ActionAssistantWidget(QWidget* parent, boost::program_opt
   /* ACTION DESCRIPTOR TEST */
 
   // Create an action descriptor
-  Subject subject_0, subject_1;
-  subject_0.type_ = Subject::WHAT;
-  subject_1.type_ = Subject::WHERE;
-  subject_0.words_.push_back("dog");
-  subject_1.words_.push_back("table");
+  Object object_0, object_1;
+  object_0.type_ = Object::WHAT;
+  object_1.type_ = Object::WHERE;
+  object_0.words_.push_back("dog");
+  object_1.words_.push_back("table");
 
   DataInstance data_0_sub_0;
   data_0_sub_0.type_ = DataInstance::TOPIC;
-  subject_0.data_.push_back(data_0_sub_0);
+  object_0.data_.push_back(data_0_sub_0);
 
   DataInstance data_1_sub_0;
   data_1_sub_0.type_ = DataInstance::POINTER;
-  subject_0.data_.push_back(data_1_sub_0);
+  object_0.data_.push_back(data_1_sub_0);
 
   Interface interface_0;
   interface_0.type_ = Interface::SYNCHRONOUS;
-  interface_0.input_subjects_.push_back(subject_0);
-  interface_0.input_subjects_.push_back(subject_1);
+  interface_0.input_objects_.push_back(object_0);
+  interface_0.input_objects_.push_back(object_1);
 
   ActionDescriptor new_action_descriptor;
   new_action_descriptor.lexical_unit_ = "Test action";

@@ -89,20 +89,20 @@ SFEditorWidget::SFEditorWidget(QWidget* parent, ActionDescriptorPtr action_descr
   edit_screen_content_->addWidget(iew_);
 
   /*
-   * Subjects editor page: TODO
+   * Objects editor page: TODO
    */
-  QWidget* subjects_editor_widget = new QWidget();
-  QVBoxLayout* subjects_editor_layout = new QVBoxLayout();
-  subjects_editor_widget->setLayout(subjects_editor_layout);
+  QWidget* objects_editor_widget = new QWidget();
+  QVBoxLayout* objects_editor_layout = new QVBoxLayout();
+  objects_editor_widget->setLayout(objects_editor_layout);
 
   // DO STUFF //
 
-  edit_screen_content_->addWidget(subjects_editor_widget);
+  edit_screen_content_->addWidget(objects_editor_widget);
 
   /*
-   * Subject editor page
+   * Object editor page
    */
-  sew_ = new SubjectEditWidget(parent);
+  sew_ = new ObjectEditWidget(parent);
   edit_screen_content_->addWidget(sew_);
 
   /*
@@ -268,14 +268,14 @@ void SFEditorWidget::editSelected()
     break;
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-     * Edit subject
+     * Edit object
      * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
     case (InterfaceTreeData::SUBJECT):
     {
-      // Set up the subject editor
+      // Set up the object editor
       sew_->focusGiven(active_tree_item_);
 
-      // Show subject editor
+      // Show object editor
       edit_screen_content_->setCurrentIndex(3);
     }
     break;
@@ -334,9 +334,9 @@ void SFEditorWidget::populateInterfacesTree()
     /*
      * Create input item for the interface item
      */
-    if (interface_sf.input_subjects_.empty())
+    if (interface_sf.input_objects_.empty())
     {
-      // Interface is required to have input subjects
+      // Interface is required to have input objects
       // TODO: throw an errror
       return;
     }
@@ -344,64 +344,64 @@ void SFEditorWidget::populateInterfacesTree()
     // TODO: Remove this indexing hack - embed it into the loop header
     index++;
 
-    QTreeWidgetItem* input_subjects_item = new QTreeWidgetItem(interface_item);
-    input_subjects_item->setText(0, "Input");
-    input_subjects_item->setFont(0, io_font_);
-    InterfaceTreeData input_subjects_tdata = InterfaceTreeData(
+    QTreeWidgetItem* input_objects_item = new QTreeWidgetItem(interface_item);
+    input_objects_item->setText(0, "Input");
+    input_objects_item->setFont(0, io_font_);
+    InterfaceTreeData input_objects_tdata = InterfaceTreeData(
                                   InterfaceTreeData::INPUT,
-                                  boost::any_cast<Subjects*>(&interface_sf.input_subjects_));
-    input_subjects_item->setData(0, Qt::UserRole, QVariant::fromValue(input_subjects_tdata));
-    interface_item->addChild(input_subjects_item);
+                                  boost::any_cast<Objects*>(&interface_sf.input_objects_));
+    input_objects_item->setData(0, Qt::UserRole, QVariant::fromValue(input_objects_tdata));
+    interface_item->addChild(input_objects_item);
 
-    // Add the subjects of the interface
-    populateSubjects(input_subjects_item, interface_sf.input_subjects_);
+    // Add the objects of the interface
+    populateObjects(input_objects_item, interface_sf.input_objects_);
 
     /*
      * Create output item for the interface item
      */
-    if (interface_sf.output_subjects_.empty())
+    if (interface_sf.output_objects_.empty())
     {
-      // Interface is not required to have output subjects
+      // Interface is not required to have output objects
       continue;
     }
 
-    QTreeWidgetItem* output_subjects_item = new QTreeWidgetItem(interface_item);
-    output_subjects_item->setText(0, "Output");
-    output_subjects_item->setFont(0, io_font_);
-    InterfaceTreeData output_subjects_tdata = InterfaceTreeData(
+    QTreeWidgetItem* output_objects_item = new QTreeWidgetItem(interface_item);
+    output_objects_item->setText(0, "Output");
+    output_objects_item->setFont(0, io_font_);
+    InterfaceTreeData output_objects_tdata = InterfaceTreeData(
                                   InterfaceTreeData::OUTPUT,
-                                  boost::any_cast<Subjects*>(&interface_sf.output_subjects_));
-    output_subjects_item->setData(0, Qt::UserRole, QVariant::fromValue(output_subjects_tdata));
-    interface_item->addChild(output_subjects_item);
+                                  boost::any_cast<Objects*>(&interface_sf.output_objects_));
+    output_objects_item->setData(0, Qt::UserRole, QVariant::fromValue(output_objects_tdata));
+    interface_item->addChild(output_objects_item);
 
-    // Add the subjects of the interface
-    populateSubjects(output_subjects_item, interface_sf.output_subjects_);
+    // Add the objects of the interface
+    populateObjects(output_objects_item, interface_sf.output_objects_);
   }
 }
 
 // ******************************************************************************************
 //
 // ******************************************************************************************
-void SFEditorWidget::populateSubjects(QTreeWidgetItem* parent_item, Subjects& subjects)
+void SFEditorWidget::populateObjects(QTreeWidgetItem* parent_item, Objects& objects)
 {
-  for (Subject& subject_sf : subjects)
+  for (Object& object_sf : objects)
   {
-    QTreeWidgetItem* subject_item = new QTreeWidgetItem(parent_item);
-    QString text = QString::fromStdString(subject_sf.getTypeStr() + ": " + subject_sf.words_[0]);
-    subject_item->setText(0, text);
-    subject_item->setFont(0, type_font_);
-    InterfaceTreeData subject_tdata = InterfaceTreeData(
+    QTreeWidgetItem* object_item = new QTreeWidgetItem(parent_item);
+    QString text = QString::fromStdString(object_sf.getTypeStr() + ": " + object_sf.words_[0]);
+    object_item->setText(0, text);
+    object_item->setFont(0, type_font_);
+    InterfaceTreeData object_tdata = InterfaceTreeData(
                                   InterfaceTreeData::SUBJECT,
-                                  boost::any_cast<Subject*>(&subject_sf));
-    subject_item->setData(0, Qt::UserRole, QVariant::fromValue(subject_tdata));
-    parent_item->addChild(subject_item);
+                                  boost::any_cast<Object*>(&object_sf));
+    object_item->setData(0, Qt::UserRole, QVariant::fromValue(object_tdata));
+    parent_item->addChild(object_item);
 
     /*
      * Add the data instance elements
      */
-    for (DataInstance& data_instance_sf : subject_sf.data_)
+    for (DataInstance& data_instance_sf : object_sf.data_)
     {
-      QTreeWidgetItem* data_instance_item = new QTreeWidgetItem(subject_item);
+      QTreeWidgetItem* data_instance_item = new QTreeWidgetItem(object_item);
       QString text_data_instance = QString::fromStdString(data_instance_sf.getTypeStr());
       data_instance_item->setText(0, text_data_instance);
       data_instance_item->setFont(0, type_font_);
@@ -409,7 +409,7 @@ void SFEditorWidget::populateSubjects(QTreeWidgetItem* parent_item, Subjects& su
                                     InterfaceTreeData::DATA,
                                     boost::any_cast<DataInstance*>(&data_instance_sf));
       data_instance_item->setData(0, Qt::UserRole, QVariant::fromValue(data_instance_tdata));
-      subject_item->addChild(data_instance_item);
+      object_item->addChild(data_instance_item);
     }
   }
 }
@@ -472,7 +472,7 @@ void SFEditorWidget::removeActiveTreeElement()
     break;
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-     * Remove input subjects. Not.
+     * Remove input objects. Not.
      * If this part of the code is executed, then there is a bug in the code, since
      * the btn_delete should be disabled if the interface input is highlighted
      * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -484,29 +484,29 @@ void SFEditorWidget::removeActiveTreeElement()
     break;
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-     * Remove output subjects.
+     * Remove output objects.
      * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
     case (InterfaceTreeData::OUTPUT):
     {
       Interface* interface = boost::any_cast<Interface*>(parent_element.payload_);
-      interface->output_subjects_.clear();
+      interface->output_objects_.clear();
     }
     break;
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-     * Remove a subject.
+     * Remove a object.
      * The procedure is the same for the input and output
      * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
     case (InterfaceTreeData::SUBJECT):
     {
-      Subjects* subjects = boost::any_cast<Subjects*>(parent_element.payload_);
-      Subject* subject = boost::any_cast<Subject*>(active_tree_element_.payload_);
+      Objects* objects = boost::any_cast<Objects*>(parent_element.payload_);
+      Object* object = boost::any_cast<Object*>(active_tree_element_.payload_);
 
-      // Find the index where the subject resides inside the subjects vector
+      // Find the index where the object resides inside the objects vector
       uint32_t index = 0;
-      for (auto& subject_tmp : *subjects)
+      for (auto& object_tmp : *objects)
       {
-        if (&subject_tmp == subject)
+        if (&object_tmp == object)
         {
           break;
         }
@@ -514,7 +514,7 @@ void SFEditorWidget::removeActiveTreeElement()
       }
 
       // Check if the element was found
-      if (index >= subjects->size())
+      if (index >= objects->size())
       {
         // The element was not found
         // TODO: throw error
@@ -523,21 +523,21 @@ void SFEditorWidget::removeActiveTreeElement()
       }
 
       // Remove the element
-      (*subjects).erase(subjects->begin() + index);
+      (*objects).erase(objects->begin() + index);
     }
     break;
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
      * Remove data.
-     * The data vecctor is contained by the parent subject
+     * The data vecctor is contained by the parent object
      * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
     case (InterfaceTreeData::DATA):
     {
-      Subject* subject = boost::any_cast<Subject*>(parent_element.payload_);
-      std::vector<DataInstance>* data = &(subject->data_);
+      Object* object = boost::any_cast<Object*>(parent_element.payload_);
+      std::vector<DataInstance>* data = &(object->data_);
       DataInstance* data_instance = boost::any_cast<DataInstance*>(active_tree_element_.payload_);
 
-      // Find the index where the subject resides inside the subjects vector
+      // Find the index where the object resides inside the objects vector
       uint32_t index = 0;
       for (auto& data_tmp : *data)
       {
@@ -594,44 +594,44 @@ void SFEditorWidget::addToActiveTreeElement()
     {
       Interface* interface = boost::any_cast<Interface*>(active_tree_element_.payload_);
 
-      // Check if this interface already contains output subjects
-      if (!interface->output_subjects_.empty())
+      // Check if this interface already contains output objects
+      if (!interface->output_objects_.empty())
       {
         QMessageBox::information(this, "", "This interface already contains an output.");
         return;
       }
 
-      // Add a blank subject to the output interface
-      Subject new_subject;
-      new_subject.type_ = Subject::WHAT;
-      new_subject.words_.push_back("<modify me please>");
-      interface->output_subjects_.push_back(new_subject);
+      // Add a blank object to the output interface
+      Object new_object;
+      new_object.type_ = Object::WHAT;
+      new_object.words_.push_back("<modify me please>");
+      interface->output_objects_.push_back(new_object);
     }
     break;
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-     * Add new subject element to selected input/output
+     * Add new object element to selected input/output
      * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
     case (InterfaceTreeData::INPUT):
     case (InterfaceTreeData::OUTPUT):
     {
-      Subjects* subjects = boost::any_cast<Subjects*>(active_tree_element_.payload_);
-      Subject new_subject;
-      new_subject.type_ = Subject::WHAT;
-      new_subject.words_.push_back("<modify me please>");
-      subjects->push_back(new_subject);
+      Objects* objects = boost::any_cast<Objects*>(active_tree_element_.payload_);
+      Object new_object;
+      new_object.type_ = Object::WHAT;
+      new_object.words_.push_back("<modify me please>");
+      objects->push_back(new_object);
     }
     break;
 
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-     * Add new data element to selected subject
+     * Add new data element to selected object
      * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
     case (InterfaceTreeData::SUBJECT):
     {
-      Subject* subject = boost::any_cast<Subject*>(active_tree_element_.payload_);
+      Object* object = boost::any_cast<Object*>(active_tree_element_.payload_);
       DataInstance new_data_instance;
       new_data_instance.type_ = DataInstance::STRING;
-      subject->data_.push_back(new_data_instance);
+      object->data_.push_back(new_data_instance);
     }
     break;
 
@@ -650,14 +650,14 @@ void SFEditorWidget::addToActiveTreeElement()
 // ******************************************************************************************
 void SFEditorWidget::addInterface()
 {
-  // Add a new interface with one uninitialized subject
-  Subject new_subject;
-  new_subject.type_ = Subject::WHAT;
-  new_subject.words_.push_back("<modify me please>");
+  // Add a new interface with one uninitialized object
+  Object new_object;
+  new_object.type_ = Object::WHAT;
+  new_object.words_.push_back("<modify me please>");
 
   Interface new_interface;
   new_interface.type_ = Interface::SYNCHRONOUS;
-  new_interface.input_subjects_.push_back(new_subject);
+  new_interface.input_objects_.push_back(new_object);
 
   action_descriptor_->interfaces_.push_back(new_interface);
   refreshTree();

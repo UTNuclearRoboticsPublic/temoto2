@@ -23,7 +23,7 @@ DataInstanceEditWidget::DataInstanceEditWidget(QWidget *parent)
   data_instance_editor_layout->addLayout(data_form_layout);
 
   /*
-   * Create subject type editing combobox
+   * Create object type editing combobox
    */
   data_type_field_ = new QComboBox(this);
   data_type_field_->setMaximumWidth(400);

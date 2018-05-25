@@ -143,11 +143,11 @@ void GeneratePackageWidget::modifyPackageName(const QString &text)
   path_alnum = after;
 
   /*
-   * Add the "ai_" prefix
+   * Add the "ta_" prefix which stands for Temoto Action
    */
-  if (!boost::contains(path_alnum, "ai_"))
+  if (!boost::contains(path_alnum, "ta_"))
   {
-    path_alnum = "ai_" + path_alnum;
+    path_alnum = "ta_" + path_alnum;
   }
 
   /*

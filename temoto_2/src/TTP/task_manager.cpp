@@ -2,9 +2,6 @@
  *
  *     MASSIVE TODO: * CATCH ALL EXEPTIONS AND RETHROW AS
  *                     TEMOTO ERROR !!!
- *                   * Start using ros cpp naming conventions
- *                   * Reformat the commented debug messages into
- *                     temoto debug log messages
  *
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -130,7 +127,7 @@ void TaskManager::initCore(std::string ai_libs_path)
 
   else
   {
-    dir = boost::filesystem::directory_entry(temoto_path + "/../tasks");
+    dir = boost::filesystem::directory_entry(temoto_path + "/../temoto_actions");
   }
 
   indexTasks(dir, 2);

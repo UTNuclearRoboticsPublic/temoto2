@@ -38,41 +38,41 @@ struct convert<temoto_action_assistant::ActionDescriptor>
       interface_node["type"] = interface.getTypeStr();
 
       // Check if the interface contains an input
-      if (!interface.input_subjects_.empty())
+      if (!interface.input_objects_.empty())
       {
         // TODO: Throw an error, because each interface must contain an input
       }
 
       // Encode the input of the interface
-      for (temoto_action_assistant::Subject& subject: interface.input_subjects_)
+      for (temoto_action_assistant::Object& object: interface.input_objects_)
       {
-        Node subject_node;
-        subject_node["type"] = subject.getTypeStr();
-        subject_node["word"] = subject.words_[0];
+        Node object_node;
+        object_node["type"] = object.getTypeStr();
+        object_node["word"] = object.words_[0];
 
         // Add the data
-        for (temoto_action_assistant::DataInstance& data_instance : subject.data_)
+        for (temoto_action_assistant::DataInstance& data_instance : object.data_)
         {
-          subject_node["data"].push_back(data_instance.getTypeStr());
+          object_node["data"].push_back(data_instance.getTypeStr());
         }
 
-        interface_node["input_subjects"].push_back(subject_node);
+        interface_node["input_objects"].push_back(object_node);
       }
 
       // Encode the output of the interface
-      for (temoto_action_assistant::Subject& subject: interface.output_subjects_)
+      for (temoto_action_assistant::Object& object: interface.output_objects_)
       {
-        Node subject_node;
-        subject_node["type"] = subject.getTypeStr();
-        subject_node["word"] = subject.words_[0];
+        Node object_node;
+        object_node["type"] = object.getTypeStr();
+        object_node["word"] = object.words_[0];
 
         // Add the data
-        for (temoto_action_assistant::DataInstance& data_instance : subject.data_)
+        for (temoto_action_assistant::DataInstance& data_instance : object.data_)
         {
-          subject_node["data"].push_back(data_instance.getTypeStr());
+          object_node["data"].push_back(data_instance.getTypeStr());
         }
 
-        interface_node["output_subjects"].push_back(subject_node);
+        interface_node["output_objects"].push_back(object_node);
       }
 
       // Push the interface
@@ -114,23 +114,23 @@ struct convert<temoto_action_assistant::ActionDescriptor>
       interface.setTypeByStr((*interface_node_it)["type"].as<std::string>());
 
       /*
-       * Get the input subjects
+       * Get the input objects
        */
-      YAML::Node input_subjects_node = (*interface_node_it)["input_subjects"];
-      if (input_subjects_node)
+      YAML::Node input_objects_node = (*interface_node_it)["input_objects"];
+      if (input_objects_node)
       {
-        // Extract the input subjects
-        for (YAML::const_iterator input_subject_node_it = input_subjects_node.begin();
-             input_subject_node_it != input_subjects_node.end();
-             ++input_subject_node_it)
+        // Extract the input objects
+        for (YAML::const_iterator input_object_node_it = input_objects_node.begin();
+             input_object_node_it != input_objects_node.end();
+             ++input_object_node_it)
         {
-          // Create an empty subject
-          temoto_action_assistant::Subject input_subject;
-          input_subject.setTypeByStr((*input_subject_node_it)["type"].as<std::string>());
-          input_subject.words_.push_back((*input_subject_node_it)["word"].as<std::string>());
+          // Create an empty object
+          temoto_action_assistant::Object input_object;
+          input_object.setTypeByStr((*input_object_node_it)["type"].as<std::string>());
+          input_object.words_.push_back((*input_object_node_it)["word"].as<std::string>());
 
           // Get the data
-          YAML::Node data_node = (*input_subject_node_it)["data"];
+          YAML::Node data_node = (*input_object_node_it)["data"];
 
           if (data_node)
           {
@@ -140,11 +140,11 @@ struct convert<temoto_action_assistant::ActionDescriptor>
             {
               temoto_action_assistant::DataInstance data_instance;
               data_instance.setTypeByStr((*data_instance_node_it).as<std::string>());
-              input_subject.data_.push_back(data_instance);
+              input_object.data_.push_back(data_instance);
             }
           }
 
-          interface.input_subjects_.push_back(input_subject);
+          interface.input_objects_.push_back(input_object);
         }
       }
       else
@@ -153,23 +153,23 @@ struct convert<temoto_action_assistant::ActionDescriptor>
       }
 
       /*
-       * Get the output subjects
+       * Get the output objects
        */
-      YAML::Node output_subjects_node = (*interface_node_it)["output_subjects"];
-      if (output_subjects_node)
+      YAML::Node output_objects_node = (*interface_node_it)["output_objects"];
+      if (output_objects_node)
       {
-        // Extract the output subjects
-        for (YAML::const_iterator output_subject_node_it = output_subjects_node.begin();
-             output_subject_node_it != output_subjects_node.end();
-             ++output_subject_node_it)
+        // Extract the output objects
+        for (YAML::const_iterator output_object_node_it = output_objects_node.begin();
+             output_object_node_it != output_objects_node.end();
+             ++output_object_node_it)
         {
-          // Create an empty subject
-          temoto_action_assistant::Subject subject;
-          subject.setTypeByStr((*output_subject_node_it)["type"].as<std::string>());
-          subject.words_.push_back((*output_subject_node_it)["word"].as<std::string>());
+          // Create an empty object
+          temoto_action_assistant::Object object;
+          object.setTypeByStr((*output_object_node_it)["type"].as<std::string>());
+          object.words_.push_back((*output_object_node_it)["word"].as<std::string>());
 
           // Get the data
-          YAML::Node data_node = (*output_subject_node_it)["data"];
+          YAML::Node data_node = (*output_object_node_it)["data"];
 
           // Check if there is any data
           if (data_node)
@@ -181,11 +181,11 @@ struct convert<temoto_action_assistant::ActionDescriptor>
             {
               temoto_action_assistant::DataInstance data_instance;
               data_instance.setTypeByStr((*data_instance_node_it).as<std::string>());
-              subject.data_.push_back(data_instance);
+              object.data_.push_back(data_instance);
             }
           }
 
-          interface.output_subjects_.push_back(subject);
+          interface.output_objects_.push_back(object);
         }
       }
 

@@ -1,17 +1,17 @@
 #include "common/semantic_frame_legacy.h"
 
-TTP::Subjects toLegacySubjects(temoto_action_assistant::Subjects& ad_subjects)
+TTP::Subjects toLegacySubjects(temoto_action_assistant::Objects& ad_objects)
 {
   TTP::Subjects td_subjects;
 
-  for (temoto_action_assistant::Subject& ad_subject : ad_subjects)
+  for (temoto_action_assistant::Object& ad_object : ad_objects)
   {
     TTP::Subject td_subject;
-    td_subject.words_ = ad_subject.words_;
-    td_subject.type_ = ad_subject.getTypeStr();
+    td_subject.words_ = ad_object.words_;
+    td_subject.type_ = ad_object.getTypeStr();
 
     // Convert Data
-    for (temoto_action_assistant::DataInstance ad_data_instance : ad_subject.data_)
+    for (temoto_action_assistant::DataInstance ad_data_instance : ad_object.data_)
     {
       TTP::Data td_data;
       td_data.type = ad_data_instance.getTypeStr();
@@ -41,10 +41,10 @@ TTP::TaskDescriptor toLegacyTaskDescriptor(temoto_action_assistant::ActionDescri
     td_interface.type_ = ad_interface.getTypeStr();
 
     // Convert input subjects
-    td_interface.input_subjects_ = toLegacySubjects(ad_interface.input_subjects_);
+    td_interface.input_subjects_ = toLegacySubjects(ad_interface.input_objects_);
 
     // Convert output subjects
-    td_interface.output_subjects_ = toLegacySubjects(ad_interface.output_subjects_);
+    td_interface.output_subjects_ = toLegacySubjects(ad_interface.output_objects_);
 
     td_interfaces.push_back(td_interface);
   }

@@ -1,0 +1,8 @@
+<task action="put">
+    <interface id="0" type="synchronous">
+        <in>
+            <what word="box" />
+            <where word="table" />
+        </in>
+    </interface>
+</task>

@@ -25,7 +25,7 @@ InterfaceEditWidget::InterfaceEditWidget(QWidget *parent)
   interface_editor_layout->addLayout(interface_form_layout);
 
   /*
-   * Create subject type editing combobox
+   * Create object type editing combobox
    */
   interface_type_field_ = new QComboBox(this);
   interface_type_field_->setMaximumWidth(400);

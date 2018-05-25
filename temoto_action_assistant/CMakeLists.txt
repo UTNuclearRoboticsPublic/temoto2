@@ -59,7 +59,7 @@ set(HEADERS
   src/widgets/start_screen_widget.h
   src/widgets/sf_editor_widget.h
   src/widgets/interface_edit_widget.h
-  src/widgets/subject_edit_widget.h
+  src/widgets/object_edit_widget.h
   src/widgets/data_instance_edit_widget.h
   src/widgets/generate_package_widget.h
   #src/widgets/configuration_files_widget.h
@@ -88,7 +88,7 @@ add_library(${PROJECT_NAME}_widgets
   src/widgets/start_screen_widget.cpp
   src/widgets/sf_editor_widget.cpp
   src/widgets/interface_edit_widget.cpp
-  src/widgets/subject_edit_widget.cpp
+  src/widgets/object_edit_widget.cpp
   src/widgets/data_instance_edit_widget.cpp
   src/widgets/generate_package_widget.cpp
   #src/widgets/configuration_files_widget.cpp

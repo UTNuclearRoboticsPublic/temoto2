@@ -52,7 +52,7 @@
 #include "header_widget.h"
 #include "setup_screen_widget.h"  // a base class for screens in the setup assistant
 #include "interface_edit_widget.h"
-#include "subject_edit_widget.h"
+#include "object_edit_widget.h"
 #include "data_instance_edit_widget.h"
 #include "boost/any.hpp"
 #include "temoto_action_assistant/semantic_frame.h"
@@ -116,7 +116,7 @@ private:
 
   /// Widgets for editing the contents of the interfaces tree
   InterfaceEditWidget* iew_;
-  SubjectEditWidget* sew_;
+  ObjectEditWidget* sew_;
   DataInstanceEditWidget* diew_;
 
   /// Main table for holding groups
@@ -141,8 +141,8 @@ private:
   /// Populates the interfaces tree
   void populateInterfacesTree();
 
-  /// Populate subjects
-  void populateSubjects(QTreeWidgetItem* parent_item, Subjects& subjects);
+  /// Populate objects
+  void populateObjects(QTreeWidgetItem* parent_item, Objects& objects);
 
   /// Removes the data that interfaces tree element points to
   void removeData(InterfaceTreeData &parent, InterfaceTreeData &child);

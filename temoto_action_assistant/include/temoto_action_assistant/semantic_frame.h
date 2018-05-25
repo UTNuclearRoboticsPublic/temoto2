@@ -9,15 +9,15 @@
 namespace temoto_action_assistant
 {
 
-// Forward declare the Subject and ActionDescriptor structure
+// Forward declare the Object and ActionDescriptor structure
 struct ActionDescriptor;
-struct Subject;
+struct Object;
 
 typedef std::shared_ptr<ActionDescriptor> ActionDescriptorPtr;
-typedef std::vector<Subject> Subjects ;
+typedef std::vector<Object> Objects ;
 
 /**
- * @brief Stores information about the data that is contained by a subject
+ * @brief Stores information about the data that is contained by a object
  */
 struct DataInstance
 {
@@ -63,12 +63,12 @@ struct DataInstance
 };
 
 /**
- * @brief Contains information about the subject
+ * @brief Contains information about the object
  */
-struct Subject
+struct Object
 {
   /**
-   * @brief Type of the Subject
+   * @brief Type of the Object
    */
   enum Type
   {
@@ -78,22 +78,22 @@ struct Subject
   };
 
   /// Map that translates Types to Strings
-  std::map<Subject::Type, std::string> type_to_str = {{Subject::WHAT, "what"},
-                                                      {Subject::WHERE, "where"},
-                                                      {Subject::NUMERIC, "numeric"}};
+  std::map<Object::Type, std::string> type_to_str = {{Object::WHAT, "what"},
+                                                      {Object::WHERE, "where"},
+                                                      {Object::NUMERIC, "numeric"}};
 
   /// Map that translates Strings to Types
-  std::map<std::string, Subject::Type> str_to_type_ = {{"what", Subject::WHAT},
-                                                       {"where", Subject::WHERE},
-                                                       {"numeric", Subject::NUMERIC}};
+  std::map<std::string, Object::Type> str_to_type_ = {{"what", Object::WHAT},
+                                                       {"where", Object::WHERE},
+                                                       {"numeric", Object::NUMERIC}};
 
-  /// Type of the subject
+  /// Type of the object
   Type type_;
 
-  /// Words contained by the subject.
+  /// Words contained by the object.
   std::vector<std::string> words_;
 
-  /// Data contained by the subject
+  /// Data contained by the object
   std::vector<DataInstance> data_;
 
   /**
@@ -110,7 +110,7 @@ struct Subject
    * @param type_str
    * @return
    */
-  Subject::Type setTypeByStr(std::string type_str)
+  Object::Type setTypeByStr(std::string type_str)
   {
     type_ = str_to_type_[type_str];
     return type_;
@@ -145,8 +145,8 @@ struct Interface
   /// Type of the interface
   Interface::Type type_;
 
-  Subjects input_subjects_;
-  Subjects output_subjects_;
+  Objects input_objects_;
+  Objects output_objects_;
 
   uint32_t id_;
 
