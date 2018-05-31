@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+
+<task action="start" alias="initiate">
+
+  <!--Interface block-->
+  <interface id="0" type="asynchronous">
+    
+    <!--Input block-->
+    <in>    
+      <what word="camera"/>
+    </in>
+    
+    <!--Output block-->
+    <out>
+      <what word="camera">
+        <data datatype="topic" />
+      </what> 
+    </out>
+
+  </interface>
+
+</task>
