@@ -1,1 +1,1 @@
-# MoveIt! Setup Assistant
+# TeMoto Action Assistant
