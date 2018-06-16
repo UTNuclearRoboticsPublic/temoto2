@@ -1,5 +1,12 @@
 ---
 Sensors:
+- sensor_name: "Le Terminal pour TeMoto"
+  sensor_type: "speech"
+  package_name: "temoto_2"
+  executable:  "test_2.launch"
+  topic:  "/terminal_text"
+  output_topics:
+    data: "/terminal_text"
 
 - sensor_name: "Leap Motion Hand Tracker"
   sensor_type: "hand"
@@ -15,34 +22,34 @@ Sensors:
   output_topics:
     handtracker_data: "leap_motion_output"
  
-- sensor_name: "Camera 0"
-  sensor_type: "camera"
-  package_name: "task_show"
-  executable:  "camera0.launch"
-  output_topics:
+#- sensor_name: "Camera 0"
+#  sensor_type: "camera"
+#  package_name: "task_show"
+#  executable:  "camera0.launch"
+#  output_topics:
+##    camera_info: "usb_cam/camera_info"
+#    camera_data: "usb_cam/image_raw"
+
+#- sensor_name: "Camera 1"
+#  sensor_type: "camera"
+#  package_name: "task_show"
+#  executable:  "camera1.launch"
+#  output_topics:
+##    camera_info: "usb_cam/camera_info"
+#    camera_data: "usb_cam/image_raw"
+
+#- sensor_name: "Logitech Cam"
+#  sensor_type: "camera"
+#  package_name: "usb_cam"
+#  executable:  "usb_cam-test.launch"
+#  output_topics:
 #    camera_info: "usb_cam/camera_info"
-    camera_data: "usb_cam/image_raw"
+#    camera_data: "usb_cam/image_raw"
 
-- sensor_name: "Camera 1"
-  sensor_type: "camera"
-  package_name: "task_show"
-  executable:  "camera1.launch"
-  output_topics:
+#- sensor_name: "Lenovo Cam"
+#  sensor_type: "camera"
+#  package_name: "usb_cam"
+#  executable:  "y50_70_calib.launch"
+#  output_topics:
 #    camera_info: "usb_cam/camera_info"
-    camera_data: "usb_cam/image_raw"
-
-- sensor_name: "Logitech Cam"
-  sensor_type: "camera"
-  package_name: "usb_cam"
-  executable:  "usb_cam-test.launch"
-  output_topics:
-    camera_info: "usb_cam/camera_info"
-    camera_data: "usb_cam/image_raw"
-
-- sensor_name: "Lenovo Cam"
-  sensor_type: "camera"
-  package_name: "usb_cam"
-  executable:  "y50_70_calib.launch"
-  output_topics:
-    camera_info: "usb_cam/camera_info"
-    camera_data: "usb_cam/image_raw"
+#    camera_data: "usb_cam/image_raw"
