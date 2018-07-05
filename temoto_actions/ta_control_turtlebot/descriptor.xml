@@ -1,0 +1,8 @@
+<task action="control">
+    <interface id="0" type="asynchronous">
+        <in>
+            <what word="turtlebot" />
+            <where word="keyboard" />
+        </in>
+    </interface>
+</task>

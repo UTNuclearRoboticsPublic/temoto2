@@ -149,29 +149,29 @@ void SensorManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& p
 void SensorManager::advertiseSensor(SensorInfoPtr sensor_ptr)
 {
   //TEMOTO_DEBUG("------ Advertising Sensor \n %s", sensor_ptr->toString().c_str());
-    YAML::Node config;
-    config["Sensors"].push_back(*sensor_ptr);
-    PayloadType payload;
-    payload.data = Dump(config);
-    config_syncer_.advertise(payload);
+  YAML::Node config;
+  config["Sensors"].push_back(*sensor_ptr);
+  PayloadType payload;
+  payload.data = Dump(config);
+  config_syncer_.advertise(payload);
 }
 
 void SensorManager::advertiseLocalSensors()
 {
-    // publish all local sensors
-    YAML::Node config;
-    for(auto& s : local_sensors_) 
-    {
-        config["Sensors"].push_back(*s);
-    }
-    
-    // send to other managers if there is anything to send
-    if(config.size())
-    {
-      PayloadType payload;
-      payload.data = Dump(config);
-      config_syncer_.advertise(payload);
-    }
+  // publish all local sensors
+  YAML::Node config;
+  for(auto& s : local_sensors_)
+  {
+      config["Sensors"].push_back(*s);
+  }
+
+  // send to other managers if there is anything to send
+  if(config.size())
+  {
+    PayloadType payload;
+    payload.data = Dump(config);
+    config_syncer_.advertise(payload);
+  }
 }
 
 
