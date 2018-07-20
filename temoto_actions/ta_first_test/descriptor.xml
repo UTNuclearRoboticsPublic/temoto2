@@ -1,0 +1,7 @@
+<task action="start">
+    <interface id="0" type="synchronous">
+        <in>
+            <what word="first test" />
+        </in>
+    </interface>
+</task>

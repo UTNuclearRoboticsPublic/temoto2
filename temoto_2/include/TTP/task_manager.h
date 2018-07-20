@@ -1,5 +1,5 @@
-#ifndef TASK_HANDLER_H
-#define TASK_HANDLER_H
+#ifndef TASK_MANAGER_H
+#define TASK_MANAGER_H
 
 #include "temoto_error/temoto_error.h"
 #include "common/temoto_id.h"
@@ -20,6 +20,7 @@
 #include "boost/filesystem.hpp"
 #include <exception>
 #include <cstdio>
+#include <thread>
 
 namespace TTP
 {
@@ -118,6 +119,11 @@ private:
 
   bool nlp_enabled_;
 
+
+  ros::Timer thread_joining_timer_;
+
+  std::vector<std::thread> flow_graph_threads_;
+
   std::vector<std::pair<boost::shared_ptr<TaskDescriptor>, boost::shared_ptr<BaseTask>>> asynchronous_tasks_;
 
   std::vector<std::string> synchronous_task_libs_;
@@ -184,6 +190,12 @@ private:
    * @param chat
    */
   void humanChatterCb (std_msgs::String chat);
+
+  /**
+   * @brief threadJoiningTimerCallback
+   * @param event
+   */
+  void threadJoiningTimerCallback(const ros::TimerEvent &e);
 
 };
 

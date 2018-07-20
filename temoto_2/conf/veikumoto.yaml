@@ -22,13 +22,13 @@ Sensors:
   output_topics:
     handtracker_data: "leap_motion_output"
  
-#- sensor_name: "Camera 0"
-#  sensor_type: "camera"
-#  package_name: "task_show"
-#  executable:  "camera0.launch"
-#  output_topics:
-##    camera_info: "usb_cam/camera_info"
-#    camera_data: "usb_cam/image_raw"
+- sensor_name: "Camera 0"
+  sensor_type: "camera"
+  package_name: "ta_show_camera"
+  executable:  "camera0.launch"
+  output_topics:
+    camera_info: "usb_cam/camera_info"
+    camera_data: "usb_cam/image_raw"
 
 #- sensor_name: "Camera 1"
 #  sensor_type: "camera"

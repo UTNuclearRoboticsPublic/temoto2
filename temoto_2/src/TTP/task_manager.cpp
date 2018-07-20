@@ -138,6 +138,9 @@ void TaskManager::initCore(std::string ai_libs_path)
 
   // Task indexing subscriber
   index_tasks_subscriber_ = nh_.subscribe("index_tasks", 1, &TaskManager::indexTasksCallback, this);
+
+  // Thread joining timer
+  thread_joining_timer_ = nh_.createTimer(ros::Duration(1), &TaskManager::threadJoiningTimerCallback, this);
 }
 
 /* * * * * * * * *
@@ -178,7 +181,10 @@ void TaskManager::executeVerbalInstruction (std::string& verbal_instruction)
     TaskTree sft = language_processor_->processText(std::move(verbal_instruction));
 
     // Execute the SFT
-    executeSFT(std::move(sft));
+    // executeSFT(std::move(sft));
+
+    flow_graph_threads_.emplace_back(&TaskManager::executeSFT, this, std::move(sft));
+
   }
   catch(error::ErrorStack& error_stack)
   {
@@ -1462,5 +1468,16 @@ void TaskManager::indexTasksCallback(temoto_2::IndexTasks index_msg)
       FORWARD_ERROR(error_stack);
     }
 }
+
+
+/* * * * * * * * *
+ *  THREAD JOINING TIMER CALLBACK
+ * * * * * * * * */
+
+void TaskManager::threadJoiningTimerCallback(const ros::TimerEvent& e)
+{
+  TEMOTO_INFO_STREAM(flow_graph_threads_.size() << " are currently running");
+}
+
 
 }// END of TTP namespace
