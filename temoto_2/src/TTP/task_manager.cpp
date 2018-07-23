@@ -183,7 +183,8 @@ void TaskManager::executeVerbalInstruction (std::string& verbal_instruction)
     // Execute the SFT
     // executeSFT(std::move(sft));
 
-    flow_graph_threads_.emplace_back(&TaskManager::executeSFT, this, std::move(sft));
+    //flow_graph_threads_.emplace_back(&TaskManager::executeSFT, this, std::move(sft));
+    flow_graph_futures_.push_back(std::async(std::launch::async, &TaskManager::executeSFT, this, std::move(sft)));
 
   }
   catch(error::ErrorStack& error_stack)
@@ -198,7 +199,7 @@ void TaskManager::executeVerbalInstruction (std::string& verbal_instruction)
  *  EXECUTE SEMANTIC FRAME TREE
  * * * * * * * * */
 
-void TaskManager::executeSFT (TaskTree sft)
+void TaskManager::executeSFT(TaskTree sft)
 {
   // Let others know that action execution engine is busy
   action_executioner_busy_ = true;
@@ -242,6 +243,7 @@ void TaskManager::executeSFT (TaskTree sft)
     flow_graph.wait_for_all();
 
     TEMOTO_DEBUG_STREAM("Finished executing the flow graph");
+
   }
   catch(error::ErrorStack& error_stack)
   {
@@ -254,8 +256,6 @@ void TaskManager::executeSFT (TaskTree sft)
 
   // Let others know that action execution engine is not busy
   action_executioner_busy_ = false;
-
-  return;
 }
 
 
@@ -1273,6 +1273,7 @@ void TaskManager::stopTask(std::string action, std::string what)
       TEMOTO_DEBUG_STREAM ("Found the task, stopping it");
 
       // Remove the task
+      (task_it->second)->stopTask();
       asynchronous_tasks_.erase(task_it);
       task_stopped = true;
       break;
@@ -1313,6 +1314,7 @@ void TaskManager::stopTask(std::string action, std::string what)
       TEMOTO_DEBUG_STREAM ("Found the task, stopping it");
 
       // Remove the task
+      (task_it->second)->stopTask();
       asynchronous_tasks_.erase(task_it);
       task_stopped = true;
       break;
@@ -1421,6 +1423,7 @@ void TaskManager::stopTask(std::string action, std::string what)
       TEMOTO_DEBUG_STREAM ("Found task '" << lib_path << "'. Stopping it");
 
       // Remove the task, task_it is pointed to the next element
+      (task_it->second)->stopTask();
       asynchronous_tasks_.erase(task_it);
 
       //std::cout << "D0_3\n";
@@ -1476,7 +1479,23 @@ void TaskManager::indexTasksCallback(temoto_2::IndexTasks index_msg)
 
 void TaskManager::threadJoiningTimerCallback(const ros::TimerEvent& e)
 {
-  TEMOTO_INFO_STREAM(flow_graph_threads_.size() << " are currently running");
+  //TEMOTO_INFO_STREAM(flow_graph_futures_.size() << " threads are currently running");
+
+  // Iterate through the thread vector and check if they are joinable
+  for(auto future_it = flow_graph_futures_.begin();
+      future_it != flow_graph_futures_.end();
+      /* empty */)
+  {
+    if(future_it->wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+    {
+      TEMOTO_INFO_STREAM("An action thread has finished");
+      flow_graph_futures_.erase(future_it);
+    }
+    else
+    {
+      future_it++;
+    }
+  }
 }
 
 

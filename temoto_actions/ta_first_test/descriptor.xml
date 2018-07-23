@@ -1,5 +1,5 @@
 <task action="start">
-    <interface id="0" type="synchronous">
+    <interface id="0" type="asynchronous">
         <in>
             <what word="first test" />
         </in>

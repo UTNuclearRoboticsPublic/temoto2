@@ -21,6 +21,7 @@
 #include <exception>
 #include <cstdio>
 #include <thread>
+#include <future>
 
 namespace TTP
 {
@@ -123,6 +124,8 @@ private:
   ros::Timer thread_joining_timer_;
 
   std::vector<std::thread> flow_graph_threads_;
+
+  std::vector<std::future<void>> flow_graph_futures_;
 
   std::vector<std::pair<boost::shared_ptr<TaskDescriptor>, boost::shared_ptr<BaseTask>>> asynchronous_tasks_;
 
