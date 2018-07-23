@@ -39,10 +39,11 @@ struct CandidateTask
  *  CONSTRUCTOR
  * * * * * * * * */
 
-TaskManager::TaskManager( std::string subsystem_name
+TaskManager::TaskManager(std::string subsystem_name
                         , error::Subsystem subsystem_code
                         , bool nlp_enabled
-                        , std::string ai_libs_path)
+                        , std::string ai_libs_path
+                        , std::string chatter_topic)
   : nlp_enabled_(nlp_enabled)
 {
   try
@@ -57,7 +58,7 @@ TaskManager::TaskManager( std::string subsystem_name
     error_handler_ = error::ErrorHandler(subsystem_code_, "core");
 
     // Initialize the core
-    initCore(ai_libs_path);
+    initCore(ai_libs_path, chatter_topic);
   }
 
   catch (error::ErrorStack& error_stack)
@@ -70,7 +71,10 @@ TaskManager::TaskManager( std::string subsystem_name
  *  CONSTRUCTOR
  * * * * * * * * */
 
-TaskManager::TaskManager(BaseSubsystem *b, bool nlp_enabled, std::string ai_libs_path)
+TaskManager::TaskManager( BaseSubsystem *b
+                        , bool nlp_enabled
+                        , std::string ai_libs_path
+                        , std::string chatter_topic)
   : BaseSubsystem(*b)
   , nlp_enabled_(nlp_enabled)
 {
@@ -80,7 +84,7 @@ TaskManager::TaskManager(BaseSubsystem *b, bool nlp_enabled, std::string ai_libs
     class_name_ = __func__;
 
     // Initialize the core
-    initCore(ai_libs_path);
+    initCore(ai_libs_path, chatter_topic);
   }
 
   catch (error::ErrorStack& e)
@@ -90,7 +94,7 @@ TaskManager::TaskManager(BaseSubsystem *b, bool nlp_enabled, std::string ai_libs
   }
 }
 
-void TaskManager::initCore(std::string ai_libs_path)
+void TaskManager::initCore(std::string ai_libs_path, std::string chatter_topic)
 {
   // Construct the classloader
   class_loader_ = new class_loader::MultiLibraryClassLoader(true);
@@ -108,7 +112,7 @@ void TaskManager::initCore(std::string ai_libs_path)
 
     // Subscribe to human chatter topic. This triggers the callback that processes text
     // messages and trys to find and execute tasks based on the text
-    human_chatter_subscriber_ = nh_.subscribe("human_chatter", 1, &TaskManager::humanChatterCb, this);
+    human_chatter_subscriber_ = nh_.subscribe(chatter_topic, 1, &TaskManager::humanChatterCb, this);
   }
 
   /*
@@ -127,7 +131,7 @@ void TaskManager::initCore(std::string ai_libs_path)
 
   else
   {
-    dir = boost::filesystem::directory_entry(temoto_path + "/../temoto_actions");
+    dir = boost::filesystem::directory_entry(temoto_path + "/../actions/user_actions");
   }
 
   indexTasks(dir, 2);

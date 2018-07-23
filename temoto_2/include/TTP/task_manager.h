@@ -34,9 +34,13 @@ public:
   TaskManager( std::string subsystem_name
              , error::Subsystem subsystem_code
              , bool nlp_enabled
-             , std::string ai_libs_path = "");
+             , std::string ai_libs_path = ""
+             , std::string chatter_topic = "");
 
-  TaskManager(BaseSubsystem* b, bool nlp_enabled, std::string ai_libs_path = "");
+  TaskManager( BaseSubsystem* b
+             , bool nlp_enabled
+             , std::string ai_libs_path = ""
+             , std::string chatter_topic = "");
 
   /**
    * @brief findTask
@@ -170,7 +174,7 @@ private:
 
   std::map<std::string, boost::shared_ptr<class_loader::ClassLoader>> class_loaders_;
 
-  void initCore(std::string ai_libs_path);
+  void initCore(std::string ai_libs_path, std::string chatter_topic);
 
   /**
    * @brief stopTaskCallback

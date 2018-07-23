@@ -196,6 +196,14 @@ target_link_libraries(temoto_agent ttp)
 
 
 # # # # # # # # # # # #
+# RESOUCE SNOOPER
+# # # # # # # # # # # #
+add_executable(resource_snooper src/resource_snooper/resource_snooper.cpp)
+add_dependencies(resource_snooper ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(resource_snooper ttp)
+
+
+# # # # # # # # # # # #
 # PROCESS MANAGER
 # # # # # # # # # # # #
 add_executable(process_manager src/process_manager/process_manager.cpp
@@ -241,10 +249,6 @@ target_link_libraries(ai_package_generator ${catkin_LIBRARIES} ttp ft_parser yam
 #                                    src/algorithm_manager/algorithm_info.cpp)
 #add_dependencies(algorithm_info_tests ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 #target_link_libraries(algorithm_info_tests ${catkin_LIBRARIES} yaml-cpp)
-
-#add_executable(blinker_publisher src/tools/blinker_publisher.cpp)
-#add_dependencies(blinker_publisher ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-#target_link_libraries(blinker_publisher ${catkin_LIBRARIES} )
 
 #add_executable(dummy_sensor src/tools/dummy_sensor.cpp)
 #add_dependencies(dummy_sensor ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})

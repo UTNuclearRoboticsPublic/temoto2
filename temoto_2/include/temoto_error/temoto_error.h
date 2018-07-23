@@ -18,6 +18,7 @@ namespace error
 enum class Subsystem : int
 {
   AGENT,
+  RESOURCE_SNOOPER,
   CONTEXT_MANAGER,
   HEALTH_MONITOR,
   SENSOR_MANAGER,

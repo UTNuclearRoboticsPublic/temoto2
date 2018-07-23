@@ -1,0 +1,7 @@
+<task action="find">
+    <interface id="0" type="synchronous">
+        <in>
+            <what word="ros devices" />
+        </in>
+    </interface>
+</task>

@@ -11,6 +11,7 @@
     <node name="context_manager" pkg="temoto_2" type="context_manager" output="screen" />
     <node name="output_manager" pkg="temoto_2" type="output_manager" output="screen" />
     <node name="robot_manager" pkg="temoto_2" type="robot_manager" output="screen" />
+    <node name="resource_snooper" pkg="temoto_2" type="resource_snooper" output="screen" />
   </group>
 
 </launch>
