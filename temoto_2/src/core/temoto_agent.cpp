@@ -26,7 +26,7 @@ int main(int argc, char **argv)
     ros::Publisher chatter_publisher = nh.advertise<std_msgs::String>("human_chatter", 1000);
 
     // Create a tasking core and enable the language processor
-    TTP::TaskManager task_manager(node_name, error::Subsystem::AGENT, true, "human_chatter");
+    TTP::TaskManager task_manager(node_name, error::Subsystem::AGENT, true, "", "human_chatter");
 
     // Publish a message to the tasking core
     std_msgs::String init_msg;

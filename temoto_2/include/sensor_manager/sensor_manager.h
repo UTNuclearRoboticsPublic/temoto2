@@ -83,15 +83,10 @@ private:
   std::vector<SensorInfoPtr> parseSensors(const YAML::Node& config);
 
   /**
-   * @brief Function for finding the right sensor, based on the request parameters
-   * type - requested, name - optional, node - optional
-   * @param ret
-   * @param retstartSensor
-   * @param type
-   * @param name
-   * @param node
-   * @return Returns a boolean. If suitable device was found, then the req param
-   * is formatted as a nodeSpawnKill::Request (first one in the list, even if there is more)
+   * @brief findSensor
+   * @param req
+   * @param sensors
+   * @return
    */
   SensorInfoPtr findSensor(temoto_2::LoadSensor::Request& req, const std::vector<SensorInfoPtr>& sensors);
 

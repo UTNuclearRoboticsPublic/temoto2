@@ -88,7 +88,7 @@ void startInterface_0()
   std::string  what_0_word_in = what_0_in.words_[0];
 
 
-  while (!stop_task_)
+  while (true)
   {
     TEMOTO_INFO("First test reporting");
     ros::Duration(1.5).sleep();
