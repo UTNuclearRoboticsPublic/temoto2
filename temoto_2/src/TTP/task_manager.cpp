@@ -39,7 +39,7 @@ struct CandidateTask
  *  CONSTRUCTOR
  * * * * * * * * */
 
-TaskManager::TaskManager(std::string subsystem_name
+TaskManager::TaskManager( std::string subsystem_name
                         , error::Subsystem subsystem_code
                         , bool nlp_enabled
                         , std::string ai_libs_path

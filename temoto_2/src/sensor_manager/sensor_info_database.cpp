@@ -1,36 +1,163 @@
 #include "sensor_manager/sensor_info_database.h"
+#include <algorithm>
+
+namespace sensor_manager
+{
 
 SensorInfoDatabase::SensorInfoDatabase(){}
 
-SensorInfoPtr SensorInfoDatabase::findLocalSensor(temoto_2::LoadSensor::Request& req)
+bool SensorInfoDatabase::addLocalSensor(const SensorInfo& si)
 {
-  return findSensor(req, local_sensors_);
+  // Lock the mutex
+  std::lock_guard<std::mutex> guard(read_write_mutex);
+
+  // Check if there is no such sensor
+  SensorInfo si_ret;
+  if (!findSensor(si, local_sensors_, si_ret))
+  {
+    local_sensors_.push_back(si);
+    return true;
+  }
+
+  // Return false if such sensor already exists
+  return false;
 }
 
-SensorInfoPtr SensorInfoDatabase::findRemoteSensor(temoto_2::LoadSensor::Request& req)
+bool SensorInfoDatabase::addRemoteSensor(const SensorInfo &si)
 {
-  return findSensor(req, remote_sensors_);
+  // Lock the mutex
+  std::lock_guard<std::mutex> guard(read_write_mutex);
+
+  // Check if there is no such sensor
+  SensorInfo si_ret;
+  if (!findSensor(si, remote_sensors_, si_ret))
+  {
+    remote_sensors_.push_back(si);
+    return true;
+  }
+
+  // Return false if such sensor already exists
+  return false;
 }
 
-SensorInfoPtr SensorInfoDatabase::findSensor(temoto_2::LoadSensor::Request& req,
-                                             const std::vector<SensorInfoPtr>& sensors)
+bool SensorInfoDatabase::updateLocalSensor(const SensorInfo &si)
+{
+  // Lock the mutex
+  std::lock_guard<std::mutex> guard(read_write_mutex);
+
+  const auto it = std::find_if( local_sensors_.begin()
+                              , local_sensors_.end()
+                              , [&](const SensorInfo& ls)
+                              {
+                                return ls == si;
+                              });
+
+  // Update the local sensor if its found
+  if (it == local_sensors_.end())
+  {
+    *it = *si;
+    return true;
+  }
+
+  // Return false if no such sensor was found
+  return false;
+}
+
+bool SensorInfoDatabase::updateRemoteSensor(const SensorInfo &si)
+{
+  // Lock the mutex
+  std::lock_guard<std::mutex> guard(read_write_mutex);
+
+  const auto it = std::find_if( remote_sensors_.begin()
+                              , remote_sensors_.end()
+                              , [&](const SensorInfo& rs)
+                              {
+                                return rs == si;
+                              });
+
+  // Update the local sensor if its found
+  if (it == remote_sensors_.end())
+  {
+    *it = *si;
+    return true;
+  }
+
+  // Return false if no such sensor was found
+  return false;
+}
+
+bool SensorInfoDatabase::findLocalSensor( temoto_2::LoadSensor::Request& req
+                                        , SensorInfo& si_ret ) const
+{
+  // Lock the mutex
+  std::lock_guard<std::mutex> guard(read_write_mutex);
+
+  return findSensor(req, local_sensors_, si_ret);
+}
+
+bool SensorInfoDatabase::findLocalSensor( const SensorInfo &si, SensorInfo& si_ret ) const
+{
+  // Lock the mutex
+  std::lock_guard<std::mutex> guard(read_write_mutex);
+
+  return findSensor(si, local_sensors_, si_ret);
+}
+
+bool SensorInfoDatabase::findLocalSensor( const SensorInfo &si ) const
+{
+  // Lock the mutex
+  std::lock_guard<std::mutex> guard(read_write_mutex);
+
+  SensorInfo si_ret;
+  return findSensor(si, local_sensors_, si_ret);
+}
+
+bool SensorInfoDatabase::findRemoteSensor( temoto_2::LoadSensor::Request& req
+                                         , SensorInfo& si_ret ) const
+{
+  // Lock the mutex
+  std::lock_guard<std::mutex> guard(read_write_mutex);
+
+  return findSensor(req, remote_sensors_, si_ret);
+}
+
+bool SensorInfoDatabase::findRemoteSensor( const SensorInfo &si, SensorInfo& si_ret ) const
+{
+  // Lock the mutex
+  std::lock_guard<std::mutex> guard(read_write_mutex);
+
+  return findSensor(si, remote_sensors_, si_ret);
+}
+
+bool SensorInfoDatabase::findRemoteSensor( const SensorInfo &si ) const
+{
+  // Lock the mutex
+  std::lock_guard<std::mutex> guard(read_write_mutex);
+
+  SensorInfo si_ret;
+  return findSensor(si, remote_sensors_, si_ret);
+}
+
+bool SensorInfoDatabase::findSensor( temoto_2::LoadSensor::Request& req
+                                    , const std::vector<SensorInfo>& sensors
+                                    , SensorInfo& si_ret )
 {
   // Local list of devices that follow the requirements
-  std::vector<SensorInfoPtr> candidates;
+  std::vector<SensorInfo> candidates;
 
   // Find the devices that follow the "type" criteria
   auto it = std::copy_if(sensor_infos.begin()
                        , sensor_infos.end()
                        , std::back_inserter(candidates)
-                       , [&](const SensorInfoPtr& s)
+                       , [&](const SensorInfo& s)
                          {
-                           return s->getType() == req.sensor_type;
+                           return s.getType() == req.sensor_type;
                          });
 
   // The requested type of sensor is not available
   if (candidates.empty())
   {
-    return NULL;
+    return false;
   }
 
   // If package_name is specified, remove all non-matching candidates
@@ -38,9 +165,9 @@ SensorInfoPtr SensorInfoDatabase::findSensor(temoto_2::LoadSensor::Request& req,
   if (req.package_name != "")
   {
     it_end = std::remove_if(candidates.begin(), candidates.end(),
-                            [&](SensorInfoPtr s)
+                            [&](SensorInfo s)
                             {
-                              return s->getPackageName() != req.package_name;
+                              return s.getPackageName() != req.package_name;
                             });
   }
 
@@ -48,9 +175,9 @@ SensorInfoPtr SensorInfoDatabase::findSensor(temoto_2::LoadSensor::Request& req,
   if (req.executable != "")
   {
     it_end = std::remove_if(candidates.begin(), it_end,
-                            [&](SensorInfoPtr s)
+                            [&](SensorInfo s)
                             {
-                              return s->getExecutable() != req.executable;
+                              return s.getExecutable() != req.executable;
                             });
   }
 
@@ -58,13 +185,13 @@ SensorInfoPtr SensorInfoDatabase::findSensor(temoto_2::LoadSensor::Request& req,
   if (!req.output_topics.empty())
   {
     it_end = std::remove_if(candidates.begin(), it_end,
-                            [&](SensorInfoPtr s)
+                            [&](SensorInfo s)
                             {
-                              if (s->getOutputTopics().size() < req.output_topics.size())
+                              if (s.getOutputTopics().size() < req.output_topics.size())
                                 return true;
 
                               // Make a copy of the input topics
-                              std::vector<StringPair> output_topics_copy = s->getOutputTopics();
+                              std::vector<StringPair> output_topics_copy = s.getOutputTopics();
 
                               // Start looking for the requested topic types
                               for (auto& topic : req.output_topics)
@@ -93,16 +220,54 @@ SensorInfoPtr SensorInfoDatabase::findSensor(temoto_2::LoadSensor::Request& req,
   }
 
   // Sort remaining candidates based on their reliability.
-  std::sort(candidates.begin(), it_end, [](SensorInfoPtr& s1, SensorInfoPtr& s2) {
-    return s1->getReliability() > s2->getReliability();
-  });
+  std::sort( candidates.begin()
+           , it_end
+           , [](SensorInfo& s1, SensorInfo& s2)
+             {
+               return s1.getReliability() > s2.getReliability();
+             });
 
   if (candidates.begin() == it_end)
   {
     // Sensor with the requested criteria was not found.
-    return NULL;
+    return false;
   }
 
   // Return the first sensor of the requested type.
-  return candidates.front();
+  si_ret = candidates.front();
+  return true;
 }
+
+bool SensorInfoDatabase::findSensor( SensorInfo &si
+                                   , const std::vector<SensorInfo>& sensors
+                                   , SensorInfo& si_ret ) const
+{
+  const auto it = std::find_if( sensors.begin()
+                              , sensors.end()
+                              , [&](const SensorInfo& rs)
+                              {
+                                return rs == sensor;
+                              });
+
+  if (it != sensors.end())
+  {
+    return false;
+  }
+  else
+  {
+    si_ret = *it;
+    return true;
+  }
+}
+
+const std::vector<SensorInfo>& SensorInfoDatabase::getLocalSensors() const
+{
+  return local_sensors_;
+}
+
+const std::vector<SensorInfo>& SensorInfoDatabase::getRemoteSensors() const
+{
+  return remote_sensors_;
+}
+
+} // sensor_manager namespace

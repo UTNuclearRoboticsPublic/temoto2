@@ -11,7 +11,6 @@
 
 #include "std_msgs/String.h"
 #include "common/temoto_id.h"
-#include "common/base_subsystem.h"
 
 namespace sensor_manager
 {
