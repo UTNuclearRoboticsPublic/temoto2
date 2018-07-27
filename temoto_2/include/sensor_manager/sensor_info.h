@@ -97,6 +97,11 @@ public:
     return getTemotoNamespace() == common::getTemotoNamespace();
   }
 
+  bool getUpdated() const
+  {
+    return updated_;
+  }
+
 
   /* * * * * * * * * * * *
    *     SETTERS
@@ -136,6 +141,11 @@ public:
     description_ = description;
   }
 
+  void setUpdated(bool updated)
+  {
+    updated_ = updated;
+  }
+
 
 private:
 
@@ -151,6 +161,7 @@ private:
   std::string description_;
   Reliability reliability_;
   std::vector<StringPair> output_topics_;
+  bool updated_ = false;
 };
 
 typedef std::shared_ptr<SensorInfo> SensorInfoPtr;

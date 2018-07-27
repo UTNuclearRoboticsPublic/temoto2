@@ -1,13 +1,11 @@
-#ifndef SENSOR_MANAGER_H
-#define SENSOR_MANAGER_H
+#ifndef SENSOR_MANAGER_SERVERS_H
+#define SENSOR_MANAGER_SERVERS_H
 
 #include "common/base_subsystem.h"
-#include "sensor_manager/sensor_info.h"
+#include "sensor_manager/sensor_info_database.h"
 #include "sensor_manager/sensor_manager_services.h"
 #include "process_manager/process_manager_services.h"
 #include "rmp/resource_manager.h"
-#include "rmp/config_synchronizer.h"
-#include "temoto_2/ConfigSync.h"
 
 #include "std_msgs/String.h"
 #include "common/temoto_id.h"
@@ -17,18 +15,18 @@ namespace sensor_manager
 
 typedef std_msgs::String PayloadType;
 
-class SensorManager : public BaseSubsystem
+class SensorManagerServers : public BaseSubsystem
 {
 public:
     /**
-     * @brief SensorManager
+     * @brief SensorManagerServers
      */
-    SensorManager();
+    SensorManagerServers( BaseSubsystem* b, SensorInfoDatabase* sid );
 
     /**
-     * @brief ~SensorManager
+     * @brief ~SensorManagerServers
      */
-    ~SensorManager();
+    ~SensorManagerServers();
 
     const std::string& getName() const
     {
@@ -45,8 +43,6 @@ private:
    * @return
    */
   bool listDevicesCb(temoto_2::ListDevices::Request& req, temoto_2::ListDevices::Response& res);
-
-  void syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload);
 
   /*
    * Callback to a service that executes/runs a requested device
@@ -75,40 +71,16 @@ private:
    */
   void statusCb(temoto_2::ResourceStatus& srv);
 
-  void advertiseSensor(SensorInfoPtr sensor_ptr);
+  ///  ros::ServiceServer list_devices_server_;
+  rmp::ResourceManager<SensorManagerServers> resource_manager_;
 
-  void advertiseLocalSensors();
+  /// List of allocated sensors
+  std::map<temoto_id::ID, SensorInfo> allocated_sensors_;
 
-  std::vector<SensorInfoPtr> parseSensors(const YAML::Node& config);
+  /// Sensor Info Database
+  SensorInfoDatabase* sid_;
 
-  /**
-   * @brief findSensor
-   * @param req
-   * @param sensors
-   * @return
-   */
-  SensorInfoPtr findSensor(temoto_2::LoadSensor::Request& req, const std::vector<SensorInfoPtr>& sensors);
-
-  //  ros::ServiceServer list_devices_server_;
-  rmp::ResourceManager<SensorManager> resource_manager_;
-  rmp::ConfigSynchronizer<SensorManager, PayloadType> config_syncer_;
-
-  /**
-   * @brief List of all locally defined sensors.
-   */
-  std::vector<SensorInfoPtr> local_sensors_;
-  
-  /**
-   * @brief List of all sensors in remote managers.
-   */
-  std::vector<SensorInfoPtr> remote_sensors_;
-
-  /**
-   * @brief List of allocated sensors
-   */
-  std::map<temoto_id::ID, SensorInfoPtr> allocated_sensors_;
-
-}; // SensorManager
+}; // SensorManagerServers
 
 } // sensor_manager namespace
 

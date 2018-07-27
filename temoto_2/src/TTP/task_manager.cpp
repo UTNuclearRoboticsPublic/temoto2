@@ -298,62 +298,62 @@ std::vector <TaskDescriptor> TaskManager::findTaskFilesys(std::string task_to_fi
                                                           boost::filesystem::directory_entry base_path,
                                                           int search_depth)
 {
-    boost::filesystem::path current_dir (base_path);
-    boost::filesystem::directory_iterator end_itr;
-    std::vector <TaskDescriptor> tasks_found;
+  boost::filesystem::path current_dir (base_path);
+  boost::filesystem::directory_iterator end_itr;
+  std::vector <TaskDescriptor> tasks_found;
 
-    try
+  try
+  {
+    // Start looking the files inside current directory
+    for ( boost::filesystem::directory_iterator itr( current_dir ); itr != end_itr; ++itr )
     {
-        // Start looking the files inside current directory
-        for ( boost::filesystem::directory_iterator itr( current_dir ); itr != end_itr; ++itr )
+
+      // if its a directory and depth limit is not there yet, go inside it
+      if ( boost::filesystem::is_directory(*itr) && (search_depth > 0) )
+      {
+        std::vector<TaskDescriptor> sub_tasks_found = findTaskFilesys( task_to_find, *itr, (search_depth - 1) );
+
+        // Append the subtasks if not empty
+        if ( !sub_tasks_found.empty() )
         {
-
-            // if its a directory and depth limit is not there yet, go inside it
-            if ( boost::filesystem::is_directory(*itr) && (search_depth > 0) )
-            {
-                std::vector<TaskDescriptor> sub_tasks_found = findTaskFilesys( task_to_find, *itr, (search_depth - 1) );
-
-                // Append the subtasks if not empty
-                if ( !sub_tasks_found.empty() )
-                {
-                    tasks_found.insert(std::end(tasks_found), std::begin(sub_tasks_found), std::end(sub_tasks_found));
-                }
-            }
-
-            // if its a file and matches the desc file name, process the file
-            else if ( boost::filesystem::is_regular_file(*itr) &&
-                      ((*itr).path().filename() == description_file_) )
-            {
-                try
-                {
-                    /*
-                     * Create a description processor object and Get TaskDescriptor
-                     * I THINK THIS SHOULD NOT BE CREATED EVERY SINGLE TIME
-                     */
-                    boost::filesystem::path hackdir ((*itr)); //HACKATON
-                    TaskDescriptorProcessor tdp(hackdir.parent_path().string(), *this);
-                    tasks_found.push_back(tdp.getTaskDescriptor());
-                }
-
-                catch(error::ErrorStack& error_stack)
-                {
-                  FORWARD_ERROR(error_stack);
-                }
-            }
+          tasks_found.insert(std::end(tasks_found), std::begin(sub_tasks_found), std::end(sub_tasks_found));
         }
-        return std::move(tasks_found);
-    }
-    catch (std::exception& e)
-    {
-        // Rethrow the exception
-        throw CREATE_ERROR(error::Code::FIND_TASK_FAIL, e.what());
-    }
+      }
 
-    catch(...)
-    {
-        // Rethrow the exception
-        throw CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Received an unhandled exception");
+      // if its a file and matches the desc file name, process the file
+      else if ( boost::filesystem::is_regular_file(*itr) &&
+                ((*itr).path().filename() == description_file_) )
+      {
+        try
+        {
+          /*
+           * Create a description processor object and Get TaskDescriptor
+           * I THINK THIS SHOULD NOT BE CREATED EVERY SINGLE TIME
+           */
+          boost::filesystem::path hackdir ((*itr)); //HACKATON
+          TaskDescriptorProcessor tdp(hackdir.parent_path().string(), *this);
+          tasks_found.push_back(tdp.getTaskDescriptor());
+        }
+
+        catch(error::ErrorStack& error_stack)
+        {
+          FORWARD_ERROR(error_stack);
+        }
+      }
     }
+    return std::move(tasks_found);
+  }
+  catch (std::exception& e)
+  {
+    // Rethrow the exception
+    throw CREATE_ERROR(error::Code::FIND_TASK_FAIL, e.what());
+  }
+
+  catch(...)
+  {
+    // Rethrow the exception
+    throw CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Received an unhandled exception");
+  }
 }
 
 /* * * * * * * * *

@@ -1,0 +1,10 @@
+<task action="find">
+    <interface id="0" type="asynchronous">
+        <in>
+            <what word="sensor packages">
+                <data datatype="string" />
+                <data datatype="pointer" />
+            </what>
+        </in>
+    </interface>
+</task>

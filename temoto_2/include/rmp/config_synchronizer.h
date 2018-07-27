@@ -100,7 +100,7 @@ public:
    * @brief Advertise payload to others
    * @param payload
    */
-  void advertise(const PayloadType& payload, std::string sync_action = sync_action::ADVERTISE_CONFIG)
+  void advertise(const PayloadType& payload, std::string sync_action = sync_action::ADVERTISE_CONFIG) const
   {
     try
     {

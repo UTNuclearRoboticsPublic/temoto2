@@ -7,20 +7,20 @@
 #include "temoto_2/ConfigSync.h"
 #include "TTP/task_manager.h"
 
+#include "ros/ros.h"
+
 namespace sensor_manager
 {
 
 class SensorSnooper : public BaseSubsystem
 {
-
   typedef std_msgs::String PayloadType;
 
 public:
 
-  SensorSnooper( BaseSubsystem* b
-               , SensorInfoDatabase* sid);
+  SensorSnooper( BaseSubsystem* b, SensorInfoDatabase* sid);
 
-  void advertiseSensor(SensorInfoPtr sensor_ptr) const;
+  void advertiseSensor(SensorInfo& si) const;
 
   void advertiseLocalSensors() const;
 
@@ -32,12 +32,18 @@ private:
 
   void startSnooping();
 
+  void updateMonitoringTimerCb(const ros::TimerEvent &e);
+
+
+  ros::NodeHandle nh_;
 
   rmp::ConfigSynchronizer<SensorSnooper, PayloadType> config_syncer_;
 
   SensorInfoDatabase* sid_;
 
   TTP::TaskManager action_engine_;
+
+  ros::Timer update_monitoring_timer_;
 
 };
 

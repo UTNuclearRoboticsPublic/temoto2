@@ -53,9 +53,10 @@ bool SensorInfoDatabase::updateLocalSensor(const SensorInfo &si)
                               });
 
   // Update the local sensor if its found
-  if (it == local_sensors_.end())
+  if (it != local_sensors_.end())
   {
-    *it = *si;
+    *it = si;
+    it->setUpdated(true);
     return true;
   }
 
@@ -76,9 +77,10 @@ bool SensorInfoDatabase::updateRemoteSensor(const SensorInfo &si)
                               });
 
   // Update the local sensor if its found
-  if (it == remote_sensors_.end())
+  if (it != remote_sensors_.end())
   {
-    *it = *si;
+    *it = si;
+    it->setUpdated(true);
     return true;
   }
 
@@ -139,15 +141,15 @@ bool SensorInfoDatabase::findRemoteSensor( const SensorInfo &si ) const
 }
 
 bool SensorInfoDatabase::findSensor( temoto_2::LoadSensor::Request& req
-                                    , const std::vector<SensorInfo>& sensors
-                                    , SensorInfo& si_ret )
+                                   , const std::vector<SensorInfo>& sensors
+                                   , SensorInfo& si_ret ) const
 {
   // Local list of devices that follow the requirements
   std::vector<SensorInfo> candidates;
 
   // Find the devices that follow the "type" criteria
-  auto it = std::copy_if(sensor_infos.begin()
-                       , sensor_infos.end()
+  auto it = std::copy_if(sensors.begin()
+                       , sensors.end()
                        , std::back_inserter(candidates)
                        , [&](const SensorInfo& s)
                          {
@@ -238,7 +240,7 @@ bool SensorInfoDatabase::findSensor( temoto_2::LoadSensor::Request& req
   return true;
 }
 
-bool SensorInfoDatabase::findSensor( SensorInfo &si
+bool SensorInfoDatabase::findSensor( const SensorInfo &si
                                    , const std::vector<SensorInfo>& sensors
                                    , SensorInfo& si_ret ) const
 {
@@ -246,7 +248,7 @@ bool SensorInfoDatabase::findSensor( SensorInfo &si
                               , sensors.end()
                               , [&](const SensorInfo& rs)
                               {
-                                return rs == sensor;
+                                return rs == si;
                               });
 
   if (it != sensors.end())

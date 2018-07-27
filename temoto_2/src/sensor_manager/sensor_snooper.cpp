@@ -1,5 +1,6 @@
 #include "sensor_manager/sensor_snooper.h"
 #include "sensor_manager/sensor_manager_services.h"
+#include "sensor_manager/sensor_manager_yaml.h"
 
 #include "ros/package.h"
 #include <yaml-cpp/yaml.h>
@@ -13,16 +14,16 @@ namespace sensor_manager
 
 SensorSnooper::SensorSnooper( BaseSubsystem*b
                             , SensorInfoDatabase* sid)
-: BaseSubsystem(*b)
+: BaseSubsystem(*b, __func__)
 , config_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &SensorSnooper::syncCb, this)
 , action_engine_(this, false, ros::package::getPath(ROS_PACKAGE_NAME) + "/../actions/object_tracker_actions")
 , sid_(sid)
 {
-  // Get the name of this class
-  class_name_ = __func__;
-
   // Run the sensor snooping actions
   startSnooping();
+
+  // Sensor Info update monitoring timer
+  update_monitoring_timer_ = nh_.createTimer(ros::Duration(1), &SensorSnooper::updateMonitoringTimerCb, this);
 
   // Get remote sensor_infos
   config_syncer_.requestRemoteConfigs();
@@ -75,11 +76,11 @@ void SensorSnooper::startSnooping()
 //  tracker_core_.executeSFT(std::move(sft));
 }
 
-void SensorSnooper::advertiseSensor(SensorInfoPtr sensor_ptr) const
+void SensorSnooper::advertiseSensor(SensorInfo& si) const
 {
   //TEMOTO_DEBUG("------ Advertising Sensor \n %s", sensor_ptr->toString().c_str());
   YAML::Node config;
-  config["Sensors"].push_back(*sensor_ptr);
+  config["Sensors"].push_back(si);
   PayloadType payload;
   payload.data = Dump(config);
   config_syncer_.advertise(payload);
@@ -195,6 +196,22 @@ void SensorSnooper::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& p
       {
         sid_->addRemoteSensor(*sensor);
       }
+    }
+  }
+}
+
+void SensorSnooper::updateMonitoringTimerCb(const ros::TimerEvent& e)
+{
+
+  // Iterate through local sensors and check if their reliability has been updated
+  for (const auto sensor : sid_->getLocalSensors())
+  {
+    if (sensor.getUpdated())
+    {
+      SensorInfo si = sensor;
+      si.setUpdated(false);
+      sid_->updateLocalSensor(si);
+      advertiseSensor(si);
     }
   }
 }

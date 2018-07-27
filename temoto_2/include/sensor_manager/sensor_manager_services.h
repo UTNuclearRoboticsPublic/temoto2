@@ -17,6 +17,12 @@ namespace sensor_manager
   }
 }
 
+/**
+ * @brief operator ==
+ * @param r1
+ * @param r2
+ * @return
+ */
 static bool operator==(const temoto_2::LoadSensor::Request& r1,
                        const temoto_2::LoadSensor::Request& r2)
 {

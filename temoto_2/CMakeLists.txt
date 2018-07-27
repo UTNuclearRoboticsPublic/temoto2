@@ -139,13 +139,15 @@ target_link_libraries(context_manager ${catkin_LIBRARIES} yaml-cpp ttp)
 # # # # # # # # # # # #
 # SENSOR MANAGER
 # # # # # # # # # # # #
-add_executable(sensor_manager src/sensor_manager/sensor_manager.cpp 
-	                            src/sensor_manager/sensor_manager_node.cpp
+add_executable(sensor_manager src/sensor_manager/sensor_manager_node.cpp
+	                            src/sensor_manager/sensor_manager_servers.cpp
+                              src/sensor_manager/sensor_snooper.cpp
+                              src/sensor_manager/sensor_info_database.cpp
 	                            src/sensor_manager/sensor_info.cpp
                               src/common/reliability.cpp
                               src/temoto_error/temoto_error.cpp)
 add_dependencies(sensor_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(sensor_manager ${catkin_LIBRARIES} yaml-cpp )
+target_link_libraries(sensor_manager ${catkin_LIBRARIES} yaml-cpp ttp)
 
 # # # # # # # # # # # #
 # ALGORITHM MANAGER
