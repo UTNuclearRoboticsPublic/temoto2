@@ -185,10 +185,7 @@ void TaskManager::executeVerbalInstruction (std::string& verbal_instruction)
     TaskTree sft = language_processor_->processText(std::move(verbal_instruction));
 
     // Execute the SFT
-    // executeSFT(std::move(sft));
-
-    //flow_graph_threads_.emplace_back(&TaskManager::executeSFT, this, std::move(sft));
-    flow_graph_futures_.push_back(std::async(std::launch::async, &TaskManager::executeSFT, this, std::move(sft)));
+    executeSFTThreaded(std::move(sft));
 
   }
   catch(error::ErrorStack& error_stack)
@@ -197,6 +194,15 @@ void TaskManager::executeVerbalInstruction (std::string& verbal_instruction)
   }
 
   return;
+}
+
+
+/* * * * * * * * *
+ *  EXECUTE SFT THREADED
+ * * * * * * * * */
+void TaskManager::executeSFTThreaded(TaskTree sft)
+{
+  flow_graph_futures_.push_back(std::async(std::launch::async, &TaskManager::executeSFT, this, std::move(sft)));
 }
 
 /* * * * * * * * *
@@ -259,6 +265,7 @@ void TaskManager::executeSFT(TaskTree sft)
   }
 
   // Let others know that action execution engine is not busy
+  // TODO: in a multithreaded case this will fail
   action_executioner_busy_ = false;
 }
 

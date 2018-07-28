@@ -87,6 +87,7 @@ void startInterface_0()
 
   // Get the catkin workspace src directory path
   std::string catkin_ws_src_dir = what_0_data_0_in;
+  sensor_manager::SensorInfoDatabase* sid = what_0_data_1_in;
 
   // Look for new packages every 10 seconds
   while(stop_task_ == false)
@@ -94,22 +95,37 @@ void startInterface_0()
     TEMOTO_INFO_STREAM("Snooping the catkin workspace at: " << catkin_ws_src_dir);
 
     // Find all sensor descriptor file paths
-    std::vector<std::string> sensor_desc_file_paths = findSensorDescFiles(catkin_ws_src_dir);
+    boost::filesystem::path base_path (catkin_ws_src_dir);
+    std::vector<std::string> sensor_desc_file_paths = findSensorDescFiles(base_path);
 
     // Read in the sensor descriptors
     std::vector<sensor_manager::SensorInfo> sensor_infos;
     for (const std::string& desc_file_path : sensor_desc_file_paths)
     {
-      sensor_manager::SensorInfo sensor_info;
-
       try
       {
         std::vector<sensor_manager::SensorInfo> sensor_infos_current = getSensorInfo(desc_file_path);
-        // sensor_infos.push_back(sensor_info);
+        sensor_infos.insert( sensor_infos.end()
+                           , sensor_infos_current.begin()
+                           , sensor_infos_current.end());
       }
       catch(...)
       {
         // TODO: implement a proper catch block
+      }
+    }
+
+    TEMOTO_INFO_STREAM("got " << sensor_infos.size() << " sensors");
+
+    for (auto si : sensor_infos)
+    {
+      if (sid->addLocalSensor(si))
+      {
+        TEMOTO_INFO_STREAM("Added a new sensor");
+      }
+      else
+      {
+        TEMOTO_INFO_STREAM("This sensor already exists in the SID");
       }
     }
 
@@ -123,66 +139,54 @@ void startInterface_0()
  * @param path
  * @return
  */
-std::vector<std::string> findSensorDescFiles(const std::string& path) const
+std::vector<std::string> findSensorDescFiles( const boost::filesystem::path& base_path, int search_depth = 1)
 {
-//  boost::filesystem::path current_dir (base_path);
-//  boost::filesystem::directory_iterator end_itr;
-//  std::vector <TaskDescriptor> tasks_found;
+  boost::filesystem::directory_iterator end_itr;
+  std::vector <std::string> desc_file_paths;
 
-//  try
-//  {
-//    // Start looking the files inside current directory
-//    for ( boost::filesystem::directory_iterator itr( current_dir ); itr != end_itr; ++itr )
-//    {
+  try
+  {
+    // Start looking the files inside current directory
+    for (boost::filesystem::directory_iterator itr( base_path ); itr != end_itr; ++itr)
+    {
+      // if its a directory and depth limit is not there yet, go inside it
+      if (boost::filesystem::is_directory(*itr) &&
+          checkIgnoreDirs(itr->path().filename().string()) &&
+          (search_depth > 0))
+      {
+         std::vector <std::string> sub_desc_file_paths = findSensorDescFiles( *itr, search_depth - 1 );
 
-//      // if its a directory and depth limit is not there yet, go inside it
-//      if ( boost::filesystem::is_directory(*itr) && (search_depth > 0) )
-//      {
-//        std::vector<TaskDescriptor> sub_tasks_found = findTaskFilesys( task_to_find, *itr, (search_depth - 1) );
+        // Append the subtasks if not empty
+        if (!sub_desc_file_paths.empty())
+        {
+          desc_file_paths.insert( std::end(desc_file_paths)
+                                , std::begin(sub_desc_file_paths)
+                                , std::end(sub_desc_file_paths));
+        }
+      }
 
-//        // Append the subtasks if not empty
-//        if ( !sub_tasks_found.empty() )
-//        {
-//          tasks_found.insert(std::end(tasks_found), std::begin(sub_tasks_found), std::end(sub_tasks_found));
-//        }
-//      }
+      // if its a file and matches the desc file name, process the file
+      else if ( boost::filesystem::is_regular_file(*itr) &&
+                (itr->path().filename() == description_file_) )
+      {
+        desc_file_paths.push_back(itr->path().string());
+      }
 
-//      // if its a file and matches the desc file name, process the file
-//      else if ( boost::filesystem::is_regular_file(*itr) &&
-//                ((*itr).path().filename() == description_file_) )
-//      {
-//        try
-//        {
-//          /*
-//           * Create a description processor object and Get TaskDescriptor
-//           * I THINK THIS SHOULD NOT BE CREATED EVERY SINGLE TIME
-//           */
-//          boost::filesystem::path hackdir ((*itr)); //HACKATON
-//          TaskDescriptorProcessor tdp(hackdir.parent_path().string(), *this);
-//          tasks_found.push_back(tdp.getTaskDescriptor());
-//        }
 
-//        catch(error::ErrorStack& error_stack)
-//        {
-//          FORWARD_ERROR(error_stack);
-//        }
-//      }
-//    }
-//    return std::move(tasks_found);
-//  }
-//  catch (std::exception& e)
-//  {
-//    // Rethrow the exception
-//    throw CREATE_ERROR(error::Code::FIND_TASK_FAIL, e.what());
-//  }
+    }
+    return desc_file_paths;
+  }
+  catch (std::exception& e)
+  {
+    // Rethrow the exception
+    throw CREATE_ERROR(error::Code::FIND_TASK_FAIL, e.what());
+  }
 
-//  catch(...)
-//  {
-//    // Rethrow the exception
-//    throw CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Received an unhandled exception");
-//  }
-
-  return std::vector<std::string>();
+  catch(...)
+  {
+    // Rethrow the exception
+    throw CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Received an unhandled exception");
+  }
 }
 
 /**
@@ -275,6 +279,30 @@ std::vector<sensor_manager::SensorInfo> parseSensors(const YAML::Node& config) c
   }
   return std::move(sensors);
 }
+
+/**
+ * @brief Checks if the given directory should be ignored or not
+ * @param dir
+ * @return
+ */
+bool checkIgnoreDirs( std::string dir)
+{
+  for (const std::string& ignore_dir : ignore_dirs_)
+  {
+    if (dir == ignore_dir)
+    {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/// Directories that can be ignored
+std::vector<std::string> ignore_dirs_{"src", "launch", "config", "build", "description"};
+
+/// Name of the sensor description file
+std::string description_file_= "sensor_description.yaml";
 
 }; // TaFindSensorPackages class
 

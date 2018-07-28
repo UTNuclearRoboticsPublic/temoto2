@@ -39,9 +39,9 @@ public:
 
   bool addRemoteSensor( const SensorInfo& si );
 
-  bool updateLocalSensor( const SensorInfo& si );
+  bool updateLocalSensor(const SensorInfo& si, bool advertised = false);
 
-  bool updateRemoteSensor( const SensorInfo& si );
+  bool updateRemoteSensor(const SensorInfo& si, bool advertised = false);
 
   const std::vector<SensorInfo>& getLocalSensors() const;
 

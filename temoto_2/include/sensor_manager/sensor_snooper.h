@@ -24,13 +24,13 @@ public:
 
   void advertiseLocalSensors() const;
 
+  void startSnooping();
+
   std::vector<SensorInfoPtr> parseSensors(const YAML::Node& config);
 
 private:
 
   void syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload);
-
-  void startSnooping();
 
   void updateMonitoringTimerCb(const ros::TimerEvent &e);
 

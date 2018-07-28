@@ -16,12 +16,9 @@ SensorSnooper::SensorSnooper( BaseSubsystem*b
                             , SensorInfoDatabase* sid)
 : BaseSubsystem(*b, __func__)
 , config_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &SensorSnooper::syncCb, this)
-, action_engine_(this, false, ros::package::getPath(ROS_PACKAGE_NAME) + "/../actions/object_tracker_actions")
+, action_engine_(this, false, ros::package::getPath(ROS_PACKAGE_NAME) + "/../actions/resource_snooper_actions")
 , sid_(sid)
 {
-  // Run the sensor snooping actions
-  startSnooping();
-
   // Sensor Info update monitoring timer
   update_monitoring_timer_ = nh_.createTimer(ros::Duration(1), &SensorSnooper::updateMonitoringTimerCb, this);
 
@@ -38,42 +35,36 @@ void SensorSnooper::startSnooping()
    * running in the background until its ordered to be stopped.
    */
 
-//  std::string action = "track";
-//  TTP::Subjects subjects;
+  std::string action = "find";
+  TTP::Subjects subjects;
 
-//  // Subject that will contain the name of the tracked object.
-//  // Necessary when the tracker has to be stopped
-//  TTP::Subject sub_0("what", object_name_no_space);
+  // Subject that will contain the name of the tracked object.
+  // Necessary when the tracker has to be stopped
+  TTP::Subject sub_0("what", "sensor packages");
 
-//  // Subject that will contain the data necessary for the specific tracker
-//  TTP::Subject sub_1("what", "artag data");
+  // Topic from where the raw AR tag tracker data comes from
+  std::string catkin_ws = ros::package::getPath(ROS_PACKAGE_NAME) + "/../..";
+  sub_0.addData("string", catkin_ws);
 
-//  // Topic from where the raw AR tag tracker data comes from
-//  sub_1.addData("topic", tracker_data_topic);
+  // This object will be updated inside the tracking AImp (action implementation)
+  sub_0.addData("pointer", boost::any_cast<SensorInfoDatabase*>(sid_));
 
-//  // Topic where the AImp must publish the data about the tracked object
-//  sub_1.addData("topic", tracked_object_topic);
+  subjects.push_back(sub_0);
 
-//  // This object will be updated inside the tracking AImp (action implementation)
-//  sub_1.addData("pointer", boost::any_cast<ObjectPtr>(requested_object));
+  // Create a SF
+  std::vector<TTP::TaskDescriptor> task_descriptors;
+  task_descriptors.emplace_back(action, subjects);
+  task_descriptors[0].setActionStemmed(action);
 
-//  subjects.push_back(sub_0);
-//  subjects.push_back(sub_1);
+  // Create a sematic frame tree
+  TTP::TaskTree sft = TTP::SFTBuilder::build(task_descriptors);
 
-//  // Create a SF
-//  std::vector<TTP::TaskDescriptor> task_descriptors;
-//  task_descriptors.emplace_back(action, subjects);
-//  task_descriptors[0].setActionStemmed(action);
+  // Get the root node of the tree
+  TTP::TaskTreeNode& root_node = sft.getRootNode();
+  sft.printTaskDescriptors(root_node);
 
-//  // Create a sematic frame tree
-//  TTP::TaskTree sft = TTP::SFTBuilder::build(task_descriptors);
-
-//  // Get the root node of the tree
-//  TTP::TaskTreeNode& root_node = sft.getRootNode();
-//  sft.printTaskDescriptors(root_node);
-
-//  // Execute the SFT
-//  tracker_core_.executeSFT(std::move(sft));
+  // Execute the SFT
+  action_engine_.executeSFTThreaded(std::move(sft));
 }
 
 void SensorSnooper::advertiseSensor(SensorInfo& si) const
@@ -206,11 +197,10 @@ void SensorSnooper::updateMonitoringTimerCb(const ros::TimerEvent& e)
   // Iterate through local sensors and check if their reliability has been updated
   for (const auto sensor : sid_->getLocalSensors())
   {
-    if (sensor.getUpdated())
+    if (!sensor.getAdvertised())
     {
       SensorInfo si = sensor;
-      si.setUpdated(false);
-      sid_->updateLocalSensor(si);
+      sid_->updateLocalSensor(si, true);
       advertiseSensor(si);
     }
   }

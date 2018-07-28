@@ -15,6 +15,7 @@ public:
   , ss_(this, &sid_)
   , sms_(this, &sid_)
   {
+    ss_.startSnooping();
     TEMOTO_INFO("Sensor Manager is good to go.");
   }
 

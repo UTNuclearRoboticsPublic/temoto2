@@ -40,7 +40,7 @@ bool SensorInfoDatabase::addRemoteSensor(const SensorInfo &si)
   return false;
 }
 
-bool SensorInfoDatabase::updateLocalSensor(const SensorInfo &si)
+bool SensorInfoDatabase::updateLocalSensor(const SensorInfo &si, bool advertised)
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
@@ -56,7 +56,7 @@ bool SensorInfoDatabase::updateLocalSensor(const SensorInfo &si)
   if (it != local_sensors_.end())
   {
     *it = si;
-    it->setUpdated(true);
+    it->setAdvertised( advertised );
     return true;
   }
 
@@ -64,7 +64,7 @@ bool SensorInfoDatabase::updateLocalSensor(const SensorInfo &si)
   return false;
 }
 
-bool SensorInfoDatabase::updateRemoteSensor(const SensorInfo &si)
+bool SensorInfoDatabase::updateRemoteSensor(const SensorInfo &si, bool advertised)
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
@@ -80,7 +80,7 @@ bool SensorInfoDatabase::updateRemoteSensor(const SensorInfo &si)
   if (it != remote_sensors_.end())
   {
     *it = si;
-    it->setUpdated(true);
+    it->setAdvertised( advertised );
     return true;
   }
 
@@ -244,6 +244,7 @@ bool SensorInfoDatabase::findSensor( const SensorInfo &si
                                    , const std::vector<SensorInfo>& sensors
                                    , SensorInfo& si_ret ) const
 {
+
   const auto it = std::find_if( sensors.begin()
                               , sensors.end()
                               , [&](const SensorInfo& rs)
@@ -251,7 +252,8 @@ bool SensorInfoDatabase::findSensor( const SensorInfo &si
                                 return rs == si;
                               });
 
-  if (it != sensors.end())
+
+  if (it == sensors.end())
   {
     return false;
   }

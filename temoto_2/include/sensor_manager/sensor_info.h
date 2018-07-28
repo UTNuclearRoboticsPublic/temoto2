@@ -97,9 +97,9 @@ public:
     return getTemotoNamespace() == common::getTemotoNamespace();
   }
 
-  bool getUpdated() const
+  bool getAdvertised() const
   {
-    return updated_;
+    return advertised_;
   }
 
 
@@ -141,9 +141,9 @@ public:
     description_ = description;
   }
 
-  void setUpdated(bool updated)
+  void setAdvertised(bool advertised)
   {
-    updated_ = updated;
+    advertised_ = advertised;
   }
 
 
@@ -161,7 +161,7 @@ private:
   std::string description_;
   Reliability reliability_;
   std::vector<StringPair> output_topics_;
-  bool updated_ = false;
+  bool advertised_ = false;
 };
 
 typedef std::shared_ptr<SensorInfo> SensorInfoPtr;

@@ -89,6 +89,8 @@ public:
 
   void executeVerbalInstruction (std::string& verbal_instruction);
 
+  void executeSFTThreaded(TaskTree sft);
+
   void executeSFT (TaskTree sft);
 
   /**
