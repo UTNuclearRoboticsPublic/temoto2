@@ -60,6 +60,7 @@ public:
     try
     {
       startTask(task_interface);
+      task_is_finished_ = true;
     }
     catch(error::ErrorStack& error_stack)
     {
@@ -90,6 +91,15 @@ public:
   {
     stop_task_ = true;
     return 0;
+  }
+
+  /**
+   * @brief taskFinished
+   * @return
+   */
+  bool taskFinished()
+  {
+    return task_is_finished_;
   }
 
   /**
@@ -147,6 +157,7 @@ protected:
 
   std::string description;
   bool stop_task_ = false;
+  bool task_is_finished_ = false;
 
 private:
 

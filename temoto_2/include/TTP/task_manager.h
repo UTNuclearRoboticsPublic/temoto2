@@ -118,6 +118,8 @@ public:
    */
   void stopTask(std::string action = "", std::string what = "");
 
+  ~TaskManager();
+
 private:
 
   const std::string description_file_ = "descriptor.xml";
@@ -134,6 +136,8 @@ private:
   std::vector<std::future<void>> flow_graph_futures_;
 
   std::vector<std::pair<boost::shared_ptr<TaskDescriptor>, boost::shared_ptr<BaseTask>>> asynchronous_tasks_;
+
+  std::vector<std::pair<boost::shared_ptr<TaskDescriptor>, boost::shared_ptr<BaseTask>>> synchronous_tasks_;
 
   std::vector<std::string> synchronous_task_libs_;
 

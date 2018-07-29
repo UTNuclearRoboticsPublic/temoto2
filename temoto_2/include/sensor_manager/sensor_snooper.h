@@ -28,6 +28,8 @@ public:
 
   std::vector<SensorInfoPtr> parseSensors(const YAML::Node& config);
 
+  ~SensorSnooper();
+
 private:
 
   void syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload);

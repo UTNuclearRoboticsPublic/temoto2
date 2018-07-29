@@ -206,4 +206,9 @@ void SensorSnooper::updateMonitoringTimerCb(const ros::TimerEvent& e)
   }
 }
 
+SensorSnooper::~SensorSnooper()
+{
+  TEMOTO_INFO("in the destructor of Sensor Snooper");
+}
+
 } // sensor_manager namespace
