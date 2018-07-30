@@ -92,7 +92,7 @@ void startInterface_0()
   // Look for new packages every 10 seconds
   while(stop_task_ == false)
   {
-    TEMOTO_INFO_STREAM("Snooping the catkin workspace at: " << catkin_ws_src_dir);
+    TEMOTO_DEBUG_STREAM("Snooping the catkin workspace at: " << catkin_ws_src_dir);
 
     // Find all sensor descriptor file paths
     boost::filesystem::path base_path (catkin_ws_src_dir);
@@ -115,17 +115,17 @@ void startInterface_0()
       }
     }
 
-    TEMOTO_INFO_STREAM("got " << sensor_infos.size() << " sensors");
+    TEMOTO_DEBUG_STREAM("got " << sensor_infos.size() << " sensors");
 
     for (auto si : sensor_infos)
     {
       if (sid->addLocalSensor(si))
       {
-        TEMOTO_INFO_STREAM("Added a new sensor");
+        TEMOTO_DEBUG("Added a new sensor");
       }
       else
       {
-        TEMOTO_INFO_STREAM("This sensor already exists in the SID");
+        TEMOTO_DEBUG("This sensor already exists in the SID");
       }
     }
 

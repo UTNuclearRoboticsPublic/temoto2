@@ -6,12 +6,3 @@ Sensors:
   topic:  "/terminal_text"
   output_topics:
     data: "/terminal_text"
-
-- sensor_name: "Google Speech"
-  sensor_type: "speech"
-  package_name: "google_speech_to_text"
-  executable:  "en-US.launch"
-  topic:  "stt/spoken_text"
-  output_topics:
-    data: "stt/spoken_text"
-  #  reliability: 0.9
