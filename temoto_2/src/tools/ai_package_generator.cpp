@@ -260,7 +260,7 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "ai_package_generator");
   ros::NodeHandle n;
-  std::string base_template_path = ros::package::getPath(ROS_PACKAGE_NAME) + "/test/";
+  std::string base_template_path = ros::package::getPath(ROS_PACKAGE_NAME) + "/";
 
   // Subscriber that generates the action implementation package
   ros::Subscriber ad_subscriber = n.subscribe(ACTION_DESCRIPTOR_TOPIC, 10, generatePackageCb);

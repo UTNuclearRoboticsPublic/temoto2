@@ -153,9 +153,10 @@ target_link_libraries(sensor_manager ${catkin_LIBRARIES} yaml-cpp ttp)
 # ALGORITHM MANAGER
 # # # # # # # # # # # #
 add_executable(algorithm_manager src/algorithm_manager/algorithm_manager_node.cpp
-                                 src/algorithm_manager/algorithm_manager_servers.cpp
-                                 src/algorithm_manager/algorithm_snooper.cpp
-                                 src/algorithm_manager/algorithm_info_registry.cpp 
+                                 src/algorithm_manager/algorithm_manager.cpp
+                                 #src/algorithm_manager/algorithm_manager_servers.cpp
+                                 #src/algorithm_manager/algorithm_snooper.cpp
+                                 #src/algorithm_manager/algorithm_info_registry.cpp 
 	                               src/algorithm_manager/algorithm_info.cpp
                                  src/temoto_error/temoto_error.cpp)
 add_dependencies(algorithm_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})

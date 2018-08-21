@@ -1095,8 +1095,13 @@ void TaskManager::instantiateTask(TaskTreeNode& node)
      */
     if (task_descriptor.getFirstInterface().type_ == "asynchronous")
     {
-        TEMOTO_DEBUG_STREAM("This is an async task, making a copy of the shared ptr\n");
-        asynchronous_tasks_.push_back( {node.task_descriptor_ptr_, node.task_pointer_} );
+      TEMOTO_DEBUG_STREAM("This is an Asynchronous task, making a copy of the shared ptr\n");
+      asynchronous_tasks_.push_back( {node.task_descriptor_ptr_, node.task_pointer_} );
+    }
+    else
+    {
+      TEMOTO_DEBUG_STREAM("This is a Synchronous task, making a copy of the shared ptr\n");
+      synchronous_tasks_.push_back( {node.task_descriptor_ptr_, node.task_pointer_} );
     }
 
     return;
@@ -1507,7 +1512,90 @@ void TaskManager::threadJoiningTimerCallback(const ros::TimerEvent& e)
       future_it++;
     }
   }
+
+  // Check if a synchronous task has finished
+  for (auto itr = synchronous_tasks_.begin();
+       itr != synchronous_tasks_.end();
+       /* empty */)
+  {
+    TEMOTO_INFO_STREAM("Use count of this synchronous task is: " << itr->second.use_count());
+    if (itr->second.use_count() == 1)
+    {
+      TEMOTO_INFO_STREAM("Destructing synchronous task");
+      synchronous_tasks_.erase(itr);
+    }
+    else
+    {
+      itr++;
+    }
+  }
 }
 
+TaskManager::~TaskManager()
+{
+  TEMOTO_INFO("Stopping all actions");
+
+  // Stop the synchronous actions
+  for (auto itr = synchronous_tasks_.begin();
+       itr != synchronous_tasks_.end();
+       /* empty */)
+  {
+    TEMOTO_INFO_STREAM("Use count of this synchronous task is: " << itr->second.use_count());
+    if (itr->second.use_count() == 1)
+    {
+      TEMOTO_INFO_STREAM("Destructing synchronous task");
+      synchronous_tasks_.erase(itr);
+    }
+    else if (itr->second.use_count() > 1)
+    {
+      // Tell the task to finish its business
+      itr->second->stopTask();
+
+      // Wait until the task has actually finished
+      // TODO: also add a timeout for the while loop. if the timeout is reached
+      // then somehow force the action to stop
+      while (!itr->second->taskFinished() || itr->second.use_count() > 1)
+      {
+        TEMOTO_INFO_STREAM("Waiting the Synchronous action to finish ...");
+        ros::Duration(0.1).sleep();
+      }
+
+      // Erase the task
+      synchronous_tasks_.erase(itr);
+    }
+  }
+
+  // Stop the asynchronous actions
+  for (auto itr = asynchronous_tasks_.begin();
+       itr != asynchronous_tasks_.end();
+       /* empty */)
+  {
+    TEMOTO_INFO_STREAM("Use count of this synchronous task is: " << itr->second.use_count());
+    if (itr->second.use_count() == 1)
+    {
+      TEMOTO_INFO_STREAM("Destructing synchronous task");
+      asynchronous_tasks_.erase(itr);
+    }
+    else if (itr->second.use_count() > 1)
+    {
+      // Tell the task to finish its business
+      itr->second->stopTask();
+
+      // Wait until the task has actually finished
+      // TODO: also add a timeout for the while loop. if the timeout is reached
+      // then somehow force the action to stop
+      while (!itr->second->taskFinished() || itr->second.use_count() > 1)
+      {
+        TEMOTO_INFO_STREAM("Waiting the Asynchronous action to finish ...");
+        ros::Duration(0.1).sleep();
+      }
+
+      // Erase the task
+      asynchronous_tasks_.erase(itr);
+    }
+  }
+
+  TEMOTO_INFO("All actions stopped");
+}
 
 }// END of TTP namespace

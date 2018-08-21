@@ -7,9 +7,9 @@
 
 namespace sensor_manager
 {
-SensorManagerServers::SensorManagerServers(BaseSubsystem *b, SensorInfoRegistry *sid)
+SensorManagerServers::SensorManagerServers(BaseSubsystem *b, SensorInfoRegistry *sir)
   : BaseSubsystem(*b, __func__)
-  , sid_(sid)
+  , sir_(sir)
   , resource_manager_(srv_name::MANAGER, this)
 {
   // Start the server
@@ -43,7 +43,7 @@ void SensorManagerServers::statusCb(temoto_2::ResourceStatus& srv)
       {
         TEMOTO_WARN("Local sensor failure detected, adjusting reliability.");
         it->second.adjustReliability(0.0);
-        sid_->updateLocalSensor(it->second);
+        sir_->updateLocalSensor(it->second);
       }
       else
       {
@@ -59,7 +59,7 @@ bool SensorManagerServers::listDevicesCb( temoto_2::ListDevices::Request& req
   // std::vector <std::string> devList;
 
   // Find the devices with the required type
-  for (const auto& sensor : sid_->getLocalSensors())
+  for (const auto& sensor : sir_->getLocalSensors())
   {
     if (sensor.getType() == req.type)
     {
@@ -79,7 +79,7 @@ void SensorManagerServers::startSensorCb( temoto_2::LoadSensor::Request& req
 
   // Try to find suitable candidate from local sensors
   SensorInfo si;
-  if (sid_->findLocalSensor(req, si))
+  if (sir_->findLocalSensor(req, si))
   {
     // Try to run the sensor via local Resource Manager
     temoto_2::LoadProcess load_process_msg;
@@ -148,14 +148,14 @@ void SensorManagerServers::startSensorCb( temoto_2::LoadSensor::Request& req
       res.rmp = load_process_msg.response.rmp;
 
       si.adjustReliability(1.0);
-      sid_->updateLocalSensor(si);
+      sir_->updateLocalSensor(si);
     }
     catch(error::ErrorStack& error_stack)
     { 
       if (error_stack.front().code != static_cast<int>(error::Code::SERVICE_REQ_FAIL))
       {
         si.adjustReliability(0.0);
-        sid_->updateLocalSensor(si);
+        sir_->updateLocalSensor(si);
       }
       throw FORWARD_ERROR(error_stack);
     }
@@ -171,7 +171,7 @@ void SensorManagerServers::startSensorCb( temoto_2::LoadSensor::Request& req
 //    TEMOTO_INFO("Looking from: \n%s", rs->toString().c_str());
 //  }
 
-  if (sid_->findRemoteSensor(req, si))
+  if (sir_->findRemoteSensor(req, si))
   {
     // remote sensor candidate was found, forward the request to the remote sensor manager
     temoto_2::LoadSensor load_sensor_msg;

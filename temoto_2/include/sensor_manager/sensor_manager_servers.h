@@ -71,14 +71,14 @@ private:
    */
   void statusCb(temoto_2::ResourceStatus& srv);
 
+  /// Sensor Info Registry
+  SensorInfoRegistry* sir_;
+
   ///  ros::ServiceServer list_devices_server_;
   rmp::ResourceManager<SensorManagerServers> resource_manager_;
 
   /// List of allocated sensors
   std::map<temoto_id::ID, SensorInfo> allocated_sensors_;
-
-  /// Sensor Info Registry
-  SensorInfoRegistry* sid_;
 
 }; // SensorManagerServers
 
