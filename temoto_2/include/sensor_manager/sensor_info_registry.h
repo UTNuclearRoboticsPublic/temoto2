@@ -1,5 +1,5 @@
-#ifndef SENSOR_INFO_DATABASE_H
-#define SENSOR_INFO_DATABASE_H
+#ifndef SENSOR_INFO_REGISTRY_H
+#define SENSOR_INFO_REGISTRY_H
 
 #include "sensor_manager/sensor_info.h"
 #include "temoto_2/LoadSensor.h"
@@ -12,7 +12,7 @@ namespace sensor_manager
 /**
  * @brief Class that maintains and handles the sensor info objects
  */
-class SensorInfoDatabase
+class SensorInfoRegistry
 {
 public:
 
@@ -21,7 +21,7 @@ public:
     std::vector<SensorInfoPtr>& sensors;
   };
 
-  SensorInfoDatabase();
+  SensorInfoRegistry();
 
   bool findLocalSensor( temoto_2::LoadSensor::Request& req, SensorInfo& si_ret ) const;
 

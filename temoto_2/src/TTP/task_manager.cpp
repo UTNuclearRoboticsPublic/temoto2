@@ -131,7 +131,7 @@ void TaskManager::initCore(std::string ai_libs_path, std::string chatter_topic)
 
   else
   {
-    dir = boost::filesystem::directory_entry(temoto_path + "/../actions/user_actions");
+    dir = boost::filesystem::directory_entry(temoto_path + "/../temoto_actions/user_actions");
   }
 
   indexTasks(dir, 2);

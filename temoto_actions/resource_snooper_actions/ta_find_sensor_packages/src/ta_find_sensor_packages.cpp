@@ -22,7 +22,7 @@
 #include <class_loader/class_loader.h>  // Class loader includes
 
 #include "sensor_manager/sensor_info.h"
-#include "sensor_manager/sensor_info_database.h"
+#include "sensor_manager/sensor_info_registry.h"
 
 #include <boost/filesystem/operations.hpp>
 #include <yaml-cpp/yaml.h>
@@ -83,11 +83,11 @@ void startInterface_0()
   TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
   std::string  what_0_word_in = what_0_in.words_[0];
   std::string  what_0_data_0_in = boost::any_cast<std::string>(what_0_in.data_[0].value);
-  sensor_manager::SensorInfoDatabase*     what_0_data_1_in = boost::any_cast<sensor_manager::SensorInfoDatabase*>(what_0_in.data_[1].value);
+  sensor_manager::SensorInfoRegistry*     what_0_data_1_in = boost::any_cast<sensor_manager::SensorInfoRegistry*>(what_0_in.data_[1].value);
 
   // Get the catkin workspace src directory path
   std::string catkin_ws_src_dir = what_0_data_0_in;
-  sensor_manager::SensorInfoDatabase* sid = what_0_data_1_in;
+  sensor_manager::SensorInfoRegistry* sid = what_0_data_1_in;
 
   // Look for new packages every 10 seconds
   while(stop_task_ == false)

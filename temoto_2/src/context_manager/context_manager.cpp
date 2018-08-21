@@ -14,7 +14,7 @@ ContextManager::ContextManager()
   , resource_manager_2_(srv_name::MANAGER_2, this)
   , tracked_objects_syncer_(srv_name::MANAGER, srv_name::SYNC_TRACKED_OBJECTS_TOPIC, &ContextManager::trackedObjectsSyncCb, this)
   , object_syncer_(srv_name::MANAGER, srv_name::SYNC_OBJECTS_TOPIC, &ContextManager::objectSyncCb, this)
-  , tracker_core_(this, false, ros::package::getPath(ROS_PACKAGE_NAME) + "/../actions/object_tracker_actions")
+  , tracker_core_(this, false, ros::package::getPath(ROS_PACKAGE_NAME) + "/../temoto_actions/object_tracker_actions")
 {
   /*
    * Start the servers

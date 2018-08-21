@@ -1,12 +1,12 @@
-#include "sensor_manager/sensor_info_database.h"
+#include "sensor_manager/sensor_info_registry.h"
 #include <algorithm>
 
 namespace sensor_manager
 {
 
-SensorInfoDatabase::SensorInfoDatabase(){}
+SensorInfoRegistry::SensorInfoRegistry(){}
 
-bool SensorInfoDatabase::addLocalSensor(const SensorInfo& si)
+bool SensorInfoRegistry::addLocalSensor(const SensorInfo& si)
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
@@ -23,7 +23,7 @@ bool SensorInfoDatabase::addLocalSensor(const SensorInfo& si)
   return false;
 }
 
-bool SensorInfoDatabase::addRemoteSensor(const SensorInfo &si)
+bool SensorInfoRegistry::addRemoteSensor(const SensorInfo &si)
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
@@ -40,7 +40,7 @@ bool SensorInfoDatabase::addRemoteSensor(const SensorInfo &si)
   return false;
 }
 
-bool SensorInfoDatabase::updateLocalSensor(const SensorInfo &si, bool advertised)
+bool SensorInfoRegistry::updateLocalSensor(const SensorInfo &si, bool advertised)
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
@@ -64,7 +64,7 @@ bool SensorInfoDatabase::updateLocalSensor(const SensorInfo &si, bool advertised
   return false;
 }
 
-bool SensorInfoDatabase::updateRemoteSensor(const SensorInfo &si, bool advertised)
+bool SensorInfoRegistry::updateRemoteSensor(const SensorInfo &si, bool advertised)
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
@@ -88,7 +88,7 @@ bool SensorInfoDatabase::updateRemoteSensor(const SensorInfo &si, bool advertise
   return false;
 }
 
-bool SensorInfoDatabase::findLocalSensor( temoto_2::LoadSensor::Request& req
+bool SensorInfoRegistry::findLocalSensor( temoto_2::LoadSensor::Request& req
                                         , SensorInfo& si_ret ) const
 {
   // Lock the mutex
@@ -97,7 +97,7 @@ bool SensorInfoDatabase::findLocalSensor( temoto_2::LoadSensor::Request& req
   return findSensor(req, local_sensors_, si_ret);
 }
 
-bool SensorInfoDatabase::findLocalSensor( const SensorInfo &si, SensorInfo& si_ret ) const
+bool SensorInfoRegistry::findLocalSensor( const SensorInfo &si, SensorInfo& si_ret ) const
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
@@ -105,7 +105,7 @@ bool SensorInfoDatabase::findLocalSensor( const SensorInfo &si, SensorInfo& si_r
   return findSensor(si, local_sensors_, si_ret);
 }
 
-bool SensorInfoDatabase::findLocalSensor( const SensorInfo &si ) const
+bool SensorInfoRegistry::findLocalSensor( const SensorInfo &si ) const
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
@@ -114,7 +114,7 @@ bool SensorInfoDatabase::findLocalSensor( const SensorInfo &si ) const
   return findSensor(si, local_sensors_, si_ret);
 }
 
-bool SensorInfoDatabase::findRemoteSensor( temoto_2::LoadSensor::Request& req
+bool SensorInfoRegistry::findRemoteSensor( temoto_2::LoadSensor::Request& req
                                          , SensorInfo& si_ret ) const
 {
   // Lock the mutex
@@ -123,7 +123,7 @@ bool SensorInfoDatabase::findRemoteSensor( temoto_2::LoadSensor::Request& req
   return findSensor(req, remote_sensors_, si_ret);
 }
 
-bool SensorInfoDatabase::findRemoteSensor( const SensorInfo &si, SensorInfo& si_ret ) const
+bool SensorInfoRegistry::findRemoteSensor( const SensorInfo &si, SensorInfo& si_ret ) const
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
@@ -131,7 +131,7 @@ bool SensorInfoDatabase::findRemoteSensor( const SensorInfo &si, SensorInfo& si_
   return findSensor(si, remote_sensors_, si_ret);
 }
 
-bool SensorInfoDatabase::findRemoteSensor( const SensorInfo &si ) const
+bool SensorInfoRegistry::findRemoteSensor( const SensorInfo &si ) const
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
@@ -140,7 +140,7 @@ bool SensorInfoDatabase::findRemoteSensor( const SensorInfo &si ) const
   return findSensor(si, remote_sensors_, si_ret);
 }
 
-bool SensorInfoDatabase::findSensor( temoto_2::LoadSensor::Request& req
+bool SensorInfoRegistry::findSensor( temoto_2::LoadSensor::Request& req
                                    , const std::vector<SensorInfo>& sensors
                                    , SensorInfo& si_ret ) const
 {
@@ -240,7 +240,7 @@ bool SensorInfoDatabase::findSensor( temoto_2::LoadSensor::Request& req
   return true;
 }
 
-bool SensorInfoDatabase::findSensor( const SensorInfo &si
+bool SensorInfoRegistry::findSensor( const SensorInfo &si
                                    , const std::vector<SensorInfo>& sensors
                                    , SensorInfo& si_ret ) const
 {
@@ -264,12 +264,12 @@ bool SensorInfoDatabase::findSensor( const SensorInfo &si
   }
 }
 
-const std::vector<SensorInfo>& SensorInfoDatabase::getLocalSensors() const
+const std::vector<SensorInfo>& SensorInfoRegistry::getLocalSensors() const
 {
   return local_sensors_;
 }
 
-const std::vector<SensorInfo>& SensorInfoDatabase::getRemoteSensors() const
+const std::vector<SensorInfo>& SensorInfoRegistry::getRemoteSensors() const
 {
   return remote_sensors_;
 }
