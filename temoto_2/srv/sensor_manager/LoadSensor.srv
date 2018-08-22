@@ -21,6 +21,9 @@ string executable
 # by the sensor manager
 diagnostic_msgs/KeyValue[] output_topics
 
+# Same idea applies here as it did with the output_topics
+diagnostic_msgs/KeyValue[] input_topics
+
 ---
 
 # Remote Management Response
@@ -34,3 +37,5 @@ string executable
 
 # Actual output topics
 diagnostic_msgs/KeyValue[] output_topics
+
+diagnostic_msgs/KeyValue[] input_topics

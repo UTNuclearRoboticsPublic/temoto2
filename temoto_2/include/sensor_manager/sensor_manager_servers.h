@@ -71,6 +71,19 @@ private:
    */
   void statusCb(temoto_2::ResourceStatus& srv);
 
+  /**
+   * @brief remapArguments
+   * @param req
+   * @param res
+   * @param load_process_msg
+   * @param algorithm_ptr
+   */
+  void remapArguments(std::vector<diagnostic_msgs::KeyValue>& req_topics,
+                      std::vector<diagnostic_msgs::KeyValue>& res_topics,
+                      temoto_2::LoadProcess& load_process_msg,
+                      SensorInfo& sensor_info,
+                      bool inputTopics);
+
   /// Sensor Info Registry
   SensorInfoRegistry* sir_;
 

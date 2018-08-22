@@ -29,6 +29,7 @@ public:
 
   ~SensorManager()
   {
+    // "cout" instead of "TEMOTO_INFO" because otherwise it will print nothing
     std::cout << "Shutting down the Sensor Manager ..." << std::endl;
   }
 

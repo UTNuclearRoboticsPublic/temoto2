@@ -1,162 +1,162 @@
-#include "sensor_manager/sensor_info_registry.h"
+#include "algorithm_manager/algorithm_info_registry.h"
 #include <algorithm>
 
-namespace sensor_manager
+namespace algorithm_manager
 {
 
-SensorInfoRegistry::SensorInfoRegistry(){}
+AlgorithmInfoRegistry::AlgorithmInfoRegistry(){}
 
-bool SensorInfoRegistry::addLocalSensor(const SensorInfo& si)
+bool AlgorithmInfoRegistry::addLocalAlgorithm(const AlgorithmInfo& si)
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
 
-  // Check if there is no such sensor
-  SensorInfo si_ret;
-  if (!findSensor(si, local_sensors_, si_ret))
+  // Check if there is no such algorithm
+  AlgorithmInfo si_ret;
+  if (!findAlgorithm(si, local_algorithms_, si_ret))
   {
-    local_sensors_.push_back(si);
+    local_algorithms_.push_back(si);
     return true;
   }
 
-  // Return false if such sensor already exists
+  // Return false if such algorithm already exists
   return false;
 }
 
-bool SensorInfoRegistry::addRemoteSensor(const SensorInfo &si)
+bool AlgorithmInfoRegistry::addRemoteAlgorithm(const AlgorithmInfo &si)
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
 
-  // Check if there is no such sensor
-  SensorInfo si_ret;
-  if (!findSensor(si, remote_sensors_, si_ret))
+  // Check if there is no such algorithm
+  AlgorithmInfo si_ret;
+  if (!findAlgorithm(si, remote_algorithms_, si_ret))
   {
-    remote_sensors_.push_back(si);
+    remote_algorithms_.push_back(si);
     return true;
   }
 
-  // Return false if such sensor already exists
+  // Return false if such algorithm already exists
   return false;
 }
 
-bool SensorInfoRegistry::updateLocalSensor(const SensorInfo &si, bool advertised)
+bool AlgorithmInfoRegistry::updateLocalAlgorithm(const AlgorithmInfo &si, bool advertised)
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
 
-  const auto it = std::find_if( local_sensors_.begin()
-                              , local_sensors_.end()
-                              , [&](const SensorInfo& ls)
+  const auto it = std::find_if( local_algorithms_.begin()
+                              , local_algorithms_.end()
+                              , [&](const AlgorithmInfo& ls)
                               {
                                 return ls == si;
                               });
 
-  // Update the local sensor if its found
-  if (it != local_sensors_.end())
+  // Update the local algorithm if its found
+  if (it != local_algorithms_.end())
   {
     *it = si;
     it->setAdvertised( advertised );
     return true;
   }
 
-  // Return false if no such sensor was found
+  // Return false if no such algorithm was found
   return false;
 }
 
-bool SensorInfoRegistry::updateRemoteSensor(const SensorInfo &si, bool advertised)
+bool AlgorithmInfoRegistry::updateRemoteAlgorithm(const AlgorithmInfo &si, bool advertised)
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
 
-  const auto it = std::find_if( remote_sensors_.begin()
-                              , remote_sensors_.end()
-                              , [&](const SensorInfo& rs)
+  const auto it = std::find_if( remote_algorithms_.begin()
+                              , remote_algorithms_.end()
+                              , [&](const AlgorithmInfo& rs)
                               {
                                 return rs == si;
                               });
 
-  // Update the local sensor if its found
-  if (it != remote_sensors_.end())
+  // Update the local algorithm if its found
+  if (it != remote_algorithms_.end())
   {
     *it = si;
     it->setAdvertised( advertised );
     return true;
   }
 
-  // Return false if no such sensor was found
+  // Return false if no such algorithm was found
   return false;
 }
 
-bool SensorInfoRegistry::findLocalSensor( temoto_2::LoadSensor::Request& req
-                                        , SensorInfo& si_ret ) const
+bool AlgorithmInfoRegistry::findLocalAlgorithm( temoto_2::LoadAlgorithm::Request& req
+                                        , AlgorithmInfo& si_ret ) const
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
 
-  return findSensor(req, local_sensors_, si_ret);
+  return findAlgorithm(req, local_algorithms_, si_ret);
 }
 
-bool SensorInfoRegistry::findLocalSensor( const SensorInfo &si, SensorInfo& si_ret ) const
+bool AlgorithmInfoRegistry::findLocalAlgorithm( const AlgorithmInfo &si, AlgorithmInfo& si_ret ) const
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
 
-  return findSensor(si, local_sensors_, si_ret);
+  return findAlgorithm(si, local_algorithms_, si_ret);
 }
 
-bool SensorInfoRegistry::findLocalSensor( const SensorInfo &si ) const
+bool AlgorithmInfoRegistry::findLocalAlgorithm( const AlgorithmInfo &si ) const
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
 
-  SensorInfo si_ret;
-  return findSensor(si, local_sensors_, si_ret);
+  AlgorithmInfo si_ret;
+  return findAlgorithm(si, local_algorithms_, si_ret);
 }
 
-bool SensorInfoRegistry::findRemoteSensor( temoto_2::LoadSensor::Request& req
-                                         , SensorInfo& si_ret ) const
+bool AlgorithmInfoRegistry::findRemoteAlgorithm( temoto_2::LoadAlgorithm::Request& req
+                                         , AlgorithmInfo& si_ret ) const
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
 
-  return findSensor(req, remote_sensors_, si_ret);
+  return findAlgorithm(req, remote_algorithms_, si_ret);
 }
 
-bool SensorInfoRegistry::findRemoteSensor( const SensorInfo &si, SensorInfo& si_ret ) const
+bool AlgorithmInfoRegistry::findRemoteAlgorithm( const AlgorithmInfo &si, AlgorithmInfo& si_ret ) const
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
 
-  return findSensor(si, remote_sensors_, si_ret);
+  return findAlgorithm(si, remote_algorithms_, si_ret);
 }
 
-bool SensorInfoRegistry::findRemoteSensor( const SensorInfo &si ) const
+bool AlgorithmInfoRegistry::findRemoteAlgorithm( const AlgorithmInfo &si ) const
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
 
-  SensorInfo si_ret;
-  return findSensor(si, remote_sensors_, si_ret);
+  AlgorithmInfo si_ret;
+  return findAlgorithm(si, remote_algorithms_, si_ret);
 }
 
-bool SensorInfoRegistry::findSensor( temoto_2::LoadSensor::Request& req
-                                   , const std::vector<SensorInfo>& sensors
-                                   , SensorInfo& si_ret ) const
+bool AlgorithmInfoRegistry::findAlgorithm( temoto_2::LoadAlgorithm::Request& req
+                                   , const std::vector<AlgorithmInfo>& algorithms
+                                   , AlgorithmInfo& si_ret ) const
 {
   // Local list of devices that follow the requirements
-  std::vector<SensorInfo> candidates;
+  std::vector<AlgorithmInfo> candidates;
 
   // Find the devices that follow the "type" criteria
-  auto it = std::copy_if(sensors.begin()
-                       , sensors.end()
+  auto it = std::copy_if(algorithms.begin()
+                       , algorithms.end()
                        , std::back_inserter(candidates)
-                       , [&](const SensorInfo& s)
+                       , [&](const AlgorithmInfo& s)
                          {
-                           return s.getType() == req.sensor_type;
+                           return s.getType() == req.algorithm_type;
                          });
 
-  // The requested type of sensor is not available
+  // The requested type of algorithm is not available
   if (candidates.empty())
   {
     return false;
@@ -167,7 +167,7 @@ bool SensorInfoRegistry::findSensor( temoto_2::LoadSensor::Request& req
   if (req.package_name != "")
   {
     it_end = std::remove_if(candidates.begin(), candidates.end(),
-                            [&](SensorInfo s)
+                            [&](AlgorithmInfo s)
                             {
                               return s.getPackageName() != req.package_name;
                             });
@@ -177,7 +177,7 @@ bool SensorInfoRegistry::findSensor( temoto_2::LoadSensor::Request& req
   if (req.executable != "")
   {
     it_end = std::remove_if(candidates.begin(), it_end,
-                            [&](SensorInfo s)
+                            [&](AlgorithmInfo s)
                             {
                               return s.getExecutable() != req.executable;
                             });
@@ -187,7 +187,7 @@ bool SensorInfoRegistry::findSensor( temoto_2::LoadSensor::Request& req
   if (!req.output_topics.empty())
   {
     it_end = std::remove_if(candidates.begin(), it_end,
-                            [&](SensorInfo s)
+                            [&](AlgorithmInfo s)
                             {
                               if (s.getOutputTopics().size() < req.output_topics.size())
                                 return true;
@@ -224,36 +224,36 @@ bool SensorInfoRegistry::findSensor( temoto_2::LoadSensor::Request& req
   // Sort remaining candidates based on their reliability.
   std::sort( candidates.begin()
            , it_end
-           , [](SensorInfo& s1, SensorInfo& s2)
+           , [](AlgorithmInfo& s1, AlgorithmInfo& s2)
              {
                return s1.getReliability() > s2.getReliability();
              });
 
   if (candidates.begin() == it_end)
   {
-    // Sensor with the requested criteria was not found.
+    // Algorithm with the requested criteria was not found.
     return false;
   }
 
-  // Return the first sensor of the requested type.
+  // Return the first algorithm of the requested type.
   si_ret = candidates.front();
   return true;
 }
 
-bool SensorInfoRegistry::findSensor( const SensorInfo &si
-                                   , const std::vector<SensorInfo>& sensors
-                                   , SensorInfo& si_ret ) const
+bool AlgorithmInfoRegistry::findAlgorithm( const AlgorithmInfo &si
+                                   , const std::vector<AlgorithmInfo>& algorithms
+                                   , AlgorithmInfo& si_ret ) const
 {
 
-  const auto it = std::find_if( sensors.begin()
-                              , sensors.end()
-                              , [&](const SensorInfo& rs)
+  const auto it = std::find_if( algorithms.begin()
+                              , algorithms.end()
+                              , [&](const AlgorithmInfo& rs)
                               {
                                 return rs == si;
                               });
 
 
-  if (it == sensors.end())
+  if (it == algorithms.end())
   {
     return false;
   }
@@ -264,14 +264,14 @@ bool SensorInfoRegistry::findSensor( const SensorInfo &si
   }
 }
 
-const std::vector<SensorInfo>& SensorInfoRegistry::getLocalSensors() const
+const std::vector<AlgorithmInfo>& AlgorithmInfoRegistry::getLocalAlgorithms() const
 {
-  return local_sensors_;
+  return local_algorithms_;
 }
 
-const std::vector<SensorInfo>& SensorInfoRegistry::getRemoteSensors() const
+const std::vector<AlgorithmInfo>& AlgorithmInfoRegistry::getRemoteAlgorithms() const
 {
-  return remote_sensors_;
+  return remote_algorithms_;
 }
 
-} // sensor_manager namespace
+} // algorithm_manager namespace

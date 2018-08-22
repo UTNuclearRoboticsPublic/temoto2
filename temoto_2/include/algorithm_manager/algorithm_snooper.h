@@ -1,32 +1,32 @@
-#ifndef TEMOTO_SENSOR_SNOOPER_H
-#define TEMOTO_SENSOR_SNOOPER_H
+#ifndef TEMOTO_ALGORITHM_SNOOPER_H
+#define TEMOTO_ALGORITHM_SNOOPER_H
 
 #include "common/base_subsystem.h"
-#include "sensor_manager/sensor_info_registry.h"
+#include "algorithm_manager/algorithm_info_registry.h"
 #include "rmp/config_synchronizer.h"
 #include "temoto_2/ConfigSync.h"
 #include "TTP/task_manager.h"
 
 #include "ros/ros.h"
 
-namespace sensor_manager
+namespace algorithm_manager
 {
 
-class SensorSnooper : public BaseSubsystem
+class AlgorithmSnooper : public BaseSubsystem
 {
   typedef std_msgs::String PayloadType;
 
 public:
 
-  SensorSnooper( BaseSubsystem* b, SensorInfoRegistry* sid);
+  AlgorithmSnooper( BaseSubsystem* b, AlgorithmInfoRegistry* sid);
 
-  void advertiseSensor(SensorInfo& si) const;
+  void advertiseAlgorithm(AlgorithmInfo& si) const;
 
-  void advertiseLocalSensors() const;
+  void advertiseLocalAlgorithms() const;
 
   void startSnooping();
 
-  std::vector<SensorInfoPtr> parseSensors(const YAML::Node& config);
+  std::vector<AlgorithmInfoPtr> parseAlgorithms(const YAML::Node& config);
 
 private:
 
@@ -37,9 +37,9 @@ private:
 
   ros::NodeHandle nh_;
 
-  rmp::ConfigSynchronizer<SensorSnooper, PayloadType> config_syncer_;
+  rmp::ConfigSynchronizer<AlgorithmSnooper, PayloadType> config_syncer_;
 
-  SensorInfoRegistry* sid_;
+  AlgorithmInfoRegistry* sid_;
 
   TTP::TaskManager action_engine_;
 
@@ -47,6 +47,6 @@ private:
 
 };
 
-} // sensor_manager namespace
+} // algorithm_manager namespace
 
 #endif

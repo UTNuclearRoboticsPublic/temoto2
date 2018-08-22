@@ -1,16 +1,15 @@
-#ifndef ALGORITHM_INFO_H
-#define ALGORITHM_INFO_H
+#ifndef SENSOR_INFO_H
+#define SENSOR_INFO_H
 
+#include "common/temoto_log_macros.h"
+#include "common/topic_container.h"   // StringPair
+#include "common/reliability.h"
 #include <string>
 #include <vector>
 #include <map>
 #include <ctype.h>
 #include <memory>                     // shared_ptr
-#include "common/temoto_log_macros.h"
-#include "common/topic_container.h"   // StringPair
 #include <yaml-cpp/yaml.h>
-
-#include <iostream>                   // TODO: remove
 
 namespace algorithm_manager
 {
@@ -18,21 +17,14 @@ namespace algorithm_manager
 class AlgorithmInfo
 {
 public:
+
   /**
    * @brief AlgorithmInfo
+   * @param algorithm_name
    */
-
   AlgorithmInfo(std::string algorithm_name = "A noname algorithm");
-  
-  /**
-   * \brief Adjust reliability
-   * \param reliability the new reliability contribution to the moving average filter. The value has
-   * to be in range [0-1], 0 being not reliable at all and 1.0 is very
-   * reliable.
-   */
-  void adjustReliability(float reliability = 1.0);
 
-
+  // To string
   std::string toString() const;
 
   /* * * * * * * * * * * *
@@ -40,147 +32,99 @@ public:
    * * * * * * * * * * * */
 
   // Get the temoto namespace where this algorithm is defined
-  std::string getTemotoNamespace() const
-  {
-    return temoto_namespace_;
-  }
+  std::string getTemotoNamespace() const;
 
   /// Get name
-  std::string getName() const
-  {
-    return algorithm_name_;
-  }
+  std::string getName() const;
 
   // Get input topics
-  const std::vector<StringPair>& getTopicsIn() const
-  {
-    return input_topics_;
-  }
+  const std::vector<StringPair>& getInputTopics() const;
+
+  // Get output topics
+  const std::vector<StringPair>& getOutputTopics() const;
 
   // Get topic by type
   std::string getTopicByType(const std::string& type, const std::vector<StringPair>& topics);
 
+  // Get input topic
   std::string getInputTopic(const std::string& type);
 
+  // Get output topic
   std::string getOutputTopic(const std::string& type);
 
-  // Get output topics
-  const std::vector<StringPair>& getTopicsOut() const
-  {
-    return output_topics_;
-  }
-
   // Get algorithm type
-  std::string getType() const
-  {
-    return algorithm_type_;
-  }
+  std::string getType() const;
 
   // Get algorithm package name
-  std::string getPackageName() const
-  {
-    return package_name_;
-  }
+  std::string getPackageName() const;
 
   // Get executable
-  std::string getExecutable() const
-  {
-    return executable_;
-  }
+  std::string getExecutable() const;
 
   // Get description
-  std::string getDescription() const
-  {
-    return description_;
-  }
+  std::string getDescription() const;
 
-  float getReliability() const
-  {
-    return reliability_;
-  }
+  // Get reliability
+  float getReliability() const;
+
+  // Is local
+  bool isLocal() const;
+
+  // Get advertised
+  bool getAdvertised() const;
 
 
   /* * * * * * * * * * * *
    *     SETTERS
    * * * * * * * * * * * */
-  void setTemotoNamespace(std::string temoto_namespace)
-  {
-    temoto_namespace_ = temoto_namespace;
-  }
 
-  void setName(std::string name)
-  {
-    algorithm_name_ = name;
-  }
+  void setTemotoNamespace(std::string temoto_namespace);
 
-  void addTopicIn(StringPair topic)
-  {
-    input_topics_.push_back(topic);
-  }
+  void setName(std::string name);
 
-  void addTopicOut(StringPair topic)
-  {
-    output_topics_.push_back(topic);
-  }
+  void addTopicIn(StringPair topic);
 
-  void setType(std::string algorithm_type)
-  {
-    algorithm_type_ = algorithm_type;
-  }
+  void addTopicOut(StringPair topic);
 
-  void setPackageName(std::string package_name)
-  {
-    package_name_ = package_name;
-  }
+  void setType(std::string algorithm_type);
 
-  void setExecutable(std::string executable)
-  {
-    executable_ = executable;
-  }
+  void setPackageName(std::string package_name);
 
-  void setDescription(std::string description)
-  {
-    description_ = description;
-  }
+  void setExecutable(std::string executable);
 
-  /**
-   * \brief Set reliability
-   * \param reliability Sets the initial values for the reliability moving average filter.
-   * The value has to be in range [0-1], 0 being not reliable at all and 1.0 is very
-   * reliable.
-   */
-  void setReliability(float reliability = 0.8);
+  void setDescription(std::string description);
+
+  void setAdvertised(bool advertised);
+
+  void adjustReliability(float reliability);
+
+  void resetReliability(float reliability);
+
 
 private:
-  
+
+  std::string log_class_ = "AlgorithmInfo";
+  std::string log_subsys_ = "algorithm_manager";
+  std::string log_group_ = "algorithm_manager";
+
   std::string temoto_namespace_;
   std::string algorithm_name_;
   std::string algorithm_type_;
   std::string package_name_;
   std::string executable_;
   std::string description_;
+  Reliability reliability_;
   std::vector<StringPair> input_topics_;
   std::vector<StringPair> output_topics_;
-
-  /**
-   * @brief Reliability ratings of the algorithm.
-   */
-  std::array<float, 100> reliabilities_;
-
-  /**
-   * @brief Reliability moving average.
-   */
-  float reliability_;
-
-  /**
-   * @brief Reliability rating of the algorithm.
-   */
-  unsigned int reliability_idx_;
+  bool advertised_ = false;
 };
 
 typedef std::shared_ptr<AlgorithmInfo> AlgorithmInfoPtr;
 typedef std::vector<AlgorithmInfoPtr> AlgorithmInfoPtrs;
 
+// TODO: Not sure how to declare operators in a header, implement them in src
+//       and not brake everything (linking problems in places where
+//       algorithm_info.cpp has to be linked)
 static bool operator==(const AlgorithmInfo& s1, const AlgorithmInfo& s2)
 {
   // Check the namespace, executable and name of the package
@@ -192,15 +136,15 @@ static bool operator==(const AlgorithmInfo& s1, const AlgorithmInfo& s2)
   }
 
   // Check the size of input and output topics
-  if (s1.getTopicsIn().size() != s2.getTopicsIn().size() ||
-      s1.getTopicsOut().size() != s2.getTopicsOut().size())
+  if (s1.getInputTopics().size() != s2.getInputTopics().size() ||
+      s1.getOutputTopics().size() != s2.getOutputTopics().size())
   {
     return false;
   }
 
   // Check the input topics
-  auto input_topics_2_copy = s2.getTopicsIn();
-  for (auto& input_topic_1 : s1.getTopicsIn())
+  auto input_topics_2_copy = s2.getInputTopics();
+  for (auto& input_topic_1 : s1.getInputTopics())
   {
     bool topic_found = false;
     for (auto it=input_topics_2_copy.begin(); it!=input_topics_2_copy.end(); it++)
@@ -220,8 +164,8 @@ static bool operator==(const AlgorithmInfo& s1, const AlgorithmInfo& s2)
   }
 
   // Check the output topics
-  auto output_topics_2_copy = s2.getTopicsOut();
-  for (auto& output_topic_1 : s1.getTopicsOut())
+  auto output_topics_2_copy = s2.getOutputTopics();
+  for (auto& output_topic_1 : s1.getOutputTopics())
   {
     bool topic_found = false;
     for (auto it=output_topics_2_copy.begin(); it!=output_topics_2_copy.end(); it++)
@@ -261,14 +205,14 @@ struct convert<algorithm_manager::AlgorithmInfo>
     node["reliability"] = algorithm.getReliability();
 
     Node input_topics_node;
-    for (auto& topics : algorithm.getTopicsIn())
+    for (auto& topics : algorithm.getInputTopics())
     {
       input_topics_node[topics.first] = topics.second;
     }
     node["input_topics"] = input_topics_node;
 
     Node output_topics_node;
-    for (auto& topics : algorithm.getTopicsOut())
+    for (auto& topics : algorithm.getOutputTopics())
     {
       output_topics_node[topics.first] = topics.second;
     }
@@ -348,7 +292,7 @@ struct convert<algorithm_manager::AlgorithmInfo>
 
     try
     {
-      algorithm.setReliability(node["reliability"].as<float>());
+      algorithm.resetReliability(node["reliability"].as<float>());
     }
     catch (YAML::InvalidNode e)
     {

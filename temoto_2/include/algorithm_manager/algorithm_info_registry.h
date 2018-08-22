@@ -1,78 +1,78 @@
-#ifndef SENSOR_INFO_DATABASE_H
-#define SENSOR_INFO_DATABASE_H
+#ifndef ALGORITHM_INFO_DATABASE_H
+#define ALGORITHM_INFO_DATABASE_H
 
-#include "sensor_manager/sensor_info.h"
-#include "temoto_2/LoadSensor.h"
+#include "algorithm_manager/algorithm_info.h"
+#include "temoto_2/LoadAlgorithm.h"
 
 #include <mutex>
 
-namespace sensor_manager
+namespace algorithm_manager
 {
 
 /**
- * @brief Class that maintains and handles the sensor info objects
+ * @brief Class that maintains and handles the algorithm info objects
  */
-class SensorInfoRegistry
+class AlgorithmInfoRegistry
 {
 public:
 
-  struct SensorInfoPtrs
+  struct AlgorithmInfoPtrs
   {
-    std::vector<SensorInfoPtr>& sensors;
+    std::vector<AlgorithmInfoPtr>& algorithms;
   };
 
-  SensorInfoRegistry();
+  AlgorithmInfoRegistry();
 
-  bool findLocalSensor( temoto_2::LoadSensor::Request& req, SensorInfo& si_ret ) const;
+  bool findLocalAlgorithm( temoto_2::LoadAlgorithm::Request& req, AlgorithmInfo& si_ret ) const;
 
-  bool findLocalSensor( const SensorInfo& si, SensorInfo& si_ret ) const;
+  bool findLocalAlgorithm( const AlgorithmInfo& si, AlgorithmInfo& si_ret ) const;
 
-  bool findLocalSensor( const SensorInfo& si ) const;
+  bool findLocalAlgorithm( const AlgorithmInfo& si ) const;
 
-  bool findRemoteSensor( temoto_2::LoadSensor::Request& req, SensorInfo& si_ret ) const;
+  bool findRemoteAlgorithm( temoto_2::LoadAlgorithm::Request& req, AlgorithmInfo& si_ret ) const;
 
-  bool findRemoteSensor( const SensorInfo& si, SensorInfo& si_ret ) const;
+  bool findRemoteAlgorithm( const AlgorithmInfo& si, AlgorithmInfo& si_ret ) const;
 
-  bool findRemoteSensor( const SensorInfo& si ) const;
+  bool findRemoteAlgorithm( const AlgorithmInfo& si ) const;
 
-  bool addLocalSensor( const SensorInfo& si );
+  bool addLocalAlgorithm( const AlgorithmInfo& si );
 
-  bool addRemoteSensor( const SensorInfo& si );
+  bool addRemoteAlgorithm( const AlgorithmInfo& si );
 
-  bool updateLocalSensor(const SensorInfo& si, bool advertised = false);
+  bool updateLocalAlgorithm(const AlgorithmInfo& si, bool advertised = false);
 
-  bool updateRemoteSensor(const SensorInfo& si, bool advertised = false);
+  bool updateRemoteAlgorithm(const AlgorithmInfo& si, bool advertised = false);
 
-  const std::vector<SensorInfo>& getLocalSensors() const;
+  const std::vector<AlgorithmInfo>& getLocalAlgorithms() const;
 
-  const std::vector<SensorInfo>& getRemoteSensors() const;
+  const std::vector<AlgorithmInfo>& getRemoteAlgorithms() const;
 
 private:
 
   /**
-   * @brief findSensor
+   * @brief findAlgorithm
    * @param req
-   * @param sensors
+   * @param algorithms
    * @return
    */
-  bool findSensor( temoto_2::LoadSensor::Request& req
-                 , const std::vector<SensorInfo>& sensors
-                 , SensorInfo& si_ret ) const;
+  bool findAlgorithm( temoto_2::LoadAlgorithm::Request& req
+                 , const std::vector<AlgorithmInfo>& algorithms
+                 , AlgorithmInfo& si_ret ) const;
 
-  bool findSensor( const SensorInfo& si
-                 , const std::vector<SensorInfo>& sensors
-                 , SensorInfo& si_ret ) const;
+  bool findAlgorithm( const AlgorithmInfo& si
+                 , const std::vector<AlgorithmInfo>& algorithms
+                 , AlgorithmInfo& si_ret ) const;
 
-  /// List of all locally defined sensors.
-  std::vector<SensorInfo> local_sensors_;
+  /// List of all locally defined algorithms.
+  std::vector<AlgorithmInfo> local_algorithms_;
 
-  /// List of all sensors in remote managers.
-  std::vector<SensorInfo> remote_sensors_;
+  /// List of all algorithms in remote managers.
+  std::vector<AlgorithmInfo> remote_algorithms_;
 
-  /// Mutex for protecting sensor info vectors from data races
+  /// Mutex for protecting algorithm info vectors from data races
   mutable std::mutex read_write_mutex;
 };
 
-} // sensor_manager namespace
+} // algorithm_manager namespace
 
 #endif

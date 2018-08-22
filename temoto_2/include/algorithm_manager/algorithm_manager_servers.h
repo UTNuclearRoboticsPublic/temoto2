@@ -1,32 +1,32 @@
-#ifndef SENSOR_MANAGER_SERVERS_H
-#define SENSOR_MANAGER_SERVERS_H
+#ifndef ALGORITHM_MANAGER_SERVERS_H
+#define ALGORITHM_MANAGER_SERVERS_H
 
 #include "common/base_subsystem.h"
-#include "sensor_manager/sensor_info_registry.h"
-#include "sensor_manager/sensor_manager_services.h"
+#include "algorithm_manager/algorithm_info_registry.h"
+#include "algorithm_manager/algorithm_manager_services.h"
 #include "process_manager/process_manager_services.h"
 #include "rmp/resource_manager.h"
 
 #include "std_msgs/String.h"
 #include "common/temoto_id.h"
 
-namespace sensor_manager
+namespace algorithm_manager
 {
 
 typedef std_msgs::String PayloadType;
 
-class SensorManagerServers : public BaseSubsystem
+class AlgorithmManagerServers : public BaseSubsystem
 {
 public:
     /**
-     * @brief SensorManagerServers
+     * @brief AlgorithmManagerServers
      */
-    SensorManagerServers( BaseSubsystem* b, SensorInfoRegistry* sid );
+    AlgorithmManagerServers( BaseSubsystem* b, AlgorithmInfoRegistry* sid );
 
     /**
-     * @brief ~SensorManagerServers
+     * @brief ~AlgorithmManagerServers
      */
-    ~SensorManagerServers();
+    ~AlgorithmManagerServers();
 
     const std::string& getName() const
     {
@@ -34,22 +34,6 @@ public:
     }
     
 private:
-  //bool indexSensors(const std::string& yaml_filename);
-  /**
-   * @brief Callback to a service that lists all available packages that
-   * are with a requested "type". For example "list all HANDtracking devices"
-   * @param req
-   * @param res
-   * @return
-   */
-  bool listDevicesCb(temoto_2::ListDevices::Request& req, temoto_2::ListDevices::Response& res);
-
-  /*
-   * Callback to a service that executes/runs a requested device
-   * and sends back the topic that the device is publishing to
-   * THIS IS LIKELY A GENERIC FUNCTION THAT WILL BE USED ALSO BY
-   * OTHER MANAGERS
-   */
 
   /**
    * @brief Start node service
@@ -57,31 +41,31 @@ private:
    * @param res
    * @return
    */
-  void startSensorCb(temoto_2::LoadSensor::Request& req, temoto_2::LoadSensor::Response& res);
+  void startAlgorithmCb(temoto_2::LoadAlgorithm::Request& req, temoto_2::LoadAlgorithm::Response& res);
 
   /**
-   * @brief Called when sensor is unloaded. Nothing to do here.
+   * @brief Called when algorithm is unloaded. Nothing to do here.
    * @return
    */
-  void stopSensorCb(temoto_2::LoadSensor::Request& req, temoto_2::LoadSensor::Response& res);
+  void stopAlgorithmCb(temoto_2::LoadAlgorithm::Request& req, temoto_2::LoadAlgorithm::Response& res);
 
   /**
-   * @brief Called when sensor is unloaded. Nothing to do here.
+   * @brief Called when algorithm is unloaded. Nothing to do here.
    * @return
    */
   void statusCb(temoto_2::ResourceStatus& srv);
 
   ///  ros::ServiceServer list_devices_server_;
-  rmp::ResourceManager<SensorManagerServers> resource_manager_;
+  rmp::ResourceManager<AlgorithmManagerServers> resource_manager_;
 
-  /// List of allocated sensors
-  std::map<temoto_id::ID, SensorInfo> allocated_sensors_;
+  /// List of allocated algorithms
+  std::map<temoto_id::ID, AlgorithmInfo> allocated_algorithms_;
 
-  /// Sensor Info Registry
-  SensorInfoRegistry* sid_;
+  /// Algorithm Info Registry
+  AlgorithmInfoRegistry* sid_;
 
-}; // SensorManagerServers
+}; // AlgorithmManagerServers
 
-} // sensor_manager namespace
+} // algorithm_manager namespace
 
 #endif

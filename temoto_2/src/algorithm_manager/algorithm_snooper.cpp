@@ -1,32 +1,31 @@
-#include "sensor_manager/sensor_snooper.h"
-#include "sensor_manager/sensor_manager_services.h"
-#include "sensor_manager/sensor_manager_yaml.h"
+#include "algorithm_manager/algorithm_snooper.h"
+#include "algorithm_manager/algorithm_manager_services.h"
 
 #include "ros/package.h"
 #include <yaml-cpp/yaml.h>
 
 
-namespace sensor_manager
+namespace algorithm_manager
 {
 
 // TODO: the constructor of the action_engine_ can throw in the initializer list
 //       and I have no clue what kind of behaviour should be expected - prolly bad
 
-SensorSnooper::SensorSnooper( BaseSubsystem*b
-                            , SensorInfoRegistry* sid)
+AlgorithmSnooper::AlgorithmSnooper( BaseSubsystem*b
+                            , AlgorithmInfoRegistry* sid)
 : BaseSubsystem(*b, __func__)
-, config_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &SensorSnooper::syncCb, this)
+, config_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &AlgorithmSnooper::syncCb, this)
 , action_engine_(this, false, ros::package::getPath(ROS_PACKAGE_NAME) + "/../temoto_actions/resource_snooper_actions")
 , sid_(sid)
 {
-  // Sensor Info update monitoring timer
-  update_monitoring_timer_ = nh_.createTimer(ros::Duration(1), &SensorSnooper::updateMonitoringTimerCb, this);
+  // Algorithm Info update monitoring timer
+  update_monitoring_timer_ = nh_.createTimer(ros::Duration(1), &AlgorithmSnooper::updateMonitoringTimerCb, this);
 
-  // Get remote sensor_infos
+  // Get remote algorithm_infos
   config_syncer_.requestRemoteConfigs();
 }
 
-void SensorSnooper::startSnooping()
+void AlgorithmSnooper::startSnooping()
 {
   /*
    * Action related stuff up ahead: A semantic frame is manually created. Based on that SF
@@ -40,14 +39,14 @@ void SensorSnooper::startSnooping()
 
   // Subject that will contain the name of the tracked object.
   // Necessary when the tracker has to be stopped
-  TTP::Subject sub_0("what", "sensor packages");
+  TTP::Subject sub_0("what", "algorithm packages");
 
   // Topic from where the raw AR tag tracker data comes from
   std::string catkin_ws = ros::package::getPath(ROS_PACKAGE_NAME) + "/../..";
   sub_0.addData("string", catkin_ws);
 
   // This object will be updated inside the tracking AImp (action implementation)
-  sub_0.addData("pointer", boost::any_cast<SensorInfoRegistry*>(sid_));
+  sub_0.addData("pointer", boost::any_cast<AlgorithmInfoRegistry*>(sid_));
 
   subjects.push_back(sub_0);
 
@@ -67,23 +66,23 @@ void SensorSnooper::startSnooping()
   action_engine_.executeSFTThreaded(std::move(sft));
 }
 
-void SensorSnooper::advertiseSensor(SensorInfo& si) const
+void AlgorithmSnooper::advertiseAlgorithm(AlgorithmInfo& si) const
 {
-  //TEMOTO_DEBUG("------ Advertising Sensor \n %s", sensor_ptr->toString().c_str());
+  //TEMOTO_DEBUG("------ Advertising Algorithm \n %s", algorithm_ptr->toString().c_str());
   YAML::Node config;
-  config["Sensors"].push_back(si);
+  config["Algorithms"].push_back(si);
   PayloadType payload;
   payload.data = Dump(config);
   config_syncer_.advertise(payload);
 }
 
-void SensorSnooper::advertiseLocalSensors() const
+void AlgorithmSnooper::advertiseLocalAlgorithms() const
 {
-  // publish all local sensors
+  // publish all local algorithms
   YAML::Node config;
-  for(const auto& s : sid_->getLocalSensors())
+  for(const auto& s : sid_->getLocalAlgorithms())
   {
-    config["Sensors"].push_back(s);
+    config["Algorithms"].push_back(s);
   }
 
   // send to other managers if there is anything to send
@@ -95,65 +94,65 @@ void SensorSnooper::advertiseLocalSensors() const
   }
 }
 
-std::vector<SensorInfoPtr> SensorSnooper::parseSensors(const YAML::Node& config)
+std::vector<AlgorithmInfoPtr> AlgorithmSnooper::parseAlgorithms(const YAML::Node& config)
 {
-  std::vector<SensorInfoPtr> sensors;
+  std::vector<AlgorithmInfoPtr> algorithms;
 
   if (!config.IsMap())
   {
-    TEMOTO_WARN("Unable to parse 'Sensors' key from config.");
-    return sensors;
+    TEMOTO_WARN("Unable to parse 'Algorithms' key from config.");
+    return algorithms;
   }
 
-  YAML::Node sensors_node = config["Sensors"];
-  if (!sensors_node.IsSequence())
+  YAML::Node algorithms_node = config["Algorithms"];
+  if (!algorithms_node.IsSequence())
   {
-    TEMOTO_WARN("The given config does not contain sequence of sensors.");
-    return sensors;
+    TEMOTO_WARN("The given config does not contain sequence of algorithms.");
+    return algorithms;
   }
 
-  TEMOTO_DEBUG("Parsing %lu sensors.", sensors_node.size());
+  TEMOTO_DEBUG("Parsing %lu algorithms.", algorithms_node.size());
 
-  // go over each sensor node in the sequence
-  for (YAML::const_iterator node_it = sensors_node.begin(); node_it != sensors_node.end(); ++node_it)
+  // go over each algorithm node in the sequence
+  for (YAML::const_iterator node_it = algorithms_node.begin(); node_it != algorithms_node.end(); ++node_it)
   {
     if (!node_it->IsMap())
     {
-      TEMOTO_WARN("Unable to parse the sensor. Parameters in YAML have to be specified in "
+      TEMOTO_WARN("Unable to parse the algorithm. Parameters in YAML have to be specified in "
                    "key-value pairs.");
       continue;
     }
 
     try
     {
-      SensorInfo sensor = node_it->as<SensorInfo>();
-      if (std::count_if(sensors.begin(), sensors.end(),
-                        [&](const SensorInfoPtr& s) { return *s == sensor; }) == 0)
+      AlgorithmInfo algorithm = node_it->as<AlgorithmInfo>();
+      if (std::count_if(algorithms.begin(), algorithms.end(),
+                        [&](const AlgorithmInfoPtr& s) { return *s == algorithm; }) == 0)
       {
-        // OK, this is unique pointer, add it to the sensors vector.
-        sensors.emplace_back(std::make_shared<SensorInfo>(sensor));
-        //TEMOTO_DEBUG_STREAM("####### PARSED SENSOR: #######\n" << sensors.back()->toString());
+        // OK, this is unique pointer, add it to the algorithms vector.
+        algorithms.emplace_back(std::make_shared<AlgorithmInfo>(algorithm));
+        //TEMOTO_DEBUG_STREAM("####### PARSED SENSOR: #######\n" << algorithms.back()->toString());
       }
       else
       {
-        TEMOTO_WARN("Ignoring duplicate of sensor '%s'.", sensor.getName().c_str());
+        TEMOTO_WARN("Ignoring duplicate of algorithm '%s'.", algorithm.getName().c_str());
       }
     }
-    catch (YAML::TypedBadConversion<SensorInfo> e)
+    catch (YAML::TypedBadConversion<AlgorithmInfo> e)
     {
-      TEMOTO_WARN("Failed to parse SensorInfo from config.");
+      TEMOTO_WARN("Failed to parse AlgorithmInfo from config.");
       continue;
     }
   }
-  return sensors;
+  return algorithms;
 }
 
-void SensorSnooper::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload)
+void AlgorithmSnooper::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload)
 {
 
   if (msg.action == rmp::sync_action::REQUEST_CONFIG)
   {
-    advertiseLocalSensors();
+    advertiseLocalAlgorithms();
     return;
   }
 
@@ -161,49 +160,49 @@ void SensorSnooper::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& p
   {
     // Convert the config string to YAML tree and parse
     YAML::Node config = YAML::Load(payload.data);
-    std::vector<SensorInfoPtr> sensors = parseSensors(config);
+    std::vector<AlgorithmInfoPtr> algorithms = parseAlgorithms(config);
 
     // TODO: Hold remote stuff in a map or something keyed by namespace
     // TODO: Temoto namespace can (doesn't have to) be contained in config
-    for (auto& s : sensors)
+    for (auto& s : algorithms)
     {
       s->setTemotoNamespace(msg.temoto_namespace);
     }
 
-    //for (auto& s : remote_sensors_)
+    //for (auto& s : remote_algorithms_)
     //{
     //  TEMOTO_DEBUG("---------REMOTE SENSOR: \n %s", s->toString().c_str());
     //}
 
-    for (auto& sensor : sensors)
+    for (auto& algorithm : algorithms)
     {
-      // Check if sensor has to be added or updated
-      if (sid_->updateRemoteSensor(*sensor))
+      // Check if algorithm has to be added or updated
+      if (sid_->updateRemoteAlgorithm(*algorithm))
       {
-        TEMOTO_DEBUG("Updating remote sensor '%s' at '%s'.", sensor->getName().c_str(),
-                     sensor->getTemotoNamespace().c_str());
+        TEMOTO_DEBUG("Updating remote algorithm '%s' at '%s'.", algorithm->getName().c_str(),
+                     algorithm->getTemotoNamespace().c_str());
       }
       else
       {
-        sid_->addRemoteSensor(*sensor);
+        sid_->addRemoteAlgorithm(*algorithm);
       }
     }
   }
 }
 
-void SensorSnooper::updateMonitoringTimerCb(const ros::TimerEvent& e)
+void AlgorithmSnooper::updateMonitoringTimerCb(const ros::TimerEvent& e)
 {
 
-  // Iterate through local sensors and check if their reliability has been updated
-  for (const auto sensor : sid_->getLocalSensors())
+  // Iterate through local algorithms and check if their reliability has been updated
+  for (const auto algorithm : sid_->getLocalAlgorithms())
   {
-    if (!sensor.getAdvertised())
+    if (!algorithm.getAdvertised())
     {
-      SensorInfo si = sensor;
-      sid_->updateLocalSensor(si, true);
-      advertiseSensor(si);
+      AlgorithmInfo si = algorithm;
+      sid_->updateLocalAlgorithm(si, true);
+      advertiseAlgorithm(si);
     }
   }
 }
 
-} // sensor_manager namespace
+} // algorithm_manager namespace

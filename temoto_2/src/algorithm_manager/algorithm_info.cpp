@@ -6,33 +6,37 @@ namespace algorithm_manager
 {
 AlgorithmInfo::AlgorithmInfo(std::string algorithm_name)
 {
-  setReliability(0.8);
-
   //set the algorithm to current namespace
   temoto_namespace_ = ::common::getTemotoNamespace();
   algorithm_name_ = algorithm_name;
 }
 
-// Adds a reliability contribution to a moving average filter
-void AlgorithmInfo::adjustReliability(float reliability)
+/* * * * * * * * * * * *
+   *     GETTERS
+   * * * * * * * * * * * */
+
+// Get the temoto namespace where this algorithm is defined
+std::string AlgorithmInfo::getTemotoNamespace() const
 {
-  reliability = std::max(std::min(reliability, 1.0f), 0.0f);  // clamp to [0-1]
-  ++reliability_idx_ %= reliabilities_.size();                 // rolling index
-
-  // take out the last reliability
-  reliability_ -= reliabilities_[reliability_idx_] / (float)reliabilities_.size();
-
-  // insert new reliability value
-  reliabilities_[reliability_idx_] = reliability;
-  reliability_ += reliability / (float)reliabilities_.size();
+  return temoto_namespace_;
 }
 
-void AlgorithmInfo::setReliability(float reliability)
+/// Get name
+std::string AlgorithmInfo::getName() const
 {
-  // Fill array with initial reliability values;
-  reliabilities_.fill(reliability);  // buffer for instantaneous reliability values
-  reliability_ = reliability;    // Filtered reliability is kept here
-  reliability_idx_ = 0;
+  return algorithm_name_;
+}
+
+// Get input topics
+const std::vector<StringPair>& AlgorithmInfo::getInputTopics() const
+{
+  return input_topics_;
+}
+
+// Get output topics
+const std::vector<StringPair>& AlgorithmInfo::getOutputTopics() const
+{
+  return output_topics_;
 }
 
 // Get topic by type
@@ -50,7 +54,7 @@ std::string AlgorithmInfo::getTopicByType(const std::string& type, const std::ve
   return std::string();
 }
 
-// Get input topic
+// Get output topic
 std::string AlgorithmInfo::getInputTopic(const std::string& type)
 {
   return getTopicByType(type, input_topics_);
@@ -62,11 +66,53 @@ std::string AlgorithmInfo::getOutputTopic(const std::string& type)
   return getTopicByType(type, output_topics_);
 }
 
+// Get algorithm type
+std::string AlgorithmInfo::getType() const
+{
+  return algorithm_type_;
+}
+
+// Get algorithm package name
+std::string AlgorithmInfo::getPackageName() const
+{
+  return package_name_;
+}
+
+// Get executable
+std::string AlgorithmInfo::getExecutable() const
+{
+  return executable_;
+}
+
+// Get description
+std::string AlgorithmInfo::getDescription() const
+{
+  return description_;
+}
+
+// Get reliability
+float AlgorithmInfo::getReliability() const
+{
+  return reliability_.getReliability();
+}
+
+// Is local
+bool AlgorithmInfo::isLocal() const
+{
+  return getTemotoNamespace() == common::getTemotoNamespace();
+}
+
+// Get advertised
+bool AlgorithmInfo::getAdvertised() const
+{
+  return advertised_;
+}
+
 // To string
 std::string AlgorithmInfo::toString() const
 {
   std::string ret;
-  ret += "  algorithm: " + getName() + "\n";
+  ret += "SENSOR: " + getName() + "\n";
   ret += "  temoto_namespace : " + getTemotoNamespace() + "\n";
   ret += "  type             : " + getType() + "\n";
   ret += "  package name     : " + getPackageName() + "\n";
@@ -75,25 +121,85 @@ std::string AlgorithmInfo::toString() const
   ret += "  reliability      : " + std::to_string(getReliability()) + "\n";
 
   // Print out the input topics
-  if (!getTopicsIn().empty())
+  if (!getInputTopics().empty())
   {
-    ret += "  input_topics \n";
-    for (auto& topic : getTopicsIn())
+    ret += "  output_topics \n";
+    for (auto& topic : getInputTopics())
     {
       ret += "    " + topic.first + " : " + topic.second + "\n";
     }
   }
 
   // Print out the output topics
-  if (!getTopicsOut().empty())
+  if (!getOutputTopics().empty())
   {
     ret += "  output_topics \n";
-    for (auto& topic : getTopicsOut())
+    for (auto& topic : getOutputTopics())
     {
       ret += "    " + topic.first + " : " + topic.second + "\n";
     }
   }
+
   return ret;
+}
+
+/* * * * * * * * * * * *
+ *     SETTERS
+ * * * * * * * * * * * */
+
+void AlgorithmInfo::setTemotoNamespace(std::string temoto_namespace)
+{
+  temoto_namespace_ = temoto_namespace;
+}
+
+void AlgorithmInfo::setName(std::string name)
+{
+  algorithm_name_ = name;
+}
+
+void AlgorithmInfo::addTopicIn(StringPair topic)
+{
+  input_topics_.push_back(topic);
+}
+
+void AlgorithmInfo::addTopicOut(StringPair topic)
+{
+  output_topics_.push_back(topic);
+}
+
+void AlgorithmInfo::setType(std::string algorithm_type)
+{
+  algorithm_type_ = algorithm_type;
+}
+
+void AlgorithmInfo::setPackageName(std::string package_name)
+{
+  package_name_ = package_name;
+}
+
+void AlgorithmInfo::setExecutable(std::string executable)
+{
+  executable_ = executable;
+}
+
+void AlgorithmInfo::setDescription(std::string description)
+{
+  description_ = description;
+}
+
+void AlgorithmInfo::setAdvertised(bool advertised)
+{
+  advertised_ = advertised;
+}
+
+void AlgorithmInfo::adjustReliability(float reliability)
+{
+  reliability_.adjustReliability(reliability);
+}
+
+void AlgorithmInfo::resetReliability(float reliability)
+{
+  reliability_.resetReliability(reliability);
 }
 
 }  // AlgorithmManager namespace

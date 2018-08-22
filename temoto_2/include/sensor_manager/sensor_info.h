@@ -17,23 +17,14 @@ namespace sensor_manager
 class SensorInfo
 {
 public:
+
   /**
    * @brief SensorInfo
+   * @param sensor_name
    */
-
   SensorInfo(std::string sensor_name = "A noname sensor");
   
-  void adjustReliability(float reliability)
-  {
-    reliability_.adjustReliability(reliability);
-  }
-
-  void resetReliability(float reliability)
-  {
-    reliability_.resetReliability(reliability);
-  }
-
-
+  // To string
   std::string toString() const;
 
   /* * * * * * * * * * * *
@@ -41,110 +32,73 @@ public:
    * * * * * * * * * * * */
 
   // Get the temoto namespace where this sensor is defined
-  std::string getTemotoNamespace() const
-  {
-    return temoto_namespace_;
-  }
+  std::string getTemotoNamespace() const;
 
   /// Get name
-  std::string getName() const
-  {
-    return sensor_name_;
-  }
+  std::string getName() const;
+
+  // Get input topics
+  const std::vector<StringPair>& getInputTopics() const;
 
   // Get output topics
-  const std::vector<StringPair>& getOutputTopics() const
-  {
-    return output_topics_;
-  }
+  const std::vector<StringPair>& getOutputTopics() const;
 
   // Get topic by type
   std::string getTopicByType(const std::string& type, const std::vector<StringPair>& topics);
 
+  // Get input topic
+  std::string getInputTopic(const std::string& type);
+
+  // Get output topic
   std::string getOutputTopic(const std::string& type);
 
   // Get sensor type
-  std::string getType() const
-  {
-    return sensor_type_;
-  }
+  std::string getType() const;
 
   // Get sensor package name
-  std::string getPackageName() const
-  {
-    return package_name_;
-  }
+  std::string getPackageName() const;
 
   // Get executable
-  std::string getExecutable() const
-  {
-    return executable_;
-  }
+  std::string getExecutable() const;
 
   // Get description
-  std::string getDescription() const
-  {
-    return description_;
-  }
+  std::string getDescription() const;
 
-  float getReliability() const
-  {
-    return reliability_.getReliability();
-  }
+  // Get reliability
+  float getReliability() const;
 
-  bool isLocal() const
-  {
-    return getTemotoNamespace() == common::getTemotoNamespace();
-  }
+  // Is local
+  bool isLocal() const;
 
-  bool getAdvertised() const
-  {
-    return advertised_;
-  }
+  // Get advertised
+  bool getAdvertised() const;
 
 
   /* * * * * * * * * * * *
    *     SETTERS
    * * * * * * * * * * * */
-  void setTemotoNamespace(std::string temoto_namespace)
-  {
-    temoto_namespace_ = temoto_namespace;
-  }
 
-  void setName(std::string name)
-  {
-    sensor_name_ = name;
-  }
+  void setTemotoNamespace(std::string temoto_namespace);
 
-  void addTopicOut(StringPair topic)
-  {
-    output_topics_.push_back(topic);
-  }
+  void setName(std::string name);
 
-  void setType(std::string sensor_type)
-  {
-    sensor_type_ = sensor_type;
-  }
+  void addTopicIn(StringPair topic);
 
-  void setPackageName(std::string package_name)
-  {
-    package_name_ = package_name;
-  }
+  void addTopicOut(StringPair topic);
 
-  void setExecutable(std::string executable)
-  {
-    executable_ = executable;
-  }
+  void setType(std::string sensor_type);
 
-  void setDescription(std::string description)
-  {
-    description_ = description;
-  }
+  void setPackageName(std::string package_name);
 
-  void setAdvertised(bool advertised)
-  {
-    advertised_ = advertised;
-  }
+  void setExecutable(std::string executable);
+
+  void setDescription(std::string description);
+
+  void setAdvertised(bool advertised);
+
+  void adjustReliability(float reliability);
+
+  void resetReliability(float reliability);
 
 
 private:
@@ -160,6 +114,7 @@ private:
   std::string executable_;
   std::string description_;
   Reliability reliability_;
+  std::vector<StringPair> input_topics_;
   std::vector<StringPair> output_topics_;
   bool advertised_ = false;
 };
@@ -167,6 +122,9 @@ private:
 typedef std::shared_ptr<SensorInfo> SensorInfoPtr;
 typedef std::vector<SensorInfoPtr> SensorInfoPtrs;
 
+// TODO: Not sure how to declare operators in a header, implement them in src
+//       and not brake everything (linking problems in places where
+//       sensor_info.cpp has to be linked)
 static bool operator==(const SensorInfo& s1, const SensorInfo& s2)
 {
   // Check the namespace, executable and name of the package
@@ -178,9 +136,31 @@ static bool operator==(const SensorInfo& s1, const SensorInfo& s2)
   }
 
   // Check the size of input and output topics
-  if (s1.getOutputTopics().size() != s2.getOutputTopics().size())
+  if (s1.getInputTopics().size() != s2.getInputTopics().size() ||
+      s1.getOutputTopics().size() != s2.getOutputTopics().size())
   {
     return false;
+  }
+
+  // Check the input topics
+  auto input_topics_2_copy = s2.getInputTopics();
+  for (auto& input_topic_1 : s1.getInputTopics())
+  {
+    bool topic_found = false;
+    for (auto it=input_topics_2_copy.begin(); it!=input_topics_2_copy.end(); it++)
+    {
+      if (input_topic_1.first == it->first)
+      {
+        topic_found = true;
+        input_topics_2_copy.erase(it);
+        break;
+      }
+    }
+
+    if (!topic_found)
+    {
+      return false;
+    }
   }
 
   // Check the output topics
@@ -224,6 +204,13 @@ struct convert<sensor_manager::SensorInfo>
     node["description"] = sensor.getDescription();
     node["reliability"] = sensor.getReliability();
 
+    Node input_topics_node;
+    for (auto& topics : sensor.getInputTopics())
+    {
+      input_topics_node[topics.first] = topics.second;
+    }
+    node["input_topics"] = input_topics_node;
+
     Node output_topics_node;
     for (auto& topics : sensor.getOutputTopics())
     {
@@ -241,23 +228,56 @@ struct convert<sensor_manager::SensorInfo>
       return false;
     }
 
+    uint8_t code;
+
     // Convert the compulsory fields
     try
     {
+      code = 1;
       sensor.setName(node["sensor_name"].as<std::string>());
+
+      code = 2;
       sensor.setType(node["sensor_type"].as<std::string>());
+
+      code = 3;
       sensor.setPackageName(node["package_name"].as<std::string>());
+
+      code = 4;
       sensor.setExecutable(node["executable"].as<std::string>());
 
+      // Get the input_topics
+      code = 5;
+      Node input_topics_node = node["input_topics"];
+      for (YAML::const_iterator node_it = input_topics_node.begin(); node_it != input_topics_node.end(); ++node_it)
+      {
+        sensor.addTopicIn({node_it->first.as<std::string>(),
+                              node_it->second.as<std::string>()});
+      }
+
       // Get the output_topics
+      code = 6;
       Node output_topics_node = node["output_topics"];
       for (YAML::const_iterator node_it = output_topics_node.begin(); node_it != output_topics_node.end(); ++node_it)
       {
-        sensor.addTopicOut({node_it->first.as<std::string>(), node_it->second.as<std::string>()});
+        sensor.addTopicOut({node_it->first.as<std::string>(),
+                               node_it->second.as<std::string>()});
       }
+
     }
     catch (YAML::InvalidNode e)
     {
+      // print out the error message
+      switch(code)
+      {
+        case 5:
+          std::cout << "Something is wrong with the 'input_topics'\n";
+          break;
+
+        case 6:
+          std::cout << "Something is wrong with the 'output_topics'\n";
+          break;
+      }
+
       return false;
     }
 
