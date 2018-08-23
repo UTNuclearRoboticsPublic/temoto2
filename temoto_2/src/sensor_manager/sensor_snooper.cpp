@@ -13,11 +13,11 @@ namespace sensor_manager
 //       and I have no clue what kind of behaviour should be expected - prolly bad
 
 SensorSnooper::SensorSnooper( BaseSubsystem*b
-                            , SensorInfoRegistry* sid)
+                            , SensorInfoRegistry* sir)
 : BaseSubsystem(*b, __func__)
 , config_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &SensorSnooper::syncCb, this)
 , action_engine_(this, false, ros::package::getPath(ROS_PACKAGE_NAME) + "/../temoto_actions/resource_snooper_actions")
-, sid_(sid)
+, sir_(sir)
 {
   // Sensor Info update monitoring timer
   update_monitoring_timer_ = nh_.createTimer(ros::Duration(1), &SensorSnooper::updateMonitoringTimerCb, this);
@@ -46,8 +46,8 @@ void SensorSnooper::startSnooping()
   std::string catkin_ws = ros::package::getPath(ROS_PACKAGE_NAME) + "/../..";
   sub_0.addData("string", catkin_ws);
 
-  // This object will be updated inside the tracking AImp (action implementation)
-  sub_0.addData("pointer", boost::any_cast<SensorInfoRegistry*>(sid_));
+  // This object will be updated insire the tracking action
+  sub_0.addData("pointer", boost::any_cast<SensorInfoRegistry*>(sir_));
 
   subjects.push_back(sub_0);
 
@@ -81,7 +81,7 @@ void SensorSnooper::advertiseLocalSensors() const
 {
   // publish all local sensors
   YAML::Node config;
-  for(const auto& s : sid_->getLocalSensors())
+  for(const auto& s : sir_->getLocalSensors())
   {
     config["Sensors"].push_back(s);
   }
@@ -178,14 +178,14 @@ void SensorSnooper::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& p
     for (auto& sensor : sensors)
     {
       // Check if sensor has to be added or updated
-      if (sid_->updateRemoteSensor(*sensor))
+      if (sir_->updateRemoteSensor(*sensor))
       {
         TEMOTO_DEBUG("Updating remote sensor '%s' at '%s'.", sensor->getName().c_str(),
                      sensor->getTemotoNamespace().c_str());
       }
       else
       {
-        sid_->addRemoteSensor(*sensor);
+        sir_->addRemoteSensor(*sensor);
       }
     }
   }
@@ -195,12 +195,12 @@ void SensorSnooper::updateMonitoringTimerCb(const ros::TimerEvent& e)
 {
 
   // Iterate through local sensors and check if their reliability has been updated
-  for (const auto sensor : sid_->getLocalSensors())
+  for (const auto sensor : sir_->getLocalSensors())
   {
     if (!sensor.getAdvertised())
     {
       SensorInfo si = sensor;
-      sid_->updateLocalSensor(si, true);
+      sir_->updateLocalSensor(si, true);
       advertiseSensor(si);
     }
   }
