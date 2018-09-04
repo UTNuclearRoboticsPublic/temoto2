@@ -1,5 +1,5 @@
-#ifndef ALGORITHM_MANAGER_SERVERS_H
-#define ALGORITHM_MANAGER_SERVERS_H
+#ifndef SENSOR_MANAGER_SERVERS_H
+#define SENSOR_MANAGER_SERVERS_H
 
 #include "common/base_subsystem.h"
 #include "algorithm_manager/algorithm_info_registry.h"
@@ -18,21 +18,21 @@ typedef std_msgs::String PayloadType;
 class AlgorithmManagerServers : public BaseSubsystem
 {
 public:
-    /**
-     * @brief AlgorithmManagerServers
-     */
-    AlgorithmManagerServers( BaseSubsystem* b, AlgorithmInfoRegistry* sid );
+  /**
+   * @brief AlgorithmManagerServers
+   */
+  AlgorithmManagerServers( BaseSubsystem* b, AlgorithmInfoRegistry* air );
 
-    /**
-     * @brief ~AlgorithmManagerServers
-     */
-    ~AlgorithmManagerServers();
+  /**
+   * @brief ~AlgorithmManagerServers
+   */
+  ~AlgorithmManagerServers();
 
-    const std::string& getName() const
-    {
-      return subsystem_name_;
-    }
-    
+  const std::string& getName() const
+  {
+    return subsystem_name_;
+  }
+
 private:
 
   /**
@@ -41,13 +41,13 @@ private:
    * @param res
    * @return
    */
-  void startAlgorithmCb(temoto_2::LoadAlgorithm::Request& req, temoto_2::LoadAlgorithm::Response& res);
+  void loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req, temoto_2::LoadAlgorithm::Response& res);
 
   /**
    * @brief Called when algorithm is unloaded. Nothing to do here.
    * @return
    */
-  void stopAlgorithmCb(temoto_2::LoadAlgorithm::Request& req, temoto_2::LoadAlgorithm::Response& res);
+  void unloadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req, temoto_2::LoadAlgorithm::Response& res);
 
   /**
    * @brief Called when algorithm is unloaded. Nothing to do here.
@@ -55,14 +55,27 @@ private:
    */
   void statusCb(temoto_2::ResourceStatus& srv);
 
+  /**
+   * @brief processTopics
+   * @param req
+   * @param res
+   * @param load_process_msg
+   * @param algorithm_ptr
+   */
+  void processTopics( std::vector<diagnostic_msgs::KeyValue>& req_topics
+                    , std::vector<diagnostic_msgs::KeyValue>& res_topics
+                    , temoto_2::LoadProcess& load_process_msg
+                    , AlgorithmInfo& algorithm_info
+                    , bool inputTopics);
+
+  /// Algorithm Info Registry
+  AlgorithmInfoRegistry* air_;
+
   ///  ros::ServiceServer list_devices_server_;
   rmp::ResourceManager<AlgorithmManagerServers> resource_manager_;
 
   /// List of allocated algorithms
   std::map<temoto_id::ID, AlgorithmInfo> allocated_algorithms_;
-
-  /// Algorithm Info Registry
-  AlgorithmInfoRegistry* sid_;
 
 }; // AlgorithmManagerServers
 

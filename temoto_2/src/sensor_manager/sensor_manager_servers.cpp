@@ -16,8 +16,8 @@ SensorManagerServers::SensorManagerServers(BaseSubsystem *b, SensorInfoRegistry 
 {
   // Start the server
   resource_manager_.addServer<temoto_2::LoadSensor>( srv_name::SERVER
-                                                   , &SensorManagerServers::startSensorCb
-                                                   , &SensorManagerServers::stopSensorCb);
+                                                   , &SensorManagerServers::loadSensorCb
+                                                   , &SensorManagerServers::unloadSensorCb);
   // Register callback for status info
   resource_manager_.registerStatusCb(&SensorManagerServers::statusCb);
 
@@ -72,8 +72,8 @@ bool SensorManagerServers::listDevicesCb( temoto_2::ListDevices::Request& req
   return true;
 }
 
-// TODO: rename "startSensorCb" to "loadSensorCb"
-void SensorManagerServers::startSensorCb( temoto_2::LoadSensor::Request& req
+// TODO: rename "loadSensorCb" to "loadSensorCb"
+void SensorManagerServers::loadSensorCb( temoto_2::LoadSensor::Request& req
                                         , temoto_2::LoadSensor::Response& res)
 {
   TEMOTO_INFO_STREAM("- - - - - - - - - - - - -\n"
@@ -90,15 +90,16 @@ void SensorManagerServers::startSensorCb( temoto_2::LoadSensor::Request& req
     load_process_msg.request.executable = si.getExecutable();
 
     // Remap the input topics if requested
-    remapArguments(req.input_topics, res.input_topics, load_process_msg, si, true);
+    processTopics(req.input_topics, res.input_topics, load_process_msg, si, true);
 
     // Remap the output topics if requested
-    remapArguments(req.output_topics, res.output_topics, load_process_msg, si, false);
+    processTopics(req.output_topics, res.output_topics, load_process_msg, si, false);
 
     TEMOTO_INFO( "SensorManagerServers found a suitable local sensor: '%s', '%s', '%s', reliability %.3f"
                , load_process_msg.request.action.c_str()
                , load_process_msg.request.package_name.c_str()
-               , load_process_msg.request.executable.c_str(), si.getReliability());
+               , load_process_msg.request.executable.c_str()
+               , si.getReliability());
 
     try
     {
@@ -179,8 +180,8 @@ void SensorManagerServers::startSensorCb( temoto_2::LoadSensor::Request& req
   }
 }
 
-// TODO: rename "stopSensorCb" to "unloadSensorCb"
-void SensorManagerServers::stopSensorCb(temoto_2::LoadSensor::Request& req,
+// TODO: rename "unloadSensorCb" to "unloadSensorCb"
+void SensorManagerServers::unloadSensorCb(temoto_2::LoadSensor::Request& req,
                                  temoto_2::LoadSensor::Response& res)
 {
   TEMOTO_DEBUG("received a request to stop sensor with id '%ld'", res.rmp.resource_id);
@@ -188,11 +189,11 @@ void SensorManagerServers::stopSensorCb(temoto_2::LoadSensor::Request& req,
   return;
 }
 
-void SensorManagerServers::remapArguments(std::vector<diagnostic_msgs::KeyValue>& req_topics,
-                                          std::vector<diagnostic_msgs::KeyValue>& res_topics,
-                                          temoto_2::LoadProcess& load_process_msg,
-                                          SensorInfo& sensor_info,
-                                          bool inputTopics)
+void SensorManagerServers::processTopics( std::vector<diagnostic_msgs::KeyValue>& req_topics
+                                        , std::vector<diagnostic_msgs::KeyValue>& res_topics
+                                        , temoto_2::LoadProcess& load_process_msg
+                                        , SensorInfo& sensor_info
+                                        , bool inputTopics)
 {
   /*
    * Find out it this is a launch file or not. Remapping is different
@@ -202,12 +203,25 @@ void SensorManagerServers::remapArguments(std::vector<diagnostic_msgs::KeyValue>
   std::regex rx(".*\\.launch$");
   isLaunchFile = std::regex_match(sensor_info.getExecutable(), rx);
 
+  // If no topics were requested, then return a list of all topics this sensor publishes
+  if (req_topics.empty())
+  {
+    for (const auto& output_topic : sensor_info.getOutputTopics())
+    {
+      diagnostic_msgs::KeyValue topic_msg;
+      topic_msg.key = output_topic.first;
+      topic_msg.value = common::getAbsolutePath(output_topic.second);
+      res_topics.push_back(topic_msg);
+    }
+    return;
+  }
+
   // Remap the input topics if requested
   for (auto& req_topic : req_topics)
   {
     // And return the input topics via response
-    diagnostic_msgs::KeyValue res_input_topic;
-    res_input_topic.key = req_topic.key;
+    diagnostic_msgs::KeyValue res_topic;
+    res_topic.key = req_topic.key;
     std::string default_topic;
 
     if (inputTopics)
@@ -221,7 +235,7 @@ void SensorManagerServers::remapArguments(std::vector<diagnostic_msgs::KeyValue>
 
     if (req_topic.value != "")
     {
-      res_input_topic.value = common::getAbsolutePath(req_topic.value);
+      res_topic.value = common::getAbsolutePath(req_topic.value);
 
       // Remap depending wether it is a launch file or excutable
       std::string remap_arg;
@@ -239,11 +253,11 @@ void SensorManagerServers::remapArguments(std::vector<diagnostic_msgs::KeyValue>
     }
     else
     {
-      res_input_topic.value = common::getAbsolutePath(default_topic);
+      res_topic.value = common::getAbsolutePath(default_topic);
     }
 
     // Add the topic to the response message
-    res_topics.push_back(res_input_topic);
+    res_topics.push_back(res_topic);
   }
 }
 

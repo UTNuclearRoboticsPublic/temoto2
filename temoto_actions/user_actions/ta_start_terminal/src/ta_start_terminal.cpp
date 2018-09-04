@@ -21,19 +21,19 @@
 #include <boost/algorithm/string.hpp>
 
 // First implementaton
-class TaskTerminal : public TTP::BaseTask
+class TaTaskTerminal : public TTP::BaseTask
 {
 public:
   /* * * * * * * * * * * * * * * * * * * * * * * * *
    * Inherited methods that have to be implemented /START
    * * * * * * * * * * * * * * * * * * * * * * * * */
 
-  TaskTerminal()
+  TaTaskTerminal()
   {
-    class_name_ = "TaskTerminal";
+    class_name_ = "TaTaskTerminal";
 
     // Do something here if needed
-    TASK_DEBUG("TaskTerminal constructed");
+    TASK_DEBUG("TaTaskTerminal constructed");
   }
 
   // startTask
@@ -67,9 +67,6 @@ public:
 
     // --------------------------------< USER CODE >-------------------------------
 
-    // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
-
     // Initialize context manager interface
     cmi_.initialize(this);
 
@@ -85,7 +82,8 @@ public:
     speech_specifiers.push_back(speech_specifier);
 
     // Get speech and register callback
-    cmi_.getSpeech(speech_specifiers, &TaskTerminal::speech_callback, this);
+    cmi_.getSpeech(speech_specifiers, &TaTaskTerminal::speech_callback, this);
+
     // --------------------------------</ USER CODE >-------------------------------
   }
 
@@ -117,10 +115,10 @@ public:
     }
   }
 
-  ~TaskTerminal()
+  ~TaTaskTerminal()
   {
     core_pub_.shutdown();
-    ROS_INFO("[TaskTerminal::~TaskTerminal] TaskTerminal destructed");
+    ROS_INFO("[TaTaskTerminal::~TaTaskTerminal] TaTaskTerminal destructed");
   }
 
 private:
@@ -130,10 +128,10 @@ private:
   std::string class_name_;
 
   // Human context interface object
-  context_manager::ContextManagerInterface<TaskTerminal> cmi_;
+  context_manager::ContextManagerInterface<TaTaskTerminal> cmi_;
   ros::Publisher core_pub_;
   ros::NodeHandle nh_;
 };
 
 // Dont forget that part, otherwise this class would not be loadable
-CLASS_LOADER_REGISTER_CLASS(TaskTerminal, TTP::BaseTask);
+CLASS_LOADER_REGISTER_CLASS(TaTaskTerminal, TTP::BaseTask);

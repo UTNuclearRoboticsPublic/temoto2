@@ -80,7 +80,7 @@ public:
     // Call the server
     try
     {
-      resource_manager_->template call<temoto_2::LoadSpeech>(context_manager::srv_name::MANAGER
+      resource_manager_->template call<temoto_2::LoadSpeech>( context_manager::srv_name::MANAGER
                                                             , context_manager::srv_name::SPEECH_SERVER
                                                             , srv_msg);
       allocated_speeches_.push_back(srv_msg);

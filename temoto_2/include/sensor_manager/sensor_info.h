@@ -245,15 +245,6 @@ struct convert<sensor_manager::SensorInfo>
       code = 4;
       sensor.setExecutable(node["executable"].as<std::string>());
 
-      // Get the input_topics
-      code = 5;
-      Node input_topics_node = node["input_topics"];
-      for (YAML::const_iterator node_it = input_topics_node.begin(); node_it != input_topics_node.end(); ++node_it)
-      {
-        sensor.addTopicIn({node_it->first.as<std::string>(),
-                              node_it->second.as<std::string>()});
-      }
-
       // Get the output_topics
       code = 6;
       Node output_topics_node = node["output_topics"];
@@ -281,7 +272,26 @@ struct convert<sensor_manager::SensorInfo>
       return false;
     }
 
-    // These fields are optional
+    /*
+     * These fields are optional
+     */
+
+    // Get the input_topics
+    try
+    {
+      Node input_topics_node = node["input_topics"];
+      for (YAML::const_iterator node_it = input_topics_node.begin()
+          ; node_it != input_topics_node.end()
+          ; ++node_it)
+      {
+        sensor.addTopicIn({node_it->first.as<std::string>(), node_it->second.as<std::string>()});
+      }
+    }
+    catch (YAML::InvalidNode e)
+    {
+    }
+
+    // Get the description
     try
     {
       sensor.setDescription(node["description"].as<std::string>());
@@ -290,6 +300,7 @@ struct convert<sensor_manager::SensorInfo>
     {
     }
 
+    // Get the reliability
     try
     {
       sensor.resetReliability(node["reliability"].as<float>());
