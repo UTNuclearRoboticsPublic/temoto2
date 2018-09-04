@@ -1,5 +1,5 @@
-#ifndef SENSOR_MANAGER_SERVERS_H
-#define SENSOR_MANAGER_SERVERS_H
+#ifndef ALGORITHM_MANAGER_SERVERS_H
+#define ALGORITHM_MANAGER_SERVERS_H
 
 #include "common/base_subsystem.h"
 #include "algorithm_manager/algorithm_info_registry.h"
