@@ -13,13 +13,16 @@
 namespace sensor_manager
 {
 
-typedef std_msgs::String PayloadType;
-
+/**
+ * @brief The SensorManagerServers contains all Sensor Manager related ROS services.
+ */
 class SensorManagerServers : public BaseSubsystem
 {
 public:
   /**
-   * @brief SensorManagerServers
+   * @brief Constructor.
+   * @param b pointer to parent class (each subsystem in TeMoto inherits the base subsystem class).
+   * @param sid pointer to Sensor Info Database.
    */
   SensorManagerServers( BaseSubsystem* b, SensorInfoRegistry* sid );
 
@@ -28,69 +31,64 @@ public:
    */
   ~SensorManagerServers();
 
+  /**
+   * @brief getName
+   * @return Name of this subsystem.
+   */
   const std::string& getName() const
   {
     return subsystem_name_;
   }
     
 private:
-  //bool indexSensors(const std::string& yaml_filename);
-  /**
-   * @brief Callback to a service that lists all available packages that
-   * are with a requested "type". For example "list all HANDtracking devices"
-   * @param req
-   * @param res
-   * @return
-   */
+
+  // TODO: Unused service, should be removed
   bool listDevicesCb(temoto_2::ListDevices::Request& req, temoto_2::ListDevices::Response& res);
 
-  /*
-   * Callback to a service that executes/runs a requested device
-   * and sends back the topic that the device is publishing to
-   * THIS IS LIKELY A GENERIC FUNCTION THAT WILL BE USED ALSO BY
-   * OTHER MANAGERS
-   */
-
   /**
-   * @brief Start node service
+   * @brief Callback to a service that executes/runs a requested device
+   * and sends back the topic that the device is publishing to
    * @param req
    * @param res
-   * @return
    */
   void loadSensorCb(temoto_2::LoadSensor::Request& req, temoto_2::LoadSensor::Response& res);
 
   /**
-   * @brief Called when sensor is unloaded. Nothing to do here.
-   * @return
+   * @brief Called when a sensor is unloaded.
+   * @param req
+   * @param res
    */
   void unloadSensorCb(temoto_2::LoadSensor::Request& req, temoto_2::LoadSensor::Response& res);
 
   /**
-   * @brief Called when sensor is unloaded. Nothing to do here.
-   * @return
+   * @brief Called when sensor status update information is received.
+   * @param srv
    */
   void statusCb(temoto_2::ResourceStatus& srv);
 
   /**
-   * @brief processTopics
-   * @param req
-   * @param res
-   * @param load_process_msg
-   * @param algorithm_ptr
+   * @brief A function that helps to manage sensor topic related information.
+   * @param req_topics Topics that were requested.
+   * @param res_topics Response part for the requested topics.
+   * @param load_process_msg If topic name remapping is required, then the remapped topic names
+   * are placed into this message structure (used later for invoking the sensor via External
+   * Resource Manager)
+   * @param sensor_info Data structure that contains information about the particular sensor.
+   * @param direction Specifies whether input or output topics are managed.
    */
-  void processTopics(std::vector<diagnostic_msgs::KeyValue>& req_topics
+  void processTopics( std::vector<diagnostic_msgs::KeyValue>& req_topics
                     , std::vector<diagnostic_msgs::KeyValue>& res_topics
                     , temoto_2::LoadProcess& load_process_msg
                     , SensorInfo& sensor_info
-                    , bool inputTopics);
+                    , std::string direction);
 
-  /// Sensor Info Registry
+  /// Pointer to a central Sensor Info Registry object.
   SensorInfoRegistry* sir_;
 
-  ///  ros::ServiceServer list_devices_server_;
+  /// Resource Management object which handles resource requests and status info propagation.
   rmp::ResourceManager<SensorManagerServers> resource_manager_;
 
-  /// List of allocated sensors
+  /// List of allocated sensors.
   std::map<temoto_id::ID, SensorInfo> allocated_sensors_;
 
 }; // SensorManagerServers

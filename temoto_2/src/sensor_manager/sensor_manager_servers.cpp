@@ -90,10 +90,10 @@ void SensorManagerServers::loadSensorCb( temoto_2::LoadSensor::Request& req
     load_process_msg.request.executable = si.getExecutable();
 
     // Remap the input topics if requested
-    processTopics(req.input_topics, res.input_topics, load_process_msg, si, true);
+    processTopics(req.input_topics, res.input_topics, load_process_msg, si, "in");
 
     // Remap the output topics if requested
-    processTopics(req.output_topics, res.output_topics, load_process_msg, si, false);
+    processTopics(req.output_topics, res.output_topics, load_process_msg, si, "out");
 
     TEMOTO_INFO( "SensorManagerServers found a suitable local sensor: '%s', '%s', '%s', reliability %.3f"
                , load_process_msg.request.action.c_str()
@@ -193,7 +193,7 @@ void SensorManagerServers::processTopics( std::vector<diagnostic_msgs::KeyValue>
                                         , std::vector<diagnostic_msgs::KeyValue>& res_topics
                                         , temoto_2::LoadProcess& load_process_msg
                                         , SensorInfo& sensor_info
-                                        , bool inputTopics)
+                                        , std::string direction)
 {
   /*
    * Find out it this is a launch file or not. Remapping is different
@@ -203,10 +203,22 @@ void SensorManagerServers::processTopics( std::vector<diagnostic_msgs::KeyValue>
   std::regex rx(".*\\.launch$");
   isLaunchFile = std::regex_match(sensor_info.getExecutable(), rx);
 
+  // Work with input or output topics
+  std::vector<StringPair> sensor_info_topics;
+
+  if (direction == "in")
+  {
+    sensor_info_topics = sensor_info.getInputTopics();
+  }
+  else if (direction == "out")
+  {
+    sensor_info_topics = sensor_info.getOutputTopics();
+  }
+
   // If no topics were requested, then return a list of all topics this sensor publishes
   if (req_topics.empty())
   {
-    for (const auto& output_topic : sensor_info.getOutputTopics())
+    for (const auto& output_topic : sensor_info_topics)
     {
       diagnostic_msgs::KeyValue topic_msg;
       topic_msg.key = output_topic.first;
@@ -224,11 +236,11 @@ void SensorManagerServers::processTopics( std::vector<diagnostic_msgs::KeyValue>
     res_topic.key = req_topic.key;
     std::string default_topic;
 
-    if (inputTopics)
+    if (direction == "in")
     {
       default_topic = sensor_info.getInputTopic(req_topic.key);
     }
-    else
+    else if (direction == "out")
     {
       default_topic = sensor_info.getOutputTopic(req_topic.key);
     }
