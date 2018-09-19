@@ -25,7 +25,7 @@ find_install_from_source () {
   fi 
 }
 
-# Usage: find_install_from_source <package_name> <git_repo_uri> 
+# Usage: find_install_from_source <package_name> <apt_name> 
 find_install_from_apt () {
   PACKAGE_NAME=$1
   PACKAGE_NAME_APT=$2
