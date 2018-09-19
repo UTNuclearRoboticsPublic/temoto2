@@ -37,7 +37,7 @@ sudo apt install g++ git cmake make libjemalloc-dev zlib1g-dev wget
 # Install MeTA
 # # # # # # # #
 
-PREV_DIR=$(pwd)
+PREV_DIR=$(pwdw)
 mkdir -p $META_SRC_DIR
 cd $META_SRC_DIR
 

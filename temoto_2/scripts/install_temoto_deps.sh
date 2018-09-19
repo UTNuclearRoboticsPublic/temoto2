@@ -7,6 +7,8 @@ BOLD="\e[1m"
 NL="\n"
 RESET="\e[39m\e[0m"
 
+ROS_VERSION="kinetic"
+
 # Usage: find_install_from_source <package_name> <git_repo_uri> 
 find_install_from_source () {
   PACKAGE_NAME=$1
@@ -25,26 +27,8 @@ find_install_from_source () {
   fi 
 }
 
-# Usage: find_install_from_source <package_name> <apt_name> 
+# Find non ROS packages find_install_from_apt <package_name>
 find_install_from_apt () {
-  PACKAGE_NAME=$1
-  PACKAGE_NAME_APT=$2
-
-  # Look for the package
-  rospack find $PACKAGE_NAME &> /dev/null
-
-  # Get the package if it was not found
-  if [[ $? = 0 ]]; then
-    echo -e $GREEN$BOLD"*" $PACKAGE_NAME $RESET$GREEN"package is already installed."$RESET
-  else
-    # Clone the rviz_plugin_manager package
-    echo -e $RESET$GREEN"Installing the" $PACKAGE_NAME $RESET
-    sudo apt install $PACKAGE_NAME_APT
-  fi 
-}
-
-# Find non ROS packages
-find_install_non_ros () {
   PACKAGE_NAME=$1
   
   # Look for the package
@@ -91,23 +75,23 @@ find_install_from_source human_msgs https://github.com/ut-ims-robotics/human_msg
 find_install_from_source file_template_parser https://github.com/ut-ims-robotics/file_template_parser
 
 # Check if the ar_track_alvar_messages package exists
-find_install_from_apt ar_track_alvar_msgs ros-kinetic-ar-track-alvar-msgs 
+find_install_from_apt ros-$ROS_VERSION-ar-track-alvar-msgs 
 
 # Check if the moveit_ros_planning_interface  package exists
-find_install_from_apt moveit_ros_planning_interface ros-kinetic-moveit-ros-planning-interface
+find_install_from_apt ros-$ROS_VERSION-moveit-ros-planning-interface
 
 # Check if the moveit_ros_planning_interface  package exists
-find_install_from_apt tf2_geometry_msgs ros-kinetic-tf2-geometry-msgs
+find_install_from_apt ros-$ROS_VERSION-tf2-geometry-msgs
 
 # Install Intel TBB
-find_install_non_ros libtbb2
-find_install_non_ros libtbb-dev
+find_install_from_apt libtbb2
+find_install_from_apt libtbb-dev
 
 # Install TinyXML
-find_install_non_ros libtinyxml-dev
-find_install_non_ros libtinyxml2-2v5
-find_install_non_ros libtinyxml2-dev
-find_install_non_ros libtinyxml2.6.2v5
+find_install_from_apt libtinyxml-dev
+find_install_from_apt libtinyxml2-2v5
+find_install_from_apt libtinyxml2-dev
+find_install_from_apt libtinyxml2.6.2v5
 
 cd $PREV_DIR
 echo -e $NL"Dependencies are installed, you are good to go."
