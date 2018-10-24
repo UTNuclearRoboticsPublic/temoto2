@@ -72,7 +72,7 @@
   <run_depend>rviz_plugin_manager</run_depend>
   <run_depend>file_template_parser</run_depend>
   <run_depend>temoto_action_assistant</run_depend>
-  <run_depend>yaml-cpp</run_depend>
+  <run_depend>yaml-cpp</run_depend>r
 
 
   <!-- The export tag contains other, unspecified, tags -->

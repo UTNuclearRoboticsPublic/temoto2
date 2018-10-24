@@ -27,7 +27,7 @@ find_install_from_source () {
   fi 
 }
 
-# Find non ROS packages find_install_from_apt <package_name>
+# Usage: find_install_from_apt <package_name>
 find_install_from_apt () {
   PACKAGE_NAME=$1
   
@@ -41,7 +41,6 @@ find_install_from_apt () {
     echo -e $RESET$GREEN"Installing the" $PACKAGE_NAME $RESET
     sudo apt install $PACKAGE_NAME
   fi 
-
 }
 
 # Go back to the catkin_workspace/src folder

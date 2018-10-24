@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 
     // Publish a message to the tasking core
     std_msgs::String init_msg;
-    init_msg.data = "start the terminal";
+    init_msg.data = common::getTemotoNamespace() + " start the terminal";
     chatter_publisher.publish(init_msg);
 
     std::cout << prefix << " Core is up and running\n\n";

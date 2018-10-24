@@ -12,7 +12,11 @@
 namespace TTP
 {
 
-MetaLP::MetaLP(std::string language_models_dir, BaseSubsystem& b) : BaseSubsystem(b)
+MetaLP::MetaLP( std::string language_models_dir
+              , BaseSubsystem& b
+              , std::string wake_word)
+: BaseSubsystem(b)
+, wake_word_(wake_word)
 {
   class_name_ = __func__;
   // Name of the method, used for making debugging a bit simpler
@@ -73,6 +77,12 @@ TaskTree MetaLP::processText(std::string input_text)
        */
       p_tree.visit(bf);
       std::vector<TTP::TaskDescriptor> task_descs = bf.getTaskDescs();
+
+      if (bf.getAddressable() != wake_word_)
+      {
+        throw CREATE_ERROR(error::Code::NLP_BAD_INPUT, "Did not receive correct wake word."
+                           " Expecting '" + wake_word_ + "' but got '" + bf.getAddressable() + "'");
+      }
 
       // If potential tasks were found then ...
       if (task_descs.size() > 0)

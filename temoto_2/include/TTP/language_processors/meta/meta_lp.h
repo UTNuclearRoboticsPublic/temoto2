@@ -15,32 +15,35 @@ class MetaLP : BaseSubsystem
 {
 public:
 
-    /// Default constructor
-//    MetaLP() = default;
+  /**
+   * @brief MetaLP
+   * @param language_models_dir
+   * @param b
+   * @param wake_word
+   */
+  MetaLP( std::string language_models_dir
+        , BaseSubsystem& b
+        , std::string wake_word = "");
 
-    /**
-     * @brief Constructor
-     * @param Base path to language model files
-     */
-    MetaLP(std::string language_models_dir, BaseSubsystem& b);
-
-    /**
-     * @brief Looks for any potential tasks from input text and
-     * sets them in hierarchical order,i.e., task tree
-     * @param input_text
-     * @return
-     */
-    TaskTree processText(std::string input_text);
+  /**
+   * @brief Looks for any potential tasks from input text and
+   * sets them in hierarchical order,i.e., task tree
+   * @param input_text
+   * @return
+   */
+  TaskTree processText(std::string input_text);
 
 private:
 
-    meta::sequence::perceptron tagger_;
+  meta::sequence::perceptron tagger_;
 
-    meta::parser::sr_parser parser_;
+  meta::parser::sr_parser parser_;
 
-    TaskTree task_tree_;
+  TaskTree task_tree_;
 
-    std::shared_ptr<nummap> str_int_map_;
+  std::shared_ptr<nummap> str_int_map_;
+
+  std::string wake_word_;
 };
 
 }// END of TTP namespace
