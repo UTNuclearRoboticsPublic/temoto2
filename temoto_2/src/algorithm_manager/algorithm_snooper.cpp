@@ -12,11 +12,11 @@ namespace algorithm_manager
 //       and I have no clue what kind of behaviour should be expected - prolly bad
 
 AlgorithmSnooper::AlgorithmSnooper( BaseSubsystem*b
-                            , AlgorithmInfoRegistry* sid)
+                            , AlgorithmInfoRegistry* aid)
 : BaseSubsystem(*b, __func__)
 , config_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &AlgorithmSnooper::syncCb, this)
 , action_engine_(this, false, ros::package::getPath(ROS_PACKAGE_NAME) + "/../temoto_actions/resource_snooper_actions")
-, sid_(sid)
+, aid_(aid)
 {
   // Algorithm Info update monitoring timer
   update_monitoring_timer_ = nh_.createTimer(ros::Duration(1), &AlgorithmSnooper::updateMonitoringTimerCb, this);
@@ -46,7 +46,7 @@ void AlgorithmSnooper::startSnooping()
   sub_0.addData("string", catkin_ws);
 
   // This object will be updated inside the tracking AImp (action implementation)
-  sub_0.addData("pointer", boost::any_cast<AlgorithmInfoRegistry*>(sid_));
+  sub_0.addData("pointer", boost::any_cast<AlgorithmInfoRegistry*>(aid_));
 
   subjects.push_back(sub_0);
 
@@ -66,11 +66,11 @@ void AlgorithmSnooper::startSnooping()
   action_engine_.executeSFTThreaded(std::move(sft));
 }
 
-void AlgorithmSnooper::advertiseAlgorithm(AlgorithmInfo& si) const
+void AlgorithmSnooper::advertiseAlgorithm(AlgorithmInfo& ai) const
 {
   //TEMOTO_DEBUG("------ Advertising Algorithm \n %s", algorithm_ptr->toString().c_str());
   YAML::Node config;
-  config["Algorithms"].push_back(si);
+  config["Algorithms"].push_back(ai);
   PayloadType payload;
   payload.data = Dump(config);
   config_syncer_.advertise(payload);
@@ -80,7 +80,7 @@ void AlgorithmSnooper::advertiseLocalAlgorithms() const
 {
   // publish all local algorithms
   YAML::Node config;
-  for(const auto& s : sid_->getLocalAlgorithms())
+  for(const auto& s : aid_->getLocalAlgorithms())
   {
     config["Algorithms"].push_back(s);
   }
@@ -177,14 +177,14 @@ void AlgorithmSnooper::syncCb(const temoto_2::ConfigSync& msg, const PayloadType
     for (auto& algorithm : algorithms)
     {
       // Check if algorithm has to be added or updated
-      if (sid_->updateRemoteAlgorithm(*algorithm))
+      if (aid_->updateRemoteAlgorithm(*algorithm))
       {
         TEMOTO_DEBUG("Updating remote algorithm '%s' at '%s'.", algorithm->getName().c_str(),
                      algorithm->getTemotoNamespace().c_str());
       }
       else
       {
-        sid_->addRemoteAlgorithm(*algorithm);
+        aid_->addRemoteAlgorithm(*algorithm);
       }
     }
   }
@@ -194,12 +194,12 @@ void AlgorithmSnooper::updateMonitoringTimerCb(const ros::TimerEvent& e)
 {
 
   // Iterate through local algorithms and check if their reliability has been updated
-  for (const auto algorithm : sid_->getLocalAlgorithms())
+  for (const auto algorithm : aid_->getLocalAlgorithms())
   {
     if (!algorithm.getAdvertised())
     {
       AlgorithmInfo si = algorithm;
-      sid_->updateLocalAlgorithm(si, true);
+      aid_->updateLocalAlgorithm(si, true);
       advertiseAlgorithm(si);
     }
   }

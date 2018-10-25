@@ -62,103 +62,109 @@ void AlgorithmManagerServers::loadAlgorithmCb( temoto_2::LoadAlgorithm::Request&
                      << "Received a request to load a algorithm: \n" << req << std::endl);
 
   // Try to find suitable candidate from local algorithms
-  AlgorithmInfo ai;
-  if (air_->findLocalAlgorithm(req, ai))
+  std::vector<AlgorithmInfo> ais;
+  if (air_->findLocalAlgorithms(req, ais))
   {
-    // Try to run the algorithm via local Resource Manager
-    temoto_2::LoadProcess load_process_msg;
-    load_process_msg.request.action = process_manager::action::ROS_EXECUTE;
-    load_process_msg.request.package_name = ai.getPackageName();
-    load_process_msg.request.executable = ai.getExecutable();
-
-    // Remap the input topics if requested
-    processTopics(req.input_topics, res.input_topics, load_process_msg, ai, true);
-
-    // Remap the output topics if requested
-    processTopics(req.output_topics, res.output_topics, load_process_msg, ai, false);
-
-    TEMOTO_INFO( "AlgorithmManagerServers found a suitable local algorithm: '%s', '%s', '%s', reliability %.3f"
-               , load_process_msg.request.action.c_str()
-               , load_process_msg.request.package_name.c_str()
-               , load_process_msg.request.executable.c_str()
-               , ai.getReliability());
-
-    try
+    // Loop over suitable algorithms
+    for (AlgorithmInfo& ai : ais)
     {
-      resource_manager_.call<temoto_2::LoadProcess>( process_manager::srv_name::MANAGER
-                                                   , process_manager::srv_name::SERVER
-                                                   , load_process_msg
-                                                   , rmp::FailureBehavior::NONE);
+      // Try to run the algorithm via local Resource Manager
+      temoto_2::LoadProcess load_process_msg;
+      load_process_msg.request.action = process_manager::action::ROS_EXECUTE;
+      load_process_msg.request.package_name = ai.getPackageName();
+      load_process_msg.request.executable = ai.getExecutable();
 
-      TEMOTO_DEBUG("Call to ProcessManager was sucessful.");
+      // Remap the input topics if requested
+      processTopics(req.input_topics, res.input_topics, load_process_msg, ai, true);
 
-      // Fill out the response about which particular algorithm was chosen
-      res.package_name = ai.getPackageName();
-      res.executable = ai.getExecutable();
-      res.rmp = load_process_msg.response.rmp;
+      // Remap the output topics if requested
+      processTopics(req.output_topics, res.output_topics, load_process_msg, ai, false);
 
-      ai.adjustReliability(1.0);
-      air_->updateLocalAlgorithm(ai);
-    }
-    catch(error::ErrorStack& error_stack)
-    {
-      if (error_stack.front().code != static_cast<int>(error::Code::SERVICE_REQ_FAIL))
+      TEMOTO_INFO( "Found a suitable local algorithm: '%s', '%s', '%s', reliability %.3f"
+                 , load_process_msg.request.action.c_str()
+                 , load_process_msg.request.package_name.c_str()
+                 , load_process_msg.request.executable.c_str()
+                 , ai.getReliability());
+
+      try
       {
-        ai.adjustReliability(0.0);
+        resource_manager_.call<temoto_2::LoadProcess>( process_manager::srv_name::MANAGER
+                                                     , process_manager::srv_name::SERVER
+                                                     , load_process_msg
+                                                     , rmp::FailureBehavior::NONE);
+
+        TEMOTO_DEBUG("Call to ProcessManager was sucessful.");
+
+        // Fill out the response about which particular algorithm was chosen
+        res.package_name = ai.getPackageName();
+        res.executable = ai.getExecutable();
+        res.rmp = load_process_msg.response.rmp;
+
+        ai.adjustReliability(1.0);
         air_->updateLocalAlgorithm(ai);
+        allocated_algorithms_.emplace(res.rmp.resource_id, ai);
+
+        return;
       }
-      throw FORWARD_ERROR(error_stack);
+      catch(error::ErrorStack& error_stack)
+      {
+        if (error_stack.front().code != static_cast<int>(error::Code::SERVICE_REQ_FAIL))
+        {
+          ai.adjustReliability(0.0);
+          air_->updateLocalAlgorithm(ai);
+        }
+        // TODO: Create error branches
+        SEND_ERROR(error_stack);
+      }
     }
-
-    allocated_algorithms_.emplace(res.rmp.resource_id, ai);
-
-    return;
   }
 
-  // try remote algorithms
-//  for (auto& rs : remote_algorithms_)
-//  {
-//    TEMOTO_INFO("Looking from: \n%s", rs->toString().c_str());
-//  }
-
-  if (air_->findRemoteAlgorithm(req, ai))
+  /*
+   * try remote algorithms
+   */
+  if (air_->findRemoteAlgorithms(req, ais))
   {
-    // remote algorithm candidate was found, forward the request to the remote algorithm manager
-    temoto_2::LoadAlgorithm load_algorithm_msg;
-    load_algorithm_msg.request.algorithm_type = ai.getType();
-    load_algorithm_msg.request.package_name = ai.getPackageName();
-    load_algorithm_msg.request.executable = ai.getExecutable();
-    load_algorithm_msg.request.input_topics = req.input_topics;
-    load_algorithm_msg.request.output_topics = req.output_topics;
-
-    TEMOTO_INFO( "Algorithm Manager is forwarding request: '%s', '%s', '%s', reliability %.3f"
-               , ai.getType().c_str()
-               , ai.getPackageName().c_str()
-               , ai.getExecutable().c_str()
-               , ai.getReliability());
-
-    try
+    for (AlgorithmInfo& ai : ais)
     {
-      resource_manager_.call<temoto_2::LoadAlgorithm>( algorithm_manager::srv_name::MANAGER
-                                                  , algorithm_manager::srv_name::SERVER
-                                                  , load_algorithm_msg
-                                                  , rmp::FailureBehavior::NONE
-                                                  , ai.getTemotoNamespace());
+      // remote algorithm candidate was found, forward the request to the remote algorithm manager
+      temoto_2::LoadAlgorithm load_algorithm_msg;
+      load_algorithm_msg.request.algorithm_type = ai.getType();
+      load_algorithm_msg.request.package_name = ai.getPackageName();
+      load_algorithm_msg.request.executable = ai.getExecutable();
+      load_algorithm_msg.request.input_topics = req.input_topics;
+      load_algorithm_msg.request.output_topics = req.output_topics;
 
-      TEMOTO_DEBUG("Call to remote AlgorithmManagerServers was sucessful.");
-      res = load_algorithm_msg.response;
-      allocated_algorithms_.emplace(res.rmp.resource_id, ai);
+      TEMOTO_INFO( "Algorithm Manager is forwarding request: '%s', '%s', '%s', reliability %.3f"
+                 , ai.getType().c_str()
+                 , ai.getPackageName().c_str()
+                 , ai.getExecutable().c_str()
+                 , ai.getReliability());
+
+      try
+      {
+        resource_manager_.call<temoto_2::LoadAlgorithm>( algorithm_manager::srv_name::MANAGER
+                                                       , algorithm_manager::srv_name::SERVER
+                                                       , load_algorithm_msg
+                                                       , rmp::FailureBehavior::NONE
+                                                       , ai.getTemotoNamespace());
+
+        TEMOTO_DEBUG("Call to remote AlgorithmManagerServers was sucessful.");
+        res = load_algorithm_msg.response;
+        allocated_algorithms_.emplace(res.rmp.resource_id, ai);
+
+        return;
+      }
+      catch(error::ErrorStack& error_stack)
+      {
+        // TODO: Create error branches
+        SEND_ERROR(error_stack);
+      }
     }
-    catch(error::ErrorStack& error_stack)
-    {
-      throw FORWARD_ERROR(error_stack);
-    }
-    return;
   }
   else
   {
     // no suitable local nor remote algorithm was found
-    throw CREATE_ERROR(error::Code::SENSOR_NOT_FOUND, "AlgorithmManagerServers did not find a suitable algorithm.");
+    throw CREATE_ERROR(error::Code::ALGORITHM_NOT_FOUND, "Did not find a suitable algorithm.");
   }
 }
 
@@ -172,10 +178,10 @@ void AlgorithmManagerServers::unloadAlgorithmCb(temoto_2::LoadAlgorithm::Request
 }
 
 void AlgorithmManagerServers::processTopics( std::vector<diagnostic_msgs::KeyValue>& req_topics
-                                        , std::vector<diagnostic_msgs::KeyValue>& res_topics
-                                        , temoto_2::LoadProcess& load_process_msg
-                                        , AlgorithmInfo& algorithm_info
-                                        , bool inputTopics)
+                                           , std::vector<diagnostic_msgs::KeyValue>& res_topics
+                                           , temoto_2::LoadProcess& load_process_msg
+                                           , AlgorithmInfo& algorithm_info
+                                           , bool inputTopics)
 {
   /*
    * Find out it this is a launch file or not. Remapping is different

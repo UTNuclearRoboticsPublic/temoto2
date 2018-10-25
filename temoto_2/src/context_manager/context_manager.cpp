@@ -216,7 +216,7 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
     std::string object_name_no_space = req.object_name;
     std::replace(object_name_no_space.begin(), object_name_no_space.end(), ' ', '_');
 
-    TEMOTO_DEBUG_STREAM("Received a request to track an object named: '" << object_name_no_space << "'");
+    TEMOTO_INFO_STREAM("Received a request to track an object named: '" << object_name_no_space << "'");
 
     /*
      * Check if this object is already tracked in other temoto namespace
@@ -245,13 +245,20 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
     // Look if the requested object is described in the object database
     ObjectPtr requested_object = findObject(object_name_no_space);
 
-    TEMOTO_DEBUG_STREAM("The requested object is known, tracking it via: " << requested_object->detection_methods[0]);
+    TEMOTO_INFO_STREAM("The requested object is known");
 
     /*
      * Start a tracker that can be used to detect the requested object
      */
     temoto_2::LoadTracker load_tracker_msg;
-    auto& detection_methods = requested_object->detection_methods;
+    addDetectionMethods(requested_object->detection_methods);
+    std::vector<std::string> detection_methods = getOrderedDetectionMethods();
+
+    for (auto dm : detection_methods)
+    {
+      std::cout << dm << " !!!!!!!!!!!!!!!! " << std::endl;
+    }
+
     std::string selected_tracker;
 
     // Loop over different tracker categories and try to load one. The loop is iterated either until
@@ -260,14 +267,25 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
     {
       try
       {
+        TEMOTO_INFO_STREAM("Trying to track the " << object_name_no_space
+                           << " via '"<< tracker_category << "'");
+
         load_tracker_msg = temoto_2::LoadTracker();
         load_tracker_msg.request.tracker_category = tracker_category;
         resource_manager_1_.call<temoto_2::LoadTracker>(context_manager::srv_name::MANAGER_2,
                                                         context_manager::srv_name::TRACKER_SERVER,
                                                         load_tracker_msg);
+
+        selected_tracker = tracker_category;
+        detection_method_history_[tracker_category].adjustReliability();
+        active_detection_method_.first = load_tracker_msg.response.rmp.resource_id;
+        active_detection_method_.second = tracker_category;
+        break;
       }
       catch (error::ErrorStack& error_stack)
       {
+        detection_method_history_[tracker_category].adjustReliability(0);
+
         // If a requested tracker was not found but there are other options
         // available, then continue. Otherwise forward the error
         if (error_stack.front().code == static_cast<int>(error::Code::NO_TRACKERS_FOUND) &&
@@ -278,8 +296,6 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
 
         throw FORWARD_ERROR(error_stack);
       }
-
-      selected_tracker = tracker_category;
     }
 
     /*
@@ -550,6 +566,15 @@ TrackerInfoPtrs ContextManager::findTrackers(temoto_2::LoadTracker::Request& req
     }
   }
 
+  // Sort the trackers with decreasing reliability order
+  std::sort( trackers.begin()
+           , trackers.end()
+           , [](const TrackerInfoPtr lhs, const TrackerInfoPtr rhs)
+             {
+               return lhs->reliability_.getReliability() >
+                      rhs->reliability_.getReliability();
+             });
+
   return trackers;
 }
 
@@ -561,162 +586,165 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
 {
   TEMOTO_INFO_STREAM("Received a request: \n" << req << std::endl);
 
+  TrackerInfoPtrs trackers;
   try
   {
     // Get the trackers that follow the requested criteria
-    TrackerInfoPtrs trackers = findTrackers(req);
-
-    TEMOTO_DEBUG_STREAM("Found the requested tracker category.");
-
-    /*
-     * Choose a tracker based on a TODO metric. Currently the tracker that has the
-     * highest reliability value is chosen
-     */
-    TrackerInfoPtr tracker = *(std::max_element(trackers.begin(), trackers.end(),
-                               [](const TrackerInfoPtr lhs, const TrackerInfoPtr rhs)
-                               {
-                                 return lhs->reliability_.getReliability() <
-                                        rhs->reliability_.getReliability();
-                               }));
-
-    TEMOTO_DEBUG_STREAM("The following tracking method was chosen: \n" << tracker->toString().c_str());
-
-    // Get the id of the pipe, if provided
-    std::string pipe_id = req.pipe_id;
-
-    // Create a new pipe id if it was not specified
-    if (pipe_id == "")
-    {
-      // Create a unique pipe identifier string
-      pipe_id = "pipe_" + std::to_string(pipe_id_generator_.generateID())
-              + "_at_" + common::getTemotoNamespace();
-    }
-
-    /*
-     * Build the pipe based on the number of filters. If the pipe
-     * contains only one filter, then there are no constraints on
-     * the ouptut topic types. But if the pipe contains multiple filters
-     * then each preceding filter has to provide the topics that are
-     * required by the proceding filter
-     */
-    TopicContainer required_topics;
-
-    if (tracker->getPipeSize() > 1)
-    {
-      // TODO: If the right hand side of the "req_tops" is directly used in the proceeding
-      // for-loop, then it crashes on the second loop. Not sure why.
-      std::set<std::string> req_tops = tracker->getPipe().at(1).required_input_topic_types_;
-
-      // Loop over requested topics
-      for (auto& topic : req_tops)
-      {
-        required_topics.addOutputTopicType(topic);
-      }
-    }
-    else
-    {
-      // TODO: If the right hand side of the "req_tops" is directly used in the proceeding
-      // for-loop, then it crashes on the second loop. Not sure why.
-      std::set<std::string> req_tops = tracker->getPipe().at(0).required_output_topic_types_;
-
-      // Loop over requested topics
-      for (auto& topic : req_tops)
-      {
-        required_topics.addOutputTopicType(topic);
-      }
-    }
-
-    // Loop over the pipe
-    std::vector<Filter> pipe = tracker->getPipe();
-
-    // TODO: REMOVE AFTER RMP HAS THIS FUNCTIONALITY
-    std::vector<int> sub_resource_ids;
-
-    for (unsigned int i=0; i<pipe.size(); i++)
-    {
-      /*
-       * If the filter is a sensor
-       */
-      if (pipe.at(i).filter_category_ == "sensor")
-      {
-        // Compose the LoadSensor message
-        temoto_2::LoadSensor load_sensor_msg;
-        load_sensor_msg.request.sensor_type = pipe.at(i).filter_type_;
-        load_sensor_msg.request.output_topics = required_topics.outputTopicsAsKeyValues();
-
-        // Call the Sensor Manager
-        resource_manager_2_.call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
-                                                       sensor_manager::srv_name::SERVER,
-                                                       load_sensor_msg);
-
-        // TODO: REMOVE AFTER RMP HAS THIS FUNCTIONALITY
-        sub_resource_ids.push_back(load_sensor_msg.response.rmp.resource_id);
-
-        required_topics.setInputTopicsByKeyValue(load_sensor_msg.response.output_topics);
-
-        // This line is necessary if the pipe size is 1
-        required_topics.setOutputTopicsByKeyValue(load_sensor_msg.response.output_topics);
-      }
-
-      /*
-       * If the filter is an algorithm
-       */
-      else if (pipe.at(i).filter_category_ == "algorithm")
-      {
-
-        // Clear out the required output topics
-        required_topics.clearOutputTopics();
-
-        // If it is not the last filter then ...
-        if (i != pipe.size()-1)
-        {
-          // ... get the requirements for the output topic types from the proceding filter
-          for (auto& topic_type : pipe.at(i+1).required_input_topic_types_)
-          {
-            required_topics.addOutputTopic(topic_type, "/" + pipe_id + "/filter_" + std::to_string(i) + "/" + topic_type);
-          }
-        }
-        else
-        {
-          // ... get the requirements for the output topics from own output topic requirements
-          // TODO: throw if the "required_output_topic_types_" is empty
-          for (auto& topic_type : pipe.at(i).required_output_topic_types_)
-          {
-            required_topics.addOutputTopic(topic_type, "/" + pipe_id + "/filter_" + std::to_string(i) + "/" + topic_type);
-          }
-        }
-
-        // Compose the LoadAlgorithm message
-        temoto_2::LoadAlgorithm load_algorithm_msg;
-        load_algorithm_msg.request.algorithm_type = pipe.at(i).filter_type_;
-        load_algorithm_msg.request.input_topics = required_topics.inputTopicsAsKeyValues();
-        load_algorithm_msg.request.output_topics = required_topics.outputTopicsAsKeyValues();
-
-        // Call the Algorithm Manager
-        resource_manager_2_.call<temoto_2::LoadAlgorithm>(algorithm_manager::srv_name::MANAGER,
-                                                          algorithm_manager::srv_name::SERVER,
-                                                          load_algorithm_msg);
-
-        // TODO: REMOVE AFTER RMP HAS THIS FUNCTIONALITY
-        sub_resource_ids.push_back(load_algorithm_msg.response.rmp.resource_id);
-
-        required_topics.setInputTopicsByKeyValue(load_algorithm_msg.response.output_topics);
-      }
-    }
-
-    // Send the output topics of the last filter back via response
-    res.output_topics = required_topics.outputTopicsAsKeyValues();
-
-    // Add the tracker to allocated trackers + increase its reliability
-    tracker->reliability_.adjustReliability();
-    //allocated_trackers_[res.rmp.resource_id] = tracker;
-    allocated_trackers_hack_[res.rmp.resource_id] = std::pair<TrackerInfoPtr, std::vector<int>>(tracker, sub_resource_ids);
-
-    return;
+    trackers = findTrackers(req);
   }
   catch (error::ErrorStack& error_stack)
   {
     throw FORWARD_ERROR(error_stack);
+  }
+  TEMOTO_DEBUG_STREAM("Found the requested tracker category.");
+
+  /*
+   * Loop over all possible tracking methods until somethin starts to work
+   */
+  for (TrackerInfoPtr tracker : trackers)
+  {
+    TEMOTO_DEBUG_STREAM("Trying tracker: \n" << tracker->toString().c_str());
+
+    try
+    {
+      // Get the id of the pipe, if provided
+      std::string pipe_id = req.pipe_id;
+
+      // Create a new pipe id if it was not specified
+      if (pipe_id == "")
+      {
+        // Create a unique pipe identifier string
+        pipe_id = "pipe_" + std::to_string(pipe_id_generator_.generateID())
+                + "_at_" + common::getTemotoNamespace();
+      }
+
+      /*
+       * Build the pipe based on the number of filters. If the pipe
+       * contains only one filter, then there are no constraints on
+       * the ouptut topic types. But if the pipe contains multiple filters
+       * then each preceding filter has to provide the topics that are
+       * required by the proceding filter
+       */
+      TopicContainer required_topics;
+
+      if (tracker->getPipeSize() > 1)
+      {
+        // TODO: If the right hand side of the "req_tops" is directly used in the proceeding
+        // for-loop, then it crashes on the second loop. Not sure why.
+        std::set<std::string> req_tops = tracker->getPipe().at(1).required_input_topic_types_;
+
+        // Loop over requested topics
+        for (auto& topic : req_tops)
+        {
+          required_topics.addOutputTopicType(topic);
+        }
+      }
+      else
+      {
+        // TODO: If the right hand side of the "req_tops" is directly used in the proceeding
+        // for-loop, then it crashes on the second loop. Not sure why.
+        std::set<std::string> req_tops = tracker->getPipe().at(0).required_output_topic_types_;
+
+        // Loop over requested topics
+        for (auto& topic : req_tops)
+        {
+          required_topics.addOutputTopicType(topic);
+        }
+      }
+
+      // Loop over the pipe
+      std::vector<Filter> pipe = tracker->getPipe();
+
+      // TODO: REMOVE AFTER RMP HAS THIS FUNCTIONALITY
+      std::vector<int> sub_resource_ids;
+
+      for (unsigned int i=0; i<pipe.size(); i++)
+      {
+        /*
+         * If the filter is a sensor
+         */
+        if (pipe.at(i).filter_category_ == "sensor")
+        {
+          // Compose the LoadSensor message
+          temoto_2::LoadSensor load_sensor_msg;
+          load_sensor_msg.request.sensor_type = pipe.at(i).filter_type_;
+          load_sensor_msg.request.output_topics = required_topics.outputTopicsAsKeyValues();
+
+          // Call the Sensor Manager
+          resource_manager_2_.call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
+                                                         sensor_manager::srv_name::SERVER,
+                                                         load_sensor_msg);
+
+          // TODO: REMOVE AFTER RMP HAS THIS FUNCTIONALITY
+          sub_resource_ids.push_back(load_sensor_msg.response.rmp.resource_id);
+
+          required_topics.setInputTopicsByKeyValue(load_sensor_msg.response.output_topics);
+
+          // This line is necessary if the pipe size is 1
+          required_topics.setOutputTopicsByKeyValue(load_sensor_msg.response.output_topics);
+        }
+
+        /*
+         * If the filter is an algorithm
+         */
+        else if (pipe.at(i).filter_category_ == "algorithm")
+        {
+
+          // Clear out the required output topics
+          required_topics.clearOutputTopics();
+
+          // If it is not the last filter then ...
+          if (i != pipe.size()-1)
+          {
+            // ... get the requirements for the output topic types from the proceding filter
+            for (auto& topic_type : pipe.at(i+1).required_input_topic_types_)
+            {
+              required_topics.addOutputTopic(topic_type, "/" + pipe_id + "/filter_" + std::to_string(i) + "/" + topic_type);
+            }
+          }
+          else
+          {
+            // ... get the requirements for the output topics from own output topic requirements
+            // TODO: throw if the "required_output_topic_types_" is empty
+            for (auto& topic_type : pipe.at(i).required_output_topic_types_)
+            {
+              required_topics.addOutputTopic(topic_type, "/" + pipe_id + "/filter_" + std::to_string(i) + "/" + topic_type);
+            }
+          }
+
+          // Compose the LoadAlgorithm message
+          temoto_2::LoadAlgorithm load_algorithm_msg;
+          load_algorithm_msg.request.algorithm_type = pipe.at(i).filter_type_;
+          load_algorithm_msg.request.input_topics = required_topics.inputTopicsAsKeyValues();
+          load_algorithm_msg.request.output_topics = required_topics.outputTopicsAsKeyValues();
+
+          // Call the Algorithm Manager
+          resource_manager_2_.call<temoto_2::LoadAlgorithm>(algorithm_manager::srv_name::MANAGER,
+                                                            algorithm_manager::srv_name::SERVER,
+                                                            load_algorithm_msg);
+
+          // TODO: REMOVE AFTER RMP HAS THIS FUNCTIONALITY
+          sub_resource_ids.push_back(load_algorithm_msg.response.rmp.resource_id);
+
+          required_topics.setInputTopicsByKeyValue(load_algorithm_msg.response.output_topics);
+        }
+      }
+
+      // Send the output topics of the last filter back via response
+      res.output_topics = required_topics.outputTopicsAsKeyValues();
+
+      // Add the tracker to allocated trackers + increase its reliability
+      tracker->reliability_.adjustReliability();
+      //allocated_trackers_[res.rmp.resource_id] = tracker;
+      allocated_trackers_hack_[res.rmp.resource_id] = std::pair<TrackerInfoPtr, std::vector<int>>(tracker, sub_resource_ids);
+
+      return;
+    }
+    catch (error::ErrorStack& error_stack)
+    {
+      // TODO: Make sure that send error add the name of the function where the error was sent
+      SEND_ERROR(error_stack);
+    }
   }
 
   throw CREATE_ERROR(error::Code::NO_TRACKERS_FOUND, "Could not find trackers for the requested category");
@@ -811,6 +839,7 @@ void ContextManager::parseTrackers(std::string config_path)
       {
         // Convert the tracking method yaml description into TrackerInfo
         context_manager::TrackerInfo tracker_info = method_it->as<context_manager::TrackerInfo>();
+        tracker_info.setType(tracker_category);
 
         // Add the tracking method into the map of locally known trackers
         categorized_trackers_[tracker_category].push_back(std::make_shared<context_manager::TrackerInfo>(tracker_info));
@@ -910,14 +939,63 @@ void ContextManager::statusCb2(temoto_2::ResourceStatus& srv)
 
     if (it != allocated_trackers_hack_.end())
     {
-      TEMOTO_DEBUG("Tracker of type '%s' (pipe size: %d) has stopped working",
+      TEMOTO_INFO("Tracker of type '%s' (pipe size: %d) has stopped working",
                    (it->second.first)->getType().c_str(),
                    (it->second.first)->getPipeSize());
 
       // Reduce the reliability of the tracker
       (it->second.first)->reliability_.adjustReliability(0);
+      detection_method_history_[(it->second.first)->getType()].adjustReliability(0);
     }
   }
+}
+
+
+void ContextManager::addDetectionMethod(std::string detection_method)
+{
+  if (detection_method_history_.find(detection_method) == detection_method_history_.end())
+  {
+    detection_method_history_[detection_method] = Reliability();
+    std::cout << "Added new detection method !!!!! \n";
+  }
+}
+
+void ContextManager::addDetectionMethods(std::vector<std::string> detection_methods)
+{
+  for (std::string& detection_method : detection_methods)
+  {
+    addDetectionMethod(detection_method);
+  }
+}
+
+std::vector<std::string> ContextManager::getOrderedDetectionMethods()
+{
+  std::vector<std::pair<std::string, Reliability>> ordered_detection_methods;
+
+  for ( auto it = detection_method_history_.begin()
+      ; it != detection_method_history_.end()
+      ; it++)
+  {
+    ordered_detection_methods.push_back(*it);
+  }
+
+  std::sort( ordered_detection_methods.begin()
+           , ordered_detection_methods.end()
+           , [](const std::pair<std::string, Reliability>& lhs, const std::pair<std::string, Reliability>& rhs)
+             {
+               return lhs.second.getReliability() >
+                      rhs.second.getReliability();
+             });
+
+  std::vector<std::string> odm_vec;
+
+  for (auto odm : ordered_detection_methods)
+  {
+    std::cout << odm.first << " --- " << odm.second.getReliability() << std::endl;
+    odm_vec.push_back(odm.first);
+  }
+
+  return odm_vec;
 }
 
 }  // namespace context_manager

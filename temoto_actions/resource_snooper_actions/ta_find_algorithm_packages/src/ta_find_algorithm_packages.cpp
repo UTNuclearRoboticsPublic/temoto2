@@ -87,7 +87,7 @@ void startInterface_0()
 
   // Get the catkin workspace src directory path
   std::string catkin_ws_src_dir = what_0_data_0_in;
-  algorithm_manager::AlgorithmInfoRegistry* sid = what_0_data_1_in;
+  algorithm_manager::AlgorithmInfoRegistry* aid = what_0_data_1_in;
 
   // Look for new packages every 10 seconds
   while(stop_task_ == false)
@@ -106,8 +106,8 @@ void startInterface_0()
       {
         std::vector<algorithm_manager::AlgorithmInfo> algorithm_infos_current = getAlgorithmInfo(desc_file_path);
         algorithm_infos.insert( algorithm_infos.end()
-                           , algorithm_infos_current.begin()
-                           , algorithm_infos_current.end());
+                              , algorithm_infos_current.begin()
+                              , algorithm_infos_current.end());
       }
       catch(...)
       {
@@ -117,9 +117,9 @@ void startInterface_0()
 
     TEMOTO_DEBUG_STREAM("got " << algorithm_infos.size() << " algorithms");
 
-    for (auto si : algorithm_infos)
+    for (auto ai : algorithm_infos)
     {
-      if (sid->addLocalAlgorithm(si))
+      if (aid->addLocalAlgorithm(ai))
       {
         TEMOTO_INFO("Added a new algorithm");
       }

@@ -1,0 +1,12 @@
+<task action="track">
+    <interface id="0" type="asynchronous">
+        <in>
+            <what word="" />
+            <what word="hand data">
+                <data datatype="topic" />
+                <data datatype="topic" />
+                <data datatype="pointer" />
+            </what>
+        </in>
+    </interface>
+</task>

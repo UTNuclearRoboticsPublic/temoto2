@@ -3,6 +3,7 @@
 
 #include "common/base_subsystem.h"
 #include "common/temoto_id.h"
+#include "common/reliability.h"
 
 #include "context_manager/context_manager_containers.h"
 #include "context_manager/tracking_method.h"
@@ -129,7 +130,11 @@ private:
 
   void statusCb2(temoto_2::ResourceStatus& srv);
 
+  void addDetectionMethod(std::string detection_method);
 
+  void addDetectionMethods(std::vector<std::string> detection_methods);
+
+  std::vector<std::string> getOrderedDetectionMethods();
 
 
 
@@ -166,6 +171,10 @@ private:
   rmp::ConfigSynchronizer<ContextManager, std::string> tracked_objects_syncer_;
 
   TTP::TaskManager tracker_core_;
+
+  std::map<std::string, Reliability> detection_method_history_;
+
+  std::pair<int, std::string> active_detection_method_;
 
   /*
    * TODO: A DATA STRUCTURE THAT IS A TEMPORARY HACK UNTIL RMP IS IMPROVED

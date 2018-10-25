@@ -18,9 +18,9 @@ class AlgorithmSnooper : public BaseSubsystem
 
 public:
 
-  AlgorithmSnooper( BaseSubsystem* b, AlgorithmInfoRegistry* sid);
+  AlgorithmSnooper(BaseSubsystem* b, AlgorithmInfoRegistry* aid);
 
-  void advertiseAlgorithm(AlgorithmInfo& si) const;
+  void advertiseAlgorithm(AlgorithmInfo& ai) const;
 
   void advertiseLocalAlgorithms() const;
 
@@ -39,7 +39,7 @@ private:
 
   rmp::ConfigSynchronizer<AlgorithmSnooper, PayloadType> config_syncer_;
 
-  AlgorithmInfoRegistry* sid_;
+  AlgorithmInfoRegistry* aid_;
 
   TTP::TaskManager action_engine_;
 

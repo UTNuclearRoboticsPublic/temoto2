@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(ai_track_artag)
+project(ta_track_artag)
 
 # use c++11 standard
 add_compile_options(-std=c++11)
@@ -11,8 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
-  ar_track_alvar_msgs
   temoto_2
+  ar_track_alvar_msgs
 )
 
 catkin_package()

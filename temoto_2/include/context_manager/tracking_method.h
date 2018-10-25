@@ -157,6 +157,11 @@ public:
     pipe_ = pipe;
   }
 
+  void setType(std::string type)
+  {
+    type_ = type;
+  }
+
   /// Add filter
   void addFilter(Filter filter)
   {

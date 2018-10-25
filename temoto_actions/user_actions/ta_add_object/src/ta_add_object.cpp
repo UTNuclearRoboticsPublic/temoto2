@@ -94,11 +94,12 @@ void startInterface_0()
   temoto_2::ObjectContainer hand;
   hand.name = "right hand";
 
-  TEMOTO_INFO_STREAM("The tracking method for the hand is:" << temoto_2::ObjectContainer::HAND);
+  //TEMOTO_INFO_STREAM("The tracking method for the hand is:" << temoto_2::ObjectContainer::HAND);
+  TEMOTO_INFO_STREAM("The tracking method for the hand is:" << temoto_2::ObjectContainer::ARTAG);
 
   hand.detection_methods.push_back(temoto_2::ObjectContainer::HAND);
   hand.detection_methods.push_back(temoto_2::ObjectContainer::ARTAG);
-  hand.tag_id = 9;
+  hand.tag_id = 2;
 
   visualization_msgs::Marker marker;
   marker.type = visualization_msgs::Marker::ARROW;

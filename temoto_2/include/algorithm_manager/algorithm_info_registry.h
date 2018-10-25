@@ -23,25 +23,25 @@ public:
 
   AlgorithmInfoRegistry();
 
-  bool findLocalAlgorithm( temoto_2::LoadAlgorithm::Request& req, AlgorithmInfo& si_ret ) const;
+  bool findLocalAlgorithms( temoto_2::LoadAlgorithm::Request& req, std::vector<AlgorithmInfo>& ai_ret ) const;
 
-  bool findLocalAlgorithm( const AlgorithmInfo& si, AlgorithmInfo& si_ret ) const;
+  bool findLocalAlgorithm( const AlgorithmInfo& ai, AlgorithmInfo& ai_ret ) const;
 
-  bool findLocalAlgorithm( const AlgorithmInfo& si ) const;
+  bool findLocalAlgorithm( const AlgorithmInfo& ai ) const;
 
-  bool findRemoteAlgorithm( temoto_2::LoadAlgorithm::Request& req, AlgorithmInfo& si_ret ) const;
+  bool findRemoteAlgorithms( temoto_2::LoadAlgorithm::Request& req, std::vector<AlgorithmInfo>& ai_ret ) const;
 
-  bool findRemoteAlgorithm( const AlgorithmInfo& si, AlgorithmInfo& si_ret ) const;
+  bool findRemoteAlgorithm( const AlgorithmInfo& ai, AlgorithmInfo& ai_ret ) const;
 
-  bool findRemoteAlgorithm( const AlgorithmInfo& si ) const;
+  bool findRemoteAlgorithm( const AlgorithmInfo& ai ) const;
 
-  bool addLocalAlgorithm( const AlgorithmInfo& si );
+  bool addLocalAlgorithm( const AlgorithmInfo& ai );
 
-  bool addRemoteAlgorithm( const AlgorithmInfo& si );
+  bool addRemoteAlgorithm( const AlgorithmInfo& ai );
 
-  bool updateLocalAlgorithm(const AlgorithmInfo& si, bool advertised = false);
+  bool updateLocalAlgorithm(const AlgorithmInfo& ai, bool advertised = false);
 
-  bool updateRemoteAlgorithm(const AlgorithmInfo& si, bool advertised = false);
+  bool updateRemoteAlgorithm(const AlgorithmInfo& ai, bool advertised = false);
 
   const std::vector<AlgorithmInfo>& getLocalAlgorithms() const;
 
@@ -55,13 +55,13 @@ private:
    * @param algorithms
    * @return
    */
-  bool findAlgorithm( temoto_2::LoadAlgorithm::Request& req
-                 , const std::vector<AlgorithmInfo>& algorithms
-                 , AlgorithmInfo& si_ret ) const;
+  bool findAlgorithms( temoto_2::LoadAlgorithm::Request& req
+                     , const std::vector<AlgorithmInfo>& algorithms
+                     , std::vector<AlgorithmInfo>& ai_ret ) const;
 
-  bool findAlgorithm( const AlgorithmInfo& si
-                 , const std::vector<AlgorithmInfo>& algorithms
-                 , AlgorithmInfo& si_ret ) const;
+  bool findAlgorithm( const AlgorithmInfo& ai
+                    , const std::vector<AlgorithmInfo>& algorithms
+                    , AlgorithmInfo& ai_ret ) const;
 
   /// List of all locally defined algorithms.
   std::vector<AlgorithmInfo> local_algorithms_;

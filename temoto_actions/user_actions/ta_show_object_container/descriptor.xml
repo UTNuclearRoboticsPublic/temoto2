@@ -1,0 +1,10 @@
+<task action="show">
+    <interface id="0" type="asynchronous">
+        <in>
+            <what word="object container">
+                <data datatype="topic" />
+            </what>
+            <where word="rviz,screen" />
+        </in>
+    </interface>
+</task>

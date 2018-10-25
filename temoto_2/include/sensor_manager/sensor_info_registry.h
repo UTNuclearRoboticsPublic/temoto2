@@ -23,13 +23,13 @@ public:
 
   SensorInfoRegistry();
 
-  bool findLocalSensor( temoto_2::LoadSensor::Request& req, SensorInfo& si_ret ) const;
+  bool findLocalSensors( temoto_2::LoadSensor::Request& req, std::vector<SensorInfo>& si_ret ) const;
 
   bool findLocalSensor( const SensorInfo& si, SensorInfo& si_ret ) const;
 
   bool findLocalSensor( const SensorInfo& si ) const;
 
-  bool findRemoteSensor( temoto_2::LoadSensor::Request& req, SensorInfo& si_ret ) const;
+  bool findRemoteSensors( temoto_2::LoadSensor::Request& req, std::vector<SensorInfo>& si_ret ) const;
 
   bool findRemoteSensor( const SensorInfo& si, SensorInfo& si_ret ) const;
 
@@ -55,9 +55,9 @@ private:
    * @param sensors
    * @return
    */
-  bool findSensor( temoto_2::LoadSensor::Request& req
-                 , const std::vector<SensorInfo>& sensors
-                 , SensorInfo& si_ret ) const;
+  bool findSensors( temoto_2::LoadSensor::Request& req
+                  , const std::vector<SensorInfo>& sensors
+                  , std::vector<SensorInfo>& si_ret ) const;
 
   bool findSensor( const SensorInfo& si
                  , const std::vector<SensorInfo>& sensors

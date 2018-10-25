@@ -6,16 +6,16 @@ namespace algorithm_manager
 
 AlgorithmInfoRegistry::AlgorithmInfoRegistry(){}
 
-bool AlgorithmInfoRegistry::addLocalAlgorithm(const AlgorithmInfo& si)
+bool AlgorithmInfoRegistry::addLocalAlgorithm(const AlgorithmInfo& ai)
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
 
   // Check if there is no such algorithm
-  AlgorithmInfo si_ret;
-  if (!findAlgorithm(si, local_algorithms_, si_ret))
+  AlgorithmInfo ai_ret;
+  if (!findAlgorithm(ai, local_algorithms_, ai_ret))
   {
-    local_algorithms_.push_back(si);
+    local_algorithms_.push_back(ai);
     return true;
   }
 
@@ -23,16 +23,16 @@ bool AlgorithmInfoRegistry::addLocalAlgorithm(const AlgorithmInfo& si)
   return false;
 }
 
-bool AlgorithmInfoRegistry::addRemoteAlgorithm(const AlgorithmInfo &si)
+bool AlgorithmInfoRegistry::addRemoteAlgorithm(const AlgorithmInfo &ai)
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
 
   // Check if there is no such algorithm
-  AlgorithmInfo si_ret;
-  if (!findAlgorithm(si, remote_algorithms_, si_ret))
+  AlgorithmInfo ai_ret;
+  if (!findAlgorithm(ai, remote_algorithms_, ai_ret))
   {
-    remote_algorithms_.push_back(si);
+    remote_algorithms_.push_back(ai);
     return true;
   }
 
@@ -40,7 +40,7 @@ bool AlgorithmInfoRegistry::addRemoteAlgorithm(const AlgorithmInfo &si)
   return false;
 }
 
-bool AlgorithmInfoRegistry::updateLocalAlgorithm(const AlgorithmInfo &si, bool advertised)
+bool AlgorithmInfoRegistry::updateLocalAlgorithm(const AlgorithmInfo &ai, bool advertised)
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
@@ -49,13 +49,13 @@ bool AlgorithmInfoRegistry::updateLocalAlgorithm(const AlgorithmInfo &si, bool a
                               , local_algorithms_.end()
                               , [&](const AlgorithmInfo& ls)
                               {
-                                return ls == si;
+                                return ls == ai;
                               });
 
   // Update the local algorithm if its found
   if (it != local_algorithms_.end())
   {
-    *it = si;
+    *it = ai;
     it->setAdvertised( advertised );
     return true;
   }
@@ -64,7 +64,7 @@ bool AlgorithmInfoRegistry::updateLocalAlgorithm(const AlgorithmInfo &si, bool a
   return false;
 }
 
-bool AlgorithmInfoRegistry::updateRemoteAlgorithm(const AlgorithmInfo &si, bool advertised)
+bool AlgorithmInfoRegistry::updateRemoteAlgorithm(const AlgorithmInfo &ai, bool advertised)
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
@@ -73,13 +73,13 @@ bool AlgorithmInfoRegistry::updateRemoteAlgorithm(const AlgorithmInfo &si, bool 
                               , remote_algorithms_.end()
                               , [&](const AlgorithmInfo& rs)
                               {
-                                return rs == si;
+                                return rs == ai;
                               });
 
   // Update the local algorithm if its found
   if (it != remote_algorithms_.end())
   {
-    *it = si;
+    *it = ai;
     it->setAdvertised( advertised );
     return true;
   }
@@ -88,61 +88,61 @@ bool AlgorithmInfoRegistry::updateRemoteAlgorithm(const AlgorithmInfo &si, bool 
   return false;
 }
 
-bool AlgorithmInfoRegistry::findLocalAlgorithm( temoto_2::LoadAlgorithm::Request& req
-                                        , AlgorithmInfo& si_ret ) const
+bool AlgorithmInfoRegistry::findLocalAlgorithms( temoto_2::LoadAlgorithm::Request& req
+                                               , std::vector<AlgorithmInfo>& ai_ret ) const
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
 
-  return findAlgorithm(req, local_algorithms_, si_ret);
+  return findAlgorithms(req, local_algorithms_, ai_ret);
 }
 
-bool AlgorithmInfoRegistry::findLocalAlgorithm( const AlgorithmInfo &si, AlgorithmInfo& si_ret ) const
+bool AlgorithmInfoRegistry::findLocalAlgorithm( const AlgorithmInfo &ai, AlgorithmInfo& ai_ret ) const
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
 
-  return findAlgorithm(si, local_algorithms_, si_ret);
+  return findAlgorithm(ai, local_algorithms_, ai_ret);
 }
 
-bool AlgorithmInfoRegistry::findLocalAlgorithm( const AlgorithmInfo &si ) const
+bool AlgorithmInfoRegistry::findLocalAlgorithm( const AlgorithmInfo &ai ) const
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
 
-  AlgorithmInfo si_ret;
-  return findAlgorithm(si, local_algorithms_, si_ret);
+  AlgorithmInfo ai_ret;
+  return findAlgorithm(ai, local_algorithms_, ai_ret);
 }
 
-bool AlgorithmInfoRegistry::findRemoteAlgorithm( temoto_2::LoadAlgorithm::Request& req
-                                         , AlgorithmInfo& si_ret ) const
+bool AlgorithmInfoRegistry::findRemoteAlgorithms( temoto_2::LoadAlgorithm::Request& req
+                                                , std::vector<AlgorithmInfo>& ai_ret ) const
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
 
-  return findAlgorithm(req, remote_algorithms_, si_ret);
+  return findAlgorithms(req, remote_algorithms_, ai_ret);
 }
 
-bool AlgorithmInfoRegistry::findRemoteAlgorithm( const AlgorithmInfo &si, AlgorithmInfo& si_ret ) const
+bool AlgorithmInfoRegistry::findRemoteAlgorithm( const AlgorithmInfo &ai, AlgorithmInfo& ai_ret ) const
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
 
-  return findAlgorithm(si, remote_algorithms_, si_ret);
+  return findAlgorithm(ai, remote_algorithms_, ai_ret);
 }
 
-bool AlgorithmInfoRegistry::findRemoteAlgorithm( const AlgorithmInfo &si ) const
+bool AlgorithmInfoRegistry::findRemoteAlgorithm( const AlgorithmInfo &ai ) const
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
 
-  AlgorithmInfo si_ret;
-  return findAlgorithm(si, remote_algorithms_, si_ret);
+  AlgorithmInfo ai_ret;
+  return findAlgorithm(ai, remote_algorithms_, ai_ret);
 }
 
-bool AlgorithmInfoRegistry::findAlgorithm( temoto_2::LoadAlgorithm::Request& req
-                                   , const std::vector<AlgorithmInfo>& algorithms
-                                   , AlgorithmInfo& si_ret ) const
+bool AlgorithmInfoRegistry::findAlgorithms( temoto_2::LoadAlgorithm::Request& req
+                                          , const std::vector<AlgorithmInfo>& algorithms
+                                          , std::vector<AlgorithmInfo>& ai_ret ) const
 {
   // Local list of devices that follow the requirements
   std::vector<AlgorithmInfo> candidates;
@@ -235,21 +235,21 @@ bool AlgorithmInfoRegistry::findAlgorithm( temoto_2::LoadAlgorithm::Request& req
     return false;
   }
 
-  // Return the first algorithm of the requested type.
-  si_ret = candidates.front();
+  // Return the algorithms of the requested type.
+  ai_ret = candidates;
   return true;
 }
 
-bool AlgorithmInfoRegistry::findAlgorithm( const AlgorithmInfo &si
-                                   , const std::vector<AlgorithmInfo>& algorithms
-                                   , AlgorithmInfo& si_ret ) const
-{
+bool AlgorithmInfoRegistry::findAlgorithm( const AlgorithmInfo &ai
+                                         , const std::vector<AlgorithmInfo>& algorithms
+                                         , AlgorithmInfo& ai_ret ) const
+      {
 
   const auto it = std::find_if( algorithms.begin()
                               , algorithms.end()
                               , [&](const AlgorithmInfo& rs)
                               {
-                                return rs == si;
+                                return rs == ai;
                               });
 
 
@@ -259,7 +259,7 @@ bool AlgorithmInfoRegistry::findAlgorithm( const AlgorithmInfo &si
   }
   else
   {
-    si_ret = *it;
+    ai_ret = *it;
     return true;
   }
 }

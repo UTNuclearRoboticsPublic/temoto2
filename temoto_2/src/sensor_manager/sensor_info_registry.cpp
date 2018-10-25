@@ -88,13 +88,13 @@ bool SensorInfoRegistry::updateRemoteSensor(const SensorInfo &si, bool advertise
   return false;
 }
 
-bool SensorInfoRegistry::findLocalSensor( temoto_2::LoadSensor::Request& req
-                                        , SensorInfo& si_ret ) const
+bool SensorInfoRegistry::findLocalSensors( temoto_2::LoadSensor::Request& req
+                                         , std::vector<SensorInfo>& si_ret ) const
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
 
-  return findSensor(req, local_sensors_, si_ret);
+  return findSensors(req, local_sensors_, si_ret);
 }
 
 bool SensorInfoRegistry::findLocalSensor( const SensorInfo &si, SensorInfo& si_ret ) const
@@ -114,13 +114,13 @@ bool SensorInfoRegistry::findLocalSensor( const SensorInfo &si ) const
   return findSensor(si, local_sensors_, si_ret);
 }
 
-bool SensorInfoRegistry::findRemoteSensor( temoto_2::LoadSensor::Request& req
-                                         , SensorInfo& si_ret ) const
+bool SensorInfoRegistry::findRemoteSensors( temoto_2::LoadSensor::Request& req
+                                          , std::vector<SensorInfo>& si_ret ) const
 {
   // Lock the mutex
   std::lock_guard<std::mutex> guard(read_write_mutex);
 
-  return findSensor(req, remote_sensors_, si_ret);
+  return findSensors(req, remote_sensors_, si_ret);
 }
 
 bool SensorInfoRegistry::findRemoteSensor( const SensorInfo &si, SensorInfo& si_ret ) const
@@ -140,9 +140,9 @@ bool SensorInfoRegistry::findRemoteSensor( const SensorInfo &si ) const
   return findSensor(si, remote_sensors_, si_ret);
 }
 
-bool SensorInfoRegistry::findSensor( temoto_2::LoadSensor::Request& req
-                                   , const std::vector<SensorInfo>& sensors
-                                   , SensorInfo& si_ret ) const
+bool SensorInfoRegistry::findSensors( temoto_2::LoadSensor::Request& req
+                                    , const std::vector<SensorInfo>& sensors
+                                    , std::vector<SensorInfo>& si_ret ) const
 {
   // Local list of devices that follow the requirements
   std::vector<SensorInfo> candidates;
@@ -236,7 +236,7 @@ bool SensorInfoRegistry::findSensor( temoto_2::LoadSensor::Request& req
   }
 
   // Return the first sensor of the requested type.
-  si_ret = candidates.front();
+  si_ret = candidates;
   return true;
 }
 

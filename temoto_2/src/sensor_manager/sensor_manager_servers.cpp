@@ -80,57 +80,60 @@ void SensorManagerServers::loadSensorCb( temoto_2::LoadSensor::Request& req
                      << "Received a request to load a sensor: \n" << req << std::endl);
 
   // Try to find suitable candidate from local sensors
-  SensorInfo si;
-  if (sir_->findLocalSensor(req, si))
+  std::vector<SensorInfo> sis;
+  if (sir_->findLocalSensors(req, sis))
   {
-    // Try to run the sensor via local Resource Manager
-    temoto_2::LoadProcess load_process_msg;
-    load_process_msg.request.action = process_manager::action::ROS_EXECUTE;
-    load_process_msg.request.package_name = si.getPackageName();
-    load_process_msg.request.executable = si.getExecutable();
-
-    // Remap the input topics if requested
-    processTopics(req.input_topics, res.input_topics, load_process_msg, si, "in");
-
-    // Remap the output topics if requested
-    processTopics(req.output_topics, res.output_topics, load_process_msg, si, "out");
-
-    TEMOTO_INFO( "SensorManagerServers found a suitable local sensor: '%s', '%s', '%s', reliability %.3f"
-               , load_process_msg.request.action.c_str()
-               , load_process_msg.request.package_name.c_str()
-               , load_process_msg.request.executable.c_str()
-               , si.getReliability());
-
-    try
+    // Loop over suitable sensors
+    for (SensorInfo& si : sis)
     {
-      resource_manager_.call<temoto_2::LoadProcess>( process_manager::srv_name::MANAGER
-                                                   , process_manager::srv_name::SERVER
-                                                   , load_process_msg
-                                                   , rmp::FailureBehavior::NONE);
+      // Try to run the sensor via local Resource Manager
+      temoto_2::LoadProcess load_process_msg;
+      load_process_msg.request.action = process_manager::action::ROS_EXECUTE;
+      load_process_msg.request.package_name = si.getPackageName();
+      load_process_msg.request.executable = si.getExecutable();
 
-      TEMOTO_DEBUG("Call to ProcessManager was sucessful.");
+      // Remap the input topics if requested
+      processTopics(req.input_topics, res.input_topics, load_process_msg, si, "in");
 
-      // Fill out the response about which particular sensor was chosen
-      res.package_name = si.getPackageName();
-      res.executable = si.getExecutable();
-      res.rmp = load_process_msg.response.rmp;
+      // Remap the output topics if requested
+      processTopics(req.output_topics, res.output_topics, load_process_msg, si, "out");
 
-      si.adjustReliability(1.0);
-      sir_->updateLocalSensor(si);
-    }
-    catch(error::ErrorStack& error_stack)
-    { 
-      if (error_stack.front().code != static_cast<int>(error::Code::SERVICE_REQ_FAIL))
+      TEMOTO_INFO( "SensorManagerServers found a suitable local sensor: '%s', '%s', '%s', reliability %.3f"
+                 , load_process_msg.request.action.c_str()
+                 , load_process_msg.request.package_name.c_str()
+                 , load_process_msg.request.executable.c_str()
+                 , si.getReliability());
+
+      try
       {
-        si.adjustReliability(0.0);
+        resource_manager_.call<temoto_2::LoadProcess>( process_manager::srv_name::MANAGER
+                                                     , process_manager::srv_name::SERVER
+                                                     , load_process_msg
+                                                     , rmp::FailureBehavior::NONE);
+
+        TEMOTO_DEBUG("Call to ProcessManager was sucessful.");
+
+        // Fill out the response about which particular sensor was chosen
+        res.package_name = si.getPackageName();
+        res.executable = si.getExecutable();
+        res.rmp = load_process_msg.response.rmp;
+
+        si.adjustReliability(1.0);
         sir_->updateLocalSensor(si);
+        allocated_sensors_.emplace(res.rmp.resource_id, si);
+
+        return;
       }
-      throw FORWARD_ERROR(error_stack);
+      catch(error::ErrorStack& error_stack)
+      {
+        if (error_stack.front().code != static_cast<int>(error::Code::SERVICE_REQ_FAIL))
+        {
+          si.adjustReliability(0.0);
+          sir_->updateLocalSensor(si);
+        }
+        SEND_ERROR(error_stack);
+      }
     }
-
-    allocated_sensors_.emplace(res.rmp.resource_id, si);
-
-    return;
   }
 
   // try remote sensors
@@ -139,39 +142,43 @@ void SensorManagerServers::loadSensorCb( temoto_2::LoadSensor::Request& req
 //    TEMOTO_INFO("Looking from: \n%s", rs->toString().c_str());
 //  }
 
-  if (sir_->findRemoteSensor(req, si))
+  if (sir_->findRemoteSensors(req, sis))
   {
-    // remote sensor candidate was found, forward the request to the remote sensor manager
-    temoto_2::LoadSensor load_sensor_msg;
-    load_sensor_msg.request.sensor_type = si.getType();
-    load_sensor_msg.request.package_name = si.getPackageName();
-    load_sensor_msg.request.executable = si.getExecutable();
-    load_sensor_msg.request.input_topics = req.input_topics;
-    load_sensor_msg.request.output_topics = req.output_topics;
-
-    TEMOTO_INFO( "Sensor Manager is forwarding request: '%s', '%s', '%s', reliability %.3f"
-               , si.getType().c_str()
-               , si.getPackageName().c_str()
-               , si.getExecutable().c_str()
-               , si.getReliability());
-
-    try
+    // Loop over suitable sensors
+    for (SensorInfo& si : sis)
     {
-      resource_manager_.call<temoto_2::LoadSensor>( sensor_manager::srv_name::MANAGER
-                                                  , sensor_manager::srv_name::SERVER
-                                                  , load_sensor_msg
-                                                  , rmp::FailureBehavior::NONE
-                                                  , si.getTemotoNamespace());
+      // remote sensor candidate was found, forward the request to the remote sensor manager
+      temoto_2::LoadSensor load_sensor_msg;
+      load_sensor_msg.request.sensor_type = si.getType();
+      load_sensor_msg.request.package_name = si.getPackageName();
+      load_sensor_msg.request.executable = si.getExecutable();
+      load_sensor_msg.request.input_topics = req.input_topics;
+      load_sensor_msg.request.output_topics = req.output_topics;
 
-      TEMOTO_DEBUG("Call to remote SensorManagerServers was sucessful.");
-      res = load_sensor_msg.response;
-      allocated_sensors_.emplace(res.rmp.resource_id, si);
+      TEMOTO_INFO( "Sensor Manager is forwarding request: '%s', '%s', '%s', reliability %.3f"
+                 , si.getType().c_str()
+                 , si.getPackageName().c_str()
+                 , si.getExecutable().c_str()
+                 , si.getReliability());
+
+      try
+      {
+        resource_manager_.call<temoto_2::LoadSensor>( sensor_manager::srv_name::MANAGER
+                                                    , sensor_manager::srv_name::SERVER
+                                                    , load_sensor_msg
+                                                    , rmp::FailureBehavior::NONE
+                                                    , si.getTemotoNamespace());
+
+        TEMOTO_DEBUG("Call to remote SensorManagerServers was sucessful.");
+        res = load_sensor_msg.response;
+        allocated_sensors_.emplace(res.rmp.resource_id, si);
+      }
+      catch(error::ErrorStack& error_stack)
+      {
+        throw FORWARD_ERROR(error_stack);
+      }
+      return;
     }
-    catch(error::ErrorStack& error_stack)
-    {
-      throw FORWARD_ERROR(error_stack);
-    }
-    return;
   }
   else
   {
