@@ -121,7 +121,7 @@ void startInterface_0()
     {
       if (sid->addLocalSensor(si))
       {
-        TEMOTO_DEBUG("Added a new sensor");
+        TEMOTO_INFO("Added a new sensor");
       }
       else
       {

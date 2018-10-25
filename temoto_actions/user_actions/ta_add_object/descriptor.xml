@@ -1,0 +1,7 @@
+<task action="add">
+    <interface id="0" type="synchronous">
+        <in>
+            <what word="right hand" />
+        </in>
+    </interface>
+</task>

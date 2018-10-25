@@ -135,14 +135,14 @@ void ContextManager::addOrUpdateObjects(const Objects& objects_to_add, bool from
     // Update the object
     if (it != objects_.end())
     {
-      TEMOTO_DEBUG("Updating object: '%s'.", object.name.c_str());
+      TEMOTO_INFO("Updating object: '%s'.", object.name.c_str());
       *it = std::make_shared<temoto_2::ObjectContainer>(object);
     }
 
     // Add new object
     else
     {
-      TEMOTO_DEBUG("Adding new object: '%s'.", object.name.c_str());
+      TEMOTO_INFO("Adding new object: '%s'.", object.name.c_str());
       objects_.push_back(std::make_shared<temoto_2::ObjectContainer>(object));
     }
   }
@@ -198,7 +198,7 @@ ObjectPtr ContextManager::findObject(std::string object_name)
  */
 bool ContextManager::addObjectsCb(temoto_2::AddObjects::Request& req, temoto_2::AddObjects::Response& res)
 {
-  TEMOTO_DEBUG("Received a request to add %ld objects.", req.objects.size());
+  TEMOTO_INFO("Received a request to add %ld objects.", req.objects.size());
 
   addOrUpdateObjects(req.objects, false);
 

@@ -121,7 +121,7 @@ void startInterface_0()
     {
       if (sid->addLocalAlgorithm(si))
       {
-        TEMOTO_DEBUG("Added a new algorithm");
+        TEMOTO_INFO("Added a new algorithm");
       }
       else
       {
