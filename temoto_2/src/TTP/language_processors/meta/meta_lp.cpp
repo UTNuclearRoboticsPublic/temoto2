@@ -36,6 +36,9 @@ MetaLP::MetaLP( std::string language_models_dir
   std::cout << prefix << " Loading the 'string-to-integer' lookup table ... " << std::flush;
   str_int_map_ = std::make_shared<nummap>(generateStrToNrMap(999999));
   std::cout << "done\n";
+
+  // Update the wake_word list
+  wake_words_.push_back(wake_word_);
 }
 
 TaskTree MetaLP::processText(std::string input_text)
@@ -78,7 +81,7 @@ TaskTree MetaLP::processText(std::string input_text)
       p_tree.visit(bf);
       std::vector<TTP::TaskDescriptor> task_descs = bf.getTaskDescs();
 
-      if (bf.getAddressable() != wake_word_)
+      if (!checkIfWakeWord(bf.getAddressable()))
       {
         throw CREATE_ERROR(error::Code::NLP_BAD_INPUT, "Did not receive correct wake word."
                            " Expecting '" + wake_word_ + "' but got '" + bf.getAddressable() + "'");
@@ -112,6 +115,18 @@ TaskTree MetaLP::processText(std::string input_text)
   }
 
   return std::move(task_tree_);
+}
+
+bool MetaLP::checkIfWakeWord(std::string word)
+{
+  if (std::find(wake_words_.begin(), wake_words_.end(), word) != wake_words_.end())
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
 }
 
 }// END of TTP namespace

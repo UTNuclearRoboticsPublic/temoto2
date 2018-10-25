@@ -1,9 +1,6 @@
 /**
  * @file branch_finder.h
  * @author Robert valner
- *
- * All files in META are released under the MIT license. For more details,
- * consult the file LICENSE in the root of the project.
  */
 
 #ifndef META_PARSER_BRANCH_FINDER_H_

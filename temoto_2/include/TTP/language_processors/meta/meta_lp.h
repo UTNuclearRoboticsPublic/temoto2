@@ -35,6 +35,8 @@ public:
 
 private:
 
+  bool checkIfWakeWord(std::string word);
+
   meta::sequence::perceptron tagger_;
 
   meta::parser::sr_parser parser_;
@@ -44,6 +46,8 @@ private:
   std::shared_ptr<nummap> str_int_map_;
 
   std::string wake_word_;
+
+  std::vector<std::string> wake_words_ = {"everybody"};
 };
 
 }// END of TTP namespace
