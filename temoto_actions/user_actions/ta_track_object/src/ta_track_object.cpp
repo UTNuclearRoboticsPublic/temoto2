@@ -70,12 +70,11 @@ std::vector<TTP::Subject> getSolution()
 
 private:
 
-/* * * * * * * * * * * * * * * * * * 
- *                                 *
- * ===> YOUR CUSTOM VARIABLES <=== *
- *       AND FUNCTIONS HERE        *
- *                                 *
- * * * * * * * * * * * * * * * * * */
+// Nodehandle
+ros::NodeHandle n_;
+
+// Create context manager interface object for context manager manager
+context_manager::ContextManagerInterface <TaTrackObject> cmi_;
 
     
 /*
@@ -92,11 +91,12 @@ void startInterface_0()
   std::string  what_0_data_0_out;
 
 
-  /* * * * * * * * * * * * * * * 
-   *                           *
-   * ===> YOUR CODE HERE <===  *
-   *                           *
-   * * * * * * * * * * * * * * */
+  // Initialize the sensor manager interface
+  cmi_.initialize(this);
+
+  // Start tracking the object and return the topic to the object
+  what_0_data_0_out = cmi_.trackObject(what_0_word_in);
+  what_0_word_out = "object container";
 
   
   TTP::Subject what_0_out("what", what_0_word_out);
