@@ -153,12 +153,15 @@ void SensorSnooper::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& p
 
   if (msg.action == rmp::sync_action::REQUEST_CONFIG)
   {
+    std::cout << "Received a request to advertise local sensors" << std::endl;
     advertiseLocalSensors();
     return;
   }
 
   if (msg.action == rmp::sync_action::ADVERTISE_CONFIG)
   {
+    std::cout << "Received a request to add or update remote sensors" << std::endl;
+
     // Convert the config string to YAML tree and parse
     YAML::Node config = YAML::Load(payload.data);
     std::vector<SensorInfoPtr> sensors = parseSensors(config);

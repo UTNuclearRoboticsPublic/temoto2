@@ -87,7 +87,7 @@ void SensorManagerServers::loadSensorCb( temoto_2::LoadSensor::Request& req
   bool got_remote_sensors = sir_->findRemoteSensors(req, r_sis);
 
   // Find the most reliable global sensor
-  bool prefer_remote;
+  bool prefer_remote = false;
   if (got_local_sensors && got_remote_sensors)
   {
     if (l_sis.at(0).getReliability() < r_sis.at(0).getReliability())
