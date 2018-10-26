@@ -86,12 +86,19 @@ void SensorManagerServers::loadSensorCb( temoto_2::LoadSensor::Request& req
   bool got_local_sensors = sir_->findLocalSensors(req, l_sis);
   bool got_remote_sensors = sir_->findRemoteSensors(req, r_sis);
 
+  std::cout << req.rmp.temoto_namespace << std::endl;
+  std::cout << common::getTemotoNamespace() << std::endl;
+
   // Find the most reliable global sensor
   bool prefer_remote = false;
-  if (got_local_sensors && got_remote_sensors)
+  if (got_local_sensors && got_remote_sensors
+      && (req.rmp.temoto_namespace == common::getTemotoNamespace()))
   {
     if (l_sis.at(0).getReliability() < r_sis.at(0).getReliability())
     {
+      std::cout << "lsis0 = " << l_sis.at(0).getReliability();
+      std::cout << "; rsis0 = " << r_sis.at(0).getReliability();
+      std::cout << "gonna prefer remote sensor" << std::endl;
       prefer_remote = true;
     }
   }
@@ -150,12 +157,6 @@ void SensorManagerServers::loadSensorCb( temoto_2::LoadSensor::Request& req
       }
     }
   }
-
-  // try remote sensors
-//  for (auto& rs : remote_sensors_)
-//  {
-//    TEMOTO_INFO("Looking from: \n%s", rs->toString().c_str());
-//  }
 
   if (got_remote_sensors)
   {
