@@ -80,11 +80,26 @@ void SensorManagerServers::loadSensorCb( temoto_2::LoadSensor::Request& req
                      << "Received a request to load a sensor: \n" << req << std::endl);
 
   // Try to find suitable candidate from local sensors
-  std::vector<SensorInfo> sis;
-  if (sir_->findLocalSensors(req, sis))
+  std::vector<SensorInfo> l_sis;
+  std::vector<SensorInfo> r_sis;
+
+  bool got_local_sensors = sir_->findLocalSensors(req, l_sis);
+  bool got_remote_sensors = sir_->findRemoteSensors(req, r_sis);
+
+  // Find the most reliable global sensor
+  bool prefer_remote;
+  if (got_local_sensors && got_remote_sensors)
+  {
+    if (l_sis.at(0).getReliability() < r_sis.at(0).getReliability())
+    {
+      prefer_remote = true;
+    }
+  }
+
+  if (got_local_sensors && !prefer_remote)
   {
     // Loop over suitable sensors
-    for (SensorInfo& si : sis)
+    for (SensorInfo& si : l_sis)
     {
       // Try to run the sensor via local Resource Manager
       temoto_2::LoadProcess load_process_msg;
@@ -142,10 +157,10 @@ void SensorManagerServers::loadSensorCb( temoto_2::LoadSensor::Request& req
 //    TEMOTO_INFO("Looking from: \n%s", rs->toString().c_str());
 //  }
 
-  if (sir_->findRemoteSensors(req, sis))
+  if (got_remote_sensors)
   {
     // Loop over suitable sensors
-    for (SensorInfo& si : sis)
+    for (SensorInfo& si : r_sis)
     {
       // remote sensor candidate was found, forward the request to the remote sensor manager
       temoto_2::LoadSensor load_sensor_msg;
