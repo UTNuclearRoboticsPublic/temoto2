@@ -239,6 +239,7 @@ public:
         // this call automatically updates the response in allocated sensors vec
         try
         {
+          sens_it->request.output_topics = sens_it->response.output_topics;
           resource_manager_->template call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
                                                                  sensor_manager::srv_name::SERVER,
                                                                  *sens_it);

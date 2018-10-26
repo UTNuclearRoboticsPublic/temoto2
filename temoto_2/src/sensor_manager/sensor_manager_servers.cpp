@@ -89,7 +89,8 @@ void SensorManagerServers::loadSensorCb( temoto_2::LoadSensor::Request& req
   std::cout << req.rmp.temoto_namespace << std::endl;
   std::cout << common::getTemotoNamespace() << std::endl;
 
-  // Find the most reliable global sensor
+  // Find the most reliable global sensor but do not forward the requests
+  // that originate from other namespaces
   bool prefer_remote = false;
   if (got_local_sensors && got_remote_sensors
       && (req.rmp.temoto_namespace == common::getTemotoNamespace()))

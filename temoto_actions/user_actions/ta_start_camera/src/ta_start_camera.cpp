@@ -79,8 +79,8 @@ public:
     smi_.initialize(this);
 
     SensorTopicsReq requested_topics;
-    requested_topics.addOutputTopicType("camera_data");
-    requested_topics.addOutputTopicType("camera_info");
+    requested_topics.addOutputTopic("camera_data", "/cam_data_topic");
+    requested_topics.addOutputTopic("camera_info", "/cam_info_topic");
 
     TEMOTO_INFO(" Starting the camera");
 
