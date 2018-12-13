@@ -46,7 +46,6 @@ add_message_files(FILES
 
   # Context Manager 
   SpeechSpecifier.msg
-  GestureSpecifier.msg
   ObjectContainer.msg
 
   # Configuration Synchronizer
@@ -73,8 +72,8 @@ add_service_files(
   algorithm_manager/LoadAlgorithm.srv
 
   # Context Manager
+  context_manager/GetNumber.srv
   context_manager/LoadTracker.srv
-  context_manager/LoadGesture.srv
   context_manager/LoadSpeech.srv
   context_manager/AddObjects.srv
   context_manager/TrackObject.srv
@@ -108,7 +107,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES yaml-cpp ft_parser
   # LIBRARIES temoto_2
-  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs message_runtime human_msgs diagnostic_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs message_runtime human_msgs diagnostic_msgs shape_msgs visualization_msgs
   DEPENDS 
     TinyXML
     EIGEN3
@@ -192,6 +191,15 @@ target_link_libraries(ttp ${catkin_LIBRARIES}
                           ${TinyXML_LIBRARIES}
                           ${TBB_LIBRARIES}
                           meta-classify meta-sequence-analyzers meta-parser-analyzers )
+
+# # # # # # # # # # # #
+# TEMOTO CORE
+# # # # # # # # # # # #
+add_library(temoto_core 
+                src/common/reliability.cpp
+                src/temoto_error/temoto_error.cpp)
+add_dependencies(temoto_core ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(temoto_core ${catkin_LIBRARIES})
 
 # # # # # # # # # # # #
 # TEMOTO AGENT

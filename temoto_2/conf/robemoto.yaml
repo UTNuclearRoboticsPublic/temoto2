@@ -110,22 +110,22 @@ Algorithms:
     type_1: "algorithm_1_pub_1"
 
 Robots:
-  #- robot_name: "ur5"
-  #  description: "Heavy duty piece made by Universal Robotics"
-  #  reliability: 0.5
-  #  hardware:
-  #    package_name: "task_robot"
-  #    executable: "ur5.launch"
-  #  urdf:
-  #    package_name: "ur_description"
-  #    executable: "urdf/ur5_joint_limited_robot.urdf.xacro"
-  #  manipulation:
-  #    moveit_config_package: "ur5_moveit_config"
-  #    planning_groups: ["manipulator"]
-  #  navigation:
-  #    package_name: "task_robot"
-  #    executable: "ur5.launch"
-  #
+  - robot_name: "ur5"
+    description: "Heavy duty piece made by Universal Robotics"
+    reliability: 0.5
+    hardware:
+      package_name: "task_robot"
+      executable: "ur5.launch"
+    urdf:
+      package_name: "ur_description"
+      executable: "urdf/ur5_joint_limited_robot.urdf.xacro"
+    manipulation:
+      moveit_config_package: "ur5_moveit_config"
+      planning_groups: ["manipulator"]
+    navigation:
+      package_name: "task_robot"
+      executable: "ur5.launch"
+  
 
 - robot_name: "vaultbot_sim"
   description: "Vaultbot with tools and fake hardware drivers"

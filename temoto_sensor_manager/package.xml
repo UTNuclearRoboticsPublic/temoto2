@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<package>
+  <name>temoto_sensor_manager</name>
+  <version>2.0.1</version>
+  <description>The temoto_sensor_manager package</description>
+
+  <!-- One maintainer tag required, multiple allowed, one person per tag --> 
+  <!-- Example:  -->
+  <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
+  <maintainer email="robert@todo.todo">Robert Valner</maintainer>
+
+
+  <!-- One license tag required, multiple allowed, one license per tag -->
+  <!-- Commonly used license strings: -->
+  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
+  <license>LICENCE</license>
+
+
+  <!-- Url tags are optional, but multiple are allowed, one per tag -->
+  <!-- Optional attribute type can be: website, bugtracker, or repository -->
+  <!-- Example: -->
+  <url type="website">https://github.com/UTNuclearRobotics/temoto2</url>
+  <url type="repository">https://github.com/UTNuclearRobotics/temoto2</url>
+
+
+  <!-- Author tags are optional, multiple are allowed, one per tag -->
+  <!-- Authors do not have to be maintainers, but could be -->
+  <!-- Example: -->
+  <author email="rober@todo.todo">Robert Valner</author>
+  <author email="veix123@gmail.com">Veiko Vunder</author>
+
+
+  <!-- The *_depend tags are used to specify dependencies -->
+  <!-- Dependencies can be catkin packages or system dependencies -->
+  <!-- Examples: -->
+  <!-- Use build_depend for packages you need at compile time: -->
+  <!--   <build_depend>message_generation</build_depend> -->
+  <!-- Use buildtool_depend for build tool packages: -->
+  <!--   <buildtool_depend>catkin</buildtool_depend> -->
+  <!-- Use run_depend for packages you need at runtime: -->
+  <!--   <run_depend>message_runtime</run_depend> -->
+  <!-- Use test_depend for packages you need only for testing: -->
+  <!--   <test_depend>gtest</test_depend> -->
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>diagnostic_msgs</build_depend>
+  <build_depend>cmake_modules</build_depend>
+	<build_depend>message_generation</build_depend>
+  <build_depend>yaml-cpp</build_depend>
+  <build_depend>temoto_2</build_depend>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>diagnostic_msgs</run_depend>
+	<run_depend>message_runtime</run_depend>
+  <run_depend>yaml-cpp</run_depend>
+  <run_depend>temoto_2</run_depend>
+
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <rosdoc config="rosdoc.yaml"/>
+  </export>
+</package>

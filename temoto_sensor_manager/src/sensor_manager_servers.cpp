@@ -1,5 +1,5 @@
 #include "ros/package.h"
-#include "sensor_manager/sensor_manager_servers.h"
+#include "temoto_sensor_manager/sensor_manager_servers.h"
 
 #include <algorithm>
 #include <utility>
@@ -7,7 +7,7 @@
 #include <fstream>
 #include <regex>
 
-namespace sensor_manager
+namespace temoto_sensor_manager
 {
 SensorManagerServers::SensorManagerServers(BaseSubsystem *b, SensorInfoRegistry *sir)
   : BaseSubsystem(*b, __func__)
@@ -15,7 +15,7 @@ SensorManagerServers::SensorManagerServers(BaseSubsystem *b, SensorInfoRegistry 
   , resource_manager_(srv_name::MANAGER, this)
 {
   // Start the server
-  resource_manager_.addServer<temoto_2::LoadSensor>( srv_name::SERVER
+  resource_manager_.addServer<temoto_sensor_manager::LoadSensor>( srv_name::SERVER
                                                    , &SensorManagerServers::loadSensorCb
                                                    , &SensorManagerServers::unloadSensorCb);
   // Register callback for status info
@@ -55,8 +55,8 @@ void SensorManagerServers::statusCb(temoto_2::ResourceStatus& srv)
   }
 }
 
-bool SensorManagerServers::listDevicesCb( temoto_2::ListDevices::Request& req
-                                        , temoto_2::ListDevices::Response& res)
+bool SensorManagerServers::listDevicesCb( temoto_sensor_manager::ListDevices::Request& req
+                                        , temoto_sensor_manager::ListDevices::Response& res)
 {
   // std::vector <std::string> devList;
 
@@ -73,8 +73,8 @@ bool SensorManagerServers::listDevicesCb( temoto_2::ListDevices::Request& req
 }
 
 // TODO: rename "loadSensorCb" to "loadSensorCb"
-void SensorManagerServers::loadSensorCb( temoto_2::LoadSensor::Request& req
-                                        , temoto_2::LoadSensor::Response& res)
+void SensorManagerServers::loadSensorCb( temoto_sensor_manager::LoadSensor::Request& req
+                                       , temoto_sensor_manager::LoadSensor::Response& res)
 {
   TEMOTO_INFO_STREAM("- - - - - - - - - - - - -\n"
                      << "Received a request to load a sensor: \n" << req << std::endl);
@@ -159,7 +159,7 @@ void SensorManagerServers::loadSensorCb( temoto_2::LoadSensor::Request& req
     for (SensorInfo& si : r_sis)
     {
       // remote sensor candidate was found, forward the request to the remote sensor manager
-      temoto_2::LoadSensor load_sensor_msg;
+      temoto_sensor_manager::LoadSensor load_sensor_msg;
       load_sensor_msg.request.sensor_type = si.getType();
       load_sensor_msg.request.package_name = si.getPackageName();
       load_sensor_msg.request.executable = si.getExecutable();
@@ -174,8 +174,8 @@ void SensorManagerServers::loadSensorCb( temoto_2::LoadSensor::Request& req
 
       try
       {
-        resource_manager_.call<temoto_2::LoadSensor>( sensor_manager::srv_name::MANAGER
-                                                    , sensor_manager::srv_name::SERVER
+        resource_manager_.call<temoto_sensor_manager::LoadSensor>( temoto_sensor_manager::srv_name::MANAGER
+                                                    , temoto_sensor_manager::srv_name::SERVER
                                                     , load_sensor_msg
                                                     , rmp::FailureBehavior::NONE
                                                     , si.getTemotoNamespace());
@@ -199,8 +199,8 @@ void SensorManagerServers::loadSensorCb( temoto_2::LoadSensor::Request& req
 }
 
 // TODO: rename "unloadSensorCb" to "unloadSensorCb"
-void SensorManagerServers::unloadSensorCb(temoto_2::LoadSensor::Request& req,
-                                 temoto_2::LoadSensor::Response& res)
+void SensorManagerServers::unloadSensorCb(temoto_sensor_manager::LoadSensor::Request& req,
+                                 temoto_sensor_manager::LoadSensor::Response& res)
 {
   TEMOTO_DEBUG("received a request to stop sensor with id '%ld'", res.rmp.resource_id);
   allocated_sensors_.erase(res.rmp.resource_id);

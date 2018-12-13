@@ -1,0 +1,11 @@
+int32 requested_int
+
+# Remote Management Request
+temoto_2/RMPRequest rmp
+
+---
+
+int32 responded_int
+
+# Remote Management Response
+temoto_2/RMPResponse rmp

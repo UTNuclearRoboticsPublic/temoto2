@@ -133,7 +133,7 @@ private:
   ros::ServiceClient client_set_mode_;
 
   ros::Subscriber target_pose_sub_;
-  temoto_2::LoadGesture hand_srv_msg_;
+  // temoto_2::LoadGesture hand_srv_msg_;
   
   // Keeps robot_infos in sync with other managers
   rmp::ConfigSynchronizer<RobotManager, PayloadType> config_syncer_;

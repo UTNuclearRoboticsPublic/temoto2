@@ -20,10 +20,10 @@ ContextManager::ContextManager()
    * Start the servers
    */
 
-  // Hand tracking service
-  resource_manager_1_.addServer<temoto_2::LoadGesture>(srv_name::GESTURE_SERVER
-                                                     , &ContextManager::loadGestureCb
-                                                     , &ContextManager::unloadGestureCb);
+  // Speech recognition service
+  resource_manager_1_.addServer<temoto_2::GetNumber>( srv_name::GET_NUMBER_SERVER
+                                                    , &ContextManager::loadGetNumberCb
+                                                    , &ContextManager::unloadGetNumberCb);
 
   // Speech recognition service
   resource_manager_1_.addServer<temoto_2::LoadSpeech>(srv_name::SPEECH_SERVER
@@ -72,6 +72,25 @@ ContextManager::ContextManager()
 //  }
   
   TEMOTO_INFO("Context Manager is ready.");
+}
+
+/*
+ * Implementation of the GetNumber service
+ */ 
+void ContextManager::loadGetNumberCb( temoto_2::GetNumber::Request& req
+                                    , temoto_2::GetNumber::Response& res)
+{
+  TEMOTO_INFO_STREAM("Received a request to load number '" << req.requested_int << "'");
+  res.responded_int = req.requested_int;
+}
+
+/*
+ * Implementation of the unload GetNumber service
+ */ 
+void ContextManager::unloadGetNumberCb( temoto_2::GetNumber::Request& req
+                                      , temoto_2::GetNumber::Response& res)
+{
+  TEMOTO_INFO_STREAM("Received a request to UNload number '" << req.requested_int << "'");
 }
 
 /*
@@ -770,36 +789,6 @@ void ContextManager::unloadTrackerCb(temoto_2::LoadTracker::Request& req, temoto
 }
 
 /*
- * Load gesture callback
- */
-void ContextManager::loadGestureCb(temoto_2::LoadGesture::Request& req,
-                                   temoto_2::LoadGesture::Response& res)
-{
-  TEMOTO_INFO("Gesture requested.");
-  TEMOTO_DEBUG("Using hardcoded specifiers[0]");
-
-  temoto_2::LoadSensor msg;
-  msg.request.sensor_type = req.gesture_specifiers[0].type;
-
-  // Call the sensor manager to arrange us a gesture sensor
-  try
-  {
-    resource_manager_1_.call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
-                                                   sensor_manager::srv_name::SERVER,
-                                                   msg);
-
-    TEMOTO_DEBUG("Got a response: '%s'.", msg.response.rmp.message.c_str());
-    res.package_name = msg.response.package_name;
-    res.executable = msg.response.executable;
-    res.topic = msg.response.output_topics.at(0).value;
-  }
-  catch (error::ErrorStack& error_stack)
-  {
-    throw FORWARD_ERROR(error_stack);
-  }
-}
-
-/*
  * Parse trackers
  */
 void ContextManager::parseTrackers(std::string config_path)
@@ -854,12 +843,6 @@ void ContextManager::parseTrackers(std::string config_path)
       }
     }
   }
-}
-
-void ContextManager::unloadGestureCb(temoto_2::LoadGesture::Request& req,
-                                   temoto_2::LoadGesture::Response& res)
-{
-  TEMOTO_DEBUG("Gesture unloaded.");
 }
 
 /*

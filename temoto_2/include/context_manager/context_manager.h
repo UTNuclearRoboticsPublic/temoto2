@@ -34,6 +34,10 @@ public:
 
 private:
 
+  void loadGetNumberCb(temoto_2::GetNumber::Request& req, temoto_2::GetNumber::Response& res);
+
+  void unloadGetNumberCb(temoto_2::GetNumber::Request& req, temoto_2::GetNumber::Response& res);
+
   /**
    * @brief loadTrackerCb
    * @param req
@@ -74,23 +78,6 @@ private:
    * @param config_path
    */
   void parseTrackers(std::string config_path);
-
-  /**
-   * @brief Service that sets up a gesture publisher
-   * @param A gesture specifier message
-   * @param Returns a topic where the requested gesture messages
-   * are going to be published
-   * @return
-   */
-  void loadGestureCb(temoto_2::LoadGesture::Request& req, temoto_2::LoadGesture::Response& res);
-
-  /**
-   * @brief Unload Callback for gesture
-   * @param LoadGesture request message
-   * @param LoadGesture response message
-   * @return
-   */
-  void unloadGestureCb(temoto_2::LoadGesture::Request& req, temoto_2::LoadGesture::Response& res);
 
   /**
    * @brief Service that sets up a speech publisher

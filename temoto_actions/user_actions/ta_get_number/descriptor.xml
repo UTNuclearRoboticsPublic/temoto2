@@ -1,0 +1,7 @@
+<task action="get">
+    <interface id="0" type="synchronous">
+        <in>
+            <what word="number" />
+        </in>
+    </interface>
+</task>

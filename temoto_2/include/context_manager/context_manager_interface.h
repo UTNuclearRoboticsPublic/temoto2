@@ -23,7 +23,6 @@ class ContextManagerInterface : public BaseSubsystem
 {
 public:
 
-  typedef void (OwnerTask::*GestureCallbackType)(human_msgs::Hands);
   typedef void (OwnerTask::*SpeechCallbackType)(std_msgs::String);
 
   ContextManagerInterface()
@@ -55,6 +54,36 @@ public:
 
     // Add object service client
     add_object_client_ = nh_.serviceClient<temoto_2::AddObjects>(context_manager::srv_name::SERVER_ADD_OBJECTS);
+  }
+
+  int getNumber(const int number)
+  {
+    try
+    {
+      validateInterface();
+    }
+    catch (error::ErrorStack& error_stack)
+    {
+      throw FORWARD_ERROR(error_stack);
+    }
+
+    // Create a GetNumber service message
+    temoto_2::GetNumber srv_msg;
+    srv_msg.request.requested_int = number;
+
+    // Call the server
+    try
+    {
+      resource_manager_->template call<temoto_2::GetNumber>( context_manager::srv_name::MANAGER
+                                                           , context_manager::srv_name::GET_NUMBER_SERVER
+                                                           , srv_msg);
+    }
+    catch(error::ErrorStack& error_stack)
+    {
+      throw FORWARD_ERROR(error_stack);
+    }
+
+    return srv_msg.response.responded_int;
   }
 
   void getSpeech(std::vector<temoto_2::SpeechSpecifier> speech_specifiers, SpeechCallbackType callback, OwnerTask* obj)
@@ -93,44 +122,6 @@ public:
     // Subscribe to the topic that was provided by the "Context Manager"
     TEMOTO_DEBUG("subscribing to topic'%s'", srv_msg.response.topic.c_str());
     speech_subscriber_ = nh_.subscribe(srv_msg.response.topic, 1000, task_speech_cb_, task_speech_obj_);
-  }
-
-  void getGesture(std::vector<temoto_2::GestureSpecifier> gesture_specifiers, GestureCallbackType callback, OwnerTask* obj)
-  {
-    try
-    {
-      validateInterface();
-    }
-    catch (error::ErrorStack& error_stack)
-    {
-      throw FORWARD_ERROR(error_stack);
-    }
-
-    task_gesture_cb_ = callback;
-    task_gesture_obj_ = obj;
-
-    // Contact the "Context Manager", pass the gesture specifier and if successful, get
-    // the name of the topic
-    temoto_2::LoadGesture srv_msg;
-    srv_msg.request.gesture_specifiers = gesture_specifiers;
-
-    // Call the server
-    try
-    {
-      resource_manager_->template call<temoto_2::LoadGesture>(context_manager::srv_name::MANAGER,
-                                                              context_manager::srv_name::GESTURE_SERVER,
-                                                              srv_msg);
-      allocated_gestures_.push_back(srv_msg);
-    }
-    catch(error::ErrorStack& error_stack)
-    {
-      throw FORWARD_ERROR(error_stack);
-    }
-
-    // Subscribe to the topic that was provided by the "Context Manager"
-    // TODO: This should be a vector of subsctibers, not just one.
-    TEMOTO_INFO("subscribing to topic'%s'", srv_msg.response.topic.c_str());
-    gesture_subscriber_ = nh_.subscribe(srv_msg.response.topic, 1000, task_gesture_cb_, task_gesture_obj_);
   }
 
   /**
@@ -274,7 +265,6 @@ public:
     {
       // remove all connections, which were created via call() function
       resource_manager_->unloadClients();
-      allocated_gestures_.clear();
       allocated_speeches_.clear();
     }
     catch (error::ErrorStack& error_stack)
@@ -302,10 +292,6 @@ public:
     if (srv.request.status_code == rmp::status_codes::FAILED)
     {
       TEMOTO_WARN("Received a notification about a resource failure. Unloading and trying again");
-      auto gest_it = std::find_if(allocated_gestures_.begin(), allocated_gestures_.end(),
-                                  [&](const temoto_2::LoadGesture& sens) -> bool {
-                                    return sens.response.rmp.resource_id == srv.request.resource_id;
-                                  });
 
       auto speech_it = std::find_if(allocated_speeches_.begin(), allocated_speeches_.end(),
                                   [&](const temoto_2::LoadSpeech& sens) -> bool {
@@ -341,33 +327,8 @@ public:
         // Replace subscriber
         TEMOTO_DEBUG("Replacing subscriber new topic'%s'",
                  speech_it->response.topic.c_str());
-        gesture_subscriber_.shutdown();
-        gesture_subscriber_ = nh_.subscribe(speech_it->response.topic, 1000, task_speech_cb_, task_speech_obj_);
-      }
-
-
-      else if (gest_it != allocated_gestures_.end())
-      {
-        try
-        {
-          TEMOTO_DEBUG("Unloading gesture");
-          resource_manager_->unloadClientResource(gest_it->response.rmp.resource_id);
-          TEMOTO_DEBUG("Asking the same gesture again");
-          resource_manager_->template call<temoto_2::LoadGesture>(
-              context_manager::srv_name::MANAGER, context_manager::srv_name::GESTURE_SERVER,
-              *gest_it);
-        }
-        catch(error::ErrorStack& error_stack)
-        {
-          throw FORWARD_ERROR(error_stack);
-        }
-
-
-        // Replace subscriber
-        TEMOTO_DEBUG("Replacing subscriber new topic'%s'",
-                 gest_it->response.topic.c_str());
-        gesture_subscriber_.shutdown();
-        gesture_subscriber_ = nh_.subscribe(gest_it->response.topic, 1000, task_gesture_cb_, task_gesture_obj_);
+        speech_subscriber_.shutdown();
+        speech_subscriber_ = nh_.subscribe(speech_it->response.topic, 1000, task_speech_cb_, task_speech_obj_);
       }
 
       // If the tracker was found then ...
@@ -420,8 +381,7 @@ public:
         }
       }
 
-      if (gest_it != allocated_gestures_.end() &&
-          speech_it != allocated_speeches_.end() &&
+      if (speech_it != allocated_speeches_.end() &&
           tracker_it != allocated_trackers_.end() &&
           track_object_it != allocated_track_objects_.end())
       {
@@ -440,13 +400,11 @@ public:
 
 private:
 
-  GestureCallbackType task_gesture_cb_;
   SpeechCallbackType task_speech_cb_;
 
   //TODO: Currently task is able to give callback functions which are only bind to itself.
   // arbitrary objects should be allowed in future.
   OwnerTask* task_speech_obj_;
-  OwnerTask* task_gesture_obj_;
   
   std::unique_ptr<rmp::ResourceManager<ContextManagerInterface>> resource_manager_;
 
@@ -454,11 +412,9 @@ private:
   TTP::BaseTask* task_;
 
   ros::NodeHandle nh_;
-  ros::Subscriber gesture_subscriber_;
   ros::Subscriber speech_subscriber_;
   ros::ServiceClient add_object_client_;
 
-  std::vector<temoto_2::LoadGesture> allocated_gestures_;
   std::vector<temoto_2::LoadSpeech> allocated_speeches_;
   std::vector<temoto_2::LoadTracker> allocated_trackers_;
   std::vector<temoto_2::TrackObject> allocated_track_objects_;
