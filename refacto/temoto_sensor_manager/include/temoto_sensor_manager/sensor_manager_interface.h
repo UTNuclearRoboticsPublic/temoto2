@@ -1,12 +1,12 @@
 #ifndef SENSOR_MANAGER_INTERFACE_H
 #define SENSOR_MANAGER_INTERFACE_H
 
-#include "common/base_subsystem.h"
+#include "temoto_core/common/base_subsystem.h"
 #include "common/topic_container.h"
 
 #include "TTP/base_task/base_task.h"
 #include "temoto_sensor_manager/sensor_manager_services.h"
-#include "rmp/resource_manager.h"
+#include "temoto_core/rmp/resource_manager.h"
 #include <memory> //unique_ptr
 
 /**

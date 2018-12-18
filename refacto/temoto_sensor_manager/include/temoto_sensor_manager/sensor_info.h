@@ -1,7 +1,7 @@
 #ifndef SENSOR_INFO_H
 #define SENSOR_INFO_H
 
-#include "common/temoto_log_macros.h"
+#include "temoto_core/common/temoto_log_macros.h"
 #include "common/topic_container.h"   // StringPair
 #include "common/reliability.h"
 #include <string>

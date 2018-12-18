@@ -1,14 +1,14 @@
 #ifndef SENSOR_MANAGER_SERVERS_H
 #define SENSOR_MANAGER_SERVERS_H
 
-#include "common/base_subsystem.h"
+#include "temoto_core/common/base_subsystem.h"
 #include "temoto_sensor_manager/sensor_info_registry.h"
 #include "temoto_sensor_manager/sensor_manager_services.h"
 #include "process_manager/process_manager_services.h"
-#include "rmp/resource_manager.h"
+#include "temoto_core/rmp/resource_manager.h"
 
 #include "std_msgs/String.h"
-#include "common/temoto_id.h"
+#include "temoto_core/common/temoto_id.h"
 
 namespace temoto_sensor_manager
 {

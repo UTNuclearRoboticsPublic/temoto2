@@ -1,4 +1,4 @@
-#include "common/base_subsystem.h"
+#include "temoto_core/common/base_subsystem.h"
 #include "temoto_sensor_manager/sensor_manager_services.h"
 #include "temoto_sensor_manager/sensor_manager_servers.h"
 #include "temoto_sensor_manager/sensor_info_registry.h"

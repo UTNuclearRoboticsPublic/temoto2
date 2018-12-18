@@ -1,10 +1,10 @@
 #ifndef TEMOTO_SENSOR_SNOOPER_H
 #define TEMOTO_SENSOR_SNOOPER_H
 
-#include "common/base_subsystem.h"
+#include "temoto_core/common/base_subsystem.h"
 #include "temoto_sensor_manager/sensor_info_registry.h"
 #include "rmp/config_synchronizer.h"
-#include "temoto_2/ConfigSync.h"
+#include "temoto_core/ConfigSync.h"
 #include "TTP/task_manager.h"
 
 #include "ros/ros.h"

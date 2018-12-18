@@ -208,15 +208,6 @@ add_executable(temoto_agent src/core/temoto_agent.cpp)
 add_dependencies(temoto_agent ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(temoto_agent ttp)
 
-
-# # # # # # # # # # # #
-# RESOUCE SNOOPER
-# # # # # # # # # # # #
-add_executable(resource_snooper src/resource_snooper/resource_snooper.cpp)
-add_dependencies(resource_snooper ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(resource_snooper ttp)
-
-
 # # # # # # # # # # # #
 # PROCESS MANAGER
 # # # # # # # # # # # #
