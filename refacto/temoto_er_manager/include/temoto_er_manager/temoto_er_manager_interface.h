@@ -1,11 +1,11 @@
-#ifndef TEMOTO_EXTERNAL_RESOURCE_MANAGER_INTERFACE_H
-#define TEMOTO_EXTERNAL_RESOURCE_MANAGER_INTERFACE_H
+#ifndef TEMOTO_ER_MANAGER__TEMOTO_ER_MANAGER_INTERFACE_H
+#define TEMOTO_ER_MANAGER__TEMOTO_ER_MANAGER_INTERFACE_H
 
 #include "temoto_core/common/base_subsystem.h"
+#include "temoto_core/rmp/resource_manager.h"
 
 #include "TTP/base_task/base_task.h"
 #include "temoto_er_manager/temoto_er_manager_services.h"
-#include "temoto_core/rmp/resource_manager.h"
 #include <memory> //unique_ptr
 
 
@@ -15,19 +15,17 @@
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-using namespace temoto_core;
-
 namespace temoto_er_manager
 {
 
 template <class OwnerTask>
-class ExternalResourceManagerInterface : public BaseSubsystem
+class ERManagerInterface : public temoto_core::BaseSubsystem
 {
 public:
   /**
-   * @brief ExternalResourceManagerInterface
+   * @brief ERManagerInterface
    */
-  ExternalResourceManagerInterface()
+  ERManagerInterface()
   {
     class_name_ = __func__;
   }
@@ -43,8 +41,9 @@ public:
     log_group_ = "interfaces." + task->getPackageName();
     name_ = task->getName() + "/external_resource_manager_interface";
 
-    resource_manager_ = std::unique_ptr<rmp::ResourceManager<ExternalResourceManagerInterface>>(new rmp::ResourceManager<ExternalResourceManagerInterface>(name_, this));
-    resource_manager_->registerStatusCb(&ExternalResourceManagerInterface::statusInfoCb);
+    resource_manager_ = std::unique_ptr<temoto_core::rmp::ResourceManager<ERManagerInterface>>(
+                        new temoto_core::rmp::ResourceManager<ERManagerInterface>(name_, this));
+    resource_manager_->registerStatusCb(&ERManagerInterface::statusInfoCb);
   }
 
   /**
@@ -73,10 +72,10 @@ public:
 //                                                             sensor_manager::srv_name::SERVER,
 //                                                             load_resource_msg);
 
-       resource_manager_->template call<temoto_er_manager::LoadExtResource>(temoto_er_manager::srv_name::MANAGER,
-                                                               temoto_er_manager::srv_name::SERVER,
-                                                               load_resource_msg,
-                                                               rmp::FailureBehavior::NONE);
+       resource_manager_->template call<LoadExtResource>( temoto_er_manager::srv_name::MANAGER,
+                                                          temoto_er_manager::srv_name::SERVER,
+                                                          load_resource_msg,
+                                                          temoto_core::rmp::FailureBehavior::NONE);
     }
     catch(error::ErrorStack& error_stack)
     {
@@ -165,7 +164,7 @@ public:
 //     * if any resource should fail, just unload it and load it again
 //     * there is a chance that sensor manager gives us better sensor this time
 //     */
-//    if (srv.request.status_code == rmp::status_codes::FAILED)
+//    if (srv.request.status_code == temoto_core::rmp::status_codes::FAILED)
 //    {
 //      TEMOTO_WARN("Sensor manager interface detected a sensor failure. Unloading and "
 //                                "trying again");
@@ -207,7 +206,7 @@ public:
     update_callback_ = callback;
   }
 
-  ~ExternalResourceManagerInterface()
+  ~ERManagerInterface()
   {
   }
 
@@ -219,7 +218,7 @@ public:
 private:
   std::string name_;
   std::vector<temoto_er_manager::LoadExtResource> allocated_external_resources_;
-  std::unique_ptr<rmp::ResourceManager<ExternalResourceManagerInterface>> resource_manager_;
+  std::unique_ptr<temoto_core::rmp::ResourceManager<ERManagerInterface>> resource_manager_;
 
   void(OwnerTask::*update_callback_)(bool) = NULL;
   OwnerTask* owner_instance_;

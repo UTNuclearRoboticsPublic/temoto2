@@ -9,6 +9,8 @@
 
 namespace temoto_sensor_manager
 {
+using namespace temoto_core;
+
 SensorManagerServers::SensorManagerServers(BaseSubsystem *b, SensorInfoRegistry *sir)
   : BaseSubsystem(*b, __func__)
   , sir_(sir)

@@ -1,10 +1,12 @@
-#ifndef TOOLSX_H
-#define TOOLSX_H
+#ifndef TEMOTO_CORE__TOOLS_H
+#define TEMOTO_CORE__TOOLS_H
 
 #include <ros/ros.h>
 #include <string>
 #include <stdlib.h>  // for getenv
 
+namespace temoto_core
+{
 namespace common
 {
 /**
@@ -76,6 +78,7 @@ inline std::string getAbsolutePath(const std::string& path_in)
   }
   return abs_path;
 }
-}
 
+} // common namespace
+} // temoto_core namespace
 #endif

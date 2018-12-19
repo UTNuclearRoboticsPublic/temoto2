@@ -1,9 +1,9 @@
-#ifndef SENSOR_INFO_H
-#define SENSOR_INFO_H
+#ifndef TEMOTO_SENSOR_MANAGER__SENSOR_INFO_H
+#define TEMOTO_SENSOR_MANAGER__SENSOR_INFO_H
 
 #include "temoto_core/common/temoto_log_macros.h"
-#include "common/topic_container.h"   // StringPair
-#include "common/reliability.h"
+#include "temoto_core/common/topic_container.h"   // StringPair
+#include "temoto_core/common/reliability.h"
 #include <string>
 #include <vector>
 #include <map>

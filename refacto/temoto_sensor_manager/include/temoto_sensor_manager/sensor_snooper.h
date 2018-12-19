@@ -1,10 +1,9 @@
-#ifndef TEMOTO_SENSOR_SNOOPER_H
-#define TEMOTO_SENSOR_SNOOPER_H
+#ifndef TEMOTO_SENSOR__MANAGER_SENSOR_SNOOPER_H
+#define TEMOTO_SENSOR__MANAGER_SENSOR_SNOOPER_H
 
 #include "temoto_core/common/base_subsystem.h"
+#include "temoto_core/rmp/config_synchronizer.h"
 #include "temoto_sensor_manager/sensor_info_registry.h"
-#include "rmp/config_synchronizer.h"
-#include "temoto_core/ConfigSync.h"
 #include "TTP/task_manager.h"
 
 #include "ros/ros.h"
@@ -17,7 +16,7 @@ namespace temoto_sensor_manager
  * about available sensors (in a system where multiple instances of temoto are running).
  * Sensor Snooper uses snooping agents (temoto actions) to discover sensor devices.
  */
-class SensorSnooper : public BaseSubsystem
+class SensorSnooper : public temoto_core::BaseSubsystem
 {
   /**
    * @brief Defines what kind of data type is used in sensor info synchronization messages.
@@ -81,7 +80,7 @@ private:
   ros::NodeHandle nh_;
 
   /// Object that handles sensor info syncronization.
-  rmp::ConfigSynchronizer<SensorSnooper, PayloadType> config_syncer_;
+  temoto_core::rmp::ConfigSynchronizer<SensorSnooper, PayloadType> config_syncer_;
 
   /// Pointer to a central Sensor Info Registry object.
   SensorInfoRegistry* sir_;

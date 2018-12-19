@@ -1,13 +1,3 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *
- *          MASSIVE TODO: * CATCH ALL EXCEPTIONS !!!
- *                        * implement interprocess piping service
- *                          that starts streaming the std::out of
- *                          a requested process.
- *                        * organize your sh*t
- *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
 #include "ros/package.h"
 #include "temoto_er_manager/temoto_er_manager.h"
 #include <stdio.h>
@@ -17,10 +7,10 @@
 #include <spawn.h>
 #include <regex>
 
-using namespace temoto_core;
-
 namespace temoto_er_manager
 {
+using namespace temoto_core;
+
 ERManager::ERManager() : resource_manager_(srv_name::MANAGER, this)
 {
   class_name_ = __func__;

@@ -1,5 +1,5 @@
-#ifndef TEMOTO_CORE_RMP_CLIENT_QUERY_H
-#define TEMOTO_CORE_RMP_CLIENT_QUERY_H
+#ifndef TEMOTO_CORE__CLIENT_QUERY_H
+#define TEMOTO_CORE__CLIENT_QUERY_H
 
 #include "temoto_core/common/temoto_id.h"
 #include <string>

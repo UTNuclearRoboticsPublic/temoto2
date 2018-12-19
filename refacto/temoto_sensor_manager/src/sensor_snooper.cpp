@@ -8,6 +8,7 @@
 
 namespace temoto_sensor_manager
 {
+using namespace temoto_core;
 
 // TODO: the constructor of the action_engine_ can throw in the initializer list
 //       and I have no clue what kind of behaviour should be expected - prolly bad

@@ -1,7 +1,10 @@
-#ifndef TOPIC_CONTAINER_H
-#define TOPIC_CONTAINER_H
+#ifndef TEMOTO_CORE__TOPIC_CONTAINER_H
+#define TEMOTO_CORE__TOPIC_CONTAINER_H
 
 #include "diagnostic_msgs/KeyValue.h"
+
+namespace temoto_core
+{
 
 typedef std::pair<std::string, std::string> StringPair;
 
@@ -150,5 +153,7 @@ private:
   }
 
 };
+
+} // temoto_core namespace
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef TEMOTO_CORE_BASE_RESOURCE_SERVER_H
-#define TEMOTO_CORE_BASE_RESOURCE_SERVER_H
+#ifndef TEMOTO_CORE__BASE_RESOURCE_SERVER_H
+#define TEMOTO_CORE__BASE_RESOURCE_SERVER_H
 
 #include "temoto_core/temoto_error/temoto_error.h"
 #include "temoto_core/common/temoto_id.h"

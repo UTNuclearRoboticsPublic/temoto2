@@ -1,14 +1,16 @@
-#ifndef TEMOTO_ERROR_H
-#define TEMOTO_ERROR_H
+#ifndef TEMOTO_CORE__TEMOTO_ERROR_H
+#define TEMOTO_CORE__TEMOTO_ERROR_H
 
+#include "temoto_core/Error.h"
+#include "temoto_core/ErrorStack.h"
+#include "temoto_core/common/temoto_log_macros.h"
+#include "temoto_core/common/console_colors.h"
 #include <string>
 #include <vector>
 #include "ros/ros.h"
-#include "temoto_2/Error.h"
-#include "temoto_2/ErrorStack.h"
-#include "temoto_core/common/temoto_log_macros.h"
-#include "common/console_colors.h"
 
+namespace temoto_core
+{
 namespace error
 {
 
@@ -192,7 +194,8 @@ private:
   ros::NodeHandle n_;
 };
 
-}  // end of error namespace
+} // end of error namespace
+} // temoto_core namespace 
 
 
 /**

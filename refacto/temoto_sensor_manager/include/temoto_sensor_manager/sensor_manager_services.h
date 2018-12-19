@@ -1,5 +1,5 @@
-#ifndef SENSOR_MANAGER_SERVICES_H
-#define SENSOR_MANAGER_SERVICES_H
+#ifndef TEMOTO_SENSOR_MANAGER__SENSOR_MANAGER_SERVICES_H
+#define TEMOTO_SENSOR_MANAGER__SENSOR_MANAGER_SERVICES_H
 
 #include <string>
 #include "temoto_core/rmp/resource_manager_services.h"

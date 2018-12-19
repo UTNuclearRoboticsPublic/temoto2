@@ -1,5 +1,5 @@
 # Remote Management Request
-temoto_2/RMPRequest rmp
+temoto_core/RMPRequest rmp
 
 # actions (rosrun or roslaunch) or system command:
 string action
@@ -19,4 +19,4 @@ string args
 ---
 
 # Remote Management Response
-temoto_2/RMPResponse rmp
+temoto_core/RMPResponse rmp

@@ -1,5 +1,5 @@
-#ifndef TEMOTO_CORE_CONSOLE_COLORS_H
-#define TEMOTO_CORE_CONSOLE_COLORS_H
+#ifndef TEMOTO_CORE__CONSOLE_COLORS_H
+#define TEMOTO_CORE__CONSOLE_COLORS_H
 
 //the following are UBUNTU/LINUX ONLY terminal color codes.
 #define RESET   "\033[0m"

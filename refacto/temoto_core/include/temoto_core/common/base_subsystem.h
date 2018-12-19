@@ -1,5 +1,5 @@
-#ifndef TEMOTO_CORE_BASE_SUBSYSTEM_H
-#define TEMOTO_CORE_BASE_SUBSYSTEM_H
+#ifndef TEMOTO_CORE__BASE_SUBSYSTEM_H
+#define TEMOTO_CORE__BASE_SUBSYSTEM_H
 
 #include "temoto_core/temoto_error/temoto_error.h"
 #include <string>

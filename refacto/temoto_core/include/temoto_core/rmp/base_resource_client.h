@@ -1,5 +1,5 @@
-#ifndef TEMOTO_CORE_BASE_RESOURCE_CLIENT_H
-#define TEMOTO_CORE_BASE_RESOURCE_CLIENT_H
+#ifndef TEMOTO_CORE__BASE_RESOURCE_CLIENT_H
+#define TEMOTO_CORE__BASE_RESOURCE_CLIENT_H
 
 #include "temoto_core/common/temoto_id.h"
 #include "temoto_core/common/base_subsystem.h"

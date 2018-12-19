@@ -1,9 +1,9 @@
-#ifndef TEMOTO_EXTERNAL_RESOURCE_MANAGER_H
-#define TEMOTO_EXTERNAL_RESOURCE_MANAGER_H
+#ifndef TEMOTO_ER_MANAGER__TEMOTO_ER_MANAGER_H
+#define TEMOTO_ER_MANAGER__TEMOTO_ER_MANAGER_H
 
-#include "temoto_er_manager/temoto_er_manager_services.h"
 #include "temoto_core/rmp/resource_manager.h"
 #include "temoto_core/common/base_subsystem.h"
+#include "temoto_er_manager/temoto_er_manager_services.h"
 #include <stdio.h> //pid_t TODO: check where pid_t actually is
 #include <mutex>
 #include <sys/stat.h>

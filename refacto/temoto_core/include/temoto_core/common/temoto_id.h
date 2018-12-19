@@ -1,11 +1,14 @@
-#ifndef TEMOTO_ID_H
-#define TEMOTO_ID_H
+#ifndef TEMOTO_CORE__TEMOTO_ID_H
+#define TEMOTO_CORE__TEMOTO_ID_H
 
 #include <stdlib.h>
 #include <chrono>
 
+namespace temoto_core
+{
 namespace temoto_id
 {
+
 typedef int ID;
 const ID UNASSIGNED_ID = 0;
 
@@ -63,7 +66,9 @@ private:
       ++current_ID_;
   }
 };
-}
+
+} // temoto_id namespace
+} // temoto_core namespace
 
 // TODO: temporary mapping until code gets clean
 namespace TemotoID = temoto_id;

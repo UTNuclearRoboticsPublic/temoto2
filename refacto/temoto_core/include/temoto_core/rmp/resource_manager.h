@@ -1,5 +1,5 @@
-#ifndef TEMOTO_CORE_RMP_RESOURCE_MANAGER_H
-#define TEMOTO_CORE_RMP_RESOURCE_MANAGER_H
+#ifndef TEMOTO_CORE__RESOURCE_MANAGER_H
+#define TEMOTO_CORE__RESOURCE_MANAGER_H
 
 #include "ros/callback_queue.h"
 #include "temoto_core/common/base_subsystem.h"

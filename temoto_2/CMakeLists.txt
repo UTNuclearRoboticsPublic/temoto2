@@ -193,15 +193,6 @@ target_link_libraries(ttp ${catkin_LIBRARIES}
                           meta-classify meta-sequence-analyzers meta-parser-analyzers )
 
 # # # # # # # # # # # #
-# TEMOTO CORE
-# # # # # # # # # # # #
-add_library(temoto_core 
-                src/common/reliability.cpp
-                src/temoto_error/temoto_error.cpp)
-add_dependencies(temoto_core ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(temoto_core ${catkin_LIBRARIES})
-
-# # # # # # # # # # # #
 # TEMOTO AGENT
 # # # # # # # # # # # #
 add_executable(temoto_agent src/core/temoto_agent.cpp)

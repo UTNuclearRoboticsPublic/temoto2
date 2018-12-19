@@ -1,15 +1,19 @@
-#ifndef RESOURCE_SERVER_H
-#define RESOURCE_SERVER_H
+#ifndef TEMOTO_CORE__RESOURCE_SERVER_H
+#define TEMOTO_CORE__RESOURCE_SERVER_H
+
 #include "ros/ros.h"
-#include "temoto_core/common/temoto_id.h"
-#include "common/tools.h"
-#include "rmp/base_resource_server.h"
-#include "rmp/server_query.h"
 #include "ros/callback_queue.h"
+#include "temoto_core/common/temoto_id.h"
+#include "temoto_core/common/tools.h"
+#include "temoto_core/rmp/base_resource_server.h"
+#include "temoto_core/rmp/server_query.h"
 #include <mutex>
 
+namespace temoto_core
+{
 namespace rmp
 {
+
 template <class ServiceType, class Owner>
 class ResourceServer : public BaseResourceServer<Owner>
 {
@@ -496,6 +500,8 @@ private:
   std::mutex queries_mutex_;
   std::mutex active_server_mutex_;
 };
-}
+
+} // rmp namespace
+} // temoto_core namespace
 
 #endif

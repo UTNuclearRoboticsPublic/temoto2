@@ -1,6 +1,6 @@
 #include "temoto_error/temoto_error.h"
 #include "temoto_core/common/temoto_log_macros.h"
-#include "common/console_colors.h"
+#include "temoto_core/common/console_colors.h"
 
 namespace error
 {

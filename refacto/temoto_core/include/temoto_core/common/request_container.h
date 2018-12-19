@@ -1,10 +1,10 @@
-#ifndef TEMOTO_CORE_REQUEST_CONTAINER_H
-#define TEMOTO_CORE_REQUEST_CONTAINER_H
+#ifndef TEMOTO_CORE__REQUEST_CONTAINER_H
+#define TEMOTO_CORE__REQUEST_CONTAINER_H
 
+#include "temoto_core/common/temoto_id.h"
 #include <vector>
 #include <string>
 #include <utility>
-#include "temoto_core/common/temoto_id.h"
 
 namespace temoto_core
 {

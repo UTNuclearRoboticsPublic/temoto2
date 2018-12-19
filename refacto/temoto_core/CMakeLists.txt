@@ -13,7 +13,6 @@ find_package(catkin REQUIRED
 add_message_files(FILES 
   Error.msg
   ErrorStack.msg
-  StopTaskMsg.msg
 
   # Resource Management
   RMPRequest.msg
@@ -26,8 +25,8 @@ add_message_files(FILES
 add_service_files(
   FILES
   # Resouce Management
-  RMP/UnloadResource.srv
-  RMP/ResourceStatus.srv
+  UnloadResource.srv
+  ResourceStatus.srv
 )
 
 generate_messages(
@@ -40,7 +39,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES temoto_core
-#  CATKIN_DEPENDS other_catkin_pkg
+  CATKIN_DEPENDS std_msgs diagnostic_msgs message_generation
 #  DEPENDS system_lib
 )
 
@@ -52,9 +51,9 @@ include_directories(
 # # # # # # # # # # # #
 # TEMOTO CORE
 # # # # # # # # # # # #
-add_library(temoto_core_lib 
+add_library(temoto_core_components 
   src/common/reliability.cpp
   src/temoto_error/temoto_error.cpp
 )
-add_dependencies(temoto_core_lib ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(temoto_core_lib ${catkin_LIBRARIES})
+add_dependencies(temoto_core_components ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(temoto_core_components ${catkin_LIBRARIES})

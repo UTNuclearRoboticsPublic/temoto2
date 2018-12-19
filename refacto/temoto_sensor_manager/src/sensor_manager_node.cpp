@@ -7,11 +7,12 @@
 #include <signal.h>
 
 using namespace temoto_sensor_manager;
+using namespace temoto_core;
 
 /**
  * @brief The Sensor Manager maintains 3 components of this subsystem
  */
-class SensorManager : public BaseSubsystem
+class SensorManager : public temoto_core::BaseSubsystem
 {
 public:
 

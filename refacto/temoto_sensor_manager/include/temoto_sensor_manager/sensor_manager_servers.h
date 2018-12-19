@@ -1,14 +1,13 @@
-#ifndef SENSOR_MANAGER_SERVERS_H
-#define SENSOR_MANAGER_SERVERS_H
+#ifndef TEMOTO_SENSOR_MANAGER__SENSOR_MANAGER_SERVERS_H
+#define TEMOTO_SENSOR_MANAGER__SENSOR_MANAGER_SERVERS_H
 
 #include "temoto_core/common/base_subsystem.h"
+#include "temoto_core/common/temoto_id.h"
+#include "temoto_core/rmp/resource_manager.h"
 #include "temoto_sensor_manager/sensor_info_registry.h"
 #include "temoto_sensor_manager/sensor_manager_services.h"
 #include "process_manager/process_manager_services.h"
-#include "temoto_core/rmp/resource_manager.h"
-
 #include "std_msgs/String.h"
-#include "temoto_core/common/temoto_id.h"
 
 namespace temoto_sensor_manager
 {
@@ -16,7 +15,7 @@ namespace temoto_sensor_manager
 /**
  * @brief The SensorManagerServers contains all Sensor Manager related ROS services.
  */
-class SensorManagerServers : public BaseSubsystem
+class SensorManagerServers : public temoto_core::BaseSubsystem
 {
 public:
   /**
@@ -86,10 +85,10 @@ private:
   SensorInfoRegistry* sir_;
 
   /// Resource Management object which handles resource requests and status info propagation.
-  rmp::ResourceManager<SensorManagerServers> resource_manager_;
+  temoto_core::rmp::ResourceManager<SensorManagerServers> resource_manager_;
 
   /// List of allocated sensors.
-  std::map<temoto_id::ID, SensorInfo> allocated_sensors_;
+  std::map<temoto_core::temoto_id::ID, SensorInfo> allocated_sensors_;
 
 }; // SensorManagerServers
 

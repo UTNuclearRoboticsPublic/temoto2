@@ -1,11 +1,15 @@
-#ifndef RESOURCE_CLIENT_H
-#define RESOURCE_CLIENT_H
+#ifndef TEMOTO_CORE__RESOURCE_CLIENT_H
+#define TEMOTO_CORE__RESOURCE_CLIENT_H
+
 #include "ros/ros.h"
 #include "temoto_core/common/temoto_id.h"
-#include "rmp/base_resource_client.h"
+#include "temoto_core/rmp/base_resource_client.h"
 #include "temoto_core/rmp/client_query.h"
 #include <string>
 #include <map>
+
+namespace temoto_core
+{
 
 namespace rmp
 {
@@ -288,6 +292,8 @@ private:
   ros::ServiceClient service_client_unload_;
   ros::NodeHandle nh_;
 };
-}
+
+} // rmp namespace
+} // temoto_core namespace
 
 #endif

@@ -5,6 +5,7 @@ add_compile_options(-std=c++1y -Wno-reorder -Wno-unused-function)
 
 find_package(catkin REQUIRED COMPONENTS
   temoto_2
+  temoto_core
   roscpp
   genmsg
   std_msgs
@@ -53,6 +54,6 @@ target_link_libraries(temoto_sensor_manager
   ${catkin_LIBRARIES} 
   yaml-cpp 
   ttp
-  temoto_core
+  temoto_core_components
 )
 

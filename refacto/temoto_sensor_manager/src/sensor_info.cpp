@@ -1,9 +1,11 @@
+#include "temoto_core/common/tools.h"
 #include "temoto_sensor_manager/sensor_info.h"
 #include "ros/ros.h"
-#include "common/tools.h"
 
 namespace temoto_sensor_manager
 {
+using namespace temoto_core;
+
 SensorInfo::SensorInfo(std::string sensor_name)
 {
   //set the sensor to current namespace

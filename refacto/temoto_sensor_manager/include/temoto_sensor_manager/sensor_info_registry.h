@@ -1,5 +1,5 @@
-#ifndef SENSOR_INFO_REGISTRY_H
-#define SENSOR_INFO_REGISTRY_H
+#ifndef TEMOTO_SENSOR_MANAGER__SENSOR_INFO_REGISTRY_H
+#define TEMOTO_SENSOR_MANAGER__SENSOR_INFO_REGISTRY_H
 
 #include "temoto_sensor_manager/sensor_info.h"
 #include "temoto_sensor_manager/LoadSensor.h"
