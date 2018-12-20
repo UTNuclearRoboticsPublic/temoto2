@@ -1,9 +1,9 @@
 #ifndef CONTEXT_MANAGER_H
 #define CONTEXT_MANAGER_H
 
-#include "common/base_subsystem.h"
-#include "common/temoto_id.h"
-#include "common/reliability.h"
+#include "temoto_core/common/base_subsystem.h"
+#include "temoto_core/common/temoto_id.h"
+#include "temoto_core/common/reliability.h"
 
 #include "context_manager/context_manager_containers.h"
 #include "context_manager/tracking_method.h"
@@ -22,7 +22,7 @@ namespace context_manager
 typedef std::shared_ptr<context_manager::TrackerInfo> TrackerInfoPtr;
 typedef std::vector<TrackerInfoPtr> TrackerInfoPtrs;
 
-class ContextManager : public BaseSubsystem
+class ContextManager : public temoto_core::BaseSubsystem
 {
 public:
   ContextManager();
@@ -149,7 +149,7 @@ private:
 
   std::map<int, TrackerInfoPtr> allocated_trackers_;
 
-  temoto_id::IDManager pipe_id_generator_;
+  temoto_core::temoto_id::IDManager pipe_id_generator_;
 
   // Configuration syncer that manages external resource descriptions and synchronizes them
   // between all other (context) managers

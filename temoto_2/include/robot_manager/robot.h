@@ -3,8 +3,8 @@
 
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <moveit/planning_interface/planning_interface.h>
-#include "common/temoto_id.h"
-#include "common/base_subsystem.h"
+#include "temoto_core/common/temoto_id.h"
+#include "temoto_core/common/base_subsystem.h"
 #include "process_manager/process_manager_services.h"
 #include "rmp/resource_manager.h"
 #include "robot_manager/robot_config.h"
@@ -20,10 +20,10 @@ namespace robot_manager
 // Forward declaration
 class RobotManager;
 
-class Robot : public BaseSubsystem
+class Robot : public temoto_core::BaseSubsystem
 {
 public:
-  Robot(RobotConfigPtr config_, rmp::ResourceManager<RobotManager>& resource_manager, BaseSubsystem& b);
+  Robot(RobotConfigPtr config_, rmp::ResourceManager<RobotManager>& resource_manager, temoto_core::BaseSubsystem& b);
   virtual ~Robot();
   void addPlanningGroup(const std::string& planning_group_name);
   void removePlanningGroup(const std::string& planning_group_name);
@@ -46,7 +46,7 @@ public:
   // return all the information required to visualize this robot
   std::string getVizInfo();
 
-  bool hasResource(temoto_id::ID resource_id);
+  bool hasResource(temoto_core::temoto_id::ID resource_id);
 
 private:
   void load();
@@ -58,11 +58,11 @@ private:
   void loadNavigation();
   void loadNavigationDriver();
 
-  temoto_id::ID rosExecute(const std::string& package_name, const std::string& executable,
+  temoto_core::temoto_id::ID rosExecute(const std::string& package_name, const std::string& executable,
                   const std::string& args = "");
 
-  void waitForParam(const std::string& param, temoto_id::ID interrupt_res_id);
-  void waitForTopic(const std::string& topic, temoto_id::ID interrupt_res_id);
+  void waitForParam(const std::string& param, temoto_core::temoto_id::ID interrupt_res_id);
+  void waitForTopic(const std::string& topic, temoto_core::temoto_id::ID interrupt_res_id);
 
   bool isTopicAvailable(const std::string& topic);
 

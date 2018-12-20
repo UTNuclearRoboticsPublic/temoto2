@@ -9,8 +9,8 @@
 
 namespace sensor_manager
 {
-SensorManagerServers::SensorManagerServers(BaseSubsystem *b, SensorInfoRegistry *sir)
-  : BaseSubsystem(*b, __func__)
+SensorManagerServers::SensorManagerServers(temoto_core::BaseSubsystem *b, SensorInfoRegistry *sir)
+  : temoto_core::BaseSubsystem(*b, __func__)
   , sir_(sir)
   , resource_manager_(srv_name::MANAGER, this)
 {
@@ -141,7 +141,7 @@ void SensorManagerServers::loadSensorCb( temoto_2::LoadSensor::Request& req
 
         return;
       }
-      catch(error::ErrorStack& error_stack)
+      catch(temoto_core::error::ErrorStack& error_stack)
       {
         if (error_stack.front().code != static_cast<int>(error::Code::SERVICE_REQ_FAIL))
         {
@@ -184,7 +184,7 @@ void SensorManagerServers::loadSensorCb( temoto_2::LoadSensor::Request& req
         res = load_sensor_msg.response;
         allocated_sensors_.emplace(res.rmp.resource_id, si);
       }
-      catch(error::ErrorStack& error_stack)
+      catch(temoto_core::error::ErrorStack& error_stack)
       {
         throw FORWARD_ERROR(error_stack);
       }

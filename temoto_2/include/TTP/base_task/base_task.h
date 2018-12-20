@@ -8,8 +8,8 @@
 #define BASE_TASK_H
 
 #include "ros/ros.h"
-#include "common/base_subsystem.h"
-#include "common/temoto_id.h"
+#include "temoto_core/common/base_subsystem.h"
+#include "temoto_core/common/temoto_id.h"
 #include "common/tools.h"
 #include "TTP/task_descriptor.h"
 #include "temoto_2/StopTaskMsg.h"
@@ -38,7 +38,7 @@
 namespace TTP
 {
 
-class BaseTask : public BaseSubsystem
+class BaseTask : public temoto_core::BaseSubsystem
 {
 friend class TaskManager;
 
@@ -62,7 +62,7 @@ public:
       startTask(task_interface);
       task_is_finished_ = true;
     }
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       SEND_ERROR(FORWARD_ERROR(error_stack));
     }
@@ -115,7 +115,7 @@ public:
    * @brief getID
    * @return
    */
-  TemotoID::ID getID() const
+  temoto_core::temoto_id::ID getID() const
   {
     return task_id_;
   }
@@ -171,13 +171,13 @@ private:
   /**
    * @brief task_id_
    */
-  TemotoID::ID task_id_ = TemotoID::UNASSIGNED_ID;
+  temoto_core::temoto_id::ID task_id_ = temoto_core::temoto_id::UNASSIGNED_ID;
 
   /**
    * @brief setID
    * @param task_id
    */
-  void setID( TemotoID::ID task_id )
+  void setID( temoto_core::temoto_id::ID task_id )
   {
     task_id_ = task_id;
   }

@@ -1,8 +1,8 @@
 #ifndef ALGORITHM_MANAGER_INTERFACE_H
 #define ALGORITHM_MANAGER_INTERFACE_H
 
-#include "common/base_subsystem.h"
-#include "common/topic_container.h"
+#include "temoto_core/common/base_subsystem.h"
+#include "temoto_core/common/topic_container.h"
 
 #include "TTP/base_task/base_task.h"
 #include "algorithm_manager/algorithm_manager_services.h"
@@ -12,7 +12,7 @@
 /**
  * @brief The AlgorithmTopicsReq class
  */
-class AlgorithmTopicsReq : public TopicContainer
+class AlgorithmTopicsReq : public temoto_core::TopicContainer
 {
   /* DELIBERATELY EMPTY */
 };
@@ -20,7 +20,7 @@ class AlgorithmTopicsReq : public TopicContainer
 /**
  * @brief The AlgorithmTopicsRes class
  */
-class AlgorithmTopicsRes : public TopicContainer
+class AlgorithmTopicsRes : public temoto_core::TopicContainer
 {
   /* DELIBERATELY EMPTY */
 };
@@ -33,7 +33,7 @@ class AlgorithmTopicsRes : public TopicContainer
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 template <class OwnerTask>
-class AlgorithmManagerInterface : public BaseSubsystem
+class AlgorithmManagerInterface : public temoto_core::BaseSubsystem
 {
 public:
   /**
@@ -65,7 +65,7 @@ public:
     {
       validateInterface();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -86,7 +86,7 @@ public:
     {
       validateInterface();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -111,7 +111,7 @@ public:
     {
       validateInterface();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -140,7 +140,7 @@ public:
 
       return responded_topics;
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -187,7 +187,7 @@ public:
 //      }
 //      else if (cur_algorithm_it == allocated_algorithms_.begin())
 //      {
-//        throw error::ErrorStackUtil(
+//        throw temoto_core::error::ErrorStackUtil(
 //            taskErr::RESOURCE_UNLOAD_FAIL, error::Subsystem::TASK, error::Urgency::MEDIUM,
 //            prefix + " Unable to unload resource that is not loaded.", ros::Time::now());
 //      }
@@ -204,7 +204,7 @@ public:
     {
       validateInterface();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       SEND_ERROR(error_stack);
       return;
@@ -249,7 +249,7 @@ public:
                                                                   , algorithm_manager::srv_name::SERVER
                                                                   , *algorithm_itr);
         }
-        catch (error::ErrorStack& error_stack)
+        catch (temoto_core::error::ErrorStack& error_stack)
         {
           throw FORWARD_ERROR(error_stack);
         }

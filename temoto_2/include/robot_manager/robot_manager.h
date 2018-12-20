@@ -1,8 +1,8 @@
 #ifndef ROBOT_MANAGER_H
 #define ROBOT_MANAGER_H
 
-#include "common/temoto_id.h"
-#include "common/base_subsystem.h"
+#include "temoto_core/common/temoto_id.h"
+#include "temoto_core/common/base_subsystem.h"
 #include "robot_manager/robot_manager_services.h"
 #include "process_manager/process_manager_services.h"
 #include "context_manager/context_manager_services.h"
@@ -32,7 +32,7 @@ class Robot;
 
 typedef std_msgs::String PayloadType;
 
-class RobotManager : public BaseSubsystem
+class RobotManager : public temoto_core::BaseSubsystem
 {
 public:
   RobotManager();
@@ -104,11 +104,11 @@ private:
 
   void statusInfoCb(temoto_2::ResourceStatus& srv);
 
-  void loadLocalRobot(RobotConfigPtr info_ptr, temoto_id::ID resource_id);
+  void loadLocalRobot(RobotConfigPtr info_ptr, temoto_core::temoto_id::ID resource_id);
 
 
   typedef std::shared_ptr<Robot> RobotPtr;
-  typedef std::map<temoto_id::ID, RobotPtr> Robots;
+  typedef std::map<temoto_core::temoto_id::ID, RobotPtr> Robots;
   RobotPtr active_robot_;
   Robots loaded_robots_;
   RobotConfigs local_configs_;

@@ -1,27 +1,27 @@
 #ifndef ALGORITHM_MANAGER_SERVERS_H
 #define ALGORITHM_MANAGER_SERVERS_H
 
-#include "common/base_subsystem.h"
+#include "temoto_core/common/base_subsystem.h"
 #include "algorithm_manager/algorithm_info_registry.h"
 #include "algorithm_manager/algorithm_manager_services.h"
 #include "process_manager/process_manager_services.h"
 #include "rmp/resource_manager.h"
 
 #include "std_msgs/String.h"
-#include "common/temoto_id.h"
+#include "temoto_core/common/temoto_id.h"
 
 namespace algorithm_manager
 {
 
 typedef std_msgs::String PayloadType;
 
-class AlgorithmManagerServers : public BaseSubsystem
+class AlgorithmManagerServers : public temoto_core::BaseSubsystem
 {
 public:
   /**
    * @brief AlgorithmManagerServers
    */
-  AlgorithmManagerServers( BaseSubsystem* b, AlgorithmInfoRegistry* air );
+  AlgorithmManagerServers( temoto_core::BaseSubsystem* b, AlgorithmInfoRegistry* air );
 
   /**
    * @brief ~AlgorithmManagerServers
@@ -75,7 +75,7 @@ private:
   rmp::ResourceManager<AlgorithmManagerServers> resource_manager_;
 
   /// List of allocated algorithms
-  std::map<temoto_id::ID, AlgorithmInfo> allocated_algorithms_;
+  std::map<temoto_core::temoto_id::ID, AlgorithmInfo> allocated_algorithms_;
 
 }; // AlgorithmManagerServers
 

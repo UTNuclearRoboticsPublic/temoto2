@@ -1,9 +1,9 @@
 #ifndef TASK_MANAGER_H
 #define TASK_MANAGER_H
 
-#include "temoto_error/temoto_error.h"
-#include "common/temoto_id.h"
-#include "common/base_subsystem.h"
+#include "temoto_core/temoto_error/temoto_error.h"
+#include "temoto_core/common/temoto_id.h"
+#include "temoto_core/common/base_subsystem.h"
 #include "TTP/task_descriptor.h"
 #include "TTP/task_tree.h"
 #include "TTP/base_task/base_task.h"
@@ -26,7 +26,7 @@
 namespace TTP
 {
 
-class TaskManager : public BaseSubsystem
+class TaskManager : public temoto_core::BaseSubsystem
 {
 public:
 
@@ -37,7 +37,7 @@ public:
              , std::string ai_libs_path = ""
              , std::string chatter_topic = "");
 
-  TaskManager( BaseSubsystem* b
+  TaskManager( temoto_core::BaseSubsystem* b
              , bool nlp_enabled
              , std::string ai_libs_path = ""
              , std::string chatter_topic = "");
@@ -153,7 +153,7 @@ private:
   /**
    * @brief id_manager_
    */
-  TemotoID::IDManager id_manager_;
+  temoto_core::temoto_id::IDManager id_manager_;
 
 
   ros::ServiceServer stop_task_server_;

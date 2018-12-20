@@ -5,7 +5,7 @@
 #include "TTP/task_descriptor_processor.h"
 #include "TTP/task_manager.h"
 
-#include "temoto_error/temoto_error.h"
+#include "temoto_core/temoto_error/temoto_error.h"
 
 // TBB test
 #include <cstdio>
@@ -48,7 +48,7 @@ int main(int argc, char **argv)
         }
 */
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       FORWARD_ERROR(error_stack);
     }
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
             task_manager.executeTaskTree (tt.getRootNode(), flow_graph);
 
         }
-        catch (error::ErrorStack& error_stack)
+        catch (temoto_core::error::ErrorStack& error_stack)
         {
           FORWARD_ERROR(error_stack);
         }

@@ -9,7 +9,7 @@
 #include "ros/package.h"
 
 #include "common/tools.h"
-#include "common/temoto_log_macros.h"
+#include "temoto_core/common/temoto_log_macros.h"
 #include "TTP/task_manager.h"
 #include "TTP/task_descriptor_processor.h"
 #include "TTP/task_container.h"
@@ -55,13 +55,13 @@ TaskManager::TaskManager( std::string subsystem_name
     subsystem_name_ = subsystem_name;
     subsystem_code_ = subsystem_code;
     log_group_ = "core";
-    error_handler_ = error::ErrorHandler(subsystem_code_, "core");
+    error_handler_ = temoto_core::error::ErrorHandler(subsystem_code_, "core");
 
     // Initialize the core
     initCore(ai_libs_path, chatter_topic);
   }
 
-  catch (error::ErrorStack& error_stack)
+  catch (temoto_core::error::ErrorStack& error_stack)
   {
     FORWARD_ERROR(error_stack);
   }
@@ -71,11 +71,11 @@ TaskManager::TaskManager( std::string subsystem_name
  *  CONSTRUCTOR
  * * * * * * * * */
 
-TaskManager::TaskManager( BaseSubsystem *b
+TaskManager::TaskManager( temoto_core::BaseSubsystem *b
                         , bool nlp_enabled
                         , std::string ai_libs_path
                         , std::string chatter_topic)
-  : BaseSubsystem(*b)
+  : temoto_core::BaseSubsystem(*b)
   , nlp_enabled_(nlp_enabled)
 {
   try
@@ -87,7 +87,7 @@ TaskManager::TaskManager( BaseSubsystem *b
     initCore(ai_libs_path, chatter_topic);
   }
 
-  catch (error::ErrorStack& e)
+  catch (temoto_core::error::ErrorStack& e)
   {
     // Rethrow or do whatever
     // std::cout << e.getStack();
@@ -160,7 +160,7 @@ void TaskManager::humanChatterCb (std_msgs::String chat)
     std::cout << BOLDWHITE << "Received: " << chat.data << RESET << std::endl << std::endl;
     executeVerbalInstruction (chat.data);
   }
-  catch (error::ErrorStack& error_stack)
+  catch (temoto_core::error::ErrorStack& error_stack)
   {
     FORWARD_ERROR(error_stack);
   }
@@ -190,7 +190,7 @@ void TaskManager::executeVerbalInstruction (std::string& verbal_instruction)
     executeSFTThreaded(std::move(sft));
 
   }
-  catch(error::ErrorStack& error_stack)
+  catch(temoto_core::error::ErrorStack& error_stack)
   {
     FORWARD_ERROR(error_stack);
   }
@@ -257,7 +257,7 @@ void TaskManager::executeSFT(TaskTree sft)
     TEMOTO_DEBUG_STREAM("Finished executing the flow graph");
 
   }
-  catch(error::ErrorStack& error_stack)
+  catch(temoto_core::error::ErrorStack& error_stack)
   {
     FORWARD_ERROR(error_stack);
   }
@@ -344,7 +344,7 @@ std::vector <TaskDescriptor> TaskManager::findTaskFilesys(std::string task_to_fi
           tasks_found.push_back(tdp.getTaskDescriptor());
         }
 
-        catch(error::ErrorStack& error_stack)
+        catch(temoto_core::error::ErrorStack& error_stack)
         {
           FORWARD_ERROR(error_stack);
         }
@@ -388,7 +388,7 @@ void TaskManager::indexTasks (boost::filesystem::directory_entry base_path, int 
         // Clear the synchronous task libraries set
         synchronous_task_libs_.clear();
     }
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       FORWARD_ERROR(error_stack);
     }
@@ -968,7 +968,7 @@ void TaskManager::loadAndInitializeTaskTree(TaskTreeNode& node)
       TEMOTO_DEBUG_STREAM("Instatiating the task '" << node_task_descriptor.getAction() << "'");
       instantiateTask(node);
     }
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       FORWARD_ERROR(error_stack);
     }
@@ -1216,7 +1216,7 @@ bool TaskManager::stopTaskCallback( temoto_2::StopTask::Request& req,
     res.message = "task stopped";
   }
 
-  catch(error::ErrorStack& error_stack)
+  catch(temoto_core::error::ErrorStack& error_stack)
   {
     FORWARD_ERROR(error_stack);
   }
@@ -1484,7 +1484,7 @@ void TaskManager::indexTasksCallback(temoto_2::IndexTasks index_msg)
         indexTasks(dir, 1);
         TEMOTO_DEBUG_STREAM("Browsed and indexed the tasks successfully");
     }
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       FORWARD_ERROR(error_stack);
     }

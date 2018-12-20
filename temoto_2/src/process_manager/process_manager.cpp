@@ -27,7 +27,7 @@ ProcessManager::ProcessManager() : resource_manager_(srv_name::MANAGER, this)
   subsystem_name_ = "process_manager";
   subsystem_code_ = error::Subsystem::PROCESS_MANAGER;
   log_group_ = "process_manager";
-  error_handler_ = error::ErrorHandler(subsystem_code_, log_group_);
+  error_handler_ = temoto_core::error::ErrorHandler(subsystem_code_, log_group_);
 
   resource_manager_.addServer<temoto_2::LoadProcess>(srv_name::SERVER, &ProcessManager::loadCb,
                                                      &ProcessManager::unloadCb);

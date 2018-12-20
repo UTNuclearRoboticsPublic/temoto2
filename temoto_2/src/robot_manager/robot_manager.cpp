@@ -1,5 +1,5 @@
 #include "ros/package.h"
-#include "temoto_error/temoto_error.h"
+#include "temoto_core/temoto_error/temoto_error.h"
 #include "robot_manager/robot_manager.h"
 #include "process_manager/process_manager_services.h"
 #include <yaml-cpp/yaml.h>
@@ -11,7 +11,7 @@
 namespace robot_manager
 {
 RobotManager::RobotManager()
-  : BaseSubsystem("robot_manager", error::Subsystem::ROBOT_MANAGER, __func__)
+  : temoto_core::BaseSubsystem("robot_manager", error::Subsystem::ROBOT_MANAGER, __func__)
   , resource_manager_(srv_name::MANAGER, this)
   , config_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &RobotManager::syncCb, this)
   , mode_(modes::AUTO)
@@ -103,7 +103,7 @@ RobotManager::RobotManager()
   TEMOTO_INFO("Robot manager is ready.");
 }
 
-void RobotManager::loadLocalRobot(RobotConfigPtr config, temoto_id::ID resource_id)
+void RobotManager::loadLocalRobot(RobotConfigPtr config, temoto_core::temoto_id::ID resource_id)
 {
   if (!config)
   {
@@ -118,7 +118,7 @@ void RobotManager::loadLocalRobot(RobotConfigPtr config, temoto_id::ID resource_
     advertiseConfig(config);
     TEMOTO_DEBUG("Robot '%s' loaded.", config->getName().c_str());
   }
-  catch (error::ErrorStack& error_stack)
+  catch (temoto_core::error::ErrorStack& error_stack)
   {
     //\TODO: Should we adjust reliability for only certain type of errors?
     config->adjustReliability(0.0);
@@ -141,7 +141,7 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
       res.rmp.code = rmp::status_codes::OK;
       res.rmp.message = "Robot sucessfully loaded.";
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -173,7 +173,7 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
       active_robot_ = std::make_shared<Robot>(config, resource_manager_, *this);
       loaded_robots_.emplace(load_robot_srvc.response.rmp.resource_id, active_robot_);
     }
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -370,7 +370,7 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
     {
       active_robot_->plan(req.planning_group, pose);
     }
-    catch (error::ErrorStack(e))
+    catch (temoto_core::error::ErrorStack(e))
     {
       res.error_stack = FORWARD_ERROR(e);
       res.code = rmp::status_codes::OK;
@@ -455,7 +455,7 @@ bool RobotManager::getVizInfoCb(temoto_2::RobotGetVizInfo::Request& req,
   if (req.robot_name != "")
   {
     auto robot_it = std::find_if(loaded_robots_.begin(), loaded_robots_.end(),
-                                 [&](const std::pair<temoto_id::ID, RobotPtr> p) -> bool {
+                                 [&](const std::pair<temoto_core::temoto_id::ID, RobotPtr> p) -> bool {
                                    return p.second->getName() == req.robot_name;
                                  });
     if (robot_it != loaded_robots_.end())
@@ -509,7 +509,7 @@ bool RobotManager::setTargetCb(temoto_2::RobotSetTarget::Request& req,
       target_pose_sub_ = nh_.subscribe(track_object_msg.response.object_topic, 1,
                                        &RobotManager::targetPoseCb, this);
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       res.error_stack = FORWARD_ERROR(error_stack);
       res.code = rmp::status_codes::FAILED;
@@ -669,7 +669,7 @@ void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)
   //   {
   //     resource_manager_.unloadClientResource(hand_srv_msg_.response.rmp.resource_id);
   //   }
-  //   catch (error::ErrorStack& error_stack)
+  //   catch (temoto_core::error::ErrorStack& error_stack)
   //   {
   //     TEMOTO_ERROR_STREAM(error_stack);
   //   }
@@ -684,7 +684,7 @@ void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)
   //     target_pose_sub_ =
   //         nh_.subscribe(hand_srv_msg_.response.topic, 1, &RobotManager::targetPoseCb, this);
   //   }
-  //   catch (error::ErrorStack& error_stack)
+  //   catch (temoto_core::error::ErrorStack& error_stack)
   //   {
   //     throw FORWARD_ERROR(error_stack);
   //   }

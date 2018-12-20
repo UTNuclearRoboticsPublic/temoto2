@@ -1,4 +1,4 @@
-#include "common/base_subsystem.h"
+#include "temoto_core/common/base_subsystem.h"
 #include "sensor_manager/sensor_manager_services.h"
 #include "sensor_manager/sensor_manager_servers.h"
 #include "sensor_manager/sensor_info_registry.h"
@@ -11,7 +11,7 @@ using namespace sensor_manager;
 /**
  * @brief The Sensor Manager maintains 3 components of this subsystem
  */
-class SensorManager : public BaseSubsystem
+class SensorManager : public temoto_core::BaseSubsystem
 {
 public:
 
@@ -19,7 +19,7 @@ public:
    * @brief Constructor
    */
   SensorManager()
-  : BaseSubsystem("sensor_manager", error::Subsystem::SENSOR_MANAGER, __func__)
+  : temoto_core::BaseSubsystem("sensor_manager", error::Subsystem::SENSOR_MANAGER, __func__)
   , ss_(this, &sir_)
   , sms_(this, &sir_)
   {

@@ -27,6 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2
   tf2_ros
   tf2_geometry_msgs
+  temoto_core
 )
 
 find_package(TinyXML REQUIRED)
@@ -36,20 +37,11 @@ find_package(MeTA REQUIRED)
 
 # THE FOLLOWING FILES CANNOT BE PLACED UNDER SUBDIRS!
 add_message_files(FILES 
-  Error.msg
-  ErrorStack.msg
   StopTaskMsg.msg
-
-  # Resource Management
-  RMPRequest.msg
-  RMPResponse.msg
 
   # Context Manager 
   SpeechSpecifier.msg
   ObjectContainer.msg
-
-  # Configuration Synchronizer
-  ConfigSync.msg
 
   # Task manager
   TTP/task_manager/IndexTasks.msg
@@ -57,10 +49,6 @@ add_message_files(FILES
 
 add_service_files(
   FILES
-  # Resouce Management
-  RMP/UnloadResource.srv
-  RMP/ResourceStatus.srv
-
   # Process Manager
   process_manager/LoadProcess.srv
 
@@ -101,13 +89,14 @@ generate_messages(
   visualization_msgs
   diagnostic_msgs
   temoto_2
+  temoto_core
 )
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES yaml-cpp ft_parser
   # LIBRARIES temoto_2
-  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs message_runtime human_msgs diagnostic_msgs shape_msgs visualization_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs message_runtime human_msgs diagnostic_msgs shape_msgs visualization_msgs temoto_core
   DEPENDS 
     TinyXML
     EIGEN3
@@ -126,111 +115,113 @@ include_directories(
 # # # # # # # # # # # #
 # CONTEXT MANAGER
 # # # # # # # # # # # # 
-add_executable(context_manager src/context_manager/context_manager_node.cpp
-				                       src/context_manager/context_manager.cpp
-                               src/context_manager/context_manager_containers.cpp
-                               src/temoto_error/temoto_error.cpp
-                               src/common/reliability.cpp)
+add_executable(context_manager 
+  src/context_manager/context_manager_node.cpp
+  src/context_manager/context_manager.cpp
+  src/context_manager/context_manager_containers.cpp
+)
 
 add_dependencies(context_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(context_manager ${catkin_LIBRARIES} yaml-cpp ttp)
+target_link_libraries(context_manager ${catkin_LIBRARIES} yaml-cpp ttp temoto_core_lib)
 
 # # # # # # # # # # # #
 # SENSOR MANAGER
 # # # # # # # # # # # #
-add_executable(sensor_manager src/sensor_manager/sensor_manager_node.cpp
-	                            src/sensor_manager/sensor_manager_servers.cpp
-                              src/sensor_manager/sensor_snooper.cpp
-                              src/sensor_manager/sensor_info_registry.cpp
-	                            src/sensor_manager/sensor_info.cpp
-                              src/common/reliability.cpp
-                              src/temoto_error/temoto_error.cpp)
+add_executable(sensor_manager 
+  src/sensor_manager/sensor_manager_node.cpp
+  src/sensor_manager/sensor_manager_servers.cpp
+  src/sensor_manager/sensor_snooper.cpp
+  src/sensor_manager/sensor_info_registry.cpp
+  src/sensor_manager/sensor_info.cpp
+)
 add_dependencies(sensor_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(sensor_manager ${catkin_LIBRARIES} yaml-cpp ttp)
+target_link_libraries(sensor_manager ${catkin_LIBRARIES} yaml-cpp ttp temoto_core_lib)
 
 # # # # # # # # # # # #
 # ALGORITHM MANAGER
 # # # # # # # # # # # #
-add_executable(algorithm_manager src/algorithm_manager/algorithm_manager_node.cpp
-                                 #src/algorithm_manager/algorithm_manager.cpp
-                                 src/algorithm_manager/algorithm_manager_servers.cpp
-                                 src/algorithm_manager/algorithm_snooper.cpp
-                                 src/algorithm_manager/algorithm_info_registry.cpp 
-	                               src/algorithm_manager/algorithm_info.cpp
-                                 src/common/reliability.cpp
-                                 src/temoto_error/temoto_error.cpp)
+add_executable(algorithm_manager 
+  src/algorithm_manager/algorithm_manager_node.cpp
+  #src/algorithm_manager/algorithm_manager.cpp
+  src/algorithm_manager/algorithm_manager_servers.cpp
+  src/algorithm_manager/algorithm_snooper.cpp
+  src/algorithm_manager/algorithm_info_registry.cpp 
+  src/algorithm_manager/algorithm_info.cpp
+)
 add_dependencies(algorithm_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(algorithm_manager ${catkin_LIBRARIES} yaml-cpp ttp)
+target_link_libraries(algorithm_manager ${catkin_LIBRARIES} yaml-cpp ttp temoto_core_lib)
 
 # # # # # # # # # # # #
 # OUTPUT MANAGER
 # # # # # # # # # # # #
-add_executable(output_manager src/output_manager/output_manager.cpp
-															src/output_manager/rviz_manager/rviz_manager.cpp
-															src/output_manager/rviz_manager/plugin_info.cpp
-                              src/temoto_error/temoto_error.cpp )
+add_executable(output_manager 
+  src/output_manager/output_manager.cpp
+  src/output_manager/rviz_manager/rviz_manager.cpp
+  src/output_manager/rviz_manager/plugin_info.cpp
+)
 add_dependencies(output_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(output_manager ${catkin_LIBRARIES})
+target_link_libraries(output_manager ${catkin_LIBRARIES} temoto_core_lib)
 
 # # # # # # # # # # # #
 # TTP
 # # # # # # # # # # # #
-add_library(ttp STATIC src/TTP/language_processors/meta/meta_lp.cpp
-                src/TTP/language_processors/nlp_tools/number_operations.cpp
-                src/TTP/language_processors/meta/branch_finder.cpp
-                src/TTP/task_manager.cpp
-                src/TTP/task_descriptor_processor.cpp
-                src/TTP/io_descriptor.cpp
-                src/TTP/task_descriptor.cpp
-                src/TTP/task_tree_node.cpp
-                src/TTP/task_tree.cpp
-                src/TTP/task_container.cpp
-                src/temoto_error/temoto_error.cpp)
+add_library(ttp STATIC 
+  src/TTP/language_processors/meta/meta_lp.cpp
+  src/TTP/language_processors/nlp_tools/number_operations.cpp
+  src/TTP/language_processors/meta/branch_finder.cpp
+  src/TTP/task_manager.cpp
+  src/TTP/task_descriptor_processor.cpp
+  src/TTP/io_descriptor.cpp
+  src/TTP/task_descriptor.cpp
+  src/TTP/task_tree_node.cpp
+  src/TTP/task_tree.cpp
+  src/TTP/task_container.cpp
+)
 add_dependencies(ttp ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(ttp ${catkin_LIBRARIES}
                           ${TinyXML_LIBRARIES}
                           ${TBB_LIBRARIES}
-                          meta-classify meta-sequence-analyzers meta-parser-analyzers )
+                          meta-classify meta-sequence-analyzers meta-parser-analyzers temoto_core_lib)
 
 # # # # # # # # # # # #
 # TEMOTO AGENT
 # # # # # # # # # # # #
 add_executable(temoto_agent src/core/temoto_agent.cpp)
 add_dependencies(temoto_agent ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(temoto_agent ttp)
+target_link_libraries(temoto_agent ttp temoto_core_lib)
 
 # # # # # # # # # # # #
 # PROCESS MANAGER
 # # # # # # # # # # # #
-add_executable(process_manager src/process_manager/process_manager.cpp
-	                             src/process_manager/process_manager_node.cpp
-                               src/temoto_error/temoto_error.cpp)
+add_executable(process_manager 
+  src/process_manager/process_manager.cpp
+  src/process_manager/process_manager_node.cpp
+)
 add_dependencies(process_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(process_manager ${catkin_LIBRARIES} )
+target_link_libraries(process_manager ${catkin_LIBRARIES} temoto_core_lib)
 
 
 # # # # # # # # # # # #
 # ROBOT MANAGER
 # # # # # # # # # # # #
-add_executable(robot_manager src/robot_manager/robot_manager.cpp
-	                           src/robot_manager/robot_manager_node.cpp
-                             src/robot_manager/robot.cpp
-                             src/robot_manager/robot_config.cpp
-                             src/robot_manager/robot_features.cpp
-                             src/common/reliability.cpp
-                             src/temoto_error/temoto_error.cpp)
+add_executable(robot_manager 
+  src/robot_manager/robot_manager.cpp
+  src/robot_manager/robot_manager_node.cpp
+  src/robot_manager/robot.cpp
+  src/robot_manager/robot_config.cpp
+  src/robot_manager/robot_features.cpp
+)
 
 add_dependencies(robot_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(robot_manager ${catkin_LIBRARIES} yaml-cpp)
+target_link_libraries(robot_manager ${catkin_LIBRARIES} yaml-cpp temoto_core_lib)
 
 
 # # # # # # # # # # # #
 # TEST TOOLS
 # # # # # # # # # # # #
-add_executable(language_input src/tools/language_input.cpp
-                              src/temoto_error/temoto_error.cpp)
+add_executable(language_input src/tools/language_input.cpp)
 add_dependencies(language_input ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(language_input ${catkin_LIBRARIES} )
+target_link_libraries(language_input ${catkin_LIBRARIES} temoto_core_lib)
 
 add_executable(ai_package_generator src/tools/ai_package_generator.cpp 
                                     src/common/semantic_frame_legacy.cpp)

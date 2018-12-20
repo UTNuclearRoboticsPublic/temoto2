@@ -1,4 +1,4 @@
-#include "common/base_subsystem.h"
+#include "temoto_core/common/base_subsystem.h"
 #include "algorithm_manager/algorithm_manager_services.h"
 #include "algorithm_manager/algorithm_manager_servers.h"
 #include "algorithm_manager/algorithm_info_registry.h"
@@ -11,7 +11,7 @@ using namespace algorithm_manager;
 /**
  * @brief The Algorithm Manager maintains 3 components of this subsystem
  */
-class AlgorithmManager : public BaseSubsystem
+class AlgorithmManager : public temoto_core::BaseSubsystem
 {
 public:
 
@@ -19,7 +19,7 @@ public:
    * @brief Constructor
    */
   AlgorithmManager()
-  : BaseSubsystem("algorithm_manager", error::Subsystem::SENSOR_MANAGER, __func__)
+  : temoto_core::BaseSubsystem("algorithm_manager", error::Subsystem::SENSOR_MANAGER, __func__)
   , as_(this, &air_)
   , ams_(this, &air_)
   {

@@ -2,8 +2,8 @@
 #define ROBOT_MANAGER_INTERFACE_H
 
 #include "TTP/base_task/base_task.h"
-#include "common/temoto_id.h"
-#include "common/console_colors.h"
+#include "temoto_core/common/temoto_id.h"
+#include "temoto_core/common/console_colors.h"
 
 #include "robot_manager/robot_manager_services.h"
 #include "rmp/resource_manager.h"
@@ -15,7 +15,7 @@ namespace robot_manager
 {
 
 template <class OwnerTask>
-class RobotManagerInterface : public BaseSubsystem
+class RobotManagerInterface : public temoto_core::BaseSubsystem
 {
 public:
   RobotManagerInterface()
@@ -66,7 +66,7 @@ public:
       resource_manager_->template call<temoto_2::RobotLoad>(
           robot_manager::srv_name::MANAGER, robot_manager::srv_name::SERVER_LOAD, load_srvc);
     }
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }

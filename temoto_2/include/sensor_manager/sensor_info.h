@@ -1,9 +1,9 @@
 #ifndef SENSOR_INFO_H
 #define SENSOR_INFO_H
 
-#include "common/temoto_log_macros.h"
-#include "common/topic_container.h"   // StringPair
-#include "common/reliability.h"
+#include "temoto_core/common/temoto_log_macros.h"
+#include "temoto_core/common/topic_container.h"   // StringPair
+#include "temoto_core/common/reliability.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -113,7 +113,7 @@ private:
   std::string package_name_;
   std::string executable_;
   std::string description_;
-  Reliability reliability_;
+  temoto_core::Reliability reliability_;
   std::vector<StringPair> input_topics_;
   std::vector<StringPair> output_topics_;
   bool advertised_ = false;

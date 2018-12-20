@@ -3,14 +3,14 @@
 namespace output_manager
 {
 RvizManager::RvizManager()
-  : BaseSubsystem("output_manager", error::Subsystem::OUTPUT_MANAGER, __func__)
+  : temoto_core::BaseSubsystem("output_manager", error::Subsystem::OUTPUT_MANAGER, __func__)
   , resource_manager_(srv_name::RVIZ_MANAGER, this)
 {
   class_name_ = __func__;
   subsystem_name_ = "rviz_manager";
   subsystem_code_ = error::Subsystem::SENSOR_MANAGER;
   log_group_ = "rviz_manager";
-  error_handler_ = error::ErrorHandler(subsystem_code_, log_group_);
+  error_handler_ = temoto_core::error::ErrorHandler(subsystem_code_, log_group_);
 
   //\TODO:Remove, deprecated
   log_class_ = class_name_;
@@ -246,7 +246,7 @@ void RvizManager::LoadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
   {
     runRviz();
   }
-  catch (error::ErrorStack& error_stack)
+  catch (temoto_core::error::ErrorStack& error_stack)
   {
     FORWARD_ERROR(error_stack);
   }
@@ -288,7 +288,7 @@ void RvizManager::LoadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
      //   setPluginConfigRequest(set_plugin_config_srv);
      // }
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       FORWARD_ERROR(error_stack);
     }
@@ -330,7 +330,7 @@ void RvizManager::unloadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
       res.rmp.code = 0;
       res.rmp.message = "Request satisfied";
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       FORWARD_ERROR(error_stack);
     }

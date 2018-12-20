@@ -1,9 +1,9 @@
 #ifndef RVIZ_MANAGER_H
 #define RVIZ_MANAGER_H
 
-#include "common/request_container.h"
-#include "common/temoto_id.h"
-#include "common/base_subsystem.h"
+#include "temoto_core/common/request_container.h"
+#include "temoto_core/common/temoto_id.h"
+#include "temoto_core/common/base_subsystem.h"
 #include "temoto_2/LoadRvizPlugin.h"
 #include "rviz_plugin_manager/PluginLoad.h"
 #include "rviz_plugin_manager/PluginUnload.h"
@@ -21,7 +21,7 @@
 namespace output_manager
 {
 
-class RvizManager : public BaseSubsystem
+class RvizManager : public temoto_core::BaseSubsystem
 {
 public:
   RvizManager();
@@ -53,7 +53,7 @@ private:
 
   PluginInfo findPlugin(std::string plugin_type);
 
-  std::map<long, temoto_id::ID> active_requests_;
+  std::map<long, temoto_core::temoto_id::ID> active_requests_;
 
   rmp::ResourceManager<RvizManager> resource_manager_;
 

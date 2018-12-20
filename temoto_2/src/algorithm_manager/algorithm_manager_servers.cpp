@@ -9,8 +9,8 @@
 
 namespace algorithm_manager
 {
-AlgorithmManagerServers::AlgorithmManagerServers(BaseSubsystem *b, AlgorithmInfoRegistry *air)
-  : BaseSubsystem(*b, __func__)
+AlgorithmManagerServers::AlgorithmManagerServers(temoto_core::BaseSubsystem *b, AlgorithmInfoRegistry *air)
+  : temoto_core::BaseSubsystem(*b, __func__)
   , air_(air)
   , resource_manager_(srv_name::MANAGER, this)
 {
@@ -106,7 +106,7 @@ void AlgorithmManagerServers::loadAlgorithmCb( temoto_2::LoadAlgorithm::Request&
 
         return;
       }
-      catch(error::ErrorStack& error_stack)
+      catch(temoto_core::error::ErrorStack& error_stack)
       {
         if (error_stack.front().code != static_cast<int>(error::Code::SERVICE_REQ_FAIL))
         {
@@ -154,7 +154,7 @@ void AlgorithmManagerServers::loadAlgorithmCb( temoto_2::LoadAlgorithm::Request&
 
         return;
       }
-      catch(error::ErrorStack& error_stack)
+      catch(temoto_core::error::ErrorStack& error_stack)
       {
         // TODO: Create error branches
         SEND_ERROR(error_stack);

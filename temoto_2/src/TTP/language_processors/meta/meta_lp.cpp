@@ -13,9 +13,9 @@ namespace TTP
 {
 
 MetaLP::MetaLP( std::string language_models_dir
-              , BaseSubsystem& b
+              , temoto_core::BaseSubsystem& b
               , std::string wake_word)
-: BaseSubsystem(b)
+: temoto_core::BaseSubsystem(b)
 , wake_word_(wake_word)
 {
   class_name_ = __func__;

@@ -1,7 +1,7 @@
 #ifndef EXTERNAL_RESOURCE_MANAGER_INTERFACE_H
 #define EXTERNAL_RESOURCE_MANAGER_INTERFACE_H
 
-#include "common/base_subsystem.h"
+#include "temoto_core/common/base_subsystem.h"
 
 #include "TTP/base_task/base_task.h"
 #include "process_manager/process_manager_services.h"
@@ -19,7 +19,7 @@ namespace external_resource_manager
 {
 
 template <class OwnerTask>
-class ExternalResourceManagerInterface : public BaseSubsystem
+class ExternalResourceManagerInterface : public temoto_core::BaseSubsystem
 {
 public:
   /**
@@ -76,7 +76,7 @@ public:
                                                                load_resource_msg,
                                                                rmp::FailureBehavior::NONE);
     }
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -96,7 +96,7 @@ public:
 //    {
 //      validateInterface();
 //    }
-//    catch (error::ErrorStack& error_stack)
+//    catch (temoto_core::error::ErrorStack& error_stack)
 //    {
 //      throw FORWARD_ERROR(error_stack);
 //    }
@@ -126,7 +126,7 @@ public:
 //      resource_manager_->unloadClientResource(found_sensor_it->response.rmp.resource_id);
 //      allocated_sensors_.erase(found_sensor_it);
 //    }
-//    catch (error::ErrorStack& error_stack)
+//    catch (temoto_core::error::ErrorStack& error_stack)
 //    {
 //      throw FORWARD_ERROR(error_stack);
 //    }
@@ -142,7 +142,7 @@ public:
     {
       validateInterface();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -184,7 +184,7 @@ public:
 //                                                                 sensor_manager::srv_name::SERVER,
 //                                                                 *sens_it);
 //        }
-//        catch(error::ErrorStack& error_stack)
+//        catch(temoto_core::error::ErrorStack& error_stack)
 //        {
 //          SEND_ERROR(error_stack);
 //        }

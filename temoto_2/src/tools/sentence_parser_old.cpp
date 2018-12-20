@@ -27,7 +27,7 @@
 #include "TTP/task_tree.h"
 #include "TTP/task_descriptor_processor.h"
 
-#include "temoto_error/temoto_error.h"
+#include "temoto_core/temoto_error/temoto_error.h"
 
 using namespace meta;
 
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
 
         std::cout << "---- Task Descriptor Processor test end ----" << std::endl;
     }
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       FORWARD_ERROR(error_stack);
     }

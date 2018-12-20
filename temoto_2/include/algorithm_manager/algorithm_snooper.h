@@ -1,7 +1,7 @@
 #ifndef TEMOTO_ALGORITHM_SNOOPER_H
 #define TEMOTO_ALGORITHM_SNOOPER_H
 
-#include "common/base_subsystem.h"
+#include "temoto_core/common/base_subsystem.h"
 #include "algorithm_manager/algorithm_info_registry.h"
 #include "rmp/config_synchronizer.h"
 #include "temoto_2/ConfigSync.h"
@@ -12,13 +12,13 @@
 namespace algorithm_manager
 {
 
-class AlgorithmSnooper : public BaseSubsystem
+class AlgorithmSnooper : public temoto_core::BaseSubsystem
 {
   typedef std_msgs::String PayloadType;
 
 public:
 
-  AlgorithmSnooper(BaseSubsystem* b, AlgorithmInfoRegistry* aid);
+  AlgorithmSnooper(temoto_core::BaseSubsystem* b, AlgorithmInfoRegistry* aid);
 
   void advertiseAlgorithm(AlgorithmInfo& ai) const;
 

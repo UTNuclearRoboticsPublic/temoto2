@@ -1,12 +1,12 @@
 #include "robot_manager/robot.h"
-#include "temoto_error/temoto_error.h"
+#include "temoto_core/temoto_error/temoto_error.h"
 #include "ros/package.h"
 
 
 namespace robot_manager
 {
-Robot::Robot(RobotConfigPtr config, rmp::ResourceManager<RobotManager>& resource_manager, BaseSubsystem& b)
-  : config_(config), resource_manager_(resource_manager), is_plan_valid_(false), BaseSubsystem(b)
+Robot::Robot(RobotConfigPtr config, rmp::ResourceManager<RobotManager>& resource_manager, temoto_core::BaseSubsystem& b)
+  : config_(config), resource_manager_(resource_manager), is_plan_valid_(false), temoto_core::BaseSubsystem(b)
 {
   class_name_ = "Robot";
 
@@ -102,7 +102,7 @@ void Robot::load()
   }
 }
 
-void Robot::waitForParam(const std::string& param, temoto_id::ID interrupt_res_id)
+void Robot::waitForParam(const std::string& param, temoto_core::temoto_id::ID interrupt_res_id)
 {
 //\TODO: add 30 sec timeout protection.
 
@@ -118,7 +118,7 @@ void Robot::waitForParam(const std::string& param, temoto_id::ID interrupt_res_i
   TEMOTO_DEBUG("Parameter '%s' was found.", param.c_str());
 }
 
-void Robot::waitForTopic(const std::string& topic, temoto_id::ID interrupt_res_id)
+void Robot::waitForTopic(const std::string& topic, temoto_core::temoto_id::ID interrupt_res_id)
 {
   //\TODO: add 30 sec timeout protection.
   while (!isTopicAvailable(topic))
@@ -151,7 +151,7 @@ void Robot::loadUrdf()
   {
     FeatureURDF& ftr = config_->getFeatureURDF();
     std::string urdf_path = '/' + ros::package::getPath(ftr.getPackageName()) + '/' + ftr.getExecutable();
-    temoto_id::ID res_id = rosExecute("temoto_2", "urdf_loader.py", urdf_path);
+    temoto_core::temoto_id::ID res_id = rosExecute("temoto_2", "urdf_loader.py", urdf_path);
     TEMOTO_DEBUG("URDF resource id: %d", res_id);
     ftr.setResourceId(res_id);
 
@@ -160,7 +160,7 @@ void Robot::loadUrdf()
     ftr.setLoaded(true);
     TEMOTO_DEBUG("Feature 'urdf' loaded.");
   }
-  catch(error::ErrorStack& error_stack)
+  catch(temoto_core::error::ErrorStack& error_stack)
   {
     throw FORWARD_ERROR(error_stack);
   }
@@ -177,7 +177,7 @@ void Robot::loadManipulation()
   try
   {
     FeatureManipulation& ftr = config_->getFeatureManipulation();
-    temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable(), ftr.getArgs());
+    temoto_core::temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable(), ftr.getArgs());
     TEMOTO_DEBUG("Manipulation resource id: %d", res_id);
     ftr.setResourceId(res_id);
 
@@ -197,7 +197,7 @@ void Robot::loadManipulation()
     ftr.setLoaded(true);
     TEMOTO_DEBUG("Feature 'manipulation' loaded.");
   }
-  catch(error::ErrorStack& error_stack)
+  catch(temoto_core::error::ErrorStack& error_stack)
   {
     throw FORWARD_ERROR(error_stack);
   }
@@ -214,7 +214,7 @@ void Robot::loadManipulationDriver()
   try
   {
     FeatureManipulation& ftr = config_->getFeatureManipulation();
-    temoto_id::ID res_id = rosExecute(ftr.getDriverPackageName(), ftr.getDriverExecutable(), ftr.getDriverArgs());
+    temoto_core::temoto_id::ID res_id = rosExecute(ftr.getDriverPackageName(), ftr.getDriverExecutable(), ftr.getDriverArgs());
     TEMOTO_DEBUG("Manipulation driver resource id: %d", res_id);
     ftr.setDriverResourceId(res_id);
 
@@ -224,7 +224,7 @@ void Robot::loadManipulationDriver()
     ftr.setDriverLoaded(true);
     TEMOTO_DEBUG("Feature 'manipulation driver' loaded.");
   }
-  catch(error::ErrorStack& error_stack)
+  catch(temoto_core::error::ErrorStack& error_stack)
   {
     throw FORWARD_ERROR(error_stack);
   }
@@ -241,7 +241,7 @@ void Robot::loadNavigation()
   try
   {
     FeatureNavigation& ftr = config_->getFeatureNavigation();
-    temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable(), ftr.getArgs());
+    temoto_core::temoto_id::ID res_id = rosExecute(ftr.getPackageName(), ftr.getExecutable(), ftr.getArgs());
     TEMOTO_DEBUG("Navigation resource id: %d", res_id);
     ftr.setResourceId(res_id);
 
@@ -252,7 +252,7 @@ void Robot::loadNavigation()
     ftr.setLoaded(true);
     TEMOTO_DEBUG("Feature 'navigation' loaded.");
   }
-  catch (error::ErrorStack& error_stack)
+  catch (temoto_core::error::ErrorStack& error_stack)
   {
     throw FORWARD_ERROR(error_stack);
   }
@@ -269,7 +269,7 @@ void Robot::loadNavigationDriver()
   try
   {
     FeatureNavigation& ftr = config_->getFeatureNavigation();
-    temoto_id::ID res_id = rosExecute(ftr.getDriverPackageName(), ftr.getDriverExecutable(), ftr.getDriverArgs());
+    temoto_core::temoto_id::ID res_id = rosExecute(ftr.getDriverPackageName(), ftr.getDriverExecutable(), ftr.getDriverArgs());
     TEMOTO_DEBUG("Manipulation driver resource id: %d", res_id);
     ftr.setDriverResourceId(res_id);
 
@@ -279,13 +279,13 @@ void Robot::loadNavigationDriver()
     ftr.setDriverLoaded(true);
     TEMOTO_DEBUG("Feature 'navigation driver' loaded.");
   }
-  catch(error::ErrorStack& error_stack)
+  catch(temoto_core::error::ErrorStack& error_stack)
   {
     throw FORWARD_ERROR(error_stack);
   }
 }
 
-temoto_id::ID Robot::rosExecute(const std::string& package_name, const std::string& executable,
+temoto_core::temoto_id::ID Robot::rosExecute(const std::string& package_name, const std::string& executable,
                        const std::string& args)
 {
   temoto_2::LoadProcess load_proc_srvc;
@@ -300,7 +300,7 @@ temoto_id::ID Robot::rosExecute(const std::string& package_name, const std::stri
     resource_manager_.call<temoto_2::LoadProcess>(
         process_manager::srv_name::MANAGER, process_manager::srv_name::SERVER, load_proc_srvc);
   }
-  catch(error::ErrorStack& error_stack)
+  catch(temoto_core::error::ErrorStack& error_stack)
   {
     throw FORWARD_ERROR(error_stack);
   }
@@ -431,7 +431,7 @@ std::string Robot::getVizInfo()
   return YAML::Dump(info);
 }
 
-bool Robot::hasResource(temoto_id::ID resource_id)
+bool Robot::hasResource(temoto_core::temoto_id::ID resource_id)
 {
   return (config_->getFeatureURDF().getResourceId() == resource_id ||
           config_->getFeatureManipulation().getResourceId() == resource_id ||

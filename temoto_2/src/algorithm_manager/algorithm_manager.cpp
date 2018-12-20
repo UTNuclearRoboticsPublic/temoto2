@@ -23,7 +23,7 @@ namespace algorithm_manager
  * Constructor
  */
 AlgorithmManager::AlgorithmManager()
-  : BaseSubsystem("algorithm_manager", error::Subsystem::ALGORITHM_MANAGER, __func__)
+  : temoto_core::BaseSubsystem("algorithm_manager", error::Subsystem::ALGORITHM_MANAGER, __func__)
   , resource_manager_(srv_name::MANAGER, this)
   , config_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &AlgorithmManager::syncCb, this)
 {
@@ -154,7 +154,7 @@ void AlgorithmManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType
     }
   }
   // Catch temoto errors
-  catch(error::ErrorStack error_stack)
+  catch(temoto_core::error::ErrorStack error_stack)
   {
     throw FORWARD_ERROR(error_stack);
   }
@@ -253,7 +253,7 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
       // Let other managers know about the updated reliability
       advertiseAlgorithm(algorithm_ptr);
     }
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       if (error_stack.front().code != static_cast<int>(error::Code::SERVICE_REQ_FAIL))
       {
@@ -312,7 +312,7 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
           algorithm_manager::srv_name::MANAGER, algorithm_manager::srv_name::SERVER,
           load_algorithm_msg, rmp::FailureBehavior::NONE, algorithm_ptr->getTemotoNamespace());
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }

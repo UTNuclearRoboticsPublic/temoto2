@@ -1,5 +1,5 @@
-#include "common/temoto_id.h"
-#include "common/base_subsystem.h"
+#include "temoto_core/common/temoto_id.h"
+#include "temoto_core/common/base_subsystem.h"
 #include "TTP/base_task/base_task.h"
 #include "output_manager/output_manager_services.h"
 #include "robot_manager/robot_manager_services.h"
@@ -23,7 +23,7 @@ namespace generic_topics
  * @brief The OutputManagerInterface class
  */
 template <class OwnerTask>
-class OutputManagerInterface : public BaseSubsystem
+class OutputManagerInterface : public temoto_core::BaseSubsystem
 {
 public:
   /**
@@ -71,7 +71,7 @@ public:
       resource_manager_->template call<temoto_2::LoadRvizPlugin>(
           srv_name::RVIZ_MANAGER, srv_name::RVIZ_SERVER, load_srv);
     }
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -150,7 +150,7 @@ public:
         showManipulation(rviz_node);
       }
     }
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -323,7 +323,7 @@ private:
 
   std::string log_class_, log_subsys_, log_group_;
 
-  TemotoID::ID id_ = TemotoID::UNASSIGNED_ID;
+  temoto_core::temoto_id::ID id_ = temoto_core::temoto_id::UNASSIGNED_ID;
 
   std::unique_ptr<rmp::ResourceManager<OutputManagerInterface>> resource_manager_;
 

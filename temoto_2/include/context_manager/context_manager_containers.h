@@ -2,7 +2,7 @@
 #define CONTEXT_MANAGER_CONTAINERS_H
 
 #include "temoto_2/ObjectContainer.h"
-#include "common/topic_container.h"
+#include "temoto_core/common/topic_container.h"
 
 namespace context_manager
 {

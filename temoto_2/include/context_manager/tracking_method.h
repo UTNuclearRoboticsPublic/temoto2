@@ -7,8 +7,8 @@
 #include <set>
 #include <ctype.h>
 #include <memory>                     // shared_ptr
-#include "common/temoto_log_macros.h"
-#include "common/reliability.h"
+#include "temoto_core/common/temoto_log_macros.h"
+#include "temoto_core/common/reliability.h"
 #include <yaml-cpp/yaml.h>
 
 #include <iostream>                   // TODO: remove
@@ -123,7 +123,7 @@ class TrackerInfo
 {
 public:
 
-  Reliability reliability_;
+  temoto_core::Reliability reliability_;
 
   /*
    * Getters

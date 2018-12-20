@@ -6,12 +6,12 @@
 
 #include "meta/parser/sr_parser.h"
 #include "meta/sequence/perceptron.h"
-#include "common/base_subsystem.h"
+#include "temoto_core/common/base_subsystem.h"
 
 namespace TTP
 {
 
-class MetaLP : BaseSubsystem
+class MetaLP : temoto_core::BaseSubsystem
 {
 public:
 
@@ -22,7 +22,7 @@ public:
    * @param wake_word
    */
   MetaLP( std::string language_models_dir
-        , BaseSubsystem& b
+        , temoto_core::BaseSubsystem& b
         , std::string wake_word = "");
 
   /**

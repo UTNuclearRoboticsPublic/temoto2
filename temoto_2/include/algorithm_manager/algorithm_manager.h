@@ -4,7 +4,7 @@
 #include "algorithm_manager/algorithm_info.h"
 #include "algorithm_manager/algorithm_manager_services.h"
 #include "process_manager/process_manager_services.h"
-#include "common/base_subsystem.h"
+#include "temoto_core/common/base_subsystem.h"
 #include "rmp/resource_manager.h"
 #include "rmp/config_synchronizer.h"
 
@@ -15,7 +15,7 @@ namespace algorithm_manager
 
 typedef std_msgs::String PayloadType;
 
-class AlgorithmManager : public BaseSubsystem
+class AlgorithmManager : public temoto_core::BaseSubsystem
 {
 public:
 
@@ -49,7 +49,7 @@ private:
   /**
    * @brief List of allocated algorithms
    */
-  std::map<temoto_id::ID, AlgorithmInfoPtr> allocated_algorithms_;
+  std::map<temoto_core::temoto_id::ID, AlgorithmInfoPtr> allocated_algorithms_;
 
   /**
    * @brief loadAlgorithmCb

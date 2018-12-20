@@ -3,17 +3,17 @@
 
 #include "TTP/task_descriptor.h"
 #include <tinyxml.h>            // http://www.dinomage.com/2012/01/tutorial-using-tinyxml-part-1/
-#include "common/base_subsystem.h"
+#include "temoto_core/common/base_subsystem.h"
 
 namespace TTP
 {
 
-class TaskDescriptorProcessor : BaseSubsystem
+class TaskDescriptorProcessor : temoto_core::BaseSubsystem
 {
 
 public:
 
-    TaskDescriptorProcessor( std::string path, BaseSubsystem& b);
+    TaskDescriptorProcessor( std::string path, temoto_core::BaseSubsystem& b);
 
     Action getTaskAction();
 

@@ -11,9 +11,9 @@ namespace algorithm_manager
 // TODO: the constructor of the action_engine_ can throw in the initializer list
 //       and I have no clue what kind of behaviour should be expected - prolly bad
 
-AlgorithmSnooper::AlgorithmSnooper( BaseSubsystem*b
+AlgorithmSnooper::AlgorithmSnooper( temoto_core::BaseSubsystem*b
                             , AlgorithmInfoRegistry* aid)
-: BaseSubsystem(*b, __func__)
+: temoto_core::BaseSubsystem(*b, __func__)
 , config_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &AlgorithmSnooper::syncCb, this)
 , action_engine_(this, false, ros::package::getPath(ROS_PACKAGE_NAME) + "/../temoto_actions/resource_snooper_actions")
 , aid_(aid)

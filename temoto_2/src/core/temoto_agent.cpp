@@ -1,6 +1,6 @@
 #include "ros/ros.h"
 #include "common/tools.h"
-#include "common/temoto_log_macros.h"
+#include "temoto_core/common/temoto_log_macros.h"
 #include "TTP/task_manager.h"
 #include "std_msgs/String.h"
 

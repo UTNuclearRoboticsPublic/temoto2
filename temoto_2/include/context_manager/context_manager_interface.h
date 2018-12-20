@@ -3,9 +3,9 @@
 
 
 #include "TTP/base_task/base_task.h"
-#include "common/temoto_id.h"
-#include "common/console_colors.h"
-#include "common/topic_container.h"
+#include "temoto_core/common/temoto_id.h"
+#include "temoto_core/common/console_colors.h"
+#include "temoto_core/common/topic_container.h"
 
 #include "std_msgs/Float32.h"
 #include "std_msgs/String.h"
@@ -19,7 +19,7 @@ namespace context_manager
 {
 
 template <class OwnerTask>
-class ContextManagerInterface : public BaseSubsystem
+class ContextManagerInterface : public temoto_core::BaseSubsystem
 {
 public:
 
@@ -44,7 +44,7 @@ public:
     {
       validateInterface();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -62,7 +62,7 @@ public:
     {
       validateInterface();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -78,7 +78,7 @@ public:
                                                            , context_manager::srv_name::GET_NUMBER_SERVER
                                                            , srv_msg);
     }
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -92,7 +92,7 @@ public:
     {
       validateInterface();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -114,7 +114,7 @@ public:
                                                             , srv_msg);
       allocated_speeches_.push_back(srv_msg);
     }
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -129,14 +129,14 @@ public:
    * @param tracker_category
    * @return
    */
-  TopicContainer startTracker(std::string tracker_category)
+  temoto_core::TopicContainer startTracker(std::string tracker_category)
   {
     // Validate the interface
     try
     {
       validateInterface();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -152,12 +152,12 @@ public:
                                                               load_tracker_msg);
       allocated_trackers_.push_back(load_tracker_msg);
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
 
-    TopicContainer topics_to_return;
+    temoto_core::TopicContainer topics_to_return;
     topics_to_return.setOutputTopicsByKeyValue(load_tracker_msg.response.output_topics);
 
     return topics_to_return;
@@ -170,7 +170,7 @@ public:
     {
       validateInterface();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -188,7 +188,7 @@ public:
       allocated_track_objects_.push_back(track_object_msg);
       return track_object_msg.response.object_topic;
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -256,7 +256,7 @@ public:
     {
       validateInterface();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -267,7 +267,7 @@ public:
       resource_manager_->unloadClients();
       allocated_speeches_.clear();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -280,7 +280,7 @@ public:
     {
       validateInterface();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -319,7 +319,7 @@ public:
               context_manager::srv_name::MANAGER, context_manager::srv_name::SPEECH_SERVER,
               *speech_it);
         }
-        catch(error::ErrorStack& error_stack)
+        catch(temoto_core::error::ErrorStack& error_stack)
         {
           throw FORWARD_ERROR(error_stack);
         }
@@ -354,7 +354,7 @@ public:
                                                                   context_manager::srv_name::TRACKER_SERVER,
                                                                   *tracker_it);
         }
-        catch(error::ErrorStack& error_stack)
+        catch(temoto_core::error::ErrorStack& error_stack)
         {
           throw FORWARD_ERROR(error_stack);
         }
@@ -375,7 +375,7 @@ public:
                                                                   context_manager::srv_name::TRACK_OBJECT_SERVER,
                                                                   *track_object_it);
         }
-        catch(error::ErrorStack& error_stack)
+        catch(temoto_core::error::ErrorStack& error_stack)
         {
           throw FORWARD_ERROR(error_stack);
         }

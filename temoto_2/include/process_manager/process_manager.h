@@ -7,13 +7,13 @@
 #include <mutex>
 #include <sys/stat.h>
 
-#include "common/base_subsystem.h"
+#include "temoto_core/common/base_subsystem.h"
 
 
 
 namespace process_manager
 {
-	class ProcessManager : public BaseSubsystem
+	class ProcessManager : public temoto_core::BaseSubsystem
 	{
 		public:
 

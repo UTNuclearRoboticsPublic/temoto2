@@ -1,8 +1,8 @@
 #ifndef SENSOR_MANAGER_INTERFACE_H
 #define SENSOR_MANAGER_INTERFACE_H
 
-#include "common/base_subsystem.h"
-#include "common/topic_container.h"
+#include "temoto_core/common/base_subsystem.h"
+#include "temoto_core/common/topic_container.h"
 
 #include "TTP/base_task/base_task.h"
 #include "sensor_manager/sensor_manager_services.h"
@@ -12,7 +12,7 @@
 /**
  * @brief The AlgorithmTopicsReq class
  */
-class SensorTopicsReq : public TopicContainer
+class SensorTopicsReq : public temoto_core::TopicContainer
 {
   /* DELIBERATELY EMPTY */
 };
@@ -20,7 +20,7 @@ class SensorTopicsReq : public TopicContainer
 /**
  * @brief The AlgorithmTopicsRes class
  */
-class SensorTopicsRes : public TopicContainer
+class SensorTopicsRes : public temoto_core::TopicContainer
 {
   /* DELIBERATELY EMPTY */
 };
@@ -35,7 +35,7 @@ namespace sensor_manager
 {
 
 template <class OwnerTask>
-class SensorManagerInterface : public BaseSubsystem
+class SensorManagerInterface : public temoto_core::BaseSubsystem
 {
 public:
   /**
@@ -74,7 +74,7 @@ public:
     {
       validateInterface();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -94,7 +94,7 @@ public:
     {
       validateInterface();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -131,7 +131,7 @@ public:
                                                              sensor_manager::srv_name::SERVER,
                                                              srv_msg);
     }
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -155,7 +155,7 @@ public:
     {
       validateInterface();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -185,7 +185,7 @@ public:
       resource_manager_->unloadClientResource(found_sensor_it->response.rmp.resource_id);
       allocated_sensors_.erase(found_sensor_it);
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -201,7 +201,7 @@ public:
     {
       validateInterface();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -244,7 +244,7 @@ public:
                                                                  sensor_manager::srv_name::SERVER,
                                                                  *sens_it);
         }
-        catch(error::ErrorStack& error_stack)
+        catch(temoto_core::error::ErrorStack& error_stack)
         {
           SEND_ERROR(error_stack);
         }

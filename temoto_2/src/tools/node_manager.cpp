@@ -8,7 +8,7 @@
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "common/request_container.h"
+#include "temoto_core/common/request_container.h"
 #include "std_msgs/String.h"
 #include "temoto_2/nodeSpawnKill.h"
 #include "temoto_2/resourceStatus.h"

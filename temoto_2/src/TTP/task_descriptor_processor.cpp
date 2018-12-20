@@ -48,9 +48,9 @@ std::vector<std::string> parseString (std::string in_str, char delimiter)
  *  CONSTRUCTOR
  * * * * * * * * */
 
-TaskDescriptorProcessor::TaskDescriptorProcessor(std::string path, BaseSubsystem& b) 
+TaskDescriptorProcessor::TaskDescriptorProcessor(std::string path, temoto_core::BaseSubsystem& b) 
     :
-      BaseSubsystem(b),
+      temoto_core::BaseSubsystem(b),
       base_path_(path)
 {
     class_name_ = __func__;
@@ -62,7 +62,7 @@ TaskDescriptorProcessor::TaskDescriptorProcessor(std::string path, BaseSubsystem
         getRootElement();
     }
 
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       FORWARD_ERROR(error_stack);
     }
@@ -242,7 +242,7 @@ TaskDescriptor TaskDescriptorProcessor::getTaskDescriptor()
         task_descriptor.task_lib_path_ = boost::filesystem::canonical(path).string();
     }
 
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       FORWARD_ERROR(error_stack);
     }
@@ -278,7 +278,7 @@ std::vector<TaskInterface> TaskDescriptorProcessor::getInterfaces()
         }
 
     }
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       FORWARD_ERROR(error_stack);
     }
@@ -322,7 +322,7 @@ TaskInterface TaskDescriptorProcessor::getInterface(TiXmlElement* interface_elem
         //NOT REQUIRED
         task_interface.output_subjects_ = getIOSubjects("out", interface_element);
     }
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       FORWARD_ERROR(error_stack);
     }
@@ -375,7 +375,7 @@ std::vector<Subject> TaskDescriptorProcessor::getIOSubjects(std::string directio
             io_subjects.push_back(subject);
         }
     }
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       FORWARD_ERROR(error_stack);
     }
@@ -436,7 +436,7 @@ Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
 
         subject.data_ = getData(data_element);
     }
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       FORWARD_ERROR(error_stack);
     }
@@ -508,7 +508,7 @@ std::vector<Data> TaskDescriptorProcessor::getData(TiXmlElement* first_data_elem
             datas.push_back(data);
         }
     }
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       FORWARD_ERROR(error_stack);
     }

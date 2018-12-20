@@ -9,7 +9,7 @@ namespace context_manager
 {
 
 ContextManager::ContextManager()
-  : BaseSubsystem("context_manager", error::Subsystem::CONTEXT_MANAGER, __func__)
+  : temoto_core::BaseSubsystem("context_manager", error::Subsystem::CONTEXT_MANAGER, __func__)
   , resource_manager_1_(srv_name::MANAGER, this)
   , resource_manager_2_(srv_name::MANAGER_2, this)
   , tracked_objects_syncer_(srv_name::MANAGER, srv_name::SYNC_TRACKED_OBJECTS_TOPIC, &ContextManager::trackedObjectsSyncCb, this)
@@ -301,7 +301,7 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
         active_detection_method_.second = tracker_category;
         break;
       }
-      catch (error::ErrorStack& error_stack)
+      catch (temoto_core::error::ErrorStack& error_stack)
       {
         detection_method_history_[tracker_category].adjustReliability(0);
 
@@ -330,7 +330,7 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
     /*
      * Get the topic where the tracker publishes its output data
      */
-    TopicContainer tracker_topics;
+    temoto_core::TopicContainer tracker_topics;
     tracker_topics.setOutputTopicsByKeyValue(load_tracker_msg.response.output_topics);
 
     // Topic where the information about the required object is going to be published.
@@ -460,7 +460,7 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
     tracked_objects_syncer_.advertise(object_name_no_space);
 
   }
-  catch (error::ErrorStack& error_stack)
+  catch (temoto_core::error::ErrorStack& error_stack)
   {
     throw FORWARD_ERROR(error_stack);
   }
@@ -505,7 +505,7 @@ void ContextManager::unloadTrackObjectCb(temoto_2::TrackObject::Request& req,
     // Let context managers in other namespaces know, that this object is not tracked anymore
     tracked_objects_syncer_.advertise(tracked_object, rmp::sync_action::REMOVE_CONFIG);
   }
-  catch (error::ErrorStack& error_stack)
+  catch (temoto_core::error::ErrorStack& error_stack)
   {
     throw FORWARD_ERROR(error_stack);
   }
@@ -611,7 +611,7 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
     // Get the trackers that follow the requested criteria
     trackers = findTrackers(req);
   }
-  catch (error::ErrorStack& error_stack)
+  catch (temoto_core::error::ErrorStack& error_stack)
   {
     throw FORWARD_ERROR(error_stack);
   }
@@ -644,7 +644,7 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
        * then each preceding filter has to provide the topics that are
        * required by the proceding filter
        */
-      TopicContainer required_topics;
+      temoto_core::TopicContainer required_topics;
 
       if (tracker->getPipeSize() > 1)
       {
@@ -759,7 +759,7 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
 
       return;
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       // TODO: Make sure that send error add the name of the function where the error was sent
       SEND_ERROR(error_stack);
@@ -869,7 +869,7 @@ void ContextManager::loadSpeechCb(temoto_2::LoadSpeech::Request& req,
     res.executable = msg.response.executable;
     res.topic = msg.response.output_topics.at(0).value; // TODO deprecated
   }
-  catch (error::ErrorStack& error_stack)
+  catch (temoto_core::error::ErrorStack& error_stack)
   {
     throw FORWARD_ERROR(error_stack);
   }

@@ -6,23 +6,23 @@
 #include <map>
 #include <ctype.h>
 #include <memory>  // shared_ptr
-#include "common/temoto_log_macros.h"
-#include "common/reliability.h"
-#include "common/base_subsystem.h"
+#include "temoto_core/common/temoto_log_macros.h"
+#include "temoto_core/common/reliability.h"
+#include "temoto_core/common/base_subsystem.h"
 #include <yaml-cpp/yaml.h>
 #include "robot_manager/robot_features.h"
 
 namespace robot_manager
 {
 
-class RobotConfig : BaseSubsystem
+class RobotConfig : temoto_core::BaseSubsystem
 {
 public:
   /**
    * @brief RobotConfig
    */
 
-  RobotConfig(YAML::Node yaml_config, BaseSubsystem& b);
+  RobotConfig(YAML::Node yaml_config, temoto_core::BaseSubsystem& b);
   
 
 
@@ -121,7 +121,7 @@ private:
   
   std::string name_;
   std::string description_;
-  Reliability reliability_;
+  temoto_core::Reliability reliability_;
 };
 
 typedef std::shared_ptr<RobotConfig> RobotConfigPtr;

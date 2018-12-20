@@ -1,7 +1,7 @@
 #ifndef ROBOT_FEATURES_H
 #define ROBOT_FEATURES_H
 
-#include "common/temoto_id.h"
+#include "temoto_core/common/temoto_id.h"
 #include <string>
 #include <vector>
 #include <yaml-cpp/yaml.h>
@@ -32,7 +32,7 @@ public:
     return args_;
   }
 
-  temoto_id::ID getResourceId() const
+  temoto_core::temoto_id::ID getResourceId() const
   {
     return resource_id_;
   }
@@ -57,7 +57,7 @@ public:
     feature_enabled_ = enabled;
   }
 
-  void setResourceId(temoto_id::ID id)
+  void setResourceId(temoto_core::temoto_id::ID id)
   {
     resource_id_ = id;
   }
@@ -67,7 +67,7 @@ protected:
   std::string package_name_;
   std::string executable_;
   std::string args_;
-  temoto_id::ID resource_id_;
+  temoto_core::temoto_id::ID resource_id_;
   bool feature_enabled_;
   bool feature_loaded_;
 };
@@ -98,12 +98,12 @@ public:
     driver_enabled_ = enabled;
   }
 
-  temoto_id::ID getDriverResourceId() const
+  temoto_core::temoto_id::ID getDriverResourceId() const
   {
     return driver_resource_id_;
   }
 
-  void setDriverResourceId(temoto_id::ID id)
+  void setDriverResourceId(temoto_core::temoto_id::ID id)
   {
     driver_resource_id_ = id;
   }
@@ -129,7 +129,7 @@ protected:
   std::string driver_package_name_;
   std::string driver_executable_;
   std::string driver_args_;
-  temoto_id::ID driver_resource_id_;
+  temoto_core::temoto_id::ID driver_resource_id_;
 };
 
 // URDF feature
