@@ -6,6 +6,7 @@ add_compile_options(-std=c++1y -Wno-reorder -Wno-unused-function)
 find_package(catkin REQUIRED COMPONENTS
   temoto_2
   temoto_core
+  temoto_er_manager
   roscpp
   genmsg
   std_msgs
@@ -23,12 +24,13 @@ generate_messages(
   std_msgs
   diagnostic_msgs
   temoto_2
+  temoto_core
 )
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES yaml-cpp
-  CATKIN_DEPENDS roscpp std_msgs diagnostic_msgs
+  CATKIN_DEPENDS roscpp std_msgs diagnostic_msgs temoto_core temoto_er_manager
   DEPENDS 
     TinyXML
 )

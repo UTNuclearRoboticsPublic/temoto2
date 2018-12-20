@@ -9,7 +9,7 @@ using namespace temoto_core;
 SensorInfo::SensorInfo(std::string sensor_name)
 {
   //set the sensor to current namespace
-  temoto_namespace_ = ::common::getTemotoNamespace();
+  temoto_namespace_ = common::getTemotoNamespace();
   sensor_name_ = sensor_name;
 }
 

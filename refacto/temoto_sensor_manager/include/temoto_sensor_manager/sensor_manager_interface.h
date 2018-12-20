@@ -74,7 +74,7 @@ public:
     {
       validateInterface();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -94,7 +94,7 @@ public:
     {
       validateInterface();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -131,7 +131,7 @@ public:
                                                              sensor_manager::srv_name::SERVER,
                                                              srv_msg);
     }
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -155,7 +155,7 @@ public:
     {
       validateInterface();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -185,7 +185,7 @@ public:
       resource_manager_->unloadClientResource(found_sensor_it->response.rmp.resource_id);
       allocated_sensors_.erase(found_sensor_it);
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -195,13 +195,13 @@ public:
    * @brief statusInfoCb
    * @param srv
    */
-  void statusInfoCb(temoto_2::ResourceStatus& srv)
+  void statusInfoCb(temoto_core::ResourceStatus& srv)
   {
     try
     {
       validateInterface();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -244,7 +244,7 @@ public:
                                                                  sensor_manager::srv_name::SERVER,
                                                                  *sens_it);
         }
-        catch(error::ErrorStack& error_stack)
+        catch(temoto_core::error::ErrorStack& error_stack)
         {
           SEND_ERROR(error_stack);
         }

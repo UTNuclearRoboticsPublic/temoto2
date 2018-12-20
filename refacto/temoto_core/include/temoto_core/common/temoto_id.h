@@ -70,6 +70,4 @@ private:
 } // temoto_id namespace
 } // temoto_core namespace
 
-// TODO: temporary mapping until code gets clean
-namespace TemotoID = temoto_id;
 #endif

@@ -1,6 +1,5 @@
 #include "ros/package.h"
 #include "temoto_sensor_manager/sensor_manager_servers.h"
-
 #include <algorithm>
 #include <utility>
 #include <yaml-cpp/yaml.h>
@@ -31,7 +30,7 @@ SensorManagerServers::~SensorManagerServers()
 {
 }
 
-void SensorManagerServers::statusCb(temoto_2::ResourceStatus& srv)
+void SensorManagerServers::statusCb(temoto_core::ResourceStatus& srv)
 {
 
   TEMOTO_DEBUG("Received a status message.");
@@ -106,28 +105,28 @@ void SensorManagerServers::loadSensorCb( temoto_sensor_manager::LoadSensor::Requ
     for (SensorInfo& si : l_sis)
     {
       // Try to run the sensor via local Resource Manager
-      temoto_2::LoadProcess load_process_msg;
-      load_process_msg.request.action = process_manager::action::ROS_EXECUTE;
-      load_process_msg.request.package_name = si.getPackageName();
-      load_process_msg.request.executable = si.getExecutable();
+      temoto_er_manager::LoadExtResource load_er_msg;
+      load_er_msg.request.action = temoto_er_manager::action::ROS_EXECUTE;
+      load_er_msg.request.package_name = si.getPackageName();
+      load_er_msg.request.executable = si.getExecutable();
 
       // Remap the input topics if requested
-      processTopics(req.input_topics, res.input_topics, load_process_msg, si, "in");
+      processTopics(req.input_topics, res.input_topics, load_er_msg, si, "in");
 
       // Remap the output topics if requested
-      processTopics(req.output_topics, res.output_topics, load_process_msg, si, "out");
+      processTopics(req.output_topics, res.output_topics, load_er_msg, si, "out");
 
       TEMOTO_INFO( "SensorManagerServers found a suitable local sensor: '%s', '%s', '%s', reliability %.3f"
-                 , load_process_msg.request.action.c_str()
-                 , load_process_msg.request.package_name.c_str()
-                 , load_process_msg.request.executable.c_str()
+                 , load_er_msg.request.action.c_str()
+                 , load_er_msg.request.package_name.c_str()
+                 , load_er_msg.request.executable.c_str()
                  , si.getReliability());
 
       try
       {
-        resource_manager_.call<temoto_2::LoadProcess>( process_manager::srv_name::MANAGER
-                                                     , process_manager::srv_name::SERVER
-                                                     , load_process_msg
+        resource_manager_.call<temoto_er_manager::LoadExtResource>( temoto_er_manager::srv_name::MANAGER
+                                                     , temoto_er_manager::srv_name::SERVER
+                                                     , load_er_msg
                                                      , rmp::FailureBehavior::NONE);
 
         TEMOTO_DEBUG("Call to ProcessManager was sucessful.");
@@ -135,7 +134,7 @@ void SensorManagerServers::loadSensorCb( temoto_sensor_manager::LoadSensor::Requ
         // Fill out the response about which particular sensor was chosen
         res.package_name = si.getPackageName();
         res.executable = si.getExecutable();
-        res.rmp = load_process_msg.response.rmp;
+        res.rmp = load_er_msg.response.rmp;
 
         si.adjustReliability(1.0);
         sir_->updateLocalSensor(si);
@@ -211,7 +210,7 @@ void SensorManagerServers::unloadSensorCb(temoto_sensor_manager::LoadSensor::Req
 
 void SensorManagerServers::processTopics( std::vector<diagnostic_msgs::KeyValue>& req_topics
                                         , std::vector<diagnostic_msgs::KeyValue>& res_topics
-                                        , temoto_2::LoadProcess& load_process_msg
+                                        , temoto_er_manager::LoadExtResource& load_er_msg
                                         , SensorInfo& sensor_info
                                         , std::string direction)
 {
@@ -281,7 +280,7 @@ void SensorManagerServers::processTopics( std::vector<diagnostic_msgs::KeyValue>
         remap_arg = default_topic + ":=" + req_topic.value;
       }
 
-      load_process_msg.request.args += remap_arg + " ";
+      load_er_msg.request.args += remap_arg + " ";
     }
     else
     {

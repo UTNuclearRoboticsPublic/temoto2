@@ -125,7 +125,7 @@ static const std::map<Code, std::string> descriptions = {
 /**
  * @brief ErrorStack
  */
-typedef std::vector<temoto_2::Error> ErrorStack;
+typedef std::vector<temoto_core::Error> ErrorStack;
 
 #define __TEMOTO_ERROR_HANDLER_VERBOSE__ TRUE
 
@@ -201,7 +201,7 @@ private:
 /**
  * @brief Define + operator to append some other ErrorStack to this stack.
  */
-error::ErrorStack& operator+=(error::ErrorStack& er_lhs, const error::ErrorStack& es_rhs);
+temoto_core::error::ErrorStack& operator+=(temoto_core::error::ErrorStack& er_lhs, const temoto_core::error::ErrorStack& es_rhs);
 
 /**
  * @brief operator <<
@@ -209,7 +209,7 @@ error::ErrorStack& operator+=(error::ErrorStack& er_lhs, const error::ErrorStack
  * @param t
  * @return
  */
-std::ostream& operator<<(std::ostream& out, const temoto_2::Error& t);
+std::ostream& operator<<(std::ostream& out, const temoto_core::Error& t);
 
 /**
  * @brief operator <<
@@ -217,6 +217,6 @@ std::ostream& operator<<(std::ostream& out, const temoto_2::Error& t);
  * @param t
  * @return
  */
-std::ostream& operator<<(std::ostream& out, const error::ErrorStack& t);
+std::ostream& operator<<(std::ostream& out, const temoto_core::error::ErrorStack& t);
 
 #endif

@@ -38,7 +38,7 @@ public:
 
     // Setup ROS service clients for loading and unloading the resource
     service_client_ = nh_.serviceClient<ServiceType>(load_srv_name);
-    service_client_unload_ = nh_.serviceClient<temoto_2::UnloadResource>(unload_name);
+    service_client_unload_ = nh_.serviceClient<temoto_core::UnloadResource>(unload_name);
     TEMOTO_DEBUG("Created ResourceClient %s", name_.c_str());
   }
 
@@ -195,7 +195,7 @@ public:
   /// Send unload service request to the server
   void sendUnloadRequest(temoto_id::ID ext_resource_id)
   {
-    temoto_2::UnloadResource unload_msg;
+    temoto_core::UnloadResource unload_msg;
     unload_msg.request.server_name = ext_server_name_;
     unload_msg.request.resource_id = ext_resource_id;
     TEMOTO_DEBUG("Sending unload to %s",

@@ -30,7 +30,7 @@ public:
    * @param b Pointer to the parent subsystem that embeds this object.
    * @param sir Pointer to the Sensor Info Registry.
    */
-  SensorSnooper( BaseSubsystem* b, SensorInfoRegistry* sir);
+  SensorSnooper( temoto_core::BaseSubsystem* b, SensorInfoRegistry* sir);
 
   /**
    * @brief Advertises a sensor to other sensor snoopers.
@@ -67,7 +67,7 @@ private:
    * @param msg Incoming message
    * @param payload Data portion of the message
    */
-  void syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload);
+  void syncCb(const temoto_core::ConfigSync& msg, const PayloadType& payload);
 
   /**
    * @brief A timer event callback function which checks if local sensor info entries have been

@@ -21,14 +21,14 @@ public:
     /**
      * @brief IDs_
      */
-    std::vector <TemotoID::ID> IDs_;
+    std::vector <temoto_core::temoto_id::ID> IDs_;
 
     /**
      * @brief RequestContainer
      * @param request
      * @param ID
      */
-    RequestContainer (T request, TemotoID::ID ID)
+    RequestContainer (T request, temoto_core::temoto_id::ID ID)
     {
         request_ = request;
         addID(ID);
@@ -38,7 +38,7 @@ public:
      * @brief addID
      * @param ID
      */
-    void addID (TemotoID::ID ID)
+    void addID (temoto_core::temoto_id::ID ID)
     {
         IDs_.push_back(ID);
     }
@@ -47,7 +47,7 @@ public:
      * @brief removeID
      * @param ID
      */
-    void removeID (TemotoID::ID ID)
+    void removeID (temoto_core::temoto_id::ID ID)
     {
         // Find the index of the ID
         for (auto id=IDs_.begin() ; id < IDs_.end(); id++)

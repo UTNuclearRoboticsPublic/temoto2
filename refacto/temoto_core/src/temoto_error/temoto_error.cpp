@@ -1,9 +1,12 @@
-#include "temoto_error/temoto_error.h"
+#include "temoto_core/temoto_error/temoto_error.h"
 #include "temoto_core/common/temoto_log_macros.h"
 #include "temoto_core/common/console_colors.h"
 
+namespace temoto_core
+{
 namespace error
 {
+
 ErrorHandler::ErrorHandler()
 {
 }
@@ -17,7 +20,7 @@ ErrorStack ErrorHandler::create(Code code, const std::string& prefix, const std:
 {
   ErrorStack est;
 
-  temoto_2::Error error;
+  temoto_core::Error error;
   error.subsystem = static_cast<int>(subsystem_);
   error.code = static_cast<int>(code);
   error.prefix = prefix;
@@ -37,7 +40,7 @@ ErrorStack ErrorHandler::create(Code code, const std::string& prefix, const std:
 
 ErrorStack ErrorHandler::forward(ErrorStack error_stack, const std::string& prefix) const
 {
-  temoto_2::Error error;
+  temoto_core::Error error;
   error.subsystem = static_cast<int>(subsystem_);
   error.code = static_cast<int>(Code::FORWARDING);
   error.prefix = prefix;
@@ -57,25 +60,26 @@ void ErrorHandler::send(ErrorStack est)
 {
   // Create an ErrorStack message and publish it
   ros::Publisher error_publisher_ =
-      n_.advertise<temoto_2::ErrorStack>("/temoto_2/temoto_error_messages", 100);
+      n_.advertise<temoto_core::ErrorStack>("/temoto_core/temoto_error_messages", 100);
 
   while(error_publisher_.getNumSubscribers() < 1){}
-  temoto_2::ErrorStack error_stack_msg;
+  temoto_core::ErrorStack error_stack_msg;
   error_stack_msg.error_stack = est;
   error_publisher_.publish(error_stack_msg);
 }
 
 
 }  // error namespace
+}  // temoto_core namespace
 
-error::ErrorStack& operator+=(error::ErrorStack& es_lhs, const error::ErrorStack& es_rhs)
+temoto_core::error::ErrorStack& operator+=(temoto_core::error::ErrorStack& es_lhs, const temoto_core::error::ErrorStack& es_rhs)
 {
   es_lhs.insert(es_lhs.end(), es_rhs.begin(), es_rhs.end());
   return es_lhs;
 }
 
 
-std::ostream& operator<<(std::ostream& out, const temoto_2::Error& t)
+std::ostream& operator<<(std::ostream& out, const temoto_core::Error& t)
 {
   out << std::endl;
   out << "* code: " << t.code << std::endl;
@@ -86,7 +90,7 @@ std::ostream& operator<<(std::ostream& out, const temoto_2::Error& t)
   return out;
 }
 
-std::ostream& operator<<(std::ostream& out, const error::ErrorStack& t)
+std::ostream& operator<<(std::ostream& out, const temoto_core::error::ErrorStack& t)
 {
   out << std::endl;
   // Start printing out the errors

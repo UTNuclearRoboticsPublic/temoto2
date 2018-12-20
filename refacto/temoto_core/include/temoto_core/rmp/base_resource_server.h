@@ -5,6 +5,7 @@
 #include "temoto_core/common/temoto_id.h"
 #include "temoto_core/common/base_subsystem.h"
 #include "temoto_core/rmp/resource_manager.h"
+#include "temoto_core/UnloadResource.h"
 #include <string>
 #include <vector>
 #include <utility>
@@ -50,7 +51,7 @@ class BaseResourceServer : public BaseSubsystem
 		virtual bool isLinkedTo(temoto_id::ID resource_id) const = 0;
 		virtual bool hasInternalResource(temoto_id::ID resource_id) const = 0;
 		virtual bool hasExternalResource(temoto_id::ID resource_id) const = 0;
-		virtual void unloadResource(temoto_2::UnloadResource::Request& req, temoto_2::UnloadResource::Response& res) = 0;
+		virtual void unloadResource(temoto_core::UnloadResource::Request& req, temoto_core::UnloadResource::Response& res) = 0;
     virtual std::vector<std::pair<temoto_id::ID, std::string>>
     getExternalResourcesByInternalId(temoto_id::ID internal_resource_id) = 0;
     virtual std::vector<std::pair<temoto_id::ID, std::string>>

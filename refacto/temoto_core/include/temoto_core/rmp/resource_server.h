@@ -7,6 +7,7 @@
 #include "temoto_core/common/tools.h"
 #include "temoto_core/rmp/base_resource_server.h"
 #include "temoto_core/rmp/server_query.h"
+#include "temoto_core/rmp/resource_manager_services.h"
 #include <mutex>
 
 namespace temoto_core
@@ -313,8 +314,8 @@ public:
   // We look up the query that contains given external resource id and send unload to all internal
   // clients in the same query
 
-  void unloadResource(temoto_2::UnloadResource::Request& req,
-                      temoto_2::UnloadResource::Response& res)
+  void unloadResource(temoto_core::UnloadResource::Request& req,
+                      temoto_core::UnloadResource::Response& res)
   {
     // find first query that contains resource that should be unloaded
     const temoto_id::ID ext_rid = req.resource_id;

@@ -3,6 +3,7 @@
 
 namespace temoto_sensor_manager
 {
+using namespace temoto_core;
 
 SensorInfoRegistry::SensorInfoRegistry(){}
 

@@ -47,7 +47,7 @@ inline const std::string getTemotoNamespace()
   //  }
   //  else
   //  {
-  //    temoto_name_str = "temoto_2_default";
+  //    temoto_name_str = "temoto_core_default";
   //  }
 
   std::string temoto_ns = ::ros::this_node::getNamespace();

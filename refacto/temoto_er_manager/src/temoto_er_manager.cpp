@@ -107,7 +107,7 @@ void ERManager::update(const ros::TimerEvent&)
 
   // Check the status of all running processes
   // cache all to statuses before actual sending, so we can release the running_mutex.
-  std::vector<temoto_2::ResourceStatus> statuses_to_send; 
+  std::vector<temoto_core::ResourceStatus> statuses_to_send; 
   auto proc_it = running_processes_.begin();
   while (proc_it != running_processes_.end())
   {
@@ -122,7 +122,7 @@ void ERManager::update(const ros::TimerEvent&)
                    proc_it->second.request.executable.c_str());
 
       // TODO: send error information to all related connections
-      temoto_2::ResourceStatus srv;
+      temoto_core::ResourceStatus srv;
       srv.request.resource_id = proc_it->second.response.rmp.resource_id;
       srv.request.status_code = rmp::status_codes::FAILED;
       std::stringstream ss;

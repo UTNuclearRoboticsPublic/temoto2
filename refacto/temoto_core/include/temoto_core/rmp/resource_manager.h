@@ -37,7 +37,7 @@ public:
     // set up status callback with separately threaded queue
     std::string status_srv_name = name_ + "/status";
     ros::AdvertiseServiceOptions status_service_opts =
-        ros::AdvertiseServiceOptions::create<temoto_2::ResourceStatus>(
+        ros::AdvertiseServiceOptions::create<temoto_core::ResourceStatus>(
             status_srv_name, boost::bind(&ResourceManager<Owner>::statusCallback, this, _1, _2),
             ros::VoidPtr(), &this->status_cb_queue_);
     status_server_ = nh_.advertiseService(status_service_opts);
@@ -45,7 +45,7 @@ public:
     // set up unload callback with separately threaded queue
     std::string unload_srv_name = name_ + "/unload";
     ros::AdvertiseServiceOptions unload_service_opts =
-        ros::AdvertiseServiceOptions::create<temoto_2::UnloadResource>(
+        ros::AdvertiseServiceOptions::create<temoto_core::UnloadResource>(
             unload_srv_name, boost::bind(&ResourceManager<Owner>::unloadCallback, this, _1, _2),
             ros::VoidPtr(), &this->unload_cb_queue_);
     unload_server_ = nh_.advertiseService(unload_service_opts);
@@ -83,7 +83,7 @@ public:
     return true;
   }
 
-  void registerStatusCb(void (Owner::*status_cb)(temoto_2::ResourceStatus&))
+  void registerStatusCb(void (Owner::*status_cb)(temoto_core::ResourceStatus&))
   {
     status_callback_ = status_cb;
   }
@@ -108,7 +108,7 @@ public:
   template <class ServiceType>
   void call(std::string resource_manager_name, std::string server_name, ServiceType& msg,
             rmp::FailureBehavior failure_behavior = rmp::FailureBehavior::NONE,
-            std::string temoto_namespace = ::common::getTemotoNamespace())
+            std::string temoto_namespace = ::temoto_core::common::getTemotoNamespace())
   {
     using ClientType = ResourceClient<ServiceType, Owner>;
     using ClientPtr = std::shared_ptr<ClientType>;
@@ -170,8 +170,8 @@ public:
     clients_mutex_.unlock();
   }
 
-  bool unloadCallback(temoto_2::UnloadResource::Request& req,
-                      temoto_2::UnloadResource::Response& res)
+  bool unloadCallback(temoto_core::UnloadResource::Request& req,
+                      temoto_core::UnloadResource::Response& res)
   {
     TEMOTO_DEBUG("Unload request to server: '%s', ext id: %ld.", req.server_name.c_str(), req.resource_id);
     // Find server with requested name
@@ -238,7 +238,7 @@ public:
   }
 
   // This method sends error/info message to any client connected to this resource.
-  void sendStatus(temoto_2::ResourceStatus& srv)
+  void sendStatus(temoto_core::ResourceStatus& srv)
   {
     TEMOTO_DEBUG("Sending status to internal resource: %ld.", srv.request.resource_id);
 
@@ -246,7 +246,7 @@ public:
     struct ResourceInfo
     {
       std::string status_topic;
-      temoto_2::ResourceStatus srv;
+      temoto_core::ResourceStatus srv;
     };
     std::vector<ResourceInfo> infos;
 
@@ -277,7 +277,7 @@ public:
       auto ext_resources = server->getExternalResourcesByInternalId(srv.request.resource_id);
       ResourceInfo info;
       info.srv = srv;  // initialize with given values
-      info.srv.request.temoto_namespace = ::common::getTemotoNamespace();
+      info.srv.request.temoto_namespace = ::temoto_core::common::getTemotoNamespace();
       info.srv.request.manager_name = name_;
       info.srv.request.server_name = server->getName();
       for (const auto& ext_resource : ext_resources)
@@ -297,7 +297,7 @@ public:
     for (auto& info : infos)
     {
       ros::ServiceClient service_client =
-          nh_.serviceClient<temoto_2::ResourceStatus>(info.status_topic);
+          nh_.serviceClient<temoto_core::ResourceStatus>(info.status_topic);
       TEMOTO_DEBUG("Sending ResourceStatus to %s.", info.status_topic.c_str());
       if (service_client.call(info.srv))
       {
@@ -361,8 +361,8 @@ public:
     }
   }
 
-  bool statusCallback(temoto_2::ResourceStatus::Request& req,
-                      temoto_2::ResourceStatus::Response& res)
+  bool statusCallback(temoto_core::ResourceStatus::Request& req,
+                      temoto_core::ResourceStatus::Response& res)
   {
     TEMOTO_DEBUG("Got status request: "); 
     TEMOTO_INFO_STREAM(req);
@@ -405,7 +405,7 @@ public:
         const auto int_resources = client_ptr->getInternalResources(req.resource_id);
         clients_mutex_.unlock();
 
-        temoto_2::ResourceStatus srv;
+        temoto_core::ResourceStatus srv;
         srv.request = req;
         srv.response = res;
         for (const auto& int_resource : int_resources)
@@ -542,7 +542,7 @@ private:
   Owner* owner_;
   temoto_id::IDManager id_manager_;
   std::shared_ptr<BaseResourceServer<Owner>> active_server_;
-  void (Owner::*status_callback_)(temoto_2::ResourceStatus&);
+  void (Owner::*status_callback_)(temoto_core::ResourceStatus&);
 
   ros::AsyncSpinner status_spinner_;
   ros::AsyncSpinner unload_spinner_;

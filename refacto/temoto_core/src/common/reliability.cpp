@@ -1,5 +1,8 @@
 #include "temoto_core/common/reliability.h"
 
+namespace temoto_core
+{
+
 Reliability::Reliability()
 {
   resetReliability(0.8);
@@ -26,3 +29,5 @@ void Reliability::resetReliability(float reliability)
   reliability_ = reliability;    // Filtered reliability is kept here
   reliability_idx_ = 0;
 }
+
+} // temoto_core namespace

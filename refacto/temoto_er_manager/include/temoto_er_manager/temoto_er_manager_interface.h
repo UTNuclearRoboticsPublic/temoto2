@@ -68,7 +68,7 @@ public:
     // Call the server
     try
     {
-//      resource_manager_->template call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
+//      resource_manager_->template call<temoto_core::LoadSensor>(sensor_manager::srv_name::MANAGER,
 //                                                             sensor_manager::srv_name::SERVER,
 //                                                             load_resource_msg);
 
@@ -77,7 +77,7 @@ public:
                                                           load_resource_msg,
                                                           temoto_core::rmp::FailureBehavior::NONE);
     }
-    catch(error::ErrorStack& error_stack)
+    catch(temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -97,13 +97,13 @@ public:
 //    {
 //      validateInterface();
 //    }
-//    catch (error::ErrorStack& error_stack)
+//    catch (temoto_core::error::ErrorStack& error_stack)
 //    {
 //      throw FORWARD_ERROR(error_stack);
 //    }
 
 //    // Find all instances where request part matches of what was given and unload each resource
-//    temoto_2::LoadSensor::Request req;
+//    temoto_core::LoadSensor::Request req;
 //    req.sensor_type = sensor_type;
 //    req.package_name = package_name;
 //    req.executable = ros_program_name;
@@ -113,7 +113,7 @@ public:
 //    auto found_sensor_it = std::find_if(
 //        allocated_sensors_.begin(),
 //        allocated_sensors_.end(),
-//        [&](const temoto_2::LoadSensor& load_resource_msg) -> bool{ return load_resource_msg.request == req; });
+//        [&](const temoto_core::LoadSensor& load_resource_msg) -> bool{ return load_resource_msg.request == req; });
 
 //    if (found_sensor_it == allocated_sensors_.end())
 //    {
@@ -127,7 +127,7 @@ public:
 //      resource_manager_->unloadClientResource(found_sensor_it->response.rmp.resource_id);
 //      allocated_sensors_.erase(found_sensor_it);
 //    }
-//    catch (error::ErrorStack& error_stack)
+//    catch (temoto_core::error::ErrorStack& error_stack)
 //    {
 //      throw FORWARD_ERROR(error_stack);
 //    }
@@ -137,13 +137,13 @@ public:
    * @brief statusInfoCb
    * @param srv
    */
-  void statusInfoCb(temoto_2::ResourceStatus& srv)
+  void statusInfoCb(temoto_core::ResourceStatus& srv)
   {
     try
     {
       validateInterface();
     }
-    catch (error::ErrorStack& error_stack)
+    catch (temoto_core::error::ErrorStack& error_stack)
     {
       throw FORWARD_ERROR(error_stack);
     }
@@ -169,7 +169,7 @@ public:
 //      TEMOTO_WARN("Sensor manager interface detected a sensor failure. Unloading and "
 //                                "trying again");
 //      auto sens_it = std::find_if(allocated_sensors_.begin(), allocated_sensors_.end(),
-//                                  [&](const temoto_2::LoadSensor& sens) -> bool {
+//                                  [&](const temoto_core::LoadSensor& sens) -> bool {
 //                                    return sens.response.rmp.resource_id == srv.request.resource_id;
 //                                  });
 //      if (sens_it != allocated_sensors_.end())
@@ -181,11 +181,11 @@ public:
 //        // this call automatically updates the response in allocated sensors vec
 //        try
 //        {
-//          resource_manager_->template call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
+//          resource_manager_->template call<temoto_core::LoadSensor>(sensor_manager::srv_name::MANAGER,
 //                                                                 sensor_manager::srv_name::SERVER,
 //                                                                 *sens_it);
 //        }
-//        catch(error::ErrorStack& error_stack)
+//        catch(temoto_core::error::ErrorStack& error_stack)
 //        {
 //          SEND_ERROR(error_stack);
 //        }

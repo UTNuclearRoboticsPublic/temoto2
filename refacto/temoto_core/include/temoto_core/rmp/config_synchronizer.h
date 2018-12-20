@@ -29,7 +29,7 @@ template <class Owner, class PayloadType>
 class ConfigSynchronizer : public BaseSubsystem
 {
 public:
-  typedef void (Owner::*OwnerCbType)(const temoto_2::ConfigSync&, const PayloadType& payload);
+  typedef void (Owner::*OwnerCbType)(const temoto_core::ConfigSync&, const PayloadType& payload);
 
   ConfigSynchronizer( const std::string& name
                     , const std::string& sync_topic
@@ -42,7 +42,7 @@ public:
     , BaseSubsystem(*owner, __func__)
   {
     // Setup publisher and subscriber
-    sync_pub_ = nh_.advertise<temoto_2::ConfigSync>(sync_topic, 1000);
+    sync_pub_ = nh_.advertise<temoto_core::ConfigSync>(sync_topic, 1000);
     sync_sub_ = nh_.subscribe(sync_topic, 1000, &ConfigSynchronizer::wrappedSyncCb, this);
 
     // Ask from master how many nodes have subscribed to sync_topic
@@ -92,7 +92,7 @@ public:
    */
   void requestRemoteConfigs()
   {
-    temoto_2::ConfigSync msg;
+    temoto_core::ConfigSync msg;
     msg.temoto_namespace = common::getTemotoNamespace();
     msg.action = sync_action::REQUEST_CONFIG;
     sync_pub_.publish(msg);
@@ -106,7 +106,7 @@ public:
   {
     try
     {
-      temoto_2::ConfigSync msg;
+      temoto_core::ConfigSync msg;
       msg.temoto_namespace = common::getTemotoNamespace();
       msg.action = sync_action;
 
@@ -138,7 +138,7 @@ public:
 
 private:
 
-  void wrappedSyncCb(const temoto_2::ConfigSync& msg)
+  void wrappedSyncCb(const temoto_core::ConfigSync& msg)
   {
     // Ignore messages that are ours
     if (msg.temoto_namespace == common::getTemotoNamespace())

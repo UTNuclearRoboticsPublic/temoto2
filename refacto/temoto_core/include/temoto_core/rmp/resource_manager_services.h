@@ -1,5 +1,5 @@
 #ifndef TEMOTO_CORE__RESOURCE_MANAGER_SERVICES_H
-#define TEMOTO_CORE__MANAGER_SERVICES_H
+#define TEMOTO_CORE__RESOURCE_MANAGER_SERVICES_H
 
 #include "temoto_core/UnloadResource.h"
 #include "temoto_core/ResourceStatus.h"
@@ -18,7 +18,7 @@ enum status_codes : int
 
 namespace srv_name
 {
-//const std::string PREFIX = ::common::getTemotoNamespace();
+//const std::string PREFIX = ::temoto_core::common::getTemotoNamespace();
 }
 
 } // rmp namespace
