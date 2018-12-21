@@ -86,7 +86,7 @@ private:
   SensorInfoRegistry* sir_;
 
   /// Resource Management object which handles resource requests and status info propagation.
-  rmp::ResourceManager<SensorManagerServers> resource_manager_;
+  temoto_core::rmp::ResourceManager<SensorManagerServers> resource_manager_;
 
   /// List of allocated sensors.
   std::map<temoto_core::temoto_id::ID, SensorInfo> allocated_sensors_;

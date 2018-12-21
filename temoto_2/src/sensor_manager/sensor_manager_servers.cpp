@@ -36,7 +36,7 @@ void SensorManagerServers::statusCb(temoto_2::ResourceStatus& srv)
 
   // If local sensor failed, adjust package reliability and advertise to other managers via
   // synchronizer.
-  if (srv.request.status_code == rmp::status_codes::FAILED)
+  if (srv.request.status_code == temoto_core::rmp::status_codes::FAILED)
   {
     auto it = allocated_sensors_.find(srv.request.resource_id);
     if (it != allocated_sensors_.end())
@@ -126,7 +126,7 @@ void SensorManagerServers::loadSensorCb( temoto_2::LoadSensor::Request& req
         resource_manager_.call<temoto_2::LoadProcess>( process_manager::srv_name::MANAGER
                                                      , process_manager::srv_name::SERVER
                                                      , load_process_msg
-                                                     , rmp::FailureBehavior::NONE);
+                                                     , temoto_core::rmp::FailureBehavior::NONE);
 
         TEMOTO_DEBUG("Call to ProcessManager was sucessful.");
 
@@ -177,7 +177,7 @@ void SensorManagerServers::loadSensorCb( temoto_2::LoadSensor::Request& req
         resource_manager_.call<temoto_2::LoadSensor>( sensor_manager::srv_name::MANAGER
                                                     , sensor_manager::srv_name::SERVER
                                                     , load_sensor_msg
-                                                    , rmp::FailureBehavior::NONE
+                                                    , temoto_core::rmp::FailureBehavior::NONE
                                                     , si.getTemotoNamespace());
 
         TEMOTO_DEBUG("Call to remote SensorManagerServers was sucessful.");

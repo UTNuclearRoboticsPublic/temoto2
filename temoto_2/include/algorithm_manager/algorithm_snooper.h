@@ -37,7 +37,7 @@ private:
 
   ros::NodeHandle nh_;
 
-  rmp::ConfigSynchronizer<AlgorithmSnooper, PayloadType> config_syncer_;
+  temoto_core::rmp::ConfigSynchronizer<AlgorithmSnooper, PayloadType> config_syncer_;
 
   AlgorithmInfoRegistry* aid_;
 

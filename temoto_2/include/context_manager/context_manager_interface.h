@@ -37,7 +37,7 @@ public:
     name_ = task->getName() + "/context_manager_interface";
 
     // create resource manager
-    resource_manager_ = std::unique_ptr<rmp::ResourceManager<ContextManagerInterface>>(new rmp::ResourceManager<ContextManagerInterface>(name_, this));
+    resource_manager_ = std::unique_ptr<temoto_core::rmp::ResourceManager<ContextManagerInterface>>(new temoto_core::rmp::ResourceManager<ContextManagerInterface>(name_, this));
 
     // ensure that resource_manager was created
     try
@@ -289,7 +289,7 @@ public:
     TEMOTO_DEBUG_STREAM(srv.request);
     // if any resource should fail, just unload it and try again
     // there is a chance that sensor manager gives us better sensor this time
-    if (srv.request.status_code == rmp::status_codes::FAILED)
+    if (srv.request.status_code == temoto_core::rmp::status_codes::FAILED)
     {
       TEMOTO_WARN("Received a notification about a resource failure. Unloading and trying again");
 
@@ -406,7 +406,7 @@ private:
   // arbitrary objects should be allowed in future.
   OwnerTask* task_speech_obj_;
   
-  std::unique_ptr<rmp::ResourceManager<ContextManagerInterface>> resource_manager_;
+  std::unique_ptr<temoto_core::rmp::ResourceManager<ContextManagerInterface>> resource_manager_;
 
   std::string name_; 
   TTP::BaseTask* task_;

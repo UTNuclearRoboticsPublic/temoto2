@@ -36,7 +36,7 @@ void AlgorithmManagerServers::statusCb(temoto_2::ResourceStatus& srv)
 
   // If local algorithm failed, adjust package reliability and advertise to other managers via
   // synchronizer.
-  if (srv.request.status_code == rmp::status_codes::FAILED)
+  if (srv.request.status_code == temoto_core::rmp::status_codes::FAILED)
   {
     auto it = allocated_algorithms_.find(srv.request.resource_id);
     if (it != allocated_algorithms_.end())
@@ -91,7 +91,7 @@ void AlgorithmManagerServers::loadAlgorithmCb( temoto_2::LoadAlgorithm::Request&
         resource_manager_.call<temoto_2::LoadProcess>( process_manager::srv_name::MANAGER
                                                      , process_manager::srv_name::SERVER
                                                      , load_process_msg
-                                                     , rmp::FailureBehavior::NONE);
+                                                     , temoto_core::rmp::FailureBehavior::NONE);
 
         TEMOTO_DEBUG("Call to ProcessManager was sucessful.");
 
@@ -145,7 +145,7 @@ void AlgorithmManagerServers::loadAlgorithmCb( temoto_2::LoadAlgorithm::Request&
         resource_manager_.call<temoto_2::LoadAlgorithm>( algorithm_manager::srv_name::MANAGER
                                                        , algorithm_manager::srv_name::SERVER
                                                        , load_algorithm_msg
-                                                       , rmp::FailureBehavior::NONE
+                                                       , temoto_core::rmp::FailureBehavior::NONE
                                                        , ai.getTemotoNamespace());
 
         TEMOTO_DEBUG("Call to remote AlgorithmManagerServers was sucessful.");

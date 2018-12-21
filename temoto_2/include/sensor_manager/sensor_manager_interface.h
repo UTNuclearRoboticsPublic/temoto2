@@ -57,7 +57,7 @@ public:
     log_group_ = "interfaces." + task->getPackageName();
     name_ = task->getName() + "/sensor_manager_interface";
 
-    resource_manager_ = std::unique_ptr<rmp::ResourceManager<SensorManagerInterface>>(new rmp::ResourceManager<SensorManagerInterface>(name_, this));
+    resource_manager_ = std::unique_ptr<temoto_core::rmp::ResourceManager<SensorManagerInterface>>(new temoto_core::rmp::ResourceManager<SensorManagerInterface>(name_, this));
     resource_manager_->registerStatusCb(&SensorManagerInterface::statusInfoCb);
   }
 
@@ -222,7 +222,7 @@ public:
      * if any resource should fail, just unload it and load it again
      * there is a chance that sensor manager gives us better sensor this time
      */
-    if (srv.request.status_code == rmp::status_codes::FAILED)
+    if (srv.request.status_code == temoto_core::rmp::status_codes::FAILED)
     {
       TEMOTO_WARN("Sensor manager interface detected a sensor failure. Unloading and "
                                 "trying again");
@@ -277,7 +277,7 @@ public:
 private:
   std::string name_;
   std::vector<temoto_2::LoadSensor> allocated_sensors_;
-  std::unique_ptr<rmp::ResourceManager<SensorManagerInterface>> resource_manager_;
+  std::unique_ptr<temoto_core::rmp::ResourceManager<SensorManagerInterface>> resource_manager_;
 
   void(OwnerTask::*update_callback_)(bool) = NULL;
   OwnerTask* owner_instance_;

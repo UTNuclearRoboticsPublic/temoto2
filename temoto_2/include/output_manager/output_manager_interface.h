@@ -43,8 +43,8 @@ public:
     log_group_ = "interfaces." + task->getPackageName();
 
     name_ = task->getName() + "/output_manager_interface";
-    resource_manager_ = std::unique_ptr<rmp::ResourceManager<OutputManagerInterface>>(
-        new rmp::ResourceManager<OutputManagerInterface>(name_, this));
+    resource_manager_ = std::unique_ptr<temoto_core::rmp::ResourceManager<OutputManagerInterface>>(
+        new temoto_core::rmp::ResourceManager<OutputManagerInterface>(name_, this));
     //    resource_manager_->registerStatusCb(&OutputManagerInterface::statusInfoCb);
   }
 
@@ -268,7 +268,7 @@ public:
   //    TEMOTO_DEBUG_STREAM(srv.request);
   //    // if any resource should fail, just unload it and try again
   //    // there is a chance that sensor manager gives us better sensor this time
-  //    if (srv.request.status_code == rmp::status_codes::FAILED)
+  //    if (srv.request.status_code == temoto_core::rmp::status_codes::FAILED)
   //    {
   //      TEMOTO_WARN("Output manager interface detected a sensor failure. Unloading and "
   //                                "trying again");
@@ -325,7 +325,7 @@ private:
 
   temoto_core::temoto_id::ID id_ = temoto_core::temoto_id::UNASSIGNED_ID;
 
-  std::unique_ptr<rmp::ResourceManager<OutputManagerInterface>> resource_manager_;
+  std::unique_ptr<temoto_core::rmp::ResourceManager<OutputManagerInterface>> resource_manager_;
 
   std::vector<temoto_2::LoadRvizPlugin> plugins_;
 

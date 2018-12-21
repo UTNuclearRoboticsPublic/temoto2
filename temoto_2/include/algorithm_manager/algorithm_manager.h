@@ -32,9 +32,9 @@ public:
 
 private:
 
-  rmp::ResourceManager<AlgorithmManager> resource_manager_;
+  temoto_core::rmp::ResourceManager<AlgorithmManager> resource_manager_;
 
-  rmp::ConfigSynchronizer<AlgorithmManager, PayloadType> config_syncer_;
+  temoto_core::rmp::ConfigSynchronizer<AlgorithmManager, PayloadType> config_syncer_;
 
   /**
    * @brief List of all locally defined algorithms.

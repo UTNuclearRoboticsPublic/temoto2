@@ -51,7 +51,7 @@ namespace process_manager
 			ros::NodeHandle nh_;
 
 			// Resource management protocol
-			rmp::ResourceManager<ProcessManager> resource_manager_;
+			temoto_core::rmp::ResourceManager<ProcessManager> resource_manager_;
 
 			// Listens for calls to start or kill processes
 			//ros::ServiceServer spawn_kill_srv_;

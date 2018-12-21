@@ -72,7 +72,7 @@ private:
   AlgorithmInfoRegistry* air_;
 
   ///  ros::ServiceServer list_devices_server_;
-  rmp::ResourceManager<AlgorithmManagerServers> resource_manager_;
+  temoto_core::rmp::ResourceManager<AlgorithmManagerServers> resource_manager_;
 
   /// List of allocated algorithms
   std::map<temoto_core::temoto_id::ID, AlgorithmInfo> allocated_algorithms_;

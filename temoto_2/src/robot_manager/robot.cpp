@@ -5,7 +5,7 @@
 
 namespace robot_manager
 {
-Robot::Robot(RobotConfigPtr config, rmp::ResourceManager<RobotManager>& resource_manager, temoto_core::BaseSubsystem& b)
+Robot::Robot(RobotConfigPtr config, temoto_core::rmp::ResourceManager<RobotManager>& resource_manager, temoto_core::BaseSubsystem& b)
   : config_(config), resource_manager_(resource_manager), is_plan_valid_(false), temoto_core::BaseSubsystem(b)
 {
   class_name_ = "Robot";

@@ -32,8 +32,8 @@ public:
     std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
     // create resource manager
-    resource_manager_ = std::unique_ptr<rmp::ResourceManager<RobotManagerInterface>>(
-        new rmp::ResourceManager<RobotManagerInterface>(name_, this));
+    resource_manager_ = std::unique_ptr<temoto_core::rmp::ResourceManager<RobotManagerInterface>>(
+        new temoto_core::rmp::ResourceManager<RobotManagerInterface>(name_, this));
 
     // ensure that resource_manager was created
     validateInterface(prefix);
@@ -84,7 +84,7 @@ public:
     {
       throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
     }
-    else if (msg.response.code == rmp::status_codes::FAILED)
+    else if (msg.response.code == temoto_core::rmp::status_codes::FAILED)
     {
       throw FORWARD_ERROR(msg.response.error_stack);
     }
@@ -103,7 +103,7 @@ public:
     {
       throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
     }
-    else if (msg.response.code == rmp::status_codes::FAILED)
+    else if (msg.response.code == temoto_core::rmp::status_codes::FAILED)
     {
       throw FORWARD_ERROR(msg.response.error_stack);
     }
@@ -119,7 +119,7 @@ public:
     {
       throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
     }
-    else if (msg.response.code == rmp::status_codes::FAILED)
+    else if (msg.response.code == temoto_core::rmp::status_codes::FAILED)
     {
       throw FORWARD_ERROR(msg.response.error_stack);
     }
@@ -135,7 +135,7 @@ public:
     {
       throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
     }
-    else if (msg.response.code == rmp::status_codes::FAILED)
+    else if (msg.response.code == temoto_core::rmp::status_codes::FAILED)
     {
       throw FORWARD_ERROR(msg.response.error_stack);
     }
@@ -153,7 +153,7 @@ public:
     {
       throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
     }
-    else if (msg.response.code == rmp::status_codes::FAILED)
+    else if (msg.response.code == temoto_core::rmp::status_codes::FAILED)
     {
       throw FORWARD_ERROR(msg.response.error_stack);
     }
@@ -199,7 +199,7 @@ private:
   ros::ServiceClient client_viz_info_;
   ros::ServiceClient client_set_target_;
 
-  std::unique_ptr<rmp::ResourceManager<RobotManagerInterface>> resource_manager_;
+  std::unique_ptr<temoto_core::rmp::ResourceManager<RobotManagerInterface>> resource_manager_;
 };
 
 } // namespace

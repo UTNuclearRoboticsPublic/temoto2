@@ -75,7 +75,7 @@ void AlgorithmManager::statusCb(temoto_2::ResourceStatus& srv)
 
   // If the status message indicates, that the algorithm has failed,
   // then adjust it's reliability
-  if (srv.request.status_code == rmp::status_codes::FAILED)
+  if (srv.request.status_code == temoto_core::rmp::status_codes::FAILED)
   {
     auto it = allocated_algorithms_.find(srv.request.resource_id);
     if (it != allocated_algorithms_.end())
@@ -101,14 +101,14 @@ void AlgorithmManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType
   try
   {
     // Advertise local algorithms
-    if (msg.action == rmp::sync_action::REQUEST_CONFIG)
+    if (msg.action == temoto_core::rmp::sync_action::REQUEST_CONFIG)
     {
       advertiseLocalAlgorithms();
       return;
     }
 
     // Update/add remote algorithms
-    if (msg.action == rmp::sync_action::ADVERTISE_CONFIG)
+    if (msg.action == temoto_core::rmp::sync_action::ADVERTISE_CONFIG)
     {
       // Convert the config string to YAML tree and parse
       YAML::Node config = YAML::Load(payload.data);
@@ -247,7 +247,7 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
       resource_manager_.call<temoto_2::LoadProcess>(process_manager::srv_name::MANAGER
                                                   , process_manager::srv_name::SERVER
                                                   , load_process_msg
-                                                  , rmp::FailureBehavior::NONE);
+                                                  , temoto_core::rmp::FailureBehavior::NONE);
       algorithm_ptr->adjustReliability(1.0);
 
       // Let other managers know about the updated reliability
@@ -310,7 +310,7 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
     {
       resource_manager_.call<temoto_2::LoadAlgorithm>(
           algorithm_manager::srv_name::MANAGER, algorithm_manager::srv_name::SERVER,
-          load_algorithm_msg, rmp::FailureBehavior::NONE, algorithm_ptr->getTemotoNamespace());
+          load_algorithm_msg, temoto_core::rmp::FailureBehavior::NONE, algorithm_ptr->getTemotoNamespace());
     }
     catch (temoto_core::error::ErrorStack& error_stack)
     {

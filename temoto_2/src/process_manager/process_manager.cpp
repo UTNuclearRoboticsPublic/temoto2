@@ -133,7 +133,7 @@ void ProcessManager::update(const ros::TimerEvent&)
       // TODO: send error information to all related connections
       temoto_2::ResourceStatus srv;
       srv.request.resource_id = proc_it->second.response.rmp.resource_id;
-      srv.request.status_code = rmp::status_codes::FAILED;
+      srv.request.status_code = temoto_core::rmp::status_codes::FAILED;
       std::stringstream ss;
       ss << "The process with pid '" << proc_it->first << "' has stopped.";
       srv.request.message = ss.str();
@@ -236,7 +236,7 @@ void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
   }
 
   // Fill response
-  res.rmp.code = rmp::status_codes::OK;
+  res.rmp.code = temoto_core::rmp::status_codes::OK;
   res.rmp.message = "Request added to the loading queue.";
 }
 
@@ -271,7 +271,7 @@ void ProcessManager::unloadCb(temoto_2::LoadProcess::Request& req,
   {
     TEMOTO_ERROR("Unable to unload reource with resource_id: %ld. Resource is not running nor failed.", res.rmp.resource_id);
     // Fill response
-    res.rmp.code = rmp::status_codes::FAILED;
+    res.rmp.code = temoto_core::rmp::status_codes::FAILED;
     res.rmp.message = "Resource is not running nor failed. Unable to unload.";
   }
   running_mutex_.unlock();

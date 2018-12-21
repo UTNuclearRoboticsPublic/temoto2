@@ -98,14 +98,14 @@ void ContextManager::unloadGetNumberCb( temoto_2::GetNumber::Request& req
  */
 void ContextManager::objectSyncCb(const temoto_2::ConfigSync& msg, const Objects& payload)
 {
-  if (msg.action == rmp::sync_action::REQUEST_CONFIG)
+  if (msg.action == temoto_core::rmp::sync_action::REQUEST_CONFIG)
   {
     advertiseAllObjects();
     return;
   }
 
   // Add or update objects
-  if (msg.action == rmp::sync_action::ADVERTISE_CONFIG)
+  if (msg.action == temoto_core::rmp::sync_action::ADVERTISE_CONFIG)
   {
     TEMOTO_DEBUG("Received a payload.");
     addOrUpdateObjects(payload, true);
@@ -117,7 +117,7 @@ void ContextManager::objectSyncCb(const temoto_2::ConfigSync& msg, const Objects
  */
 void ContextManager::trackedObjectsSyncCb(const temoto_2::ConfigSync& msg, const std::string& payload)
 {
-  if (msg.action == rmp::sync_action::ADVERTISE_CONFIG)
+  if (msg.action == temoto_core::rmp::sync_action::ADVERTISE_CONFIG)
   {
     TEMOTO_DEBUG_STREAM("Received a message, that '" << payload << "' is tracked by '"
                         << msg.temoto_namespace << "'.");
@@ -126,7 +126,7 @@ void ContextManager::trackedObjectsSyncCb(const temoto_2::ConfigSync& msg, const
     m_tracked_objects_remote_[payload] = msg.temoto_namespace;
   }
   else
-  if (msg.action == rmp::sync_action::REMOVE_CONFIG)
+  if (msg.action == temoto_core::rmp::sync_action::REMOVE_CONFIG)
   {
     TEMOTO_DEBUG_STREAM("Received a message, that '" << payload << "' is not tracked by '"
                         << msg.temoto_namespace << "' anymore.");
@@ -254,7 +254,7 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
       resource_manager_2_.template call<temoto_2::TrackObject>(context_manager::srv_name::MANAGER,
                                                                context_manager::srv_name::TRACK_OBJECT_SERVER,
                                                                track_object_msg,
-                                                               rmp::FailureBehavior::NONE,
+                                                               temoto_core::rmp::FailureBehavior::NONE,
                                                                remote_temoto_namespace);
 
       res = track_object_msg.response;
@@ -503,7 +503,7 @@ void ContextManager::unloadTrackObjectCb(temoto_2::TrackObject::Request& req,
     m_tracked_objects_local_.erase(res.rmp.resource_id);
 
     // Let context managers in other namespaces know, that this object is not tracked anymore
-    tracked_objects_syncer_.advertise(tracked_object, rmp::sync_action::REMOVE_CONFIG);
+    tracked_objects_syncer_.advertise(tracked_object, temoto_core::rmp::sync_action::REMOVE_CONFIG);
   }
   catch (temoto_core::error::ErrorStack& error_stack)
   {
@@ -898,7 +898,7 @@ void ContextManager::statusCb2(temoto_2::ResourceStatus& srv)
 
   // If local sensor failed, adjust package reliability and advertise to other managers via
   // synchronizer.
-  if (srv.request.status_code == rmp::status_codes::FAILED)
+  if (srv.request.status_code == temoto_core::rmp::status_codes::FAILED)
   {
     TEMOTO_DEBUG("A resource, that a running tracker depends on, has failed");
 

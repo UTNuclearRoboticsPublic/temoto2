@@ -50,7 +50,7 @@ public:
     log_group_ = "interfaces." + task->getPackageName();
     name_ = task->getName() + "/algorithm_manager_interface";
 
-    resource_manager_ = std::unique_ptr<rmp::ResourceManager<AlgorithmManagerInterface>>(new rmp::ResourceManager<AlgorithmManagerInterface>(name_, this));
+    resource_manager_ = std::unique_ptr<temoto_core::rmp::ResourceManager<AlgorithmManagerInterface>>(new temoto_core::rmp::ResourceManager<AlgorithmManagerInterface>(name_, this));
     resource_manager_->registerStatusCb(&AlgorithmManagerInterface::statusInfoCb);
   }
 
@@ -215,7 +215,7 @@ public:
 
     // If the resource has falied then reload it since there is a chance that
     // algorithm manager will provide better algorithm this time
-    if (srv.request.status_code == rmp::status_codes::FAILED)
+    if (srv.request.status_code == temoto_core::rmp::status_codes::FAILED)
     {
       TEMOTO_WARN("detected an algorithm failure. Unloading and trying again.");
 
@@ -274,7 +274,7 @@ private:
 
   std::string name_;
   std::vector<temoto_2::LoadAlgorithm> allocated_algorithms_;
-  std::unique_ptr<rmp::ResourceManager<AlgorithmManagerInterface>> resource_manager_;
+  std::unique_ptr<temoto_core::rmp::ResourceManager<AlgorithmManagerInterface>> resource_manager_;
 
 
   /**

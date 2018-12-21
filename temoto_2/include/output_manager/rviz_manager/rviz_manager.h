@@ -55,7 +55,7 @@ private:
 
   std::map<long, temoto_core::temoto_id::ID> active_requests_;
 
-  rmp::ResourceManager<RvizManager> resource_manager_;
+  temoto_core::rmp::ResourceManager<RvizManager> resource_manager_;
 
   ros::NodeHandle nh_;
 

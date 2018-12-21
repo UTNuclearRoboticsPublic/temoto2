@@ -81,7 +81,7 @@ private:
   ros::NodeHandle nh_;
 
   /// Object that handles sensor info syncronization.
-  rmp::ConfigSynchronizer<SensorSnooper, PayloadType> config_syncer_;
+  temoto_core::rmp::ConfigSynchronizer<SensorSnooper, PayloadType> config_syncer_;
 
   /// Pointer to a central Sensor Info Registry object.
   SensorInfoRegistry* sir_;

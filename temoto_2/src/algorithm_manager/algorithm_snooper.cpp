@@ -150,13 +150,13 @@ std::vector<AlgorithmInfoPtr> AlgorithmSnooper::parseAlgorithms(const YAML::Node
 void AlgorithmSnooper::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload)
 {
 
-  if (msg.action == rmp::sync_action::REQUEST_CONFIG)
+  if (msg.action == temoto_core::rmp::sync_action::REQUEST_CONFIG)
   {
     advertiseLocalAlgorithms();
     return;
   }
 
-  if (msg.action == rmp::sync_action::ADVERTISE_CONFIG)
+  if (msg.action == temoto_core::rmp::sync_action::ADVERTISE_CONFIG)
   {
     // Convert the config string to YAML tree and parse
     YAML::Node config = YAML::Load(payload.data);

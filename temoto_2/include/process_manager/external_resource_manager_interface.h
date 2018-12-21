@@ -41,7 +41,7 @@ public:
     log_group_ = "interfaces." + task->getPackageName();
     name_ = task->getName() + "/external_resource_manager_interface";
 
-    resource_manager_ = std::unique_ptr<rmp::ResourceManager<ExternalResourceManagerInterface>>(new rmp::ResourceManager<ExternalResourceManagerInterface>(name_, this));
+    resource_manager_ = std::unique_ptr<temoto_core::rmp::ResourceManager<ExternalResourceManagerInterface>>(new temoto_core::rmp::ResourceManager<ExternalResourceManagerInterface>(name_, this));
     resource_manager_->registerStatusCb(&ExternalResourceManagerInterface::statusInfoCb);
   }
 
@@ -74,7 +74,7 @@ public:
        resource_manager_->template call<temoto_2::LoadProcess>(process_manager::srv_name::MANAGER,
                                                                process_manager::srv_name::SERVER,
                                                                load_resource_msg,
-                                                               rmp::FailureBehavior::NONE);
+                                                               temoto_core::rmp::FailureBehavior::NONE);
     }
     catch(temoto_core::error::ErrorStack& error_stack)
     {
@@ -163,7 +163,7 @@ public:
 //     * if any resource should fail, just unload it and load it again
 //     * there is a chance that sensor manager gives us better sensor this time
 //     */
-//    if (srv.request.status_code == rmp::status_codes::FAILED)
+//    if (srv.request.status_code == temoto_core::rmp::status_codes::FAILED)
 //    {
 //      TEMOTO_WARN("Sensor manager interface detected a sensor failure. Unloading and "
 //                                "trying again");
@@ -217,7 +217,7 @@ public:
 private:
   std::string name_;
   std::vector<temoto_2::LoadProcess> allocated_external_resources_;
-  std::unique_ptr<rmp::ResourceManager<ExternalResourceManagerInterface>> resource_manager_;
+  std::unique_ptr<temoto_core::rmp::ResourceManager<ExternalResourceManagerInterface>> resource_manager_;
 
   void(OwnerTask::*update_callback_)(bool) = NULL;
   OwnerTask* owner_instance_;

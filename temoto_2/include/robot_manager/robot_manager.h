@@ -136,10 +136,10 @@ private:
   // temoto_2::LoadGesture hand_srv_msg_;
   
   // Keeps robot_infos in sync with other managers
-  rmp::ConfigSynchronizer<RobotManager, PayloadType> config_syncer_;
+  temoto_core::rmp::ConfigSynchronizer<RobotManager, PayloadType> config_syncer_;
 
   // Resource manager for contacting process manager
-  rmp::ResourceManager<RobotManager> resource_manager_;
+  temoto_core::rmp::ResourceManager<RobotManager> resource_manager_;
   std::mutex default_pose_mutex_;
 
 

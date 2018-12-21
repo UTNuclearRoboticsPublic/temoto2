@@ -23,7 +23,7 @@ class RobotManager;
 class Robot : public temoto_core::BaseSubsystem
 {
 public:
-  Robot(RobotConfigPtr config_, rmp::ResourceManager<RobotManager>& resource_manager, temoto_core::BaseSubsystem& b);
+  Robot(RobotConfigPtr config_, temoto_core::rmp::ResourceManager<RobotManager>& resource_manager, temoto_core::BaseSubsystem& b);
   virtual ~Robot();
   void addPlanningGroup(const std::string& planning_group_name);
   void removePlanningGroup(const std::string& planning_group_name);
@@ -74,7 +74,7 @@ private:
   RobotConfigPtr config_;
 
   // Resource Manager
-  rmp::ResourceManager<RobotManager>& resource_manager_;
+  temoto_core::rmp::ResourceManager<RobotManager>& resource_manager_;
 
   // Manipulation related
   bool is_plan_valid_;

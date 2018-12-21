@@ -126,14 +126,14 @@ private:
 
 
   // Resource manager for handling servers and clients
-  rmp::ResourceManager<ContextManager> resource_manager_1_;
+  temoto_core::rmp::ResourceManager<ContextManager> resource_manager_1_;
 
   /*
    * Resource manager for handling servers and clients.
    * TODO: The second manager is used for making RMP calls within the same manager. If the same
    * resouce manager is used for calling servers managed by the same manager, the calls will lock
    */
-  rmp::ResourceManager<ContextManager> resource_manager_2_;
+  temoto_core::rmp::ResourceManager<ContextManager> resource_manager_2_;
 
   ros::NodeHandle nh_;
 
@@ -153,9 +153,9 @@ private:
 
   // Configuration syncer that manages external resource descriptions and synchronizes them
   // between all other (context) managers
-  rmp::ConfigSynchronizer<ContextManager, Objects> object_syncer_;
+  temoto_core::rmp::ConfigSynchronizer<ContextManager, Objects> object_syncer_;
 
-  rmp::ConfigSynchronizer<ContextManager, std::string> tracked_objects_syncer_;
+  temoto_core::rmp::ConfigSynchronizer<ContextManager, std::string> tracked_objects_syncer_;
 
   TTP::TaskManager tracker_core_;
 

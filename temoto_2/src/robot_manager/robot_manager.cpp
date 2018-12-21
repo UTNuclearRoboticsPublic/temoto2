@@ -138,7 +138,7 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
     try
     {
       loadLocalRobot(config, res.rmp.resource_id);
-      res.rmp.code = rmp::status_codes::OK;
+      res.rmp.code = temoto_core::rmp::status_codes::OK;
       res.rmp.message = "Robot sucessfully loaded.";
     }
     catch (temoto_core::error::ErrorStack& error_stack)
@@ -166,7 +166,7 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
       resource_manager_.call<temoto_2::RobotLoad>(robot_manager::srv_name::MANAGER,
                                                   robot_manager::srv_name::SERVER_LOAD,
                                                   load_robot_srvc,
-                                                  rmp::FailureBehavior::NONE,
+                                                  temoto_core::rmp::FailureBehavior::NONE,
                                                   config->getTemotoNamespace());
       TEMOTO_DEBUG("Call to remote RobotManager was sucessful.");
       res.rmp = load_robot_srvc.response.rmp;
@@ -220,13 +220,13 @@ for (const auto& r : loaded_robots_)
 
 void RobotManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload)
 {
-  if (msg.action == rmp::sync_action::REQUEST_CONFIG)
+  if (msg.action == temoto_core::rmp::sync_action::REQUEST_CONFIG)
   {
     advertiseConfigs(local_configs_);
     return;
   }
 
-  if (msg.action == rmp::sync_action::ADVERTISE_CONFIG)
+  if (msg.action == temoto_core::rmp::sync_action::ADVERTISE_CONFIG)
   {
     // Convert the config string to YAML tree and parse
     YAML::Node yaml_config = YAML::Load(payload.data);
@@ -346,7 +346,7 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
   {
     res.error_stack = CREATE_ERROR(error::Code::ROBOT_PLAN_FAIL, "Unable to plan, because no robot "
                                                                  "is loaded.");
-    res.code = rmp::status_codes::FAILED;
+    res.code = temoto_core::rmp::status_codes::FAILED;
     return true;
   }
 
@@ -373,12 +373,12 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
     catch (temoto_core::error::ErrorStack(e))
     {
       res.error_stack = FORWARD_ERROR(e);
-      res.code = rmp::status_codes::OK;
+      res.code = temoto_core::rmp::status_codes::OK;
       return true;
     }
 
     TEMOTO_DEBUG("DONE PLANNING...");
-    res.code = rmp::status_codes::OK;
+    res.code = temoto_core::rmp::status_codes::OK;
   }
   else
   {
@@ -395,7 +395,7 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
     }
     else
     {
-      res.code = rmp::status_codes::FAILED;
+      res.code = temoto_core::rmp::status_codes::FAILED;
       res.error_stack = CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Call to remote RobotManager "
                                                                     "service failed.");
       return true;
@@ -416,7 +416,7 @@ bool RobotManager::execCb(temoto_2::RobotExecute::Request& req,
       active_robot_->execute();
       TEMOTO_DEBUG("DONE EXECUTING...");
       res.message = "Execute command sent to MoveIt";
-      res.code = rmp::status_codes::OK;
+      res.code = temoto_core::rmp::status_codes::OK;
     }
     else
     {
@@ -436,7 +436,7 @@ bool RobotManager::execCb(temoto_2::RobotExecute::Request& req,
       {
         TEMOTO_ERROR("Call to remote RobotManager service failed.");
         res.message = "Call to remote RobotManager service failed.";
-        res.code = rmp::status_codes::FAILED;
+        res.code = temoto_core::rmp::status_codes::FAILED;
       }
     }
   }
@@ -466,7 +466,7 @@ bool RobotManager::getVizInfoCb(temoto_2::RobotGetVizInfo::Request& req,
     {
       res.error_stack = CREATE_ERROR(error::Code::ROBOT_NOT_LOADED,
                                      "The requested robot '%s' is not loaded.", req.robot_name);
-      res.code == rmp::status_codes::FAILED;
+      res.code == temoto_core::rmp::status_codes::FAILED;
       return true;
     }
   }
@@ -481,11 +481,11 @@ bool RobotManager::getVizInfoCb(temoto_2::RobotGetVizInfo::Request& req,
     {
       res.error_stack =
           CREATE_ERROR(error::Code::ROBOT_NOT_LOADED, "No loaded robots found.", req.robot_name);
-      res.code == rmp::status_codes::FAILED;
+      res.code == temoto_core::rmp::status_codes::FAILED;
       return true;
     }
   }
-  res.code = rmp::status_codes::OK;
+  res.code = temoto_core::rmp::status_codes::OK;
   return true;
 }
 
@@ -512,7 +512,7 @@ bool RobotManager::setTargetCb(temoto_2::RobotSetTarget::Request& req,
     catch (temoto_core::error::ErrorStack& error_stack)
     {
       res.error_stack = FORWARD_ERROR(error_stack);
-      res.code = rmp::status_codes::FAILED;
+      res.code = temoto_core::rmp::status_codes::FAILED;
     }
   }
   else
@@ -534,7 +534,7 @@ bool RobotManager::setTargetCb(temoto_2::RobotSetTarget::Request& req,
     {
       TEMOTO_ERROR("Call to remote RobotManager service failed.");
       res.message = "Call to remote RobotManager service failed.";
-      res.code = rmp::status_codes::FAILED;
+      res.code = temoto_core::rmp::status_codes::FAILED;
     }
   }
 
@@ -550,7 +550,7 @@ bool RobotManager::setModeCb(temoto_2::RobotSetMode::Request& req,
   {
     TEMOTO_ERROR("Mode '%s' is not supported.", req.mode.c_str());
     res.message = "Mode is not supported.";
-    res.code = rmp::status_codes::FAILED;
+    res.code = temoto_core::rmp::status_codes::FAILED;
     return true;
   }
 
@@ -561,7 +561,7 @@ bool RobotManager::setModeCb(temoto_2::RobotSetMode::Request& req,
       mode_ = req.mode;
       TEMOTO_DEBUG("Robot mode set to: %s...", mode_.c_str());
       res.message = "Robot mode set to '" + mode_ + "'.";
-      res.code = rmp::status_codes::OK;
+      res.code = temoto_core::rmp::status_codes::OK;
     }
     else
     {
@@ -581,7 +581,7 @@ bool RobotManager::setModeCb(temoto_2::RobotSetMode::Request& req,
       {
         TEMOTO_ERROR("Call to remote RobotManager service failed.");
         res.message = "Call to remote RobotManager service failed.";
-        res.code = rmp::status_codes::FAILED;
+        res.code = temoto_core::rmp::status_codes::FAILED;
       }
     }
   }
@@ -660,7 +660,7 @@ void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)
   TEMOTO_DEBUG_STREAM(srv.request);
   // if any resource should fail, just unload it and try again
   // there is a chance that sensor manager gives us better sensor this time
-  // if (srv.request.status_code == rmp::status_codes::FAILED &&
+  // if (srv.request.status_code == temoto_core::rmp::status_codes::FAILED &&
   //     srv.request.resource_id == hand_srv_msg_.response.rmp.resource_id)
   // {
   //   TEMOTO_WARN("Robot manager detected a hand sensor failure. Unloading and "
@@ -679,7 +679,7 @@ void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)
   //   {
   //     resource_manager_.call<temoto_2::LoadGesture>(context_manager::srv_name::MANAGER,
   //                                                   context_manager::srv_name::GESTURE_SERVER,
-  //                                                   hand_srv_msg_, rmp::FailureBehavior::NONE);
+  //                                                   hand_srv_msg_, temoto_core::rmp::FailureBehavior::NONE);
   //     TEMOTO_DEBUG("Subscribing to '%s'", hand_srv_msg_.response.topic.c_str());
   //     target_pose_sub_ =
   //         nh_.subscribe(hand_srv_msg_.response.topic, 1, &RobotManager::targetPoseCb, this);
@@ -692,7 +692,7 @@ void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)
 
   // Check if any of the allocated robots has failed
   // Currently we simply remove the loaded robot if it failed
-  if (srv.request.status_code == rmp::status_codes::FAILED)
+  if (srv.request.status_code == temoto_core::rmp::status_codes::FAILED)
   {
     // was it a remote robot
     if (loaded_robots_.erase(srv.request.resource_id))

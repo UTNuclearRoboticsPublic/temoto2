@@ -151,14 +151,14 @@ std::vector<SensorInfoPtr> SensorSnooper::parseSensors(const YAML::Node& config)
 void SensorSnooper::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload)
 {
 
-  if (msg.action == rmp::sync_action::REQUEST_CONFIG)
+  if (msg.action == temoto_core::rmp::sync_action::REQUEST_CONFIG)
   {
     std::cout << "Received a request to advertise local sensors" << std::endl;
     advertiseLocalSensors();
     return;
   }
 
-  if (msg.action == rmp::sync_action::ADVERTISE_CONFIG)
+  if (msg.action == temoto_core::rmp::sync_action::ADVERTISE_CONFIG)
   {
     std::cout << "Received a request to add or update remote sensors" << std::endl;
 
