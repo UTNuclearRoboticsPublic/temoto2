@@ -13,7 +13,7 @@
 #include "output_manager/output_manager_services.h"
 #include "process_manager/process_manager_services.h"
 #include "context_manager/context_manager_services.h"
-#include "rmp/resource_manager.h"
+#include "temoto_core/rmp/resource_manager.h"
 
 
 //#include "temoto_2/stopAllocatedServices.h"

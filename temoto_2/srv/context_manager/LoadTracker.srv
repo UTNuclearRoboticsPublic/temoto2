@@ -16,7 +16,7 @@ diagnostic_msgs/KeyValue[] output_topics
 string pipe_id
 
 # RMP
-temoto_2/RMPRequest rmp
+temoto_core/RMPRequest rmp
 
 ---
 
@@ -28,4 +28,4 @@ diagnostic_msgs/KeyValue[] output_topics
 string pipe_id
 
 # RMP
-temoto_2/RMPResponse rmp
+temoto_core/RMPResponse rmp

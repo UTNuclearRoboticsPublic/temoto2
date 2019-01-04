@@ -10,8 +10,8 @@
 #include "context_manager/context_manager_services.h"
 #include "TTP/task_manager.h"
 
-#include "rmp/resource_manager.h"
-#include "rmp/config_synchronizer.h"
+#include "temoto_core/rmp/resource_manager.h"
+#include "temoto_core/rmp/config_synchronizer.h"
 
 #include "sensor_manager/sensor_manager_services.h"
 #include "algorithm_manager/algorithm_manager_services.h"
@@ -113,9 +113,9 @@ private:
 
   ObjectPtr findObject(std::string object_name);
 
-  void statusCb1(temoto_2::ResourceStatus& srv);
+  void statusCb1(temoto_core::ResourceStatus& srv);
 
-  void statusCb2(temoto_2::ResourceStatus& srv);
+  void statusCb2(temoto_core::ResourceStatus& srv);
 
   void addDetectionMethod(std::string detection_method);
 

@@ -1,5 +1,5 @@
 #include "ros/ros.h"
-#include "common/tools.h"
+#include "temoto_core/common/tools.h"
 #include "temoto_core/common/temoto_log_macros.h"
 #include "TTP/task_manager.h"
 #include "std_msgs/String.h"
@@ -10,7 +10,7 @@ int main(int argc, char **argv)
     std::string node_name = "temoto_agent";
 
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(node_name, "", __func__);
+    std::string prefix = temoto_core::common::generateLogPrefix(node_name, "", __func__);
 
     std::cout << "* * * * * * * * * * * * * * * * * * * * * * * * * * * * " << std::endl;
     std::cout << "*                                                     * " << std::endl;
@@ -26,11 +26,11 @@ int main(int argc, char **argv)
     ros::Publisher chatter_publisher = nh.advertise<std_msgs::String>("human_chatter", 1000);
 
     // Create a tasking core and enable the language processor
-    TTP::TaskManager task_manager(node_name, error::Subsystem::AGENT, true, "", "human_chatter");
+    TTP::TaskManager task_manager(node_name, temoto_core::error::Subsystem::AGENT, true, "", "human_chatter");
 
     // Publish a message to the tasking core
     std_msgs::String init_msg;
-    init_msg.data = common::getTemotoNamespace() + " start the terminal";
+    init_msg.data = temoto_core::common::getTemotoNamespace() + " start the terminal";
     chatter_publisher.publish(init_msg);
 
     std::cout << prefix << " Core is up and running\n\n";

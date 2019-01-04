@@ -29,7 +29,7 @@ SensorManagerServers::~SensorManagerServers()
 {
 }
 
-void SensorManagerServers::statusCb(temoto_2::ResourceStatus& srv)
+void SensorManagerServers::statusCb(temoto_core::ResourceStatus& srv)
 {
 
   TEMOTO_DEBUG("Received a status message.");
@@ -90,7 +90,7 @@ void SensorManagerServers::loadSensorCb( temoto_2::LoadSensor::Request& req
   // that originate from other namespaces
   bool prefer_remote = false;
   if (got_local_sensors && got_remote_sensors
-      && (req.rmp.temoto_namespace == common::getTemotoNamespace()))
+      && (req.rmp.temoto_namespace == temoto_core::common::getTemotoNamespace()))
   {
     if (l_sis.at(0).getReliability() < r_sis.at(0).getReliability())
     {
@@ -143,7 +143,7 @@ void SensorManagerServers::loadSensorCb( temoto_2::LoadSensor::Request& req
       }
       catch(temoto_core::error::ErrorStack& error_stack)
       {
-        if (error_stack.front().code != static_cast<int>(error::Code::SERVICE_REQ_FAIL))
+        if (error_stack.front().code != static_cast<int>(temoto_core::error::Code::SERVICE_REQ_FAIL))
         {
           si.adjustReliability(0.0);
           sir_->updateLocalSensor(si);
@@ -194,7 +194,7 @@ void SensorManagerServers::loadSensorCb( temoto_2::LoadSensor::Request& req
   else
   {
     // no suitable local nor remote sensor was found
-    throw CREATE_ERROR(error::Code::SENSOR_NOT_FOUND, "SensorManagerServers did not find a suitable sensor.");
+    throw CREATE_ERROR(temoto_core::error::Code::SENSOR_NOT_FOUND, "SensorManagerServers did not find a suitable sensor.");
   }
 }
 
@@ -222,7 +222,7 @@ void SensorManagerServers::processTopics( std::vector<diagnostic_msgs::KeyValue>
   isLaunchFile = std::regex_match(sensor_info.getExecutable(), rx);
 
   // Work with input or output topics
-  std::vector<StringPair> sensor_info_topics;
+  std::vector<temoto_core::StringPair> sensor_info_topics;
 
   if (direction == "in")
   {
@@ -240,7 +240,7 @@ void SensorManagerServers::processTopics( std::vector<diagnostic_msgs::KeyValue>
     {
       diagnostic_msgs::KeyValue topic_msg;
       topic_msg.key = output_topic.first;
-      topic_msg.value = common::getAbsolutePath(output_topic.second);
+      topic_msg.value = temoto_core::common::getAbsolutePath(output_topic.second);
       res_topics.push_back(topic_msg);
     }
     return;
@@ -265,7 +265,7 @@ void SensorManagerServers::processTopics( std::vector<diagnostic_msgs::KeyValue>
 
     if (req_topic.value != "")
     {
-      res_topic.value = common::getAbsolutePath(req_topic.value);
+      res_topic.value = temoto_core::common::getAbsolutePath(req_topic.value);
 
       // Remap depending wether it is a launch file or excutable
       std::string remap_arg;
@@ -283,7 +283,7 @@ void SensorManagerServers::processTopics( std::vector<diagnostic_msgs::KeyValue>
     }
     else
     {
-      res_topic.value = common::getAbsolutePath(default_topic);
+      res_topic.value = temoto_core::common::getAbsolutePath(default_topic);
     }
 
     // Add the topic to the response message

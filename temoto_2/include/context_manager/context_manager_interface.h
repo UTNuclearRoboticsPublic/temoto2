@@ -12,7 +12,7 @@
 #include "human_msgs/Hands.h"
 
 #include "context_manager/context_manager_services.h"
-#include "rmp/resource_manager.h"
+#include "temoto_core/rmp/resource_manager.h"
 #include <vector>
 
 namespace context_manager
@@ -206,13 +206,13 @@ public:
     {
       if (object.name == "")
       {
-        throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL , "The object is missing a name");
+        throw CREATE_ERROR(temoto_core::error::Code::SERVICE_REQ_FAIL , "The object is missing a name");
       }
 
       // Are the detection methods specified
       if (object.detection_methods.empty())
       {
-        throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Detection method unspecified");
+        throw CREATE_ERROR(temoto_core::error::Code::SERVICE_REQ_FAIL, "Detection method unspecified");
       }
     }
 
@@ -222,7 +222,7 @@ public:
     // Call the server
     if (!add_object_client_.call(add_obj_srvmsg))
     {
-       throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call the server");
+       throw CREATE_ERROR(temoto_core::error::Code::SERVICE_REQ_FAIL, "Failed to call the server");
     }
 
     // Check the response code
@@ -273,7 +273,7 @@ public:
     }
   }
 
-  void statusInfoCb(temoto_2::ResourceStatus& srv)
+  void statusInfoCb(temoto_core::ResourceStatus& srv)
   {
     // Validate the interface
     try
@@ -385,7 +385,7 @@ public:
           tracker_it != allocated_trackers_.end() &&
           track_object_it != allocated_track_objects_.end())
       {
-        throw CREATE_ERROR(error::Code::RESOURCE_NOT_FOUND, "Got resource_id that is not registered in this interface.");
+        throw CREATE_ERROR(temoto_core::error::Code::RESOURCE_NOT_FOUND, "Got resource_id that is not registered in this interface.");
       }
     }
   }
@@ -427,7 +427,7 @@ private:
   {
     if(!resource_manager_)
     {
-      throw CREATE_ERROR(error::Code::UNINITIALIZED, "Interface is not initalized.");
+      throw CREATE_ERROR(temoto_core::error::Code::UNINITIALIZED, "Interface is not initalized.");
     }
   }
 };

@@ -110,7 +110,7 @@ private:
 //    // parseAlgorithms
 //    AlgorithmInfoPtrs parseAlgorithms(const YAML::Node& config)
 //    {
-//        std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+//        std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
 //        std::vector<AlgorithmInfoPtr> algorithms;
 
 //        //  TEMOTO_INFO("%s CONFIG NODE:%d %s", prefix.c_str(), config.Type(), Dump(config).c_str());

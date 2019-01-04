@@ -1,5 +1,5 @@
 # Remote Management Request
-temoto_2/RMPRequest rmp
+temoto_core/RMPRequest rmp
 
 # Type of the requested sensor (required).
 string sensor_type
@@ -27,7 +27,7 @@ diagnostic_msgs/KeyValue[] input_topics
 ---
 
 # Remote Management Response
-temoto_2/RMPResponse rmp
+temoto_core/RMPResponse rmp
 
 # name of the package
 string package_name

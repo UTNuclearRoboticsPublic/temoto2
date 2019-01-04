@@ -193,7 +193,7 @@ bool AlgorithmInfoRegistry::findAlgorithms( temoto_2::LoadAlgorithm::Request& re
                                 return true;
 
                               // Make a copy of the input topics
-                              std::vector<StringPair> output_topics_copy = s.getOutputTopics();
+                              std::vector<temoto_core::StringPair> output_topics_copy = s.getOutputTopics();
 
                               // Start looking for the requested topic types
                               for (auto& topic : req.output_topics)

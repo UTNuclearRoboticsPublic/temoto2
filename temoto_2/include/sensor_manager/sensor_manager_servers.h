@@ -5,7 +5,7 @@
 #include "sensor_manager/sensor_info_registry.h"
 #include "sensor_manager/sensor_manager_services.h"
 #include "process_manager/process_manager_services.h"
-#include "rmp/resource_manager.h"
+#include "temoto_core/rmp/resource_manager.h"
 
 #include "std_msgs/String.h"
 #include "temoto_core/common/temoto_id.h"
@@ -64,7 +64,7 @@ private:
    * @brief Called when sensor status update information is received.
    * @param srv
    */
-  void statusCb(temoto_2::ResourceStatus& srv);
+  void statusCb(temoto_core::ResourceStatus& srv);
 
   /**
    * @brief A function that helps to manage sensor topic related information.

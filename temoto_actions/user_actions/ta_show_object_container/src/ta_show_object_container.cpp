@@ -134,7 +134,7 @@ void startInterface_0()
   // Initialize the output manager interface
   omi_.initialize(this);
 
-  std::string marker_topic = common::getAbsolutePath(output_manager::generic_topics::MARKER);
+  std::string marker_topic = temoto_core::common::getAbsolutePath(output_manager::generic_topics::MARKER);
 
   // Subscribe to the object container topic
   object_subscriber_ = nh_.subscribe(what_0_data_0_in, 10, &TaShowObjectContainer::objectContainerCb, this);

@@ -3,8 +3,8 @@
 
 #include "temoto_core/common/base_subsystem.h"
 #include "algorithm_manager/algorithm_info_registry.h"
-#include "rmp/config_synchronizer.h"
-#include "temoto_2/ConfigSync.h"
+#include "temoto_core/rmp/config_synchronizer.h"
+#include "temoto_core/ConfigSync.h"
 #include "TTP/task_manager.h"
 
 #include "ros/ros.h"

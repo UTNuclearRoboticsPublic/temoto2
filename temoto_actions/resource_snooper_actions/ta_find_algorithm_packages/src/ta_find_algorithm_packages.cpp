@@ -179,13 +179,13 @@ std::vector<std::string> findAlgorithmDescFiles( const boost::filesystem::path& 
   catch (std::exception& e)
   {
     // Rethrow the exception
-    throw CREATE_ERROR(error::Code::FIND_TASK_FAIL, e.what());
+    throw CREATE_ERROR(temoto_core::error::Code::FIND_TASK_FAIL, e.what());
   }
 
   catch(...)
   {
     // Rethrow the exception
-    throw CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Received an unhandled exception");
+    throw CREATE_ERROR(temoto_core::error::Code::UNHANDLED_EXCEPTION, "Received an unhandled exception");
   }
 }
 

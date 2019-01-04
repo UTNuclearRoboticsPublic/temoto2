@@ -179,13 +179,13 @@ std::vector<std::string> findSensorDescFiles( const boost::filesystem::path& bas
   catch (std::exception& e)
   {
     // Rethrow the exception
-    throw CREATE_ERROR(error::Code::FIND_TASK_FAIL, e.what());
+    throw CREATE_ERROR(temoto_core::error::Code::FIND_TASK_FAIL, e.what());
   }
 
   catch(...)
   {
     // Rethrow the exception
-    throw CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Received an unhandled exception");
+    throw CREATE_ERROR(temoto_core::error::Code::UNHANDLED_EXCEPTION, "Received an unhandled exception");
   }
 }
 

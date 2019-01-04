@@ -3,12 +3,12 @@
 namespace output_manager
 {
 RvizManager::RvizManager()
-  : temoto_core::BaseSubsystem("output_manager", error::Subsystem::OUTPUT_MANAGER, __func__)
+  : temoto_core::BaseSubsystem("output_manager", temoto_core::error::Subsystem::OUTPUT_MANAGER, __func__)
   , resource_manager_(srv_name::RVIZ_MANAGER, this)
 {
   class_name_ = __func__;
   subsystem_name_ = "rviz_manager";
-  subsystem_code_ = error::Subsystem::SENSOR_MANAGER;
+  subsystem_code_ = temoto_core::error::Subsystem::SENSOR_MANAGER;
   log_group_ = "rviz_manager";
   error_handler_ = temoto_core::error::ErrorHandler(subsystem_code_, log_group_);
 
@@ -57,7 +57,7 @@ RvizManager::RvizManager()
 void RvizManager::runRviz()
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
   // Create the message and fill out the request part
   temoto_2::LoadProcess msg;
@@ -91,18 +91,18 @@ void RvizManager::runRviz()
 
       if (ros::Time::now() >= timeout)
       {
-        throw CREATE_ERROR(error::Code::RVIZ_OPEN_FAIL, "Failed to launch rviz plugin manager: Timeout reached.");
+        throw CREATE_ERROR(temoto_core::error::Code::RVIZ_OPEN_FAIL, "Failed to launch rviz plugin manager: Timeout reached.");
       }
       TEMOTO_DEBUG("%s All rviz_plugin_manager services connected.", prefix.c_str());
     }
     else
     {
-      throw CREATE_ERROR(error::Code::RVIZ_OPEN_FAIL, "Failed to launch rviz: ");
+      throw CREATE_ERROR(temoto_core::error::Code::RVIZ_OPEN_FAIL, "Failed to launch rviz: ");
     }
   }
   catch (...)
   {
-    throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to start RViz");
+    throw CREATE_ERROR(temoto_core::error::Code::SERVICE_REQ_FAIL, "Failed to start RViz");
   }
 
 }
@@ -114,7 +114,7 @@ void RvizManager::runRviz()
 bool RvizManager::loadPluginRequest(rviz_plugin_manager::PluginLoad& load_plugin_srv)
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
   // Send the plugin request
   if (load_plugin_client_.call(load_plugin_srv))
@@ -127,12 +127,12 @@ bool RvizManager::loadPluginRequest(rviz_plugin_manager::PluginLoad& load_plugin
     }
     else
     {
-      throw CREATE_ERROR(error::Code::PLUGIN_LOAD_FAIL, "Failed to load rviz plugin: " + load_plugin_srv.response.message);
+      throw CREATE_ERROR(temoto_core::error::Code::PLUGIN_LOAD_FAIL, "Failed to load rviz plugin: " + load_plugin_srv.response.message);
     }
   }
   else
   {
-    throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service /rviz_plugin_load");
+    throw CREATE_ERROR(temoto_core::error::Code::SERVICE_REQ_FAIL, "Failed to call service /rviz_plugin_load");
   }
 }
 
@@ -143,7 +143,7 @@ bool RvizManager::loadPluginRequest(rviz_plugin_manager::PluginLoad& load_plugin
 bool RvizManager::unloadPluginRequest(rviz_plugin_manager::PluginUnload& unload_plugin_srv)
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
   // Send the plugin request
   if (unload_plugin_client_.call(unload_plugin_srv))
@@ -156,12 +156,12 @@ bool RvizManager::unloadPluginRequest(rviz_plugin_manager::PluginUnload& unload_
     }
     else
     {
-      throw CREATE_ERROR(error::Code::PLUGIN_UNLOAD_FAIL, "Failed to unload rviz plugin: " + unload_plugin_srv.response.message);
+      throw CREATE_ERROR(temoto_core::error::Code::PLUGIN_UNLOAD_FAIL, "Failed to unload rviz plugin: " + unload_plugin_srv.response.message);
     }
   }
   else
   {
-    throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service /rviz_plugin_unload");
+    throw CREATE_ERROR(temoto_core::error::Code::SERVICE_REQ_FAIL, "Failed to call service /rviz_plugin_unload");
   }
 }
 
@@ -173,7 +173,7 @@ bool RvizManager::getPluginConfigRequest(
     rviz_plugin_manager::PluginGetConfig& get_plugin_config_srv)
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
   // Send the plugin request
   if (get_plugin_config_client_.call(get_plugin_config_srv))
@@ -186,14 +186,14 @@ bool RvizManager::getPluginConfigRequest(
     }
     else
     {
-      throw CREATE_ERROR(error::Code::PLUGIN_GET_CONFIG_FAIL,
+      throw CREATE_ERROR(temoto_core::error::Code::PLUGIN_GET_CONFIG_FAIL,
                          "Failed to get rviz plugin config: " +
                              get_plugin_config_srv.response.message);
     }
   }
   else
   {
-    throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service /rviz_plugin_get_config");
+    throw CREATE_ERROR(temoto_core::error::Code::SERVICE_REQ_FAIL, "Failed to call service /rviz_plugin_get_config");
   }
 }
 
@@ -205,7 +205,7 @@ bool RvizManager::setPluginConfigRequest(
     rviz_plugin_manager::PluginSetConfig& set_plugin_config_srv)
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
   // Send the plugin request
   if (set_plugin_config_client_.call(set_plugin_config_srv))
@@ -218,14 +218,14 @@ bool RvizManager::setPluginConfigRequest(
     }
     else
     {
-      throw CREATE_ERROR(error::Code::PLUGIN_SET_CONFIG_FAIL,
+      throw CREATE_ERROR(temoto_core::error::Code::PLUGIN_SET_CONFIG_FAIL,
                          "Failed to set rviz plugin config: " +
                              set_plugin_config_srv.response.message);
     }
   }
   else
   {
-    throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service /rviz_plugin_set_config");
+    throw CREATE_ERROR(temoto_core::error::Code::SERVICE_REQ_FAIL, "Failed to call service /rviz_plugin_set_config");
   }
 }
 
@@ -237,7 +237,7 @@ void RvizManager::LoadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
                                    temoto_2::LoadRvizPlugin::Response& res)
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
   TEMOTO_INFO("%s Received a new %s request", prefix.c_str(), srv_name::RVIZ_SERVER.c_str());
   TEMOTO_INFO_STREAM(req);
@@ -295,7 +295,7 @@ void RvizManager::LoadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
   }
   else
   {
-    throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Did not find any appropriate display plugins");
+    throw CREATE_ERROR(temoto_core::error::Code::SERVICE_REQ_FAIL, "Did not find any appropriate display plugins");
   }
 }
 
@@ -307,7 +307,7 @@ void RvizManager::unloadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
                                      temoto_2::LoadRvizPlugin::Response& res)
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
   TEMOTO_INFO("%s Received an 'unload' request to ID: '%ld'.", prefix.c_str(), res.rmp.resource_id);
 
@@ -337,7 +337,7 @@ void RvizManager::unloadRvizPluginCb(temoto_2::LoadRvizPlugin::Request& req,
   }
   else
   {
-    throw CREATE_ERROR(error::Code::PLUGIN_UNLOAD_FAIL, "No allocated resources were found");
+    throw CREATE_ERROR(temoto_core::error::Code::PLUGIN_UNLOAD_FAIL, "No allocated resources were found");
   }
 }
 

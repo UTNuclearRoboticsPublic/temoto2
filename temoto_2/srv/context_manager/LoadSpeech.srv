@@ -1,5 +1,5 @@
 # Remote Management Request
-temoto_2/RMPRequest rmp
+temoto_core/RMPRequest rmp
 
 # Field that contains the speech specifiers
 temoto_2/SpeechSpecifier[] speech_specifiers
@@ -7,7 +7,7 @@ temoto_2/SpeechSpecifier[] speech_specifiers
 ---
 
 # Remote Management Response
-temoto_2/RMPResponse rmp
+temoto_core/RMPResponse rmp
 
 # name of the package
 string package_name

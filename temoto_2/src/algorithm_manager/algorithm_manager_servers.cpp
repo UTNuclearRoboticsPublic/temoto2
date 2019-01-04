@@ -29,7 +29,7 @@ AlgorithmManagerServers::~AlgorithmManagerServers()
 {
 }
 
-void AlgorithmManagerServers::statusCb(temoto_2::ResourceStatus& srv)
+void AlgorithmManagerServers::statusCb(temoto_core::ResourceStatus& srv)
 {
 
   TEMOTO_DEBUG("Received a status message.");
@@ -108,7 +108,7 @@ void AlgorithmManagerServers::loadAlgorithmCb( temoto_2::LoadAlgorithm::Request&
       }
       catch(temoto_core::error::ErrorStack& error_stack)
       {
-        if (error_stack.front().code != static_cast<int>(error::Code::SERVICE_REQ_FAIL))
+        if (error_stack.front().code != static_cast<int>(temoto_core::error::Code::SERVICE_REQ_FAIL))
         {
           ai.adjustReliability(0.0);
           air_->updateLocalAlgorithm(ai);
@@ -164,7 +164,7 @@ void AlgorithmManagerServers::loadAlgorithmCb( temoto_2::LoadAlgorithm::Request&
   else
   {
     // no suitable local nor remote algorithm was found
-    throw CREATE_ERROR(error::Code::ALGORITHM_NOT_FOUND, "Did not find a suitable algorithm.");
+    throw CREATE_ERROR(temoto_core::error::Code::ALGORITHM_NOT_FOUND, "Did not find a suitable algorithm.");
   }
 }
 
@@ -198,7 +198,7 @@ void AlgorithmManagerServers::processTopics( std::vector<diagnostic_msgs::KeyVal
     {
       diagnostic_msgs::KeyValue topic_msg;
       topic_msg.key = output_topic.first;
-      topic_msg.value = common::getAbsolutePath(output_topic.second);
+      topic_msg.value = temoto_core::common::getAbsolutePath(output_topic.second);
       res_topics.push_back(topic_msg);
     }
     return;
@@ -223,7 +223,7 @@ void AlgorithmManagerServers::processTopics( std::vector<diagnostic_msgs::KeyVal
 
     if (req_topic.value != "")
     {
-      res_topic.value = common::getAbsolutePath(req_topic.value);
+      res_topic.value = temoto_core::common::getAbsolutePath(req_topic.value);
 
       // Remap depending wether it is a launch file or excutable
       std::string remap_arg;
@@ -241,7 +241,7 @@ void AlgorithmManagerServers::processTopics( std::vector<diagnostic_msgs::KeyVal
     }
     else
     {
-      res_topic.value = common::getAbsolutePath(default_topic);
+      res_topic.value = temoto_core::common::getAbsolutePath(default_topic);
     }
 
     // Add the topic to the response message

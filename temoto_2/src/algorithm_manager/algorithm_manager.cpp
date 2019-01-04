@@ -23,7 +23,7 @@ namespace algorithm_manager
  * Constructor
  */
 AlgorithmManager::AlgorithmManager()
-  : temoto_core::BaseSubsystem("algorithm_manager", error::Subsystem::ALGORITHM_MANAGER, __func__)
+  : temoto_core::BaseSubsystem("algorithm_manager", temoto_core::error::Subsystem::ALGORITHM_MANAGER, __func__)
   , resource_manager_(srv_name::MANAGER, this)
   , config_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &AlgorithmManager::syncCb, this)
 {
@@ -43,7 +43,7 @@ AlgorithmManager::AlgorithmManager()
 
   ///////////////////  TODO:  This parsing has to be done per package   //////////////////
   std::string yaml_filename = ros::package::getPath(ROS_PACKAGE_NAME) + "/conf/" +
-                              common::getTemotoNamespace() + ".yaml";
+                              temoto_core::common::getTemotoNamespace() + ".yaml";
 
   std::ifstream in(yaml_filename);
   YAML::Node config = YAML::Load(in);
@@ -69,7 +69,7 @@ AlgorithmManager::AlgorithmManager()
 /*
  * Status callback
  */
-void AlgorithmManager::statusCb(temoto_2::ResourceStatus& srv)
+void AlgorithmManager::statusCb(temoto_core::ResourceStatus& srv)
 {
   TEMOTO_DEBUG("Received a status message");
 
@@ -162,13 +162,13 @@ void AlgorithmManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType
   // Catch yaml errors
   catch (YAML::InvalidNode e)
   {
-    throw CREATE_ERROR(error::Code::YAML_ERROR, e.what());
+    throw CREATE_ERROR(temoto_core::error::Code::YAML_ERROR, e.what());
   }
 
   // Catch all other errors
   catch(...)
   {
-    throw CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Received an unhandled exception.");
+    throw CREATE_ERROR(temoto_core::error::Code::UNHANDLED_EXCEPTION, "Received an unhandled exception.");
   }
 }
 
@@ -255,7 +255,7 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
     }
     catch(temoto_core::error::ErrorStack& error_stack)
     {
-      if (error_stack.front().code != static_cast<int>(error::Code::SERVICE_REQ_FAIL))
+      if (error_stack.front().code != static_cast<int>(temoto_core::error::Code::SERVICE_REQ_FAIL))
       {
         algorithm_ptr->adjustReliability(0.0);
         advertiseAlgorithm(algorithm_ptr); // Let other managers know about the updated reliability
@@ -325,7 +325,7 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
   }
 
   // No suitable local nor remote algorithm was found
-  throw CREATE_ERROR(error::Code::ALGORITHM_NOT_FOUND, "AlgorithmManager did not find a suitable algorithm.");
+  throw CREATE_ERROR(temoto_core::error::Code::ALGORITHM_NOT_FOUND, "AlgorithmManager did not find a suitable algorithm.");
 }
 
 /*
@@ -397,7 +397,7 @@ AlgorithmInfoPtr AlgorithmManager::findAlgorithm(temoto_2::LoadAlgorithm::Reques
                                return true;
 
                              // Make a copy of the input topics
-                             std::vector<StringPair> input_topics_copy = s->getTopicsIn();
+                             std::vector<temoto_core::StringPair> input_topics_copy = s->getTopicsIn();
 
                              // Start looking for the requested topic types
                              for (auto& topic : req.input_topics)
@@ -435,7 +435,7 @@ AlgorithmInfoPtr AlgorithmManager::findAlgorithm(temoto_2::LoadAlgorithm::Reques
                                 return true;
 
                               // Make a copy of the input topics
-                              std::vector<StringPair> output_topics_copy = s->getTopicsOut();
+                              std::vector<temoto_core::StringPair> output_topics_copy = s->getTopicsOut();
 
                               // Start looking for the requested topic types
                               for (auto& topic : req.output_topics)
@@ -585,7 +585,7 @@ void AlgorithmManager::remapArguments(std::vector<diagnostic_msgs::KeyValue>& re
 
     if (req_topic.value != "")
     {
-      res_input_topic.value = common::getAbsolutePath(req_topic.value);
+      res_input_topic.value = temoto_core::common::getAbsolutePath(req_topic.value);
 
       // Remap depending wether it is a launch file or excutable
       std::string remap_arg;
@@ -603,7 +603,7 @@ void AlgorithmManager::remapArguments(std::vector<diagnostic_msgs::KeyValue>& re
     }
     else
     {
-      res_input_topic.value = common::getAbsolutePath(default_topic);
+      res_input_topic.value = temoto_core::common::getAbsolutePath(default_topic);
     }
 
     // Add the topic to the response message

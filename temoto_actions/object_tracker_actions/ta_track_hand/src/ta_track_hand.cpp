@@ -152,7 +152,7 @@ void startInterface_0()
     TEMOTO_INFO_STREAM("Subscribed to hand data topic: " << what_1_data_0_in);
 
   }
-  catch( error::ErrorStack& error_stack )
+  catch( temoto_core::error::ErrorStack& error_stack )
   {
     SEND_ERROR(error_stack);
   }  

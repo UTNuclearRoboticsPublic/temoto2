@@ -17,8 +17,8 @@
 #include <ros/serialization.h>
 #include "std_msgs/String.h"
 #include "std_msgs/UInt8.h"
-#include "temoto_2/RMPResponse.h"
-#include "temoto_2/ConfigSync.h"
+#include "temoto_core/RMPResponse.h"
+#include "temoto_core/ConfigSync.h"
 
 
 namespace ser = ros::serialization;
@@ -32,11 +32,11 @@ public:
 
     AlgorithmTest()
     {
-        std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+        std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
         // Read the algorithms for this manager.
         std::string yaml_filename = ros::package::getPath(ROS_PACKAGE_NAME) + "/conf/" +
-                                    common::getTemotoNamespace() + ".yaml";
+                                    temoto_core::common::getTemotoNamespace() + ".yaml";
         std::ifstream in(yaml_filename);
         YAML::Node config = YAML::Load(in);
 
@@ -82,7 +82,7 @@ private:
     // parseAlgorithms
     AlgorithmInfoPtrs parseAlgorithms(const YAML::Node& config)
     {
-        std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+        std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
         std::vector<AlgorithmInfoPtr> algorithms;
 
         //  TEMOTO_INFO("%s CONFIG NODE:%d %s", prefix.c_str(), config.Type(), Dump(config).c_str());

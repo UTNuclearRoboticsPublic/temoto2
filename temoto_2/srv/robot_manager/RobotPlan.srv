@@ -6,4 +6,4 @@ geometry_msgs/PoseStamped target_pose
 
 int64 code
 string message
-temoto_2/Error[] error_stack
+temoto_core/Error[] error_stack

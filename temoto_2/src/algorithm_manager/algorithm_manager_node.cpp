@@ -19,7 +19,7 @@ public:
    * @brief Constructor
    */
   AlgorithmManager()
-  : temoto_core::BaseSubsystem("algorithm_manager", error::Subsystem::SENSOR_MANAGER, __func__)
+  : temoto_core::BaseSubsystem("algorithm_manager", temoto_core::error::Subsystem::SENSOR_MANAGER, __func__)
   , as_(this, &air_)
   , ams_(this, &air_)
   {

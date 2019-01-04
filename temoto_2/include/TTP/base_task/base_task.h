@@ -10,7 +10,7 @@
 #include "ros/ros.h"
 #include "temoto_core/common/base_subsystem.h"
 #include "temoto_core/common/temoto_id.h"
-#include "common/tools.h"
+#include "temoto_core/common/tools.h"
 #include "TTP/task_descriptor.h"
 #include "temoto_2/StopTaskMsg.h"
 #include <boost/any.hpp>
@@ -20,7 +20,7 @@
 /*
  * basic log management, everything put under temoto_2.tasks for easier level control
  */
-#define TASK_CONSOLE_PREFIX ROSCONSOLE_ROOT_LOGGER_NAME "."+::common::getTemotoNamespace()+".tasks." + this->getPackageName()
+#define TASK_CONSOLE_PREFIX ROSCONSOLE_ROOT_LOGGER_NAME "."+::temoto_core::common::getTemotoNamespace()+".tasks." + this->getPackageName()
 #define TASK_DEBUG(...) ROS_LOG(::ros::console::levels::Debug, TASK_CONSOLE_PREFIX, __VA_ARGS__)
 #define TASK_INFO(...) ROS_LOG(::ros::console::levels::Info, TASK_CONSOLE_PREFIX, __VA_ARGS__)
 #define TASK_WARN(...) ROS_LOG(::ros::console::levels::Warn, TASK_CONSOLE_PREFIX, __VA_ARGS__)
@@ -68,11 +68,11 @@ public:
     }
     catch(std::exception& e)
     {
-      SEND_ERROR(CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Caught unhandled std exception: " + std::string(e.what())));
+      SEND_ERROR(CREATE_ERROR(temoto_core::error::Code::UNHANDLED_EXCEPTION, "Caught unhandled std exception: " + std::string(e.what())));
     }
     catch(...)
     {
-      SEND_ERROR(CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Caught unhandled exception."));
+      SEND_ERROR(CREATE_ERROR(temoto_core::error::Code::UNHANDLED_EXCEPTION, "Caught unhandled exception."));
     }
   }
 

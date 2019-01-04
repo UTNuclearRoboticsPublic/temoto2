@@ -2,7 +2,7 @@
 #define SENSOR_MANAGER_SERVICES_H
 
 #include <string>
-#include "rmp/resource_manager_services.h"
+#include "temoto_core/rmp/resource_manager_services.h"
 #include "temoto_2/ListDevices.h"
 #include "temoto_2/LoadSensor.h"
 

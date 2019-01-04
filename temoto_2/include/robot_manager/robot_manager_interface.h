@@ -6,7 +6,7 @@
 #include "temoto_core/common/console_colors.h"
 
 #include "robot_manager/robot_manager_services.h"
-#include "rmp/resource_manager.h"
+#include "temoto_core/rmp/resource_manager.h"
 
 #include <vector>
 #include <string>
@@ -29,7 +29,7 @@ public:
     log_group_ = "interfaces." + task->getPackageName();
     
     name_ = task->getName() + "/robot_manager_interface";
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
     // create resource manager
     resource_manager_ = std::unique_ptr<temoto_core::rmp::ResourceManager<RobotManagerInterface>>(
@@ -54,7 +54,7 @@ public:
 
   void loadRobot(std::string robot_name = "")
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
     validateInterface(prefix);
 
     // Contact the "Context Manager", pass the gesture specifier and if successful, get
@@ -74,7 +74,7 @@ public:
 
   void plan(std::string planning_group = "")
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
     temoto_2::RobotPlan msg;
     msg.request.use_default_target = true;
@@ -82,7 +82,7 @@ public:
 
     if (!client_plan_.call(msg))
     {
-      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
+      throw CREATE_ERROR(temoto_core::error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
     }
     else if (msg.response.code == temoto_core::rmp::status_codes::FAILED)
     {
@@ -92,7 +92,7 @@ public:
 
   void plan(const geometry_msgs::PoseStamped& pose, std::string planning_group = "")
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
     TEMOTO_DEBUG("%s", prefix.c_str());
 
     temoto_2::RobotPlan msg;
@@ -101,7 +101,7 @@ public:
     msg.request.planning_group = planning_group;
     if (!client_plan_.call(msg))
     {
-      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
+      throw CREATE_ERROR(temoto_core::error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
     }
     else if (msg.response.code == temoto_core::rmp::status_codes::FAILED)
     {
@@ -111,13 +111,13 @@ public:
 
   void execute()
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
     TEMOTO_DEBUG("%s", prefix.c_str());
 
     temoto_2::RobotExecute msg;
     if (!client_exec_.call(msg))
     {
-      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
+      throw CREATE_ERROR(temoto_core::error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
     }
     else if (msg.response.code == temoto_core::rmp::status_codes::FAILED)
     {
@@ -127,13 +127,13 @@ public:
 
   std::string getMoveitRvizConfig()
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
     TEMOTO_DEBUG("%s", prefix.c_str());
 
     temoto_2::RobotGetVizInfo msg;
     if (!client_viz_info_.call(msg))
     {
-      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
+      throw CREATE_ERROR(temoto_core::error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
     }
     else if (msg.response.code == temoto_core::rmp::status_codes::FAILED)
     {
@@ -144,14 +144,14 @@ public:
 
   void setTarget(std::string object_name)
   {
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
     TEMOTO_DEBUG("%s", prefix.c_str());
 
     temoto_2::RobotSetTarget msg;
     msg.request.object_name = object_name;
     if (!client_set_target_.call(msg))
     {
-      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
+      throw CREATE_ERROR(temoto_core::error::Code::SERVICE_REQ_FAIL, "Service call returned false.");
     }
     else if (msg.response.code == temoto_core::rmp::status_codes::FAILED)
     {
@@ -167,7 +167,7 @@ public:
   {
     if (!resource_manager_)
     {
-      throw CREATE_ERROR(error::Code::UNINITIALIZED, "Interface is not initalized.");
+      throw CREATE_ERROR(temoto_core::error::Code::UNINITIALIZED, "Interface is not initalized.");
     }
   }
 

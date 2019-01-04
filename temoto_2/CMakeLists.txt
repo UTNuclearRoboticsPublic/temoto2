@@ -122,7 +122,7 @@ add_executable(context_manager
 )
 
 add_dependencies(context_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(context_manager ${catkin_LIBRARIES} yaml-cpp ttp temoto_core_lib)
+target_link_libraries(context_manager ${catkin_LIBRARIES} yaml-cpp ttp temoto_core_components)
 
 # # # # # # # # # # # #
 # SENSOR MANAGER
@@ -135,7 +135,7 @@ add_executable(sensor_manager
   src/sensor_manager/sensor_info.cpp
 )
 add_dependencies(sensor_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(sensor_manager ${catkin_LIBRARIES} yaml-cpp ttp temoto_core_lib)
+target_link_libraries(sensor_manager ${catkin_LIBRARIES} yaml-cpp ttp temoto_core_components)
 
 # # # # # # # # # # # #
 # ALGORITHM MANAGER
@@ -149,7 +149,7 @@ add_executable(algorithm_manager
   src/algorithm_manager/algorithm_info.cpp
 )
 add_dependencies(algorithm_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(algorithm_manager ${catkin_LIBRARIES} yaml-cpp ttp temoto_core_lib)
+target_link_libraries(algorithm_manager ${catkin_LIBRARIES} yaml-cpp ttp temoto_core_components)
 
 # # # # # # # # # # # #
 # OUTPUT MANAGER
@@ -160,7 +160,7 @@ add_executable(output_manager
   src/output_manager/rviz_manager/plugin_info.cpp
 )
 add_dependencies(output_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(output_manager ${catkin_LIBRARIES} temoto_core_lib)
+target_link_libraries(output_manager ${catkin_LIBRARIES} temoto_core_components)
 
 # # # # # # # # # # # #
 # TTP
@@ -181,14 +181,14 @@ add_dependencies(ttp ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGE
 target_link_libraries(ttp ${catkin_LIBRARIES}
                           ${TinyXML_LIBRARIES}
                           ${TBB_LIBRARIES}
-                          meta-classify meta-sequence-analyzers meta-parser-analyzers temoto_core_lib)
+                          meta-classify meta-sequence-analyzers meta-parser-analyzers temoto_core_components)
 
 # # # # # # # # # # # #
 # TEMOTO AGENT
 # # # # # # # # # # # #
 add_executable(temoto_agent src/core/temoto_agent.cpp)
 add_dependencies(temoto_agent ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(temoto_agent ttp temoto_core_lib)
+target_link_libraries(temoto_agent ttp temoto_core_components)
 
 # # # # # # # # # # # #
 # PROCESS MANAGER
@@ -198,7 +198,7 @@ add_executable(process_manager
   src/process_manager/process_manager_node.cpp
 )
 add_dependencies(process_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(process_manager ${catkin_LIBRARIES} temoto_core_lib)
+target_link_libraries(process_manager ${catkin_LIBRARIES} temoto_core_components)
 
 
 # # # # # # # # # # # #
@@ -213,7 +213,7 @@ add_executable(robot_manager
 )
 
 add_dependencies(robot_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(robot_manager ${catkin_LIBRARIES} yaml-cpp temoto_core_lib)
+target_link_libraries(robot_manager ${catkin_LIBRARIES} yaml-cpp temoto_core_components)
 
 
 # # # # # # # # # # # #
@@ -221,7 +221,7 @@ target_link_libraries(robot_manager ${catkin_LIBRARIES} yaml-cpp temoto_core_lib
 # # # # # # # # # # # #
 add_executable(language_input src/tools/language_input.cpp)
 add_dependencies(language_input ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(language_input ${catkin_LIBRARIES} temoto_core_lib)
+target_link_libraries(language_input ${catkin_LIBRARIES} temoto_core_components)
 
 add_executable(ai_package_generator src/tools/ai_package_generator.cpp 
                                     src/common/semantic_frame_legacy.cpp)

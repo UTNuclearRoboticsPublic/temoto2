@@ -25,7 +25,7 @@ ProcessManager::ProcessManager() : resource_manager_(srv_name::MANAGER, this)
 {
   class_name_ = __func__;
   subsystem_name_ = "process_manager";
-  subsystem_code_ = error::Subsystem::PROCESS_MANAGER;
+  subsystem_code_ = temoto_core::error::Subsystem::PROCESS_MANAGER;
   log_group_ = "process_manager";
   error_handler_ = temoto_core::error::ErrorHandler(subsystem_code_, log_group_);
 
@@ -56,7 +56,7 @@ void ProcessManager::update(const ros::TimerEvent&)
     {
       if (srv.request.ros_namespace != "")
       {
-        cmd += "ROS_NAMESPACE=" + common::getAbsolutePath(srv.request.ros_namespace) + " ";
+        cmd += "ROS_NAMESPACE=" + temoto_core::common::getAbsolutePath(srv.request.ros_namespace) + " ";
       }
       std::regex rx(".*\\.launch$");
       cmd += (std::regex_match(executable, rx)) ? "roslaunch " : "rosrun ";
@@ -116,7 +116,7 @@ void ProcessManager::update(const ros::TimerEvent&)
 
   // Check the status of all running processes
   // cache all to statuses before actual sending, so we can release the running_mutex.
-  std::vector<temoto_2::ResourceStatus> statuses_to_send; 
+  std::vector<temoto_core::ResourceStatus> statuses_to_send; 
   auto proc_it = running_processes_.begin();
   while (proc_it != running_processes_.end())
   {
@@ -131,13 +131,13 @@ void ProcessManager::update(const ros::TimerEvent&)
                    proc_it->second.request.executable.c_str());
 
       // TODO: send error information to all related connections
-      temoto_2::ResourceStatus srv;
+      temoto_core::ResourceStatus srv;
       srv.request.resource_id = proc_it->second.response.rmp.resource_id;
       srv.request.status_code = temoto_core::rmp::status_codes::FAILED;
       std::stringstream ss;
       ss << "The process with pid '" << proc_it->first << "' has stopped.";
       srv.request.message = ss.str();
-      srv.request.error_stack = CREATE_ERROR(error::Code::PROCESS_STOPPED, ss.str());
+      srv.request.error_stack = CREATE_ERROR(temoto_core::error::Code::PROCESS_STOPPED, ss.str());
 
       // store statuses to send
       statuses_to_send.push_back(srv);
@@ -174,7 +174,7 @@ void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
     std::string path = ros::package::getPath(req.package_name);
     if(path=="")
     {
-      throw CREATE_ERROR(error::Code::PACKAGE_NOT_FOUND, "ROS Package: '%s' was not found.", req.package_name.c_str());
+      throw CREATE_ERROR(temoto_core::error::Code::PACKAGE_NOT_FOUND, "ROS Package: '%s' was not found.", req.package_name.c_str());
     }
 
     // Check if .launch file exists.
@@ -183,7 +183,7 @@ void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
     {
       if (!executableExists(path + "/launch/" + req.executable))
       {
-        throw CREATE_ERROR(error::Code::EXECUTABLE_NOT_FOUND,
+        throw CREATE_ERROR(temoto_core::error::Code::EXECUTABLE_NOT_FOUND,
                            "ROS Package: '%s' does not contain the requsted launch file '%s'.",
                            req.package_name.c_str(), req.executable.c_str());
       }
@@ -209,7 +209,7 @@ void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
 //        //catkin find does not write anything to stdout if the binary does not exist.
 //        if (!result.size())
 //        {
-//          throw CREATE_ERROR(error::Code::EXECUTABLE_NOT_FOUND,
+//          throw CREATE_ERROR(temoto_core::error::Code::EXECUTABLE_NOT_FOUND,
 //                             "ROS Package: '%s' does not contain the executable '%s'.",
 //                             req.package_name.c_str(), req.executable.c_str());
 //        }
@@ -231,7 +231,7 @@ void ProcessManager::loadCb(temoto_2::LoadProcess::Request& req,
   }
   else
   {
-    throw CREATE_ERROR(error::Code::ACTION_UNKNOWN, "Action '%s' is not supported.",
+    throw CREATE_ERROR(temoto_core::error::Code::ACTION_UNKNOWN, "Action '%s' is not supported.",
                        req.action.c_str());
   }
 

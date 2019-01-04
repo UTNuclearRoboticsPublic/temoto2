@@ -76,7 +76,7 @@ void Robot::load()
   if (!config_->getFeatureURDF().isEnabled() && !config_->getFeatureManipulation().isEnabled() &&
       !config_->getFeatureNavigation().isEnabled())
   {
-    throw CREATE_ERROR(error::Code::ROBOT_CONFIG_FAIL, "Robot is missing features. Please specify "
+    throw CREATE_ERROR(temoto_core::error::Code::ROBOT_CONFIG_FAIL, "Robot is missing features. Please specify "
                                                        "urdf, manipulation, navigation sections in "
                                                        "the configuration file.");
   }
@@ -111,7 +111,7 @@ void Robot::waitForParam(const std::string& param, temoto_core::temoto_id::ID in
     TEMOTO_DEBUG("Waiting for %s ...", param.c_str());
     if (resource_manager_.hasFailed(interrupt_res_id))
     {
-      throw CREATE_ERROR(error::Code::SERVICE_STATUS_FAIL, "Loading interrupted. A FAILED status was received from process manager.");
+      throw CREATE_ERROR(temoto_core::error::Code::SERVICE_STATUS_FAIL, "Loading interrupted. A FAILED status was received from process manager.");
     }
     ros::Duration(1).sleep();
   }
@@ -126,7 +126,7 @@ void Robot::waitForTopic(const std::string& topic, temoto_core::temoto_id::ID in
     TEMOTO_DEBUG("Waiting for %s ...", topic.c_str());
     if (resource_manager_.hasFailed(interrupt_res_id))
     {
-      throw CREATE_ERROR(error::Code::SERVICE_STATUS_FAIL, "Loading interrupted. A FAILED status was received from process manager.");
+      throw CREATE_ERROR(temoto_core::error::Code::SERVICE_STATUS_FAIL, "Loading interrupted. A FAILED status was received from process manager.");
     }
     ros::Duration(1).sleep();
   }
@@ -340,7 +340,7 @@ void Robot::plan(std::string planning_group_name, geometry_msgs::PoseStamped& ta
 {
   if (!planning_groups_.size())
   {
-    throw CREATE_ERROR(error::Code::ROBOT_PLAN_FAIL,"Robot has no planning groups.");
+    throw CREATE_ERROR(temoto_core::error::Code::ROBOT_PLAN_FAIL,"Robot has no planning groups.");
   }
 
   FeatureManipulation& ftr = config_->getFeatureManipulation();
@@ -349,7 +349,7 @@ void Robot::plan(std::string planning_group_name, geometry_msgs::PoseStamped& ta
   auto group_it = planning_groups_.find(planning_group_name);
   if (group_it == planning_groups_.end())
   {
-    throw CREATE_ERROR(error::Code::PLANNING_GROUP_NOT_FOUND, "Planning group '%s' was not found.",
+    throw CREATE_ERROR(temoto_core::error::Code::PLANNING_GROUP_NOT_FOUND, "Planning group '%s' was not found.",
                        planning_group_name.c_str());
   }
 
@@ -361,7 +361,7 @@ void Robot::plan(std::string planning_group_name, geometry_msgs::PoseStamped& ta
   TEMOTO_DEBUG("Plan %s",  is_plan_valid_ ? "FOUND" : "FAILED");
   if(!is_plan_valid_)
   {
-    throw CREATE_ERROR(error::Code::ROBOT_PLAN_FAIL,"Planning with group '%s' failed.", group_it->first.c_str());
+    throw CREATE_ERROR(temoto_core::error::Code::ROBOT_PLAN_FAIL,"Planning with group '%s' failed.", group_it->first.c_str());
   }
 }
 
@@ -395,7 +395,7 @@ bool Robot::isLocal() const
 {
   if (config_) 
   {
-    return config_->getTemotoNamespace() == ::common::getTemotoNamespace();
+    return config_->getTemotoNamespace() == ::temoto_core::common::getTemotoNamespace();
   }
  return true; // some default that should never reached. 
 }

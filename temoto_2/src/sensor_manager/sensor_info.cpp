@@ -1,13 +1,13 @@
 #include "sensor_manager/sensor_info.h"
 #include "ros/ros.h"
-#include "common/tools.h"
+#include "temoto_core/common/tools.h"
 
 namespace sensor_manager
 {
 SensorInfo::SensorInfo(std::string sensor_name)
 {
   //set the sensor to current namespace
-  temoto_namespace_ = ::common::getTemotoNamespace();
+  temoto_namespace_ = ::temoto_core::common::getTemotoNamespace();
   sensor_name_ = sensor_name;
 }
 
@@ -28,19 +28,19 @@ std::string SensorInfo::getName() const
 }
 
 // Get input topics
-const std::vector<StringPair>& SensorInfo::getInputTopics() const
+const std::vector<temoto_core::StringPair>& SensorInfo::getInputTopics() const
 {
   return input_topics_;
 }
 
 // Get output topics
-const std::vector<StringPair>& SensorInfo::getOutputTopics() const
+const std::vector<temoto_core::StringPair>& SensorInfo::getOutputTopics() const
 {
   return output_topics_;
 }
 
 // Get topic by type
-std::string SensorInfo::getTopicByType(const std::string& type, const std::vector<StringPair>& topics)
+std::string SensorInfo::getTopicByType(const std::string& type, const std::vector<temoto_core::StringPair>& topics)
 {
   // Loop over the topics and check the type match. Return the topic if the types amatch
   for(auto&topic : topics)
@@ -99,7 +99,7 @@ float SensorInfo::getReliability() const
 // Is local
 bool SensorInfo::isLocal() const
 {
-  return getTemotoNamespace() == common::getTemotoNamespace();
+  return getTemotoNamespace() == temoto_core::common::getTemotoNamespace();
 }
 
 // Get advertised
@@ -157,12 +157,12 @@ void SensorInfo::setName(std::string name)
   sensor_name_ = name;
 }
 
-void SensorInfo::addTopicIn(StringPair topic)
+void SensorInfo::addTopicIn(temoto_core::StringPair topic)
 {
   input_topics_.push_back(topic);
 }
 
-void SensorInfo::addTopicOut(StringPair topic)
+void SensorInfo::addTopicOut(temoto_core::StringPair topic)
 {
   output_topics_.push_back(topic);
 }

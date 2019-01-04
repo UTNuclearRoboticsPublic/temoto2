@@ -3,7 +3,7 @@
 #include "TTP/base_task/base_task.h"
 #include "output_manager/output_manager_services.h"
 #include "robot_manager/robot_manager_services.h"
-#include "rmp/resource_manager.h"
+#include "temoto_core/rmp/resource_manager.h"
 #include "temoto_2/LoadRvizPlugin.h"
 #include <sstream>
 #include <fstream>
@@ -57,7 +57,7 @@ public:
   void showInRviz(std::string display_type, std::string topic = "", std::string display_config = "")
   {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
     validateInterface(prefix);
 
     temoto_2::LoadRvizPlugin load_srv;
@@ -87,7 +87,7 @@ public:
   void hideInRviz(std::string display_type, std::string topic = "", std::string display_config = "")
   {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
     validateInterface(prefix);
 
     temoto_2::LoadRvizPlugin::Request req;
@@ -115,7 +115,7 @@ public:
 
     if (!plugin_unloaded)
     {
-      throw CREATE_ERROR(error::Code::RESOURCE_UNLOAD_FAIL, "Unable to unload resource that is not loaded.");
+      throw CREATE_ERROR(temoto_core::error::Code::RESOURCE_UNLOAD_FAIL, "Unable to unload resource that is not loaded.");
     }
   }
 
@@ -134,7 +134,7 @@ public:
 
       if(!rviz_node.IsMap())
       {
-        throw CREATE_ERROR(error::Code::ROBOT_VIZ_NOT_FOUND, "RViz visualization options are "
+        throw CREATE_ERROR(temoto_core::error::Code::ROBOT_VIZ_NOT_FOUND, "RViz visualization options are "
                                                              "missing.");
       }
 
@@ -156,7 +156,7 @@ public:
     }
     catch(std::exception& e) // capture and wrap possible YAML failures
     {
-      throw CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Unhandled exception: " + std::string(e.what()));
+      throw CREATE_ERROR(temoto_core::error::Code::UNHANDLED_EXCEPTION, "Unhandled exception: " + std::string(e.what()));
     }
   }
 
@@ -171,7 +171,7 @@ public:
     }
     else
     {
-      throw CREATE_ERROR(error::Code::ROBOT_FEATURE_NOT_FOUND, "Robot does not have an urdf "
+      throw CREATE_ERROR(temoto_core::error::Code::ROBOT_FEATURE_NOT_FOUND, "Robot does not have an urdf "
                                                                "capability, which is requred to "
                                                                "show the robot model.");
     }
@@ -182,7 +182,7 @@ public:
     YAML::Node urdf_node = rviz_node["urdf"];
     if (!urdf_node.IsMap())
     {
-      throw CREATE_ERROR(error::Code::ROBOT_FEATURE_NOT_FOUND, "Robot does not have an urdf "
+      throw CREATE_ERROR(temoto_core::error::Code::ROBOT_FEATURE_NOT_FOUND, "Robot does not have an urdf "
                                                                "capability, which is requred to "
                                                                "show the manipulation.");
     }
@@ -190,7 +190,7 @@ public:
     YAML::Node manipulation_node = rviz_node["manipulation"];
     if (!manipulation_node.IsMap())
     {
-      throw CREATE_ERROR(error::Code::ROBOT_FEATURE_NOT_FOUND, "Robot does not have a manipulation "
+      throw CREATE_ERROR(temoto_core::error::Code::ROBOT_FEATURE_NOT_FOUND, "Robot does not have a manipulation "
                                                                "capability, which is requred to "
                                                                "show the manipulation.");
     }
@@ -222,7 +222,7 @@ public:
     }
     else
     {
-      throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to obtain visualization info from robot manager.");
+      throw CREATE_ERROR(temoto_core::error::Code::SERVICE_REQ_FAIL, "Failed to obtain visualization info from robot manager.");
     }
     return info;
   }
@@ -235,7 +235,7 @@ public:
   std::string displayConfigFromFile(std::string config_path)
   {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
     validateInterface(prefix);
 
     // Create filestream object and configure exceptions
@@ -255,13 +255,13 @@ public:
     catch (std::ifstream::failure e)
     {
       // Rethrow the exception
-      throw CREATE_ERROR(error::Code::CONFIG_OPEN_FAIL, "Failed to open the display config file");
+      throw CREATE_ERROR(temoto_core::error::Code::CONFIG_OPEN_FAIL, "Failed to open the display config file");
     }
   }
 
-  //  void statusInfoCb(temoto_2::ResourceStatus& srv)
+  //  void statusInfoCb(temoto_core::ResourceStatus& srv)
   //  {
-  //    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+  //    std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
   //    validateInterface(prefix);
   //
   //    TEMOTO_DEBUG("%s status info was received", prefix.c_str());
@@ -285,7 +285,7 @@ public:
   //        if (!resource_manager_->template call<temoto_2::LoadSensor>(
   //                sensor_manager::srv_name::MANAGER, sensor_manager::srv_name::SERVER, *sens_it))
   //        {
-  //          throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Failed to call service");
+  //          throw CREATE_ERROR(temoto_core::error::Code::SERVICE_REQ_FAIL, "Failed to call service");
   //        }
   //
   //        // If the request was fulfilled, then add the srv to the list of allocated sensors
@@ -296,7 +296,7 @@ public:
   //        }
   //        else
   //        {
-  //          throw CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Unsuccessful call to sensor manager: ");
+  //          throw CREATE_ERROR(temoto_core::error::Code::SERVICE_REQ_FAIL, "Unsuccessful call to sensor manager: ");
   //        }
   //      }
   //      else
@@ -308,7 +308,7 @@ public:
   ~OutputManagerInterface()
   {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix(log_subsys_, log_class_, __func__);
+    std::string prefix = temoto_core::common::generateLogPrefix(log_subsys_, log_class_, __func__);
 
     TEMOTO_DEBUG("OutputManagerInterface destroyed.");
   }
@@ -339,7 +339,7 @@ private:
   {
     if (!resource_manager_)
     {
-      throw CREATE_ERROR(error::Code::UNINITIALIZED, "Interface is not initalized.");
+      throw CREATE_ERROR(temoto_core::error::Code::UNINITIALIZED, "Interface is not initalized.");
     }
   }
 };

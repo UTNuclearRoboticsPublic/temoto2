@@ -6,7 +6,7 @@
 #include "temoto_core/common/temoto_id.h"
 #include "temoto_core/common/base_subsystem.h"
 #include "process_manager/process_manager_services.h"
-#include "rmp/resource_manager.h"
+#include "temoto_core/rmp/resource_manager.h"
 #include "robot_manager/robot_config.h"
 #include "robot_manager/robot_manager.h"
 #include "robot_manager/robot_features.h"

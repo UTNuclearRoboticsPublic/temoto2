@@ -1,4 +1,4 @@
-#include "common/tools.h"
+#include "temoto_core/common/tools.h"
 #include "TTP/language_processors/meta/meta_lp.h"
 #include "TTP/language_processors/meta/branch_finder.h"
 #include "TTP/language_processors/nlp_tools/number_operations.h"
@@ -20,7 +20,7 @@ MetaLP::MetaLP( std::string language_models_dir
 {
   class_name_ = __func__;
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix("", class_name_, __func__);
+  std::string prefix = temoto_core::common::generateLogPrefix("", class_name_, __func__);
 
   // load POS-tagging model
   std::cout << prefix << " Loading tagging model ... " << std::flush;
@@ -44,13 +44,13 @@ MetaLP::MetaLP( std::string language_models_dir
 TaskTree MetaLP::processText(std::string input_text)
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix("", class_name_, __func__);
+  std::string prefix = temoto_core::common::generateLogPrefix("", class_name_, __func__);
 
   // If the input string is empty then cause panic
   if (input_text.empty())
   {
       // Throw error
-      throw CREATE_ERROR(error::Code::NLP_INV_ARG, "Received an empty string");
+      throw CREATE_ERROR(temoto_core::error::Code::NLP_INV_ARG, "Received an empty string");
   }
 
   meta::sequence::sequence seq;
@@ -83,7 +83,7 @@ TaskTree MetaLP::processText(std::string input_text)
 
       if (!checkIfWakeWord(bf.getAddressable()))
       {
-        throw CREATE_ERROR(error::Code::NLP_BAD_INPUT, "Did not receive correct wake word."
+        throw CREATE_ERROR(temoto_core::error::Code::NLP_BAD_INPUT, "Did not receive correct wake word."
                            " Expecting '" + wake_word_ + "' but got '" + bf.getAddressable() + "'");
       }
 
@@ -105,7 +105,7 @@ TaskTree MetaLP::processText(std::string input_text)
       {
         std::cout << prefix << "No tasks were found\n";
         // Throw error
-        throw CREATE_ERROR(error::Code::NLP_BAD_INPUT, "Could not make any sense of input text.");
+        throw CREATE_ERROR(temoto_core::error::Code::NLP_BAD_INPUT, "Could not make any sense of input text.");
       }
     }
     else

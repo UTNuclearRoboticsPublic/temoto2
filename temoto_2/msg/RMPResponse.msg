@@ -10,4 +10,4 @@ string message
 # Unique resource identifier in a particular resource server.
 int64 resource_id
 
-temoto_2/Error[] error_stack
+temoto_core/Error[] error_stack

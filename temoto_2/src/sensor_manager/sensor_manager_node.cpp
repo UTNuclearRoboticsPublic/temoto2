@@ -19,7 +19,7 @@ public:
    * @brief Constructor
    */
   SensorManager()
-  : temoto_core::BaseSubsystem("sensor_manager", error::Subsystem::SENSOR_MANAGER, __func__)
+  : temoto_core::BaseSubsystem("sensor_manager", temoto_core::error::Subsystem::SENSOR_MANAGER, __func__)
   , ss_(this, &sir_)
   , sms_(this, &sir_)
   {

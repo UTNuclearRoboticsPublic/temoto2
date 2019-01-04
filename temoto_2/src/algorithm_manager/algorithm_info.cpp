@@ -1,13 +1,13 @@
 #include "algorithm_manager/algorithm_info.h"
 #include "ros/ros.h"
-#include "common/tools.h"
+#include "temoto_core/common/tools.h"
 
 namespace algorithm_manager
 {
 AlgorithmInfo::AlgorithmInfo(std::string algorithm_name)
 {
   //set the algorithm to current namespace
-  temoto_namespace_ = ::common::getTemotoNamespace();
+  temoto_namespace_ = ::temoto_core::common::getTemotoNamespace();
   algorithm_name_ = algorithm_name;
 }
 
@@ -28,19 +28,19 @@ std::string AlgorithmInfo::getName() const
 }
 
 // Get input topics
-const std::vector<StringPair>& AlgorithmInfo::getInputTopics() const
+const std::vector<temoto_core::StringPair>& AlgorithmInfo::getInputTopics() const
 {
   return input_topics_;
 }
 
 // Get output topics
-const std::vector<StringPair>& AlgorithmInfo::getOutputTopics() const
+const std::vector<temoto_core::StringPair>& AlgorithmInfo::getOutputTopics() const
 {
   return output_topics_;
 }
 
 // Get topic by type
-std::string AlgorithmInfo::getTopicByType(const std::string& type, const std::vector<StringPair>& topics)
+std::string AlgorithmInfo::getTopicByType(const std::string& type, const std::vector<temoto_core::StringPair>& topics)
 {
   // Loop over the topics and check the type match. Return the topic if the types amatch
   for(auto&topic : topics)
@@ -99,7 +99,7 @@ float AlgorithmInfo::getReliability() const
 // Is local
 bool AlgorithmInfo::isLocal() const
 {
-  return getTemotoNamespace() == common::getTemotoNamespace();
+  return getTemotoNamespace() == temoto_core::common::getTemotoNamespace();
 }
 
 // Get advertised
@@ -157,12 +157,12 @@ void AlgorithmInfo::setName(std::string name)
   algorithm_name_ = name;
 }
 
-void AlgorithmInfo::addTopicIn(StringPair topic)
+void AlgorithmInfo::addTopicIn(temoto_core::StringPair topic)
 {
   input_topics_.push_back(topic);
 }
 
-void AlgorithmInfo::addTopicOut(StringPair topic)
+void AlgorithmInfo::addTopicOut(temoto_core::StringPair topic)
 {
   output_topics_.push_back(topic);
 }

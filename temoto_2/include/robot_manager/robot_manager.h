@@ -6,9 +6,9 @@
 #include "robot_manager/robot_manager_services.h"
 #include "process_manager/process_manager_services.h"
 #include "context_manager/context_manager_services.h"
-#include "rmp/resource_manager.h"
-#include "rmp/config_synchronizer.h"
-#include "temoto_2/ConfigSync.h"
+#include "temoto_core/rmp/resource_manager.h"
+#include "temoto_core/rmp/config_synchronizer.h"
+#include "temoto_core/ConfigSync.h"
 #include <moveit/move_group_interface/move_group_interface.h>
 #include "robot_manager/robot.h"
 #include "robot_manager/robot_config.h"
@@ -102,7 +102,7 @@ private:
 
   void targetPoseCb(const temoto_2::ObjectContainer& msg);
 
-  void statusInfoCb(temoto_2::ResourceStatus& srv);
+  void statusInfoCb(temoto_core::ResourceStatus& srv);
 
   void loadLocalRobot(RobotConfigPtr info_ptr, temoto_core::temoto_id::ID resource_id);
 

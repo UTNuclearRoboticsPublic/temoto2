@@ -129,7 +129,7 @@ typedef std::vector<temoto_core::Error> ErrorStack;
 
 #define __TEMOTO_ERROR_HANDLER_VERBOSE__ TRUE
 
-#define CREATE_ERROR(code, ...) this->error_handler_.create(code, TEMOTO_LOG_PREFIX, error::ErrorHandler::formatToString(__VA_ARGS__))
+#define CREATE_ERROR(code, ...) this->error_handler_.create(code, TEMOTO_LOG_PREFIX, temoto_core::error::ErrorHandler::formatToString(__VA_ARGS__))
 
 #define FORWARD_ERROR(error_stack) this->error_handler_.forward(error_stack, TEMOTO_LOG_PREFIX)
 

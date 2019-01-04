@@ -1,5 +1,5 @@
 #include "TTP/io_descriptor.h"
-#include "common/tools.h"
+#include "temoto_core/common/tools.h"
 #include <iostream>
 #include <string>
 
@@ -37,7 +37,7 @@ void Subject::markComplete()
 void Subject::addData(std::string datatype, float data)
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+  std::string prefix = temoto_core::common::generateLogPrefix("", this->class_name_, __func__);
 
   // Check if the given datatype is amongst valid datatypes
   if (std::find(valid_datatypes.begin(), valid_datatypes.end(), datatype) == valid_datatypes.end())
@@ -61,7 +61,7 @@ void Subject::addData(std::string datatype, float data)
 void Subject::addData(std::string datatype, std::string data)
 {
   // Name of the method, used for making debugging a bit simpler
-  std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+  std::string prefix = temoto_core::common::generateLogPrefix("", this->class_name_, __func__);
 
   // Check if the given datatype is amongst valid datatypes
   if (std::find(valid_datatypes.begin(), valid_datatypes.end(), datatype) == valid_datatypes.end())

@@ -2,7 +2,7 @@
 #define PROCESS_MANAGER_SERVICES_H
 
 #include <string>
-#include "rmp/resource_manager_services.h"
+#include "temoto_core/rmp/resource_manager_services.h"
 #include "temoto_2/LoadProcess.h"
 
 namespace process_manager

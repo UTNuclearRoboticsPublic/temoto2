@@ -9,7 +9,7 @@ namespace context_manager
 {
 
 ContextManager::ContextManager()
-  : temoto_core::BaseSubsystem("context_manager", error::Subsystem::CONTEXT_MANAGER, __func__)
+  : temoto_core::BaseSubsystem("context_manager", temoto_core::error::Subsystem::CONTEXT_MANAGER, __func__)
   , resource_manager_1_(srv_name::MANAGER, this)
   , resource_manager_2_(srv_name::MANAGER_2, this)
   , tracked_objects_syncer_(srv_name::MANAGER, srv_name::SYNC_TRACKED_OBJECTS_TOPIC, &ContextManager::trackedObjectsSyncCb, this)
@@ -208,7 +208,7 @@ ObjectPtr ContextManager::findObject(std::string object_name)
   }
 
   // Throw an error if no objects were found
-  throw CREATE_ERROR(error::Code::UNKNOWN_OBJECT, "The requested object is unknown");
+  throw CREATE_ERROR(temoto_core::error::Code::UNKNOWN_OBJECT, "The requested object is unknown");
 }
 
 
@@ -307,7 +307,7 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
 
         // If a requested tracker was not found but there are other options
         // available, then continue. Otherwise forward the error
-        if (error_stack.front().code == static_cast<int>(error::Code::NO_TRACKERS_FOUND) &&
+        if (error_stack.front().code == static_cast<int>(temoto_core::error::Code::NO_TRACKERS_FOUND) &&
             &tracker_category != &detection_methods.back())
         {
           continue;
@@ -334,7 +334,7 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
     tracker_topics.setOutputTopicsByKeyValue(load_tracker_msg.response.output_topics);
 
     // Topic where the information about the required object is going to be published.
-    std::string tracked_object_topic = common::getAbsolutePath("object_tracker/" + object_name_no_space);
+    std::string tracked_object_topic = temoto_core::common::getAbsolutePath("object_tracker/" + object_name_no_space);
 
     /*
      * AR tag based object tracker setup
@@ -489,7 +489,7 @@ void ContextManager::unloadTrackObjectCb(temoto_2::TrackObject::Request& req,
 
     if (tracked_object.empty())
     {
-      throw CREATE_ERROR(error::Code::NO_TRACKERS_FOUND, std::string("The object '") +
+      throw CREATE_ERROR(temoto_core::error::Code::NO_TRACKERS_FOUND, std::string("The object '") +
                          req.object_name + "' is not tracked");
     }
 
@@ -524,7 +524,7 @@ TrackerInfoPtrs ContextManager::findTrackers(temoto_2::LoadTracker::Request& req
   // Throw an error if the requested tracker category does not exist
   if (tracker_category == categorized_trackers_.end())
   {
-    throw CREATE_ERROR(error::Code::NO_TRACKERS_FOUND, "No trackers found for the requested category");
+    throw CREATE_ERROR(temoto_core::error::Code::NO_TRACKERS_FOUND, "No trackers found for the requested category");
   }
 
   // Get the trackers
@@ -581,7 +581,7 @@ TrackerInfoPtrs ContextManager::findTrackers(temoto_2::LoadTracker::Request& req
     // If no tracker was suitable, then throw an error
     if (trackers.empty())
     {
-      throw CREATE_ERROR(error::Code::NO_TRACKERS_FOUND, "No trackers found for the requested topic types");
+      throw CREATE_ERROR(temoto_core::error::Code::NO_TRACKERS_FOUND, "No trackers found for the requested topic types");
     }
   }
 
@@ -634,7 +634,7 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
       {
         // Create a unique pipe identifier string
         pipe_id = "pipe_" + std::to_string(pipe_id_generator_.generateID())
-                + "_at_" + common::getTemotoNamespace();
+                + "_at_" + temoto_core::common::getTemotoNamespace();
       }
 
       /*
@@ -766,7 +766,7 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
     }
   }
 
-  throw CREATE_ERROR(error::Code::NO_TRACKERS_FOUND, "Could not find trackers for the requested category");
+  throw CREATE_ERROR(temoto_core::error::Code::NO_TRACKERS_FOUND, "Could not find trackers for the requested category");
 }
 
 /*
@@ -783,7 +783,7 @@ void ContextManager::unloadTrackerCb(temoto_2::LoadTracker::Request& req, temoto
   }
   else
   {
-    throw CREATE_ERROR(error::Code::RESOURCE_NOT_FOUND, "Could not unload the tracker, because"
+    throw CREATE_ERROR(temoto_core::error::Code::RESOURCE_NOT_FOUND, "Could not unload the tracker, because"
                        " it does not exist in the list of allocated trackers");
   }
 }
@@ -884,7 +884,7 @@ void ContextManager::unloadSpeechCb(temoto_2::LoadSpeech::Request& req,
 /*
  * Status callback 1
  */
-void ContextManager::statusCb1(temoto_2::ResourceStatus& srv)
+void ContextManager::statusCb1(temoto_core::ResourceStatus& srv)
 {
   /* TODO */
 }
@@ -892,7 +892,7 @@ void ContextManager::statusCb1(temoto_2::ResourceStatus& srv)
 /*
  * Status callback 2
  */
-void ContextManager::statusCb2(temoto_2::ResourceStatus& srv)
+void ContextManager::statusCb2(temoto_core::ResourceStatus& srv)
 {
   TEMOTO_DEBUG("Received a status message.");
 

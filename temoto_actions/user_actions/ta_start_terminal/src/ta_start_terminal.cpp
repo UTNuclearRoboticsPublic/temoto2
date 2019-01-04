@@ -105,7 +105,7 @@ public:
   // Callback for processing speech
   void speech_callback(std_msgs::String msg)
   {
-    std::string prefix = common::generateLogPrefix("", this->class_name_, __func__);
+    std::string prefix = temoto_core::common::generateLogPrefix("", this->class_name_, __func__);
     TASK_DEBUG("%s Speech callback got: %s", prefix.c_str(), msg.data.c_str());
 
     // Publish if the publisher is active

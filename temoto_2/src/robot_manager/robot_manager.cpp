@@ -11,7 +11,7 @@
 namespace robot_manager
 {
 RobotManager::RobotManager()
-  : temoto_core::BaseSubsystem("robot_manager", error::Subsystem::ROBOT_MANAGER, __func__)
+  : temoto_core::BaseSubsystem("robot_manager", temoto_core::error::Subsystem::ROBOT_MANAGER, __func__)
   , resource_manager_(srv_name::MANAGER, this)
   , config_syncer_(srv_name::MANAGER, srv_name::SYNC_TOPIC, &RobotManager::syncCb, this)
   , mode_(modes::AUTO)
@@ -58,7 +58,7 @@ RobotManager::RobotManager()
 //        y: 0.0150255505036
 //        z: -0.0361555479561
 //        w: 0.922870226032  
-  std::string marker_topic = common::getAbsolutePath("world_to_target_marker");
+  std::string marker_topic = temoto_core::common::getAbsolutePath("world_to_target_marker");
   // Advertise the marker topic
   marker_publisher_ = nh_.advertise<visualization_msgs::Marker>(marker_topic, 10);
 
@@ -79,7 +79,7 @@ RobotManager::RobotManager()
 
   // Read the robot config for this manager.
   std::string yaml_filename =
-      ros::package::getPath(ROS_PACKAGE_NAME) + "/conf/" + common::getTemotoNamespace() + ".yaml";
+      ros::package::getPath(ROS_PACKAGE_NAME) + "/conf/" + temoto_core::common::getTemotoNamespace() + ".yaml";
   // \TODO: check
   std::ifstream in(yaml_filename);
   YAML::Node yaml_config = YAML::Load(in);
@@ -107,7 +107,7 @@ void RobotManager::loadLocalRobot(RobotConfigPtr config, temoto_core::temoto_id:
 {
   if (!config)
   {
-    throw CREATE_ERROR(error::Code::NULL_PTR, "config == NULL");
+    throw CREATE_ERROR(temoto_core::error::Code::NULL_PTR, "config == NULL");
   }
 
   try
@@ -179,7 +179,7 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
     }
     catch (...)
     {
-      throw CREATE_ERROR(error::Code::UNHANDLED_EXCEPTION, "Exception occured while creating Robot "
+      throw CREATE_ERROR(temoto_core::error::Code::UNHANDLED_EXCEPTION, "Exception occured while creating Robot "
                                                            "object.");
     }
     return;
@@ -187,7 +187,7 @@ void RobotManager::loadCb(temoto_2::RobotLoad::Request& req, temoto_2::RobotLoad
   else
   {
     // no local nor remote robot found
-    throw CREATE_ERROR(error::Code::ROBOT_NOT_FOUND,"Robot manager did not find a suitable robot.");
+    throw CREATE_ERROR(temoto_core::error::Code::ROBOT_NOT_FOUND,"Robot manager did not find a suitable robot.");
   }
 }
 
@@ -344,7 +344,7 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
   TEMOTO_DEBUG("PLANNING...");
   if (!active_robot_)
   {
-    res.error_stack = CREATE_ERROR(error::Code::ROBOT_PLAN_FAIL, "Unable to plan, because no robot "
+    res.error_stack = CREATE_ERROR(temoto_core::error::Code::ROBOT_PLAN_FAIL, "Unable to plan, because no robot "
                                                                  "is loaded.");
     res.code = temoto_core::rmp::status_codes::FAILED;
     return true;
@@ -396,7 +396,7 @@ bool RobotManager::planCb(temoto_2::RobotPlan::Request& req, temoto_2::RobotPlan
     else
     {
       res.code = temoto_core::rmp::status_codes::FAILED;
-      res.error_stack = CREATE_ERROR(error::Code::SERVICE_REQ_FAIL, "Call to remote RobotManager "
+      res.error_stack = CREATE_ERROR(temoto_core::error::Code::SERVICE_REQ_FAIL, "Call to remote RobotManager "
                                                                     "service failed.");
       return true;
     }
@@ -464,7 +464,7 @@ bool RobotManager::getVizInfoCb(temoto_2::RobotGetVizInfo::Request& req,
     }
     else
     {
-      res.error_stack = CREATE_ERROR(error::Code::ROBOT_NOT_LOADED,
+      res.error_stack = CREATE_ERROR(temoto_core::error::Code::ROBOT_NOT_LOADED,
                                      "The requested robot '%s' is not loaded.", req.robot_name);
       res.code == temoto_core::rmp::status_codes::FAILED;
       return true;
@@ -480,7 +480,7 @@ bool RobotManager::getVizInfoCb(temoto_2::RobotGetVizInfo::Request& req,
     else
     {
       res.error_stack =
-          CREATE_ERROR(error::Code::ROBOT_NOT_LOADED, "No loaded robots found.", req.robot_name);
+          CREATE_ERROR(temoto_core::error::Code::ROBOT_NOT_LOADED, "No loaded robots found.", req.robot_name);
       res.code == temoto_core::rmp::status_codes::FAILED;
       return true;
     }
@@ -654,7 +654,7 @@ void RobotManager::targetPoseCb(const temoto_2::ObjectContainer& msg)
     default_pose_mutex_.unlock();
 }
 
-void RobotManager::statusInfoCb(temoto_2::ResourceStatus& srv)
+void RobotManager::statusInfoCb(temoto_core::ResourceStatus& srv)
 {
   TEMOTO_DEBUG("status info was received");
   TEMOTO_DEBUG_STREAM(srv.request);

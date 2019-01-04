@@ -5,7 +5,7 @@
 
 #include "TTP/base_task/base_task.h"
 #include "process_manager/process_manager_services.h"
-#include "rmp/resource_manager.h"
+#include "temoto_core/rmp/resource_manager.h"
 #include <memory> //unique_ptr
 
 
@@ -116,7 +116,7 @@ public:
 
 //    if (found_sensor_it == allocated_sensors_.end())
 //    {
-//      throw CREATE_ERROR(error::Code::RESOURCE_UNLOAD_FAIL, "Unable to unload resource that is not "
+//      throw CREATE_ERROR(temoto_core::error::Code::RESOURCE_UNLOAD_FAIL, "Unable to unload resource that is not "
 //                                                            "loaded.");
 //    }
 
@@ -136,7 +136,7 @@ public:
    * @brief statusInfoCb
    * @param srv
    */
-  void statusInfoCb(temoto_2::ResourceStatus& srv)
+  void statusInfoCb(temoto_core::ResourceStatus& srv)
   {
     try
     {
@@ -191,7 +191,7 @@ public:
 //      }
 //      else
 //      {
-//        throw CREATE_ERROR(error::Code::RESOURCE_NOT_FOUND, "Resource status arrived for a "
+//        throw CREATE_ERROR(temoto_core::error::Code::RESOURCE_NOT_FOUND, "Resource status arrived for a "
 //                                                            "resource that does not exist.");
 //      }
 //    }
@@ -229,7 +229,7 @@ private:
   {
     if(!resource_manager_)
     {
-      throw CREATE_ERROR(error::Code::UNINITIALIZED, "Interface is not initalized.");
+      throw CREATE_ERROR(temoto_core::error::Code::UNINITIALIZED, "Interface is not initalized.");
     }
   }
 };

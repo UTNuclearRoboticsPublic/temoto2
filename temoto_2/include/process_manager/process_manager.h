@@ -2,7 +2,7 @@
 #define PROCESS_MANAGER_H
 
 #include "process_manager/process_manager_services.h"
-#include "rmp/resource_manager.h"
+#include "temoto_core/rmp/resource_manager.h"
 #include <stdio.h> //pid_t TODO: check where pid_t actually is
 #include <mutex>
 #include <sys/stat.h>

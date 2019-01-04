@@ -1,5 +1,5 @@
 # Remote Management Request
-temoto_2/RMPRequest rmp
+temoto_core/RMPRequest rmp
 
 # Rviz display plugin type
 string type
@@ -16,4 +16,4 @@ string config
 ---
 
 # Remote Management Response
-temoto_2/RMPResponse rmp
+temoto_core/RMPResponse rmp

@@ -32,7 +32,7 @@ public:
 
 
   TaskManager( std::string subsystem_name
-             , error::Subsystem subsystem_code
+             , temoto_core::error::Subsystem subsystem_code
              , bool nlp_enabled
              , std::string ai_libs_path = ""
              , std::string chatter_topic = "");

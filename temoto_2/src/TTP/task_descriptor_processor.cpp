@@ -1,5 +1,5 @@
 #include "TTP/task_descriptor_processor.h"
-#include "common/tools.h"
+#include "temoto_core/common/tools.h"
 #include "meta/analyzers/filters/porter2_stemmer.h"
 
 #include <string>
@@ -80,7 +80,7 @@ std::string TaskDescriptorProcessor::getPackageName()
     if( !package_xml.LoadFile( base_path_ + "/package.xml") )
     {
         // Throw error
-        throw CREATE_ERROR(error::Code::DESC_OPEN_FAIL, std::string(package_xml.ErrorDesc()));
+        throw CREATE_ERROR(temoto_core::error::Code::DESC_OPEN_FAIL, std::string(package_xml.ErrorDesc()));
     }
 
     // Get root element
@@ -88,7 +88,7 @@ std::string TaskDescriptorProcessor::getPackageName()
 
     if( package_el == NULL )
     { 
-        throw CREATE_ERROR(error::Code::DESC_NO_ROOT, "Missing element 'package'.");
+        throw CREATE_ERROR(temoto_core::error::Code::DESC_NO_ROOT, "Missing element 'package'.");
     }
 
     // Get the name of the package
@@ -96,14 +96,14 @@ std::string TaskDescriptorProcessor::getPackageName()
     if (name_el == NULL)
     {
         // Throw error
-        throw CREATE_ERROR(error::Code::DESC_NO_ROOT, "Missing element 'name'.");
+        throw CREATE_ERROR(temoto_core::error::Code::DESC_NO_ROOT, "Missing element 'name'.");
     }
 
     TiXmlNode* name_content = name_el->FirstChild();
     std::string name_str;
     if(name_content == NULL)
     {
-        throw CREATE_ERROR(error::Code::DESC_NO_ROOT, "Content in the 'name' block is missing.");
+        throw CREATE_ERROR(temoto_core::error::Code::DESC_NO_ROOT, "Content in the 'name' block is missing.");
     }
     else
     {
@@ -127,7 +127,7 @@ void TaskDescriptorProcessor::openTaskDesc()
     if( !desc_file_.LoadFile(desc_file_path_) )
     {
         // Throw error
-        throw CREATE_ERROR(error::Code::DESC_OPEN_FAIL, std::string( desc_file_.ErrorDesc() ) + desc_file_path_);
+        throw CREATE_ERROR(temoto_core::error::Code::DESC_OPEN_FAIL, std::string( desc_file_.ErrorDesc() ) + desc_file_path_);
     }
 }
 
@@ -143,7 +143,7 @@ void TaskDescriptorProcessor::getRootElement()
     if( root_element_ == NULL )
     {
         // Throw error
-        throw CREATE_ERROR(error::Code::DESC_NO_ROOT, "No root element in: " + desc_file_path_);
+        throw CREATE_ERROR(temoto_core::error::Code::DESC_NO_ROOT, "No root element in: " + desc_file_path_);
     }
 }
 
@@ -159,7 +159,7 @@ Action TaskDescriptorProcessor::getTaskAction()
     if (action_attribute == NULL)
     {      
         // Throw error
-        throw CREATE_ERROR(error::Code::DESC_NO_ATTR, "Missing 'action' attribute in: " + desc_file_path_);
+        throw CREATE_ERROR(temoto_core::error::Code::DESC_NO_ATTR, "Missing 'action' attribute in: " + desc_file_path_);
     }
 
     return std::move(std::string(action_attribute));
@@ -220,7 +220,7 @@ std::vector<Action> TaskDescriptorProcessor::getTaskActionAliases()
 TaskDescriptor TaskDescriptorProcessor::getTaskDescriptor()
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix("", class_name_, __func__);
+    std::string prefix = temoto_core::common::generateLogPrefix("", class_name_, __func__);
 
     // TaskDescriptorProcessor is a friend of TaskDescriptor
     TaskDescriptor task_descriptor;
@@ -257,7 +257,7 @@ TaskDescriptor TaskDescriptorProcessor::getTaskDescriptor()
 std::vector<TaskInterface> TaskDescriptorProcessor::getInterfaces()
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix("", class_name_, __func__);
+    std::string prefix = temoto_core::common::generateLogPrefix("", class_name_, __func__);
 
     std::vector<TaskInterface> task_interfaces;
 
@@ -274,7 +274,7 @@ std::vector<TaskInterface> TaskDescriptorProcessor::getInterfaces()
         if (task_interfaces.empty())
         {
             // Throw error
-            throw CREATE_ERROR(error::Code::DESC_INVALID_ARG, "Missing 'interface' elements in: " + desc_file_path_);
+            throw CREATE_ERROR(temoto_core::error::Code::DESC_INVALID_ARG, "Missing 'interface' elements in: " + desc_file_path_);
         }
 
     }
@@ -292,7 +292,7 @@ std::vector<TaskInterface> TaskDescriptorProcessor::getInterfaces()
 TaskInterface TaskDescriptorProcessor::getInterface(TiXmlElement* interface_element)
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix("", class_name_, __func__);
+    std::string prefix = temoto_core::common::generateLogPrefix("", class_name_, __func__);
 
     TaskInterface task_interface;
 
@@ -300,7 +300,7 @@ TaskInterface TaskDescriptorProcessor::getInterface(TiXmlElement* interface_elem
     const char* id_attribute = interface_element->Attribute("id");
     if (id_attribute == NULL)
     {
-        throw CREATE_ERROR(error::Code::DESC_NO_ATTR, "Missing id attribute in: " + desc_file_path_);
+        throw CREATE_ERROR(temoto_core::error::Code::DESC_NO_ATTR, "Missing id attribute in: " + desc_file_path_);
     }
 
     task_interface.id_ = atoi(id_attribute);
@@ -309,7 +309,7 @@ TaskInterface TaskDescriptorProcessor::getInterface(TiXmlElement* interface_elem
     const char* type_attribute = interface_element->Attribute("type");
     if (type_attribute == NULL)
     {
-        throw CREATE_ERROR(error::Code::DESC_NO_ATTR, "Missing type attribute in: " + desc_file_path_);
+        throw CREATE_ERROR(temoto_core::error::Code::DESC_NO_ATTR, "Missing type attribute in: " + desc_file_path_);
     }
 
     task_interface.type_ = std::string(type_attribute);
@@ -336,7 +336,7 @@ TaskInterface TaskDescriptorProcessor::getInterface(TiXmlElement* interface_elem
 std::vector<Subject> TaskDescriptorProcessor::getIOSubjects(std::string direction, TiXmlElement* interface_element)
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix("", class_name_, __func__);
+    std::string prefix = temoto_core::common::generateLogPrefix("", class_name_, __func__);
 
     std::vector<Subject> io_subjects;
 
@@ -354,7 +354,7 @@ std::vector<Subject> TaskDescriptorProcessor::getIOSubjects(std::string directio
             }
 
             // Throw error
-            throw CREATE_ERROR(error::Code::DESC_NO_ATTR, "Missing '" + direction + "' attribute in: " + desc_file_path_);
+            throw CREATE_ERROR(temoto_core::error::Code::DESC_NO_ATTR, "Missing '" + direction + "' attribute in: " + desc_file_path_);
         }
 
         // Extract subjects (whats, wheres, numerics)
@@ -367,7 +367,7 @@ std::vector<Subject> TaskDescriptorProcessor::getIOSubjects(std::string directio
             if (std::find(valid_subjects.begin(), valid_subjects.end(), sub_type) == valid_subjects.end())
             {
                 // Throw error
-                throw CREATE_ERROR(error::Code::DESC_INVALID_ARG, "Invalid datatype: " + desc_file_path_);
+                throw CREATE_ERROR(temoto_core::error::Code::DESC_INVALID_ARG, "Invalid datatype: " + desc_file_path_);
             }
 
             // Parse the subject and add it to the IO-Descriptor
@@ -391,7 +391,7 @@ std::vector<Subject> TaskDescriptorProcessor::getIOSubjects(std::string directio
 Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix("", class_name_, __func__);
+    std::string prefix = temoto_core::common::generateLogPrefix("", class_name_, __func__);
 
     Subject subject;
 
@@ -405,7 +405,7 @@ Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
         if ( word_attribute == NULL )
         {
             // Throw error
-            throw CREATE_ERROR(error::Code::DESC_NO_ATTR, "Missing 'word' attribute in: " + desc_file_path_);
+            throw CREATE_ERROR(temoto_core::error::Code::DESC_NO_ATTR, "Missing 'word' attribute in: " + desc_file_path_);
         }
 
         subject.words_ = std::move(parseString(std::string(word_attribute), ',')); // TODO: allow ', ' default expressions
@@ -416,7 +416,7 @@ Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
         {
             /*
             // Throw error
-            throw CREATE_ERROR(error::Code::DESC_NO_ATTR, "Missing 'pos_tag' attribute in: " + desc_file_path_);
+            throw CREATE_ERROR(temoto_core::error::Code::DESC_NO_ATTR, "Missing 'pos_tag' attribute in: " + desc_file_path_);
             */
 
             subject.pos_tag_ = std::string(pos_tag_attribute);
@@ -451,7 +451,7 @@ Subject TaskDescriptorProcessor::getSubject(TiXmlElement* subject_element)
 std::vector<Data> TaskDescriptorProcessor::getData(TiXmlElement* first_data_element)
 {
     // Name of the method, used for making debugging a bit simpler
-    std::string prefix = common::generateLogPrefix("", class_name_, __func__);
+    std::string prefix = temoto_core::common::generateLogPrefix("", class_name_, __func__);
 
     std::vector<Data> datas;
 
@@ -467,7 +467,7 @@ std::vector<Data> TaskDescriptorProcessor::getData(TiXmlElement* first_data_elem
             if ( datatype_attribute == NULL )
             {
                 // Throw error
-                throw CREATE_ERROR(error::Code::DESC_NO_ATTR, "Missing 'datatype' attribute in: " + desc_file_path_);
+                throw CREATE_ERROR(temoto_core::error::Code::DESC_NO_ATTR, "Missing 'datatype' attribute in: " + desc_file_path_);
             }
 
             std::string datatype = std::string(datatype_attribute);
@@ -476,7 +476,7 @@ std::vector<Data> TaskDescriptorProcessor::getData(TiXmlElement* first_data_elem
             if (std::find(valid_datatypes.begin(), valid_datatypes.end(), datatype) == valid_datatypes.end())
             {
                 // Throw error
-                throw CREATE_ERROR(error::Code::DESC_INVALID_ARG, "Invalid datatype: " + desc_file_path_);
+                throw CREATE_ERROR(temoto_core::error::Code::DESC_INVALID_ARG, "Invalid datatype: " + desc_file_path_);
             }
 
             Data data;
@@ -514,7 +514,7 @@ std::vector<Data> TaskDescriptorProcessor::getData(TiXmlElement* first_data_elem
     }
     catch (boost::bad_any_cast& e)
     {
-        throw CREATE_ERROR(error::Code::BAD_ANY_CAST, std::string(e.what()) + ". in: " + desc_file_path_);
+        throw CREATE_ERROR(temoto_core::error::Code::BAD_ANY_CAST, std::string(e.what()) + ". in: " + desc_file_path_);
     }
 
     return datas;

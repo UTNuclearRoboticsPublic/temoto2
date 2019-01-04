@@ -2,7 +2,7 @@
 #define SENSOR_INFO_H
 
 #include "temoto_core/common/temoto_log_macros.h"
-#include "temoto_core/common/topic_container.h"   // StringPair
+#include "temoto_core/common/topic_container.h"   // temoto_core::StringPair
 #include "temoto_core/common/reliability.h"
 #include <string>
 #include <vector>
@@ -38,13 +38,13 @@ public:
   std::string getName() const;
 
   // Get input topics
-  const std::vector<StringPair>& getInputTopics() const;
+  const std::vector<temoto_core::StringPair>& getInputTopics() const;
 
   // Get output topics
-  const std::vector<StringPair>& getOutputTopics() const;
+  const std::vector<temoto_core::StringPair>& getOutputTopics() const;
 
   // Get topic by type
-  std::string getTopicByType(const std::string& type, const std::vector<StringPair>& topics);
+  std::string getTopicByType(const std::string& type, const std::vector<temoto_core::StringPair>& topics);
 
   // Get input topic
   std::string getInputTopic(const std::string& type);
@@ -82,9 +82,9 @@ public:
 
   void setName(std::string name);
 
-  void addTopicIn(StringPair topic);
+  void addTopicIn(temoto_core::StringPair topic);
 
-  void addTopicOut(StringPair topic);
+  void addTopicOut(temoto_core::StringPair topic);
 
   void setType(std::string sensor_type);
 
@@ -114,8 +114,8 @@ private:
   std::string executable_;
   std::string description_;
   temoto_core::Reliability reliability_;
-  std::vector<StringPair> input_topics_;
-  std::vector<StringPair> output_topics_;
+  std::vector<temoto_core::StringPair> input_topics_;
+  std::vector<temoto_core::StringPair> output_topics_;
   bool advertised_ = false;
 };
 

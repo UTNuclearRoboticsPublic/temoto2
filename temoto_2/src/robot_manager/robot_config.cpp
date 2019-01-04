@@ -1,5 +1,5 @@
 #include "robot_manager/robot_config.h"
-#include "common/tools.h"
+#include "temoto_core/common/tools.h"
 #include <string>
 #include <vector>
 
@@ -15,7 +15,7 @@ RobotConfig::RobotConfig(YAML::Node yaml_config, temoto_core::BaseSubsystem& b) 
   }
   catch (...)
   {
-    CREATE_ERROR(error::Code::ROBOT_CONFIG_FAIL,"Unable to parse robot name.");
+    CREATE_ERROR(temoto_core::error::Code::ROBOT_CONFIG_FAIL,"Unable to parse robot name.");
     return; //\TODO: throw and skip the rest when requred info is missing
   }
 
@@ -54,7 +54,7 @@ void RobotConfig::parseTemotoNamespace()
   catch (...)
   {
     // Assign local namespace, when not available in yaml
-    temoto_namespace_ = common::getTemotoNamespace();
+    temoto_namespace_ = temoto_core::common::getTemotoNamespace();
   }
 }
 

@@ -5,8 +5,8 @@
 #include "algorithm_manager/algorithm_manager_services.h"
 #include "process_manager/process_manager_services.h"
 #include "temoto_core/common/base_subsystem.h"
-#include "rmp/resource_manager.h"
-#include "rmp/config_synchronizer.h"
+#include "temoto_core/rmp/resource_manager.h"
+#include "temoto_core/rmp/config_synchronizer.h"
 
 #include "std_msgs/String.h"
 
@@ -68,7 +68,7 @@ private:
    * @brief Called when algorithm is unloaded. Nothing to do here.
    * @return
    */
-  void statusCb(temoto_2::ResourceStatus& srv);
+  void statusCb(temoto_core::ResourceStatus& srv);
 
   /**
    * @brief advertiseLocalAlgorithms

@@ -2,7 +2,7 @@
 string object_name
 
 # RMP
-temoto_2/RMPRequest rmp
+temoto_core/RMPRequest rmp
 
 ---
 
@@ -15,4 +15,4 @@ temoto_2/ObjectContainer object
 string object_topic
 
 # RMP
-temoto_2/RMPResponse rmp
+temoto_core/RMPResponse rmp

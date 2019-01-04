@@ -6,7 +6,7 @@
 
 #include "TTP/base_task/base_task.h"
 #include "algorithm_manager/algorithm_manager_services.h"
-#include "rmp/resource_manager.h"
+#include "temoto_core/rmp/resource_manager.h"
 #include <memory>   // unique_ptr
 
 /**
@@ -157,7 +157,7 @@ public:
 //                   , std::string ros_program_name)
 //  {
 //    // Name of the method, used for making debugging a bit simpler
-//    std::string prefix = common::generateLogPrefix(subsystem_name_, class_name_, __func__);
+//    std::string prefix = temoto_core::common::generateLogPrefix(subsystem_name_, class_name_, __func__);
 //    validateInterface(prefix);
 
 //    // Find all instances where request part matches with the function's input argumens
@@ -188,7 +188,7 @@ public:
 //      else if (cur_algorithm_it == allocated_algorithms_.begin())
 //      {
 //        throw temoto_core::error::ErrorStackUtil(
-//            taskErr::RESOURCE_UNLOAD_FAIL, error::Subsystem::TASK, error::Urgency::MEDIUM,
+//            taskErr::RESOURCE_UNLOAD_FAIL, temoto_core::error::Subsystem::TASK, error::Urgency::MEDIUM,
 //            prefix + " Unable to unload resource that is not loaded.", ros::Time::now());
 //      }
 //    }
@@ -198,7 +198,7 @@ public:
    * @brief statusInfoCb
    * @param srv
    */
-  void statusInfoCb(temoto_2::ResourceStatus& srv)
+  void statusInfoCb(temoto_core::ResourceStatus& srv)
   {
     try
     {
@@ -284,7 +284,7 @@ private:
   {
     if(!resource_manager_)
     {
-      throw CREATE_ERROR(error::Code::NOT_INITIALIZED, "Interface is not initalized.");
+      throw CREATE_ERROR(temoto_core::error::Code::NOT_INITIALIZED, "Interface is not initalized.");
     }
   }
 };

@@ -15,7 +15,7 @@
 // Task specific includes
 #include "ros/ros.h"
 #include "temoto_2/StopTask.h"
-#include "common/tools.h"
+#include "temoto_core/common/tools.h"
 
 // First implementaton
 class TaskStop: public TTP::BaseTask
@@ -95,7 +95,7 @@ void startInterface_0()
       // TODO: do something
     }
   }
-  catch(error::ErrorStack& error_stack)
+  catch(temoto_core::error::ErrorStack& error_stack)
   {
     FORWARD_ERROR(error_stack);
   }
@@ -148,7 +148,7 @@ void startInterface_1()
       // TODO: do something
     }
   }
-  catch(error::ErrorStack& error_stack)
+  catch(temoto_core::error::ErrorStack& error_stack)
   {
     FORWARD_ERROR(error_stack);
   }
