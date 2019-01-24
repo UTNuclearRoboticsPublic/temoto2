@@ -8,7 +8,7 @@
 #include "context_manager/context_manager_containers.h"
 #include "context_manager/tracking_method.h"
 #include "context_manager/context_manager_services.h"
-#include "TTP/task_manager.h"
+#include "temoto_nlp/task_manager.h"
 
 #include "temoto_core/rmp/resource_manager.h"
 #include "temoto_core/rmp/config_synchronizer.h"
@@ -103,9 +103,9 @@ private:
    */
   bool addObjectsCb(temoto_2::AddObjects::Request& req, temoto_2::AddObjects::Response& res);
 
-  void objectSyncCb(const temoto_2::ConfigSync& msg, const Objects& payload);
+  void objectSyncCb(const temoto_core::ConfigSync& msg, const Objects& payload);
 
-  void trackedObjectsSyncCb(const temoto_2::ConfigSync& msg, const std::string& payload);
+  void trackedObjectsSyncCb(const temoto_core::ConfigSync& msg, const std::string& payload);
 
   void advertiseAllObjects();
 
@@ -157,9 +157,9 @@ private:
 
   temoto_core::rmp::ConfigSynchronizer<ContextManager, std::string> tracked_objects_syncer_;
 
-  TTP::TaskManager tracker_core_;
+  temoto_nlp::TaskManager tracker_core_;
 
-  std::map<std::string, Reliability> detection_method_history_;
+  std::map<std::string, temoto_core::Reliability> detection_method_history_;
 
   std::pair<int, std::string> active_detection_method_;
 

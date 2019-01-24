@@ -1,7 +1,0 @@
-# Type of the devices required
-string type
-
----
-
-# List of devices
-string[] list

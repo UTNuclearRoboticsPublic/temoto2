@@ -9,7 +9,7 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // Things that have to be included
-#include "TTP/base_task/base_task.h"    // The base task
+#include "temoto_nlp/base_task/base_task.h"    // The base task
 #include <class_loader/class_loader.h>  // Class loader includes
 
 // Task specific includes
@@ -21,7 +21,7 @@
 #include <boost/algorithm/string.hpp>
 
 // First implementaton
-class TaTaskTerminal : public TTP::BaseTask
+class TaTaskTerminal : public temoto_nlp::BaseTask
 {
 public:
   /* * * * * * * * * * * * * * * * * * * * * * * * *
@@ -37,7 +37,7 @@ public:
   }
 
   // startTask
-  void startTask(TTP::TaskInterface task_interface)
+  void startTask(temoto_nlp::TaskInterface task_interface)
   {
     // * AUTO-GENERATED, DO NOT MODIFY *
     input_subjects = task_interface.input_subjects_;
@@ -60,7 +60,7 @@ public:
     // < AUTO-GENERATED, DO NOT MODIFY >
 
     // Extracting input subjects
-    TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
+    temoto_nlp::Subject what_0_in = temoto_nlp::getSubjectByType("what", input_subjects);
     std::string what_0_word_in = what_0_in.words_[0];
 
     // </ AUTO-GENERATED, DO NOT MODIFY >
@@ -93,7 +93,7 @@ public:
     return str;
   }
 
-  std::vector<TTP::Subject> getSolution()
+  std::vector<temoto_nlp::Subject> getSolution()
   {
     return output_subjects;
   }
@@ -134,4 +134,4 @@ private:
 };
 
 // Dont forget that part, otherwise this class would not be loadable
-CLASS_LOADER_REGISTER_CLASS(TaTaskTerminal, TTP::BaseTask);
+CLASS_LOADER_REGISTER_CLASS(TaTaskTerminal, temoto_nlp::BaseTask);

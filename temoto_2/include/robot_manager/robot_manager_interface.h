@@ -1,7 +1,7 @@
 #ifndef ROBOT_MANAGER_INTERFACE_H
 #define ROBOT_MANAGER_INTERFACE_H
 
-#include "TTP/base_task/base_task.h"
+#include "temoto_nlp/base_task/base_task.h"
 #include "temoto_core/common/temoto_id.h"
 #include "temoto_core/common/console_colors.h"
 
@@ -23,7 +23,7 @@ public:
     class_name_ = __func__;
   }
 
-  void initialize(TTP::BaseTask* task)
+  void initialize(temoto_nlp::BaseTask* task)
   {
     initializeBase(task);
     log_group_ = "interfaces." + task->getPackageName();

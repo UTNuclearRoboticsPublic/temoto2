@@ -5,7 +5,7 @@
 #include "sensor_manager/sensor_info_registry.h"
 #include "temoto_core/rmp/config_synchronizer.h"
 #include "temoto_core/ConfigSync.h"
-#include "TTP/task_manager.h"
+#include "temoto_nlp/task_manager.h"
 
 #include "ros/ros.h"
 
@@ -68,7 +68,7 @@ private:
    * @param msg Incoming message
    * @param payload Data portion of the message
    */
-  void syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload);
+  void syncCb(const temoto_core::ConfigSync& msg, const PayloadType& payload);
 
   /**
    * @brief A timer event callback function which checks if local sensor info entries have been
@@ -87,7 +87,7 @@ private:
   SensorInfoRegistry* sir_;
 
   /// Used for managing snooper agents.
-  TTP::TaskManager action_engine_;
+  temoto_nlp::TaskManager action_engine_;
 
   /**
    * @brief Timer for checking local sensor info updates (timer event will trigger the #updateMonitoringTimerCb).

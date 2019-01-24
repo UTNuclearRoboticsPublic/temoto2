@@ -1,6 +1,6 @@
 #include "temoto_core/common/temoto_id.h"
 #include "temoto_core/common/base_subsystem.h"
-#include "TTP/base_task/base_task.h"
+#include "temoto_nlp/base_task/base_task.h"
 #include "output_manager/output_manager_services.h"
 #include "robot_manager/robot_manager_services.h"
 #include "temoto_core/rmp/resource_manager.h"
@@ -37,7 +37,7 @@ public:
   /**
    * @brief initialize
    */
-  void initialize(TTP::BaseTask* task)
+  void initialize(temoto_nlp::BaseTask* task)
   {
     initializeBase(task);
     log_group_ = "interfaces." + task->getPackageName();

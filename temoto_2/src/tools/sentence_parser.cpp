@@ -1,9 +1,9 @@
 #include "ros/ros.h"
 #include "ros/package.h"
 
-#include "TTP/language_processors/meta/meta_lp.h"
-#include "TTP/task_descriptor_processor.h"
-#include "TTP/task_manager.h"
+#include "temoto_nlp/language_processors/meta/meta_lp.h"
+#include "temoto_nlp/task_descriptor_processor.h"
+#include "temoto_nlp/task_manager.h"
 
 #include "temoto_core/temoto_error/temoto_error.h"
 
@@ -11,7 +11,7 @@
 #include <cstdio>
 #include "tbb/flow_graph.h"
 
-//using namespace TTP;
+//using namespace temoto_nlp;
 
 int main(int argc, char **argv)
 {
@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     std::string temoto_path = ros::package::getPath(ROS_PACKAGE_NAME);
 
     // Task manager object
-    TTP::TaskManager task_manager("temoto_core");
+    temoto_nlp::TaskManager task_manager("temoto_core");
 
     try
     {
@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 
         std::cout << "done\n";
 /*
-        std::vector <TTP::TaskDescriptor>& tds = task_manager.getIndexedTasks();
+        std::vector <temoto_nlp::TaskDescriptor>& tds = task_manager.getIndexedTasks();
 
         // Print out the tasks
         std::cout << "Found " << tds.size() << " tasks. Printing ...\n";
@@ -53,7 +53,7 @@ int main(int argc, char **argv)
       FORWARD_ERROR(error_stack);
     }
 
-    TTP::MetaLP language_processor(temoto_path + "/include/TTP/language_processors/meta/models/");
+    temoto_nlp::MetaLP language_processor(temoto_path + "/include/TTP/language_processors/meta/models/");
     std::string line;
 
     ros::AsyncSpinner spinner(0); // TODO: does not need an async spinner
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
         try
         {
             // Process the text and receive a task tree
-            TTP::TaskTree tt = language_processor.processText(std::move(line));
+            temoto_nlp::TaskTree tt = language_processor.processText(std::move(line));
 
             // Print out the task tree
             std::cout << "Task Tree: " << tt;

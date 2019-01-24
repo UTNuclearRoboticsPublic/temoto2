@@ -9,7 +9,7 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // Things that have to be included
-#include "TTP/base_task/base_task.h"                 				 // The base task
+#include "temoto_nlp/base_task/base_task.h"                 				 // The base task
 #include <class_loader/class_loader.h>                   // Class loader includes
 
 // Task specific includes
@@ -20,7 +20,7 @@
 #include "human_msgs/Hands.h"
 
 // First implementaton
-class TaShowCamera: public TTP::BaseTask
+class TaShowCamera: public temoto_nlp::BaseTask
 {
 public:
 
@@ -35,7 +35,7 @@ TaShowCamera()
 }
 
 // startTask with arguments
-void startTask(TTP::TaskInterface task_interface)
+void startTask(temoto_nlp::TaskInterface task_interface)
 {
   // < AUTO-GENERATED, DO NOT MODIFY >
   input_subjects = task_interface.input_subjects_;
@@ -66,11 +66,11 @@ void startInterface_0()
   // < AUTO-GENERATED, DO NOT MODIFY >
 
   // Extracting input subjects
-  TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
+  temoto_nlp::Subject what_0_in = temoto_nlp::getSubjectByType("what", input_subjects);
   std::string  what_0_word_in = what_0_in.words_[0];
   std::string  what_0_data_0_in = boost::any_cast<std::string>(what_0_in.data_[0].value);
 
-  TTP::Subject where_0_in = TTP::getSubjectByType("where", input_subjects);
+  temoto_nlp::Subject where_0_in = temoto_nlp::getSubjectByType("where", input_subjects);
   std::string  where_0_word_in = where_0_in.words_[0];
 
   // Creating output variables
@@ -98,7 +98,7 @@ void startInterface_0()
 
   // < AUTO-GENERATED, DO NOT MODIFY >
 
-  TTP::Subject what_0_out("what", what_0_word_out);
+  temoto_nlp::Subject what_0_out("what", what_0_word_out);
   what_0_out.markComplete();
   what_0_out.data_.emplace_back("topic", boost::any_cast<std::string>(what_0_data_0_out));
   output_subjects.push_back(what_0_out);
@@ -106,10 +106,10 @@ void startInterface_0()
   // </ AUTO-GENERATED, DO NOT MODIFY >
 }
 
-std::vector<TTP::Subject> getSolution()
+std::vector<temoto_nlp::Subject> getSolution()
 {
   // Construct an empty vector
-  std::vector<TTP::Subject> return_subjects;
+  std::vector<temoto_nlp::Subject> return_subjects;
 
   return return_subjects;
 }
@@ -135,4 +135,4 @@ ros::NodeHandle nh_;
 };
 
 // Dont forget that part, otherwise this class would not be loadable
-CLASS_LOADER_REGISTER_CLASS(TaShowCamera, TTP::BaseTask);
+CLASS_LOADER_REGISTER_CLASS(TaShowCamera, temoto_nlp::BaseTask);

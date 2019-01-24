@@ -5,7 +5,7 @@
 #include "algorithm_manager/algorithm_info_registry.h"
 #include "temoto_core/rmp/config_synchronizer.h"
 #include "temoto_core/ConfigSync.h"
-#include "TTP/task_manager.h"
+#include "temoto_nlp/task_manager.h"
 
 #include "ros/ros.h"
 
@@ -30,7 +30,7 @@ public:
 
 private:
 
-  void syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload);
+  void syncCb(const temoto_core::ConfigSync& msg, const PayloadType& payload);
 
   void updateMonitoringTimerCb(const ros::TimerEvent &e);
 
@@ -41,7 +41,7 @@ private:
 
   AlgorithmInfoRegistry* aid_;
 
-  TTP::TaskManager action_engine_;
+  temoto_nlp::TaskManager action_engine_;
 
   ros::Timer update_monitoring_timer_;
 

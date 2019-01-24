@@ -96,7 +96,7 @@ void ContextManager::unloadGetNumberCb( temoto_2::GetNumber::Request& req
 /*
  * Object synchronization callback
  */
-void ContextManager::objectSyncCb(const temoto_2::ConfigSync& msg, const Objects& payload)
+void ContextManager::objectSyncCb(const temoto_core::ConfigSync& msg, const Objects& payload)
 {
   if (msg.action == temoto_core::rmp::sync_action::REQUEST_CONFIG)
   {
@@ -115,7 +115,7 @@ void ContextManager::objectSyncCb(const temoto_2::ConfigSync& msg, const Objects
 /*
  * Tracked objects synchronization callback
  */
-void ContextManager::trackedObjectsSyncCb(const temoto_2::ConfigSync& msg, const std::string& payload)
+void ContextManager::trackedObjectsSyncCb(const temoto_core::ConfigSync& msg, const std::string& payload)
 {
   if (msg.action == temoto_core::rmp::sync_action::ADVERTISE_CONFIG)
   {
@@ -350,18 +350,18 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
        * TTP related stuff up ahead: A semantic frame is manually created. Based on that SF
        * a SF tree is created, given that an action implementation, that corresponds to the
        * manually created SF, exists. The specific tracker task is started and it continues
-       * running in the background until its ordered to be stopped.
+       * running in the background until its ordered to stop.
        */
 
       std::string action = "track";
-      TTP::Subjects subjects;
+      temoto_nlp::Subjects subjects;
 
       // Subject that will contain the name of the tracked object.
       // Necessary when the tracker has to be stopped
-      TTP::Subject sub_0("what", object_name_no_space);
+      temoto_nlp::Subject sub_0("what", object_name_no_space);
 
       // Subject that will contain the data necessary for the specific tracker
-      TTP::Subject sub_1("what", "artag data");
+      temoto_nlp::Subject sub_1("what", "artag data");
 
       // Topic from where the raw AR tag tracker data comes from
       sub_1.addData("topic", tracker_data_topic);
@@ -376,15 +376,15 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
       subjects.push_back(sub_1);
 
       // Create a SF
-      std::vector<TTP::TaskDescriptor> task_descriptors;
+      std::vector<temoto_nlp::TaskDescriptor> task_descriptors;
       task_descriptors.emplace_back(action, subjects);
       task_descriptors[0].setActionStemmed(action);
 
       // Create a sematic frame tree
-      TTP::TaskTree sft = TTP::SFTBuilder::build(task_descriptors);
+      temoto_nlp::TaskTree sft = temoto_nlp::SFTBuilder::build(task_descriptors);
 
       // Get the root node of the tree
-      TTP::TaskTreeNode& root_node = sft.getRootNode();
+      temoto_nlp::TaskTreeNode& root_node = sft.getRootNode();
       sft.printTaskDescriptors(root_node);
 
       // Execute the SFT
@@ -409,18 +409,18 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
        * TTP related stuff up ahead: A semantic frame is manually created. Based on that SF
        * a SF tree is created, given that an action implementation, that corresponds to the
        * manually created SF, exists. The specific tracker task is started and it continues
-       * running in the background until its ordered to be stopped.
+       * running in the background until its ordered to stop.
        */
 
       std::string action = "track";
-      TTP::Subjects subjects;
+      temoto_nlp::Subjects subjects;
 
       // Subject that will contain the name of the tracked object.
       // Necessary when the tracker has to be stopped
-      TTP::Subject sub_0("what", object_name_no_space);
+      temoto_nlp::Subject sub_0("what", object_name_no_space);
 
       // Subject that will contain the data necessary for the specific tracker
-      TTP::Subject sub_1("what", "hand data");
+      temoto_nlp::Subject sub_1("what", "hand data");
 
       // Topic from where the raw hand tracker data comes from
       sub_1.addData("topic", tracker_data_topic);
@@ -435,15 +435,15 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
       subjects.push_back(sub_1);
 
       // Create a SF
-      std::vector<TTP::TaskDescriptor> task_descriptors;
+      std::vector<temoto_nlp::TaskDescriptor> task_descriptors;
       task_descriptors.emplace_back(action, subjects);
       task_descriptors[0].setActionStemmed(action);
 
       // Create a sematic frame tree
-      TTP::TaskTree sft = TTP::SFTBuilder::build(task_descriptors);
+      temoto_nlp::TaskTree sft = temoto_nlp::SFTBuilder::build(task_descriptors);
 
       // Get the root node of the tree
-      TTP::TaskTreeNode& root_node = sft.getRootNode();
+      temoto_nlp::TaskTreeNode& root_node = sft.getRootNode();
       sft.printTaskDescriptors(root_node);
 
       // Execute the SFT
@@ -938,7 +938,7 @@ void ContextManager::addDetectionMethod(std::string detection_method)
 {
   if (detection_method_history_.find(detection_method) == detection_method_history_.end())
   {
-    detection_method_history_[detection_method] = Reliability();
+    detection_method_history_[detection_method] = temoto_core::Reliability();
     std::cout << "Added new detection method !!!!! \n";
   }
 }
@@ -953,7 +953,7 @@ void ContextManager::addDetectionMethods(std::vector<std::string> detection_meth
 
 std::vector<std::string> ContextManager::getOrderedDetectionMethods()
 {
-  std::vector<std::pair<std::string, Reliability>> ordered_detection_methods;
+  std::vector<std::pair<std::string, temoto_core::Reliability>> ordered_detection_methods;
 
   for ( auto it = detection_method_history_.begin()
       ; it != detection_method_history_.end()
@@ -964,7 +964,7 @@ std::vector<std::string> ContextManager::getOrderedDetectionMethods()
 
   std::sort( ordered_detection_methods.begin()
            , ordered_detection_methods.end()
-           , [](const std::pair<std::string, Reliability>& lhs, const std::pair<std::string, Reliability>& rhs)
+           , [](const std::pair<std::string, temoto_core::Reliability>& lhs, const std::pair<std::string, temoto_core::Reliability>& rhs)
              {
                return lhs.second.getReliability() >
                       rhs.second.getReliability();

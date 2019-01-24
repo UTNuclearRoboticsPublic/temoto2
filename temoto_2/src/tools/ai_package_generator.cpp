@@ -2,7 +2,7 @@
 #include "ros/package.h"
 #include "std_msgs/String.h"
 
-#include "TTP/task_descriptor_processor.h"
+#include "temoto_nlp/task_descriptor_processor.h"
 #include "temoto_action_assistant/semantic_frame_yaml.h"
 #include "common/semantic_frame_legacy.h"
 #include "file_template_parser/file_template_parser.h"
@@ -48,7 +48,7 @@ tp::TemplateContainer t_footer;
 void generatePackage(temoto_action_assistant::ActionDescriptor& action_descriptor)
 {
   // Convert the action descriptor to legacy format
-  TTP::TaskDescriptor ai_descriptor = toLegacyTaskDescriptor(action_descriptor);
+  temoto_nlp::TaskDescriptor ai_descriptor = toLegacyTaskDescriptor(action_descriptor);
 
   /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    *                    CREATE AI PACKAGE DIRECTORY STRUCTURE
@@ -69,14 +69,14 @@ void generatePackage(temoto_action_assistant::ActionDescriptor& action_descripto
   /*
    * Extract the necessary datastructures from the ai_descriptor
    */
-  const std::vector<TTP::TaskInterface>& ai_interfaces = ai_descriptor.getInterfaces();
-  const TTP::Action& ai_lexical_unit = ai_descriptor.getAction();
+  const std::vector<temoto_nlp::TaskInterface>& ai_interfaces = ai_descriptor.getInterfaces();
+  const temoto_nlp::Action& ai_lexical_unit = ai_descriptor.getAction();
   std::string ai_class_name = ai_descriptor.getTaskClassName();
 
   /*
    * Generate descriptor.xml
    */
-  TTP::saveAIDescriptor(ai_descriptor, ai_dst_path + "descriptor.xml");
+  temoto_nlp::saveAIDescriptor(ai_descriptor, ai_dst_path + "descriptor.xml");
 
   /*
    * Generate CMakeLists.txt

@@ -3,7 +3,7 @@
 
 #include "temoto_core/common/base_subsystem.h"
 
-#include "TTP/base_task/base_task.h"
+#include "temoto_nlp/base_task/base_task.h"
 #include "process_manager/process_manager_services.h"
 #include "temoto_core/rmp/resource_manager.h"
 #include <memory> //unique_ptr

@@ -2,7 +2,7 @@
 #define HUMAN_CONTEXT_INTERFACE_H
 
 
-#include "TTP/base_task/base_task.h"
+#include "temoto_nlp/base_task/base_task.h"
 #include "temoto_core/common/temoto_id.h"
 #include "temoto_core/common/console_colors.h"
 #include "temoto_core/common/topic_container.h"
@@ -30,7 +30,7 @@ public:
     class_name_ = __func__;
   }
 
-  void initialize(TTP::BaseTask* task)
+  void initialize(temoto_nlp::BaseTask* task)
   {
     initializeBase(task);
     log_group_ = "interfaces." + task->getPackageName();
@@ -409,7 +409,7 @@ private:
   std::unique_ptr<temoto_core::rmp::ResourceManager<ContextManagerInterface>> resource_manager_;
 
   std::string name_; 
-  TTP::BaseTask* task_;
+  temoto_nlp::BaseTask* task_;
 
   ros::NodeHandle nh_;
   ros::Subscriber speech_subscriber_;

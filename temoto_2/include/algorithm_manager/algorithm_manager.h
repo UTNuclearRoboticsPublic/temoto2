@@ -85,7 +85,7 @@ private:
    * @param msg
    * @param payload
    */
-  void syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload);
+  void syncCb(const temoto_core::ConfigSync& msg, const PayloadType& payload);
 
   /**
    * @brief parseAlgorithms

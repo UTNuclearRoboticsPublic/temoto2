@@ -81,17 +81,17 @@ private:
   std::map<std::string, std::string> launchables_;
 
   /**
-   * @brief Reliability ratings of the package.
+   * @brief temoto_core::Reliability ratings of the package.
    */
   std::array<float, 100> reliabilities_;
 
   /**
-   * @brief Reliability moving average.
+   * @brief temoto_core::Reliability moving average.
    */
   float reliability_average;
 
   /**
-   * @brief Reliability rating of the package.
+   * @brief temoto_core::Reliability rating of the package.
    */
   unsigned int reliability_idx;
 };

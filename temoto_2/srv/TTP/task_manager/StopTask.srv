@@ -1,9 +1,0 @@
-string action
-
-string what
-
----
-
-int64 code
-
-string message

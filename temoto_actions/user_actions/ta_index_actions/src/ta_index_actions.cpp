@@ -5,17 +5,17 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // Things that have to be included
-#include "TTP/base_task/base_task.h"                  				 // The base task
+#include "temoto_nlp/base_task/base_task.h"                  				 // The base task
 #include <class_loader/class_loader.h>               // Class loader includes
 
 // Task specific includes
 #include "ros/ros.h"
 #include "ros/package.h"
-#include "temoto_2/IndexTasks.h"
+#include "temoto_nlp/IndexTasks.h"
 
 
 // First implementaton
-class TaskIndex: public TTP::BaseTask
+class TaskIndex: public temoto_nlp::BaseTask
 {
 public:
 
@@ -25,14 +25,14 @@ public:
 
 TaskIndex()
 {
-    index_tasks_publisher_ = n_.advertise<temoto_2::IndexTasks>("index_tasks", 10);
+    index_tasks_publisher_ = n_.advertise<temoto_nlp::IndexTasks>("index_tasks", 10);
     ROS_INFO("TaskIndex constructed");
 }
 
 /*
  * startTask
  */
-void startTask(TTP::TaskInterface task_interface)
+void startTask(temoto_nlp::TaskInterface task_interface)
 {
 // * AUTO-GENERATED, DO NOT MODIFY *
     input_subjects = task_interface.input_subjects_;
@@ -55,7 +55,7 @@ void startInterface_0()
     // < AUTO-GENERATED, DO NOT MODIFY >
 
     // Extracting input subjects
-    TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
+    temoto_nlp::Subject what_0_in = temoto_nlp::getSubjectByType("what", input_subjects);
     std::string  what_0_word_in = what_0_in.words_[0];
 
     // </ AUTO-GENERATED, DO NOT MODIFY >
@@ -65,7 +65,7 @@ void startInterface_0()
     std::cout << "  TaskIndex: Indexing the tasks '" << what_0_word_in << "'\n";
 
     // Create a service message
-    temoto_2::IndexTasks index_tasks_msg;
+    temoto_nlp::IndexTasks index_tasks_msg;
     index_tasks_msg.directory = ros::package::getPath(ROS_PACKAGE_NAME) + "/..";
 
     // Publish
@@ -80,7 +80,7 @@ std::string getStatus()
     return str;
 }
 
-std::vector<TTP::Subject> getSolution()
+std::vector<temoto_nlp::Subject> getSolution()
 {
     return output_subjects;
 }
@@ -101,4 +101,4 @@ private:
 };
 
 // Dont forget that part, otherwise this class would not be loadable
-CLASS_LOADER_REGISTER_CLASS(TaskIndex, TTP::BaseTask);
+CLASS_LOADER_REGISTER_CLASS(TaskIndex, temoto_nlp::BaseTask);

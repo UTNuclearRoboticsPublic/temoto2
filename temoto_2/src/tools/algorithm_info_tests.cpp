@@ -149,7 +149,7 @@ private:
 } // context_manager namespace
 
 
-void conf_sub_cb(temoto_2::ConfigSync conf_msg)
+void conf_sub_cb(temoto_core::ConfigSync conf_msg)
 {
   temoto_2::RMPResponse my_value_back;
 
@@ -177,7 +177,7 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "algorithm_info_tests");
   ros::NodeHandle n;
 
-  ros::Publisher conf_pub = n.advertise<temoto_2::ConfigSync>("conf_test", 10);
+  ros::Publisher conf_pub = n.advertise<temoto_core::ConfigSync>("conf_test", 10);
   ros::Subscriber conf_sub = n.subscribe("conf_test", 10, conf_sub_cb);
 
   temoto_2::RMPResponse my_value;
@@ -203,7 +203,7 @@ int main(int argc, char **argv)
   }
 
   // Create a config sync message
-  temoto_2::ConfigSync config_sync_msg;
+  temoto_core::ConfigSync config_sync_msg;
   config_sync_msg.action = "ADD";
   config_sync_msg.temoto_namespace = "test43test";
   config_sync_msg.payload = byte_array_msg;

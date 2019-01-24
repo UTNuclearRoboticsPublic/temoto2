@@ -9,16 +9,16 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // Things that have to be included
-#include "TTP/base_task/base_task.h"                 				 // The base task
+#include "temoto_nlp/base_task/base_task.h"                 				 // The base task
 #include <class_loader/class_loader.h>                   // Class loader includes
 
 // Task specific includes
 #include "ros/ros.h"
-#include "temoto_2/StopTask.h"
+#include "temoto_nlp/StopTask.h"
 #include "temoto_core/common/tools.h"
 
 // First implementaton
-class TaskStop: public TTP::BaseTask
+class TaskStop: public temoto_nlp::BaseTask
 {
 public:
 
@@ -29,12 +29,12 @@ public:
 TaskStop()
 {
   // Do something here if needed
-  stop_task_client_ = nh_.serviceClient<temoto_2::StopTask>("stop_task");
+  stop_task_client_ = nh_.serviceClient<temoto_nlp::StopTask>("stop_task");
   TEMOTO_INFO("Object constructed");
 }
 
 // startTask
-void startTask(TTP::TaskInterface task_interface)
+void startTask(temoto_nlp::TaskInterface task_interface)
 {
   // * AUTO-GENERATED, DO NOT MODIFY *
   input_subjects = task_interface.input_subjects_;
@@ -62,10 +62,10 @@ void startInterface_0()
   // < AUTO-GENERATED, DO NOT MODIFY >
 
   // Extracting input subjects
-  TTP::Subject action_0_in = TTP::getSubjectByType("action", input_subjects);
+  temoto_nlp::Subject action_0_in = temoto_nlp::getSubjectByType("action", input_subjects);
   std::string  action_0_word_in = action_0_in.words_[0];
 
-  TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
+  temoto_nlp::Subject what_0_in = temoto_nlp::getSubjectByType("what", input_subjects);
   std::string  what_0_word_in = what_0_in.words_[0];
 
   // Creating output variables
@@ -80,7 +80,7 @@ void startInterface_0()
     TEMOTO_INFO_STREAM("Stopping '" << action_0_word_in << "' with arg '" << what_0_word_in);
     what_0_word_out = what_0_word_in;
 
-    temoto_2::StopTask stop_task_srv;
+    temoto_nlp::StopTask stop_task_srv;
     stop_task_srv.request.action = action_0_word_in;
     stop_task_srv.request.what = what_0_word_in;
 
@@ -104,7 +104,7 @@ void startInterface_0()
 
   // < AUTO-GENERATED, DO NOT MODIFY >
 
-  TTP::Subject what_0_out("what", what_0_word_out);
+  temoto_nlp::Subject what_0_out("what", what_0_word_out);
   what_0_out.markComplete();
   output_subjects.push_back(what_0_out);
 
@@ -119,7 +119,7 @@ void startInterface_1()
   // < AUTO-GENERATED, DO NOT MODIFY >
 
   // Extracting input subjects
-  TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
+  temoto_nlp::Subject what_0_in = temoto_nlp::getSubjectByType("what", input_subjects);
   std::string  what_0_word_in = what_0_in.words_[0];
 
   // Creating output variables
@@ -134,7 +134,7 @@ void startInterface_1()
     TEMOTO_INFO_STREAM("Stopping '" << what_0_word_in);
     what_0_word_out = what_0_word_in;
 
-    temoto_2::StopTask stop_task_srv;
+    temoto_nlp::StopTask stop_task_srv;
     stop_task_srv.request.what = what_0_word_in;
 
     // Call the server
@@ -157,7 +157,7 @@ void startInterface_1()
 
   // < AUTO-GENERATED, DO NOT MODIFY >
 
-  TTP::Subject what_0_out("what", what_0_word_out);
+  temoto_nlp::Subject what_0_out("what", what_0_word_out);
   what_0_out.markComplete();
   output_subjects.push_back(what_0_out);
 
@@ -170,7 +170,7 @@ std::string getStatus()
   return str;
 }
 
-std::vector<TTP::Subject> getSolution()
+std::vector<temoto_nlp::Subject> getSolution()
 {
   return output_subjects;
 }
@@ -195,4 +195,4 @@ ros::ServiceClient stop_task_client_;
 };
 
 // Dont forget that part, otherwise this class would not be loadable
-CLASS_LOADER_REGISTER_CLASS(TaskStop, TTP::BaseTask);
+CLASS_LOADER_REGISTER_CLASS(TaskStop, temoto_nlp::BaseTask);

@@ -218,7 +218,7 @@ for (const auto& r : loaded_robots_)
   TEMOTO_DEBUG("ROBOT '%s' unloaded.", req.robot_name.c_str());
 }
 
-void RobotManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload)
+void RobotManager::syncCb(const temoto_core::ConfigSync& msg, const PayloadType& payload)
 {
   if (msg.action == temoto_core::rmp::sync_action::REQUEST_CONFIG)
   {

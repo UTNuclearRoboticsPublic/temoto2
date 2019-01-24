@@ -96,7 +96,7 @@ void AlgorithmManager::statusCb(temoto_core::ResourceStatus& srv)
 /*
  * Synchronization callback
  */
-void AlgorithmManager::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload)
+void AlgorithmManager::syncCb(const temoto_core::ConfigSync& msg, const PayloadType& payload)
 {
   try
   {

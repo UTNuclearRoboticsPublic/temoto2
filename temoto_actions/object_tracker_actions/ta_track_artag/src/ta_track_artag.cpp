@@ -18,7 +18,7 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 /* REQUIRED BY TEMOTO */
-#include "TTP/base_task/base_task.h"    // The base task
+#include "temoto_nlp/base_task/base_task.h"    // The base task
 #include <class_loader/class_loader.h>  // Class loader includes
 
 // Action specific includes
@@ -29,7 +29,7 @@
 /* 
  * ACTION IMPLEMENTATION of TaTrackArtag 
  */
-class TaTrackArtag : public TTP::BaseTask
+class TaTrackArtag : public temoto_nlp::BaseTask
 {
 public:
 
@@ -41,7 +41,7 @@ TaTrackArtag()
 }
     
 /* REQUIRED BY TEMOTO */
-void startTask(TTP::TaskInterface task_interface)
+void startTask(temoto_nlp::TaskInterface task_interface)
 {
   input_subjects = task_interface.input_subjects_;
   switch (task_interface.id_)
@@ -56,7 +56,7 @@ void startTask(TTP::TaskInterface task_interface)
 }
 
 /* REQUIRED BY TEMOTO */
-std::vector<TTP::Subject> getSolution()
+std::vector<temoto_nlp::Subject> getSolution()
 {
   return output_subjects;
 }
@@ -105,10 +105,10 @@ void artagDataCb(ar_track_alvar_msgs::AlvarMarkers msg)
 void startInterface_0()
 {
   /* EXTRACTION OF INPUT SUBJECTS */
-  TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
+  temoto_nlp::Subject what_0_in = temoto_nlp::getSubjectByType("what", input_subjects);
   std::string  what_0_word_in = what_0_in.words_[0];
 
-  TTP::Subject what_1_in = TTP::getSubjectByType("what", input_subjects);
+  temoto_nlp::Subject what_1_in = temoto_nlp::getSubjectByType("what", input_subjects);
   std::string  what_1_word_in = what_1_in.words_[0];
   std::string  what_1_data_0_in = boost::any_cast<std::string>(what_1_in.data_[0].value);
   std::string  what_1_data_1_in = boost::any_cast<std::string>(what_1_in.data_[1].value);
@@ -147,4 +147,4 @@ void startInterface_0()
 }; // TaTrackArtag class
 
 /* REQUIRED BY CLASS LOADER */
-CLASS_LOADER_REGISTER_CLASS(TaTrackArtag, TTP::BaseTask);
+CLASS_LOADER_REGISTER_CLASS(TaTrackArtag, temoto_nlp::BaseTask);

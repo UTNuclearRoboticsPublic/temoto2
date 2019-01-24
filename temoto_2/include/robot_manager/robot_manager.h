@@ -87,7 +87,7 @@ private:
 
   bool setModeCb(temoto_2::RobotSetMode::Request& req, temoto_2::RobotSetMode::Response& res);
 
-  void syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload);
+  void syncCb(const temoto_core::ConfigSync& msg, const PayloadType& payload);
 
   void advertiseConfig(RobotConfigPtr config);
 

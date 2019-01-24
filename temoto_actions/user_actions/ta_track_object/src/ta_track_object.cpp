@@ -18,7 +18,7 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 /* REQUIRED BY TEMOTO */
-#include "TTP/base_task/base_task.h"    // The base task
+#include "temoto_nlp/base_task/base_task.h"    // The base task
 #include <class_loader/class_loader.h>  // Class loader includes
 
 #include "ros/ros.h"
@@ -28,7 +28,7 @@
 /* 
  * ACTION IMPLEMENTATION of TaTrackObject 
  */
-class TaTrackObject : public TTP::BaseTask
+class TaTrackObject : public temoto_nlp::BaseTask
 {
 public:
 
@@ -40,7 +40,7 @@ TaTrackObject()
 }
     
 /* REQUIRED BY TEMOTO */
-void startTask(TTP::TaskInterface task_interface)
+void startTask(temoto_nlp::TaskInterface task_interface)
 {
   input_subjects = task_interface.input_subjects_;
   switch (task_interface.id_)
@@ -55,7 +55,7 @@ void startTask(TTP::TaskInterface task_interface)
 }
 
 /* REQUIRED BY TEMOTO */
-std::vector<TTP::Subject> getSolution()
+std::vector<temoto_nlp::Subject> getSolution()
 {
   return output_subjects;
 }
@@ -83,7 +83,7 @@ context_manager::ContextManagerInterface <TaTrackObject> cmi_;
 void startInterface_0()
 {
   /* EXTRACTION OF INPUT SUBJECTS */
-  TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
+  temoto_nlp::Subject what_0_in = temoto_nlp::getSubjectByType("what", input_subjects);
   std::string  what_0_word_in = what_0_in.words_[0];
 
   /* DECLARATION OF OUTPUT SUBJECTS */
@@ -99,7 +99,7 @@ void startInterface_0()
   what_0_word_out = "object container";
 
   
-  TTP::Subject what_0_out("what", what_0_word_out);
+  temoto_nlp::Subject what_0_out("what", what_0_word_out);
   what_0_out.markComplete();
   what_0_out.data_.emplace_back("topic", boost::any_cast<std::string>(what_0_data_0_out));
 
@@ -110,4 +110,4 @@ void startInterface_0()
 }; // TaTrackObject class
 
 /* REQUIRED BY CLASS LOADER */
-CLASS_LOADER_REGISTER_CLASS(TaTrackObject, TTP::BaseTask);
+CLASS_LOADER_REGISTER_CLASS(TaTrackObject, temoto_nlp::BaseTask);

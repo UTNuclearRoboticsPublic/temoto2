@@ -35,11 +35,11 @@ void AlgorithmSnooper::startSnooping()
    */
 
   std::string action = "find";
-  TTP::Subjects subjects;
+  temoto_nlp::Subjects subjects;
 
   // Subject that will contain the name of the tracked object.
   // Necessary when the tracker has to be stopped
-  TTP::Subject sub_0("what", "algorithm packages");
+  temoto_nlp::Subject sub_0("what", "algorithm packages");
 
   // Topic from where the raw AR tag tracker data comes from
   std::string catkin_ws = ros::package::getPath(ROS_PACKAGE_NAME) + "/../..";
@@ -51,15 +51,15 @@ void AlgorithmSnooper::startSnooping()
   subjects.push_back(sub_0);
 
   // Create a SF
-  std::vector<TTP::TaskDescriptor> task_descriptors;
+  std::vector<temoto_nlp::TaskDescriptor> task_descriptors;
   task_descriptors.emplace_back(action, subjects);
   task_descriptors[0].setActionStemmed(action);
 
   // Create a sematic frame tree
-  TTP::TaskTree sft = TTP::SFTBuilder::build(task_descriptors);
+  temoto_nlp::TaskTree sft = temoto_nlp::SFTBuilder::build(task_descriptors);
 
   // Get the root node of the tree
-  TTP::TaskTreeNode& root_node = sft.getRootNode();
+  temoto_nlp::TaskTreeNode& root_node = sft.getRootNode();
   sft.printTaskDescriptors(root_node);
 
   // Execute the SFT
@@ -147,7 +147,7 @@ std::vector<AlgorithmInfoPtr> AlgorithmSnooper::parseAlgorithms(const YAML::Node
   return algorithms;
 }
 
-void AlgorithmSnooper::syncCb(const temoto_2::ConfigSync& msg, const PayloadType& payload)
+void AlgorithmSnooper::syncCb(const temoto_core::ConfigSync& msg, const PayloadType& payload)
 {
 
   if (msg.action == temoto_core::rmp::sync_action::REQUEST_CONFIG)

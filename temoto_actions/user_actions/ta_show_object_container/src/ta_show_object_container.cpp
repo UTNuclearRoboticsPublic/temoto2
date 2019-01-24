@@ -18,7 +18,7 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 /* REQUIRED BY TEMOTO */
-#include "TTP/base_task/base_task.h"    // The base task
+#include "temoto_nlp/base_task/base_task.h"    // The base task
 #include <class_loader/class_loader.h>  // Class loader includes
 
 // Action specific includes
@@ -33,7 +33,7 @@
 /* 
  * ACTION IMPLEMENTATION of TaShowObjectContainer 
  */
-class TaShowObjectContainer : public TTP::BaseTask
+class TaShowObjectContainer : public temoto_nlp::BaseTask
 {
 public:
 
@@ -45,7 +45,7 @@ TaShowObjectContainer()
 }
     
 /* REQUIRED BY TEMOTO */
-void startTask(TTP::TaskInterface task_interface)
+void startTask(temoto_nlp::TaskInterface task_interface)
 {
   input_subjects = task_interface.input_subjects_;
   switch (task_interface.id_)
@@ -60,7 +60,7 @@ void startTask(TTP::TaskInterface task_interface)
 }
 
 /* REQUIRED BY TEMOTO */
-std::vector<TTP::Subject> getSolution()
+std::vector<temoto_nlp::Subject> getSolution()
 {
   return output_subjects;
 }
@@ -123,11 +123,11 @@ void objectContainerCb(temoto_2::ObjectContainer msg)
 void startInterface_0()
 {
   /* EXTRACTION OF INPUT SUBJECTS */
-  TTP::Subject what_0_in = TTP::getSubjectByType("what", input_subjects);
+  temoto_nlp::Subject what_0_in = temoto_nlp::getSubjectByType("what", input_subjects);
   std::string  what_0_word_in = what_0_in.words_[0];
   std::string  what_0_data_0_in = boost::any_cast<std::string>(what_0_in.data_[0].value);
 
-  TTP::Subject where_1_in = TTP::getSubjectByType("where", input_subjects);
+  temoto_nlp::Subject where_1_in = temoto_nlp::getSubjectByType("where", input_subjects);
   std::string  where_1_word_in = where_1_in.words_[0];
 
 
@@ -153,4 +153,4 @@ void startInterface_0()
 }; // TaShowObjectContainer class
 
 /* REQUIRED BY CLASS LOADER */
-CLASS_LOADER_REGISTER_CLASS(TaShowObjectContainer, TTP::BaseTask);
+CLASS_LOADER_REGISTER_CLASS(TaShowObjectContainer, temoto_nlp::BaseTask);

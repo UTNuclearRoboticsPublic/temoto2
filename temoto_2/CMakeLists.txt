@@ -28,6 +28,8 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   tf2_geometry_msgs
   temoto_core
+  temoto_nlp
+  roslib
 )
 
 find_package(TinyXML REQUIRED)
@@ -37,14 +39,9 @@ find_package(MeTA REQUIRED)
 
 # THE FOLLOWING FILES CANNOT BE PLACED UNDER SUBDIRS!
 add_message_files(FILES 
-  StopTaskMsg.msg
-
   # Context Manager 
   SpeechSpecifier.msg
   ObjectContainer.msg
-
-  # Task manager
-  TTP/task_manager/IndexTasks.msg
 )
 
 add_service_files(
@@ -76,9 +73,6 @@ add_service_files(
   robot_manager/RobotSetTarget.srv
   robot_manager/RobotSetMode.srv
   robot_manager/RobotGetVizInfo.srv
-
-  # Task manager
-  TTP/task_manager/StopTask.srv
 )
 
 generate_messages(
@@ -90,13 +84,14 @@ generate_messages(
   diagnostic_msgs
   temoto_2
   temoto_core
+  temoto_nlp
 )
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES yaml-cpp ft_parser
   # LIBRARIES temoto_2
-  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs message_runtime human_msgs diagnostic_msgs shape_msgs visualization_msgs temoto_core
+  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs message_runtime human_msgs diagnostic_msgs shape_msgs visualization_msgs temoto_core temoto_nlp
   DEPENDS 
     TinyXML
     EIGEN3
@@ -122,7 +117,7 @@ add_executable(context_manager
 )
 
 add_dependencies(context_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(context_manager ${catkin_LIBRARIES} yaml-cpp ttp temoto_core_components)
+target_link_libraries(context_manager ${catkin_LIBRARIES} yaml-cpp temoto_nlp_components temoto_core_components)
 
 # # # # # # # # # # # #
 # SENSOR MANAGER
@@ -135,7 +130,7 @@ add_executable(sensor_manager
   src/sensor_manager/sensor_info.cpp
 )
 add_dependencies(sensor_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(sensor_manager ${catkin_LIBRARIES} yaml-cpp ttp temoto_core_components)
+target_link_libraries(sensor_manager ${catkin_LIBRARIES} yaml-cpp temoto_nlp_components temoto_core_components)
 
 # # # # # # # # # # # #
 # ALGORITHM MANAGER
@@ -149,7 +144,7 @@ add_executable(algorithm_manager
   src/algorithm_manager/algorithm_info.cpp
 )
 add_dependencies(algorithm_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(algorithm_manager ${catkin_LIBRARIES} yaml-cpp ttp temoto_core_components)
+target_link_libraries(algorithm_manager ${catkin_LIBRARIES} yaml-cpp temoto_nlp_components temoto_core_components)
 
 # # # # # # # # # # # #
 # OUTPUT MANAGER
@@ -161,34 +156,6 @@ add_executable(output_manager
 )
 add_dependencies(output_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(output_manager ${catkin_LIBRARIES} temoto_core_components)
-
-# # # # # # # # # # # #
-# TTP
-# # # # # # # # # # # #
-add_library(ttp STATIC 
-  src/TTP/language_processors/meta/meta_lp.cpp
-  src/TTP/language_processors/nlp_tools/number_operations.cpp
-  src/TTP/language_processors/meta/branch_finder.cpp
-  src/TTP/task_manager.cpp
-  src/TTP/task_descriptor_processor.cpp
-  src/TTP/io_descriptor.cpp
-  src/TTP/task_descriptor.cpp
-  src/TTP/task_tree_node.cpp
-  src/TTP/task_tree.cpp
-  src/TTP/task_container.cpp
-)
-add_dependencies(ttp ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(ttp ${catkin_LIBRARIES}
-                          ${TinyXML_LIBRARIES}
-                          ${TBB_LIBRARIES}
-                          meta-classify meta-sequence-analyzers meta-parser-analyzers temoto_core_components)
-
-# # # # # # # # # # # #
-# TEMOTO AGENT
-# # # # # # # # # # # #
-add_executable(temoto_agent src/core/temoto_agent.cpp)
-add_dependencies(temoto_agent ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(temoto_agent ttp temoto_core_components)
 
 # # # # # # # # # # # #
 # PROCESS MANAGER
@@ -222,11 +189,6 @@ target_link_libraries(robot_manager ${catkin_LIBRARIES} yaml-cpp temoto_core_com
 add_executable(language_input src/tools/language_input.cpp)
 add_dependencies(language_input ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(language_input ${catkin_LIBRARIES} temoto_core_components)
-
-add_executable(ai_package_generator src/tools/ai_package_generator.cpp 
-                                    src/common/semantic_frame_legacy.cpp)
-add_dependencies(ai_package_generator ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(ai_package_generator ${catkin_LIBRARIES} ttp ft_parser yaml-cpp)
 
 #add_executable(tracking_pipes_tests src/tools/tracking_pipes_tests.cpp)
 #add_dependencies(tracking_pipes_tests ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})

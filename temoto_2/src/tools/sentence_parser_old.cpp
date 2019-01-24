@@ -24,8 +24,8 @@
 
 #include "core/language_processor/visitors/branch_finder.h"
 #include "core/language_processor/visitors/find_action.h"
-#include "TTP/task_tree.h"
-#include "TTP/task_descriptor_processor.h"
+#include "temoto_nlp/task_tree.h"
+#include "temoto_nlp/task_descriptor_processor.h"
 
 #include "temoto_core/temoto_error/temoto_error.h"
 
@@ -47,8 +47,8 @@ int main(int argc, char **argv)
     {
         std::cout << "---- Task Descriptor Processor test ----" << std::endl;
 
-        TTP::TaskDescriptorProcessor tdp("/home/robert/catkin_ws/src/temoto2/tasks/task_demo");
-        TTP::TaskDescriptor td = tdp.getTaskDescriptor();
+        temoto_nlp::TaskDescriptorProcessor tdp("/home/robert/catkin_ws/src/temoto2/tasks/task_demo");
+        temoto_nlp::TaskDescriptor td = tdp.getTaskDescriptor();
 
         std::cout << td;
 
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
                 try
                 {
                     p_tree.visit(bf);
-                    std::vector<TTP::TaskDescriptor> task_descs = bf.getTaskDescs();
+                    std::vector<temoto_nlp::TaskDescriptor> task_descs = bf.getTaskDescs();
 
                     std::cout << "Found " << task_descs.size() << " potential tasks addressed to: " << bf.getAddressable() << std::endl;
 
@@ -114,8 +114,8 @@ int main(int argc, char **argv)
                     }
 
                     // Build a task tree
-                    TTP::TaskTreeBuilder ttb;
-                    TTP::TaskTree task_tree = ttb.build(task_descs);
+                    temoto_nlp::TaskTreeBuilder ttb;
+                    temoto_nlp::TaskTree task_tree = ttb.build(task_descs);
                     std::cout << "Task Tree: " << task_tree;
 
                     std::cout << "----------------------------------------------------------\n";
