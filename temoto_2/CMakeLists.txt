@@ -29,6 +29,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_geometry_msgs
   temoto_core
   temoto_nlp
+  temoto_context_manager
   roslib
 )
 
@@ -38,11 +39,6 @@ find_package(Eigen3 REQUIRED)
 find_package(MeTA REQUIRED)
 
 # THE FOLLOWING FILES CANNOT BE PLACED UNDER SUBDIRS!
-add_message_files(FILES 
-  # Context Manager 
-  SpeechSpecifier.msg
-  ObjectContainer.msg
-)
 
 add_service_files(
   FILES
@@ -55,13 +51,6 @@ add_service_files(
 
   # Algorithm Manager
   algorithm_manager/LoadAlgorithm.srv
-
-  # Context Manager
-  context_manager/GetNumber.srv
-  context_manager/LoadTracker.srv
-  context_manager/LoadSpeech.srv
-  context_manager/AddObjects.srv
-  context_manager/TrackObject.srv
 
   # Output Manager
   output_manager/rviz_manager/LoadRvizPlugin.srv
@@ -91,7 +80,19 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES yaml-cpp ft_parser
   # LIBRARIES temoto_2
-  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs message_runtime human_msgs diagnostic_msgs shape_msgs visualization_msgs temoto_core temoto_nlp
+  CATKIN_DEPENDS 
+    roscpp
+    rospy 
+    std_msgs 
+    geometry_msgs
+    message_runtime
+    human_msgs
+    diagnostic_msgs
+    shape_msgs
+    visualization_msgs
+    temoto_core
+    temoto_nlp
+    temoto_context_manager
   DEPENDS 
     TinyXML
     EIGEN3
@@ -106,18 +107,6 @@ include_directories(
 )
 
 # # # # # # # # # # # #   TEMOTO SYSTEM NODES   # # # # # # # # # # # # # # #
-
-# # # # # # # # # # # #
-# CONTEXT MANAGER
-# # # # # # # # # # # # 
-add_executable(context_manager 
-  src/context_manager/context_manager_node.cpp
-  src/context_manager/context_manager.cpp
-  src/context_manager/context_manager_containers.cpp
-)
-
-add_dependencies(context_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(context_manager ${catkin_LIBRARIES} yaml-cpp temoto_nlp_components temoto_core_components)
 
 # # # # # # # # # # # #
 # SENSOR MANAGER

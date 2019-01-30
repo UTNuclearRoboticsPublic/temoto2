@@ -11,7 +11,7 @@
 
 // Task specific includes
 #include "ros/ros.h"
-#include "context_manager/context_manager_interface.h"
+#include "temoto_context_manager/context_manager_interface.h"
 #include "sensor_manager/sensor_manager_interface.h"
 #include <visualization_msgs/Marker.h>
 
@@ -117,7 +117,7 @@ private:
   sensor_manager::SensorManagerInterface<TaStartCamera> smi_;
 
   // Create context manager interface object for context manager manager
-  context_manager::ContextManagerInterface<TaStartCamera> cmi_;
+  temoto_context_manager::ContextManagerInterface<TaStartCamera> cmi_;
 
   // Marker publisher
   ros::Publisher marker_pub_;

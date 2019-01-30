@@ -119,6 +119,6 @@ private:
                       bool inputTopics);
 };
 
-} // context_manager namespace
+} // temoto_context_manager namespace
 
 #endif

@@ -23,7 +23,7 @@
 
 namespace ser = ros::serialization;
 
-namespace context_manager
+namespace temoto_context_manager
 {
 
 class AlgorithmTest
@@ -74,8 +74,8 @@ public:
 private:
 
     std::string log_class_ = "AlgorithmTest";
-    std::string log_subsys_ = "context_manager";
-    std::string log_group_ = "context_manager";
+    std::string log_subsys_ = "temoto_context_manager";
+    std::string log_group_ = "temoto_context_manager";
 
     AlgorithmInfoPtrs local_algorithms_;
 
@@ -146,7 +146,7 @@ private:
     }
 };
 
-} // context_manager namespace
+} // temoto_context_manager namespace
 
 
 void conf_sub_cb(temoto_core::ConfigSync conf_msg)

@@ -1,25 +1,23 @@
-#ifndef CONTEXT_MANAGER_H
-#define CONTEXT_MANAGER_H
+#ifndef TEMOTO_CONTEXT_MANAGER__CONTEXT_MANAGER_H
+#define TEMOTO_CONTEXT_MANAGER__CONTEXT_MANAGER_H
 
 #include "temoto_core/common/base_subsystem.h"
 #include "temoto_core/common/temoto_id.h"
 #include "temoto_core/common/reliability.h"
-
-#include "context_manager/context_manager_containers.h"
-#include "context_manager/tracking_method.h"
-#include "context_manager/context_manager_services.h"
-#include "temoto_nlp/task_manager.h"
-
 #include "temoto_core/rmp/resource_manager.h"
 #include "temoto_core/rmp/config_synchronizer.h"
 
-#include "sensor_manager/sensor_manager_services.h"
-#include "algorithm_manager/algorithm_manager_services.h"
+#include "temoto_context_manager/context_manager_containers.h"
+#include "temoto_context_manager/tracking_method.h"
+#include "temoto_context_manager/context_manager_services.h"
 
-namespace context_manager
+#include "temoto_nlp/task_manager.h"
+#include "temoto_component_manager/component_manager_services.h"
+
+namespace temoto_context_manager
 {
 
-typedef std::shared_ptr<context_manager::TrackerInfo> TrackerInfoPtr;
+typedef std::shared_ptr<temoto_context_manager::TrackerInfo> TrackerInfoPtr;
 typedef std::vector<TrackerInfoPtr> TrackerInfoPtrs;
 
 class ContextManager : public temoto_core::BaseSubsystem
@@ -34,44 +32,44 @@ public:
 
 private:
 
-  void loadGetNumberCb(temoto_2::GetNumber::Request& req, temoto_2::GetNumber::Response& res);
+  void loadGetNumberCb(GetNumber::Request& req, GetNumber::Response& res);
 
-  void unloadGetNumberCb(temoto_2::GetNumber::Request& req, temoto_2::GetNumber::Response& res);
+  void unloadGetNumberCb(GetNumber::Request& req, GetNumber::Response& res);
 
   /**
    * @brief loadTrackerCb
    * @param req
    * @param res
    */
-  void loadTrackerCb(temoto_2::LoadTracker::Request& req, temoto_2::LoadTracker::Response& res);
+  void loadTrackerCb(LoadTracker::Request& req, LoadTracker::Response& res);
 
   /**
    * @brief unloadTrackerCb
    * @param req
    * @param res
    */
-  void unloadTrackerCb(temoto_2::LoadTracker::Request& req, temoto_2::LoadTracker::Response& res);
+  void unloadTrackerCb(LoadTracker::Request& req, LoadTracker::Response& res);
 
   /**
    * @brief findTrackers
    * @param req
    * @return
    */
-  TrackerInfoPtrs findTrackers(temoto_2::LoadTracker::Request& req);
+  TrackerInfoPtrs findTrackers(LoadTracker::Request& req);
 
   /**
    * @brief loadTrackObjectCb
    * @param req
    * @param res
    */
-  void loadTrackObjectCb(temoto_2::TrackObject::Request& req, temoto_2::TrackObject::Response& res);
+  void loadTrackObjectCb(TrackObject::Request& req, TrackObject::Response& res);
 
   /**
    * @brief unloadTrackObjectCb
    * @param req
    * @param res
    */
-  void unloadTrackObjectCb(temoto_2::TrackObject::Request& req, temoto_2::TrackObject::Response& res);
+  void unloadTrackObjectCb(TrackObject::Request& req, TrackObject::Response& res);
 
   /**
    * @brief parseTrackers
@@ -86,7 +84,7 @@ private:
    * are going to be published
    * @return
    */
-  void loadSpeechCb(temoto_2::LoadSpeech::Request& req, temoto_2::LoadSpeech::Response& res);
+  void loadSpeechCb(LoadSpeech::Request& req, LoadSpeech::Response& res);
 
   /**
    * @brief Unload Callback for speech
@@ -94,14 +92,14 @@ private:
    * @param LoadSpeech response message
    * @return
    */
-  void unloadSpeechCb(temoto_2::LoadSpeech::Request& req, temoto_2::LoadSpeech::Response& res);
+  void unloadSpeechCb(LoadSpeech::Request& req, LoadSpeech::Response& res);
 
   /**
    * @brief addObjectCb
    * @param req
    * @param res
    */
-  bool addObjectsCb(temoto_2::AddObjects::Request& req, temoto_2::AddObjects::Response& res);
+  bool addObjectsCb(AddObjects::Request& req, AddObjects::Response& res);
 
   void objectSyncCb(const temoto_core::ConfigSync& msg, const Objects& payload);
 
@@ -168,6 +166,6 @@ private:
    */
   std::map<int, std::pair<TrackerInfoPtr, std::vector<int>>>  allocated_trackers_hack_;
 };
-}
+} // temoto_context_manager namespace
 
 #endif

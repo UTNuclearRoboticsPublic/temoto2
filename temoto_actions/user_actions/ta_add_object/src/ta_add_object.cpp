@@ -22,7 +22,7 @@
 #include <class_loader/class_loader.h>  // Class loader includes
 
 #include "ros/ros.h"
-#include "context_manager/context_manager_interface.h"
+#include "temoto_context_manager/context_manager_interface.h"
 #include <visualization_msgs/Marker.h>
 
 /* 
@@ -74,7 +74,7 @@ private:
   ros::NodeHandle n_;
 
   // Create context manager interface object for context manager manager
-  context_manager::ContextManagerInterface <TaAddObject> cmi_;
+  temoto_context_manager::ContextManagerInterface <TaAddObject> cmi_;
 
     
 /*
@@ -91,14 +91,14 @@ void startInterface_0()
   cmi_.initialize(this);
 
   // Create a hand object
-  temoto_2::ObjectContainer hand;
+  temoto_context_manager::ObjectContainer hand;
   hand.name = "right hand";
 
-  //TEMOTO_INFO_STREAM("The tracking method for the hand is:" << temoto_2::ObjectContainer::HAND);
-  TEMOTO_INFO_STREAM("The tracking method for the hand is:" << temoto_2::ObjectContainer::ARTAG);
+  //TEMOTO_INFO_STREAM("The tracking method for the hand is:" << temoto_context_manager::ObjectContainer::HAND);
+  TEMOTO_INFO_STREAM("The tracking method for the hand is:" << temoto_context_manager::ObjectContainer::ARTAG);
 
-  hand.detection_methods.push_back(temoto_2::ObjectContainer::HAND);
-  hand.detection_methods.push_back(temoto_2::ObjectContainer::ARTAG);
+  hand.detection_methods.push_back(temoto_context_manager::ObjectContainer::HAND);
+  hand.detection_methods.push_back(temoto_context_manager::ObjectContainer::ARTAG);
   hand.tag_id = 2;
 
   visualization_msgs::Marker marker;

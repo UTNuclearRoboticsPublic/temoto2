@@ -1,5 +1,8 @@
-#ifndef TRACKING_INFO_H
-#define TRACKING_INFO_H
+#ifndef TEMOTO_CONTEXT_MANAGER__TRACKING_INFO_H
+#define TEMOTO_CONTEXT_MANAGER__TRACKING_INFO_H
+
+#include "temoto_core/common/temoto_log_macros.h"
+#include "temoto_core/common/reliability.h"
 
 #include <string>
 #include <vector>
@@ -7,13 +10,10 @@
 #include <set>
 #include <ctype.h>
 #include <memory>                     // shared_ptr
-#include "temoto_core/common/temoto_log_macros.h"
-#include "temoto_core/common/reliability.h"
 #include <yaml-cpp/yaml.h>
-
 #include <iostream>                   // TODO: remove
 
-namespace context_manager
+namespace temoto_context_manager
 {
 
 /**
@@ -215,7 +215,7 @@ typedef std::shared_ptr<TrackerInfo> TrackerInfoPtr;
  */
 typedef std::vector<TrackerInfoPtr> TrackerInfoPtrs;
 
-} // namespace context_manager
+} // namespace temoto_context_manager
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *
@@ -226,12 +226,12 @@ typedef std::vector<TrackerInfoPtr> TrackerInfoPtrs;
 namespace YAML
 {
 template <>
-struct convert<context_manager::TrackerInfo>
+struct convert<temoto_context_manager::TrackerInfo>
 {
-  static Node encode(const context_manager::TrackerInfo& tracker_info)
+  static Node encode(const temoto_context_manager::TrackerInfo& tracker_info)
   {
     Node method;
-    std::vector<context_manager::Filter> pipe = tracker_info.getPipe();
+    std::vector<temoto_context_manager::Filter> pipe = tracker_info.getPipe();
     for (auto& filter : pipe)
     {
       // Encode the filter
@@ -264,7 +264,7 @@ struct convert<context_manager::TrackerInfo>
     return method;
   }
 
-  static bool decode(const Node& node, context_manager::TrackerInfo& tracker_info)
+  static bool decode(const Node& node, temoto_context_manager::TrackerInfo& tracker_info)
   {
     // Check if the "node" is a map
     if (!node.IsMap())
@@ -285,7 +285,7 @@ struct convert<context_manager::TrackerInfo>
       }
 
       // Create an empty filter object and fill it
-      context_manager::Filter filter;
+      temoto_context_manager::Filter filter;
 
       try
       {

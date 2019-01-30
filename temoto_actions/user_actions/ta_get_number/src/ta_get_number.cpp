@@ -20,7 +20,7 @@
 /* REQUIRED BY TEMOTO */
 #include "temoto_nlp/base_task/base_task.h"    // The base task
 #include <class_loader/class_loader.h>  // Class loader includes
-#include "context_manager/context_manager_interface.h"
+#include "temoto_context_manager/context_manager_interface.h"
 
 /* 
  * ACTION IMPLEMENTATION of TaGetNumber 
@@ -67,7 +67,7 @@ std::vector<temoto_nlp::Subject> getSolution()
 private:
 
 // Context Manager Interface object
-context_manager::ContextManagerInterface<TaGetNumber> cmi_;
+temoto_context_manager::ContextManagerInterface<TaGetNumber> cmi_;
 
 /*
  * Interface 0 body

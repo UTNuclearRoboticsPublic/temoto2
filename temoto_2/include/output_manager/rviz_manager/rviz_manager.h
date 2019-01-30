@@ -12,7 +12,7 @@
 #include "output_manager/rviz_manager/plugin_info.h"
 #include "output_manager/output_manager_services.h"
 #include "process_manager/process_manager_services.h"
-#include "context_manager/context_manager_services.h"
+#include "temoto_context_manager/context_manager_services.h"
 #include "temoto_core/rmp/resource_manager.h"
 
 

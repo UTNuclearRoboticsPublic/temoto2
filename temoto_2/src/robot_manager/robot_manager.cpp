@@ -496,13 +496,13 @@ bool RobotManager::setTargetCb(temoto_2::RobotSetTarget::Request& req,
   {
     TEMOTO_INFO("Setting target to object '%s'", req.object_name.c_str());
 
-    temoto_2::TrackObject track_object_msg;
+    temoto_context_manager::TrackObject track_object_msg;
     track_object_msg.request.object_name = req.object_name;
 
     try
     {
-      resource_manager_.call<temoto_2::TrackObject>(context_manager::srv_name::MANAGER,
-                                                    context_manager::srv_name::TRACK_OBJECT_SERVER,
+      resource_manager_.call<temoto_context_manager::TrackObject>(temoto_context_manager::srv_name::MANAGER,
+                                                    temoto_context_manager::srv_name::TRACK_OBJECT_SERVER,
                                                     track_object_msg);
 
       TEMOTO_DEBUG("Subscribing to '%s'", track_object_msg.response.object_topic.c_str());
@@ -594,7 +594,7 @@ bool RobotManager::setModeCb(temoto_2::RobotSetMode::Request& req,
 
 // Take palm pose of whichever hand is present, prefer left_hand.
 // Store the pose in a class member for later use when planning is requested.
-void RobotManager::targetPoseCb(const temoto_2::ObjectContainer& msg)
+void RobotManager::targetPoseCb(const temoto_context_manager::ObjectContainer& msg)
 {
     default_pose_mutex_.lock();
     default_target_pose_ = msg.pose;
@@ -632,7 +632,7 @@ void RobotManager::targetPoseCb(const temoto_2::ObjectContainer& msg)
 //    default_target_pose_.pose.orientation.z = (double)q.getZ();
 //    default_target_pose_.pose.orientation.w = (double)q.getW();
 
-    temoto_2::ObjectContainer msg2 = msg;
+    temoto_context_manager::ObjectContainer msg2 = msg;
     msg2.marker.header = default_target_pose_.header;
     msg2.marker.pose = default_target_pose_.pose;
     msg2.marker.ns = "blah2346";
@@ -677,8 +677,8 @@ void RobotManager::statusInfoCb(temoto_core::ResourceStatus& srv)
   //   // retry with previous request
   //   try
   //   {
-  //     resource_manager_.call<temoto_2::LoadGesture>(context_manager::srv_name::MANAGER,
-  //                                                   context_manager::srv_name::GESTURE_SERVER,
+  //     resource_manager_.call<temoto_2::LoadGesture>(temoto_context_manager::srv_name::MANAGER,
+  //                                                   temoto_context_manager::srv_name::GESTURE_SERVER,
   //                                                   hand_srv_msg_, temoto_core::rmp::FailureBehavior::NONE);
   //     TEMOTO_DEBUG("Subscribing to '%s'", hand_srv_msg_.response.topic.c_str());
   //     target_pose_sub_ =

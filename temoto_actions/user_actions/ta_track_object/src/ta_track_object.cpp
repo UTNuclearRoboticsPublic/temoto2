@@ -22,7 +22,7 @@
 #include <class_loader/class_loader.h>  // Class loader includes
 
 #include "ros/ros.h"
-#include "context_manager/context_manager_interface.h"
+#include "temoto_context_manager/context_manager_interface.h"
 #include <visualization_msgs/Marker.h>
 
 /* 
@@ -74,7 +74,7 @@ private:
 ros::NodeHandle n_;
 
 // Create context manager interface object for context manager manager
-context_manager::ContextManagerInterface <TaTrackObject> cmi_;
+temoto_context_manager::ContextManagerInterface <TaTrackObject> cmi_;
 
     
 /*

@@ -1,8 +1,0 @@
-Sensors:
-- sensor_name: "Le Terminal pour TeMoto"
-  sensor_type: "speech"
-  package_name: "temoto_2"
-  executable:  "temoto_terminal.launch"
-  topic:  "/terminal_text"
-  output_topics:
-    data: "/terminal_text"

@@ -7,7 +7,7 @@
 
 #include "ros/ros.h"
 #include "ros/package.h"
-#include "context_manager/tracking_method.h"
+#include "temoto_context_manager/tracking_method.h"
 
 #include <algorithm>
 #include <utility>
@@ -16,7 +16,7 @@
 
 namespace ser = ros::serialization;
 
-namespace context_manager
+namespace temoto_context_manager
 {
 
 class TrackingPipesTest
@@ -46,7 +46,7 @@ public:
 
 private:
 
-  std::map<std::string, std::vector<context_manager::TrackerInfo>> trackers_;
+  std::map<std::string, std::vector<temoto_context_manager::TrackerInfo>> trackers_;
 
   /**
    * @brief parseTrackers
@@ -88,7 +88,7 @@ private:
         try
         {
           // Convert the tracking method yaml description into TrackerInfo
-          context_manager::TrackerInfo tracker_info = method_it->as<context_manager::TrackerInfo>();
+          temoto_context_manager::TrackerInfo tracker_info = method_it->as<temoto_context_manager::TrackerInfo>();
 
           // Add the tracking method into the map of locally known trackers
           trackers_[tracker_category].push_back(tracker_info);
@@ -174,7 +174,7 @@ private:
 //    }
 };
 
-} // context_manager namespace
+} // temoto_context_manager namespace
 
 // main
 int main(int argc, char **argv)
@@ -182,7 +182,7 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "tracker_pipe_tests");
   ros::NodeHandle n;
 
-  context_manager::TrackingPipesTest tpt;
+  temoto_context_manager::TrackingPipesTest tpt;
 
   ros::Rate loop_rate(10);
 

@@ -1,21 +1,20 @@
-#ifndef HUMAN_CONTEXT_INTERFACE_H
-#define HUMAN_CONTEXT_INTERFACE_H
+#ifndef TEMOTO_CONTEXT_MANAGER__CONTEXT_MANAGER_INTERFACE_H
+#define TEMOTO_CONTEXT_MANAGER__CONTEXT_MANAGER_INTERFACE_H
 
-
-#include "temoto_nlp/base_task/base_task.h"
+#include "temoto_core/rmp/resource_manager.h"
 #include "temoto_core/common/temoto_id.h"
 #include "temoto_core/common/console_colors.h"
 #include "temoto_core/common/topic_container.h"
+#include "temoto_nlp/base_task/base_task.h"
+#include "temoto_context_manager/context_manager_services.h"
 
 #include "std_msgs/Float32.h"
 #include "std_msgs/String.h"
 #include "human_msgs/Hands.h"
 
-#include "context_manager/context_manager_services.h"
-#include "temoto_core/rmp/resource_manager.h"
 #include <vector>
 
-namespace context_manager
+namespace temoto_context_manager
 {
 
 template <class OwnerTask>
@@ -53,7 +52,7 @@ public:
     resource_manager_->registerStatusCb(&ContextManagerInterface::statusInfoCb);
 
     // Add object service client
-    add_object_client_ = nh_.serviceClient<temoto_2::AddObjects>(context_manager::srv_name::SERVER_ADD_OBJECTS);
+    add_object_client_ = nh_.serviceClient<AddObjects>(srv_name::SERVER_ADD_OBJECTS);
   }
 
   int getNumber(const int number)
@@ -68,14 +67,14 @@ public:
     }
 
     // Create a GetNumber service message
-    temoto_2::GetNumber srv_msg;
+    GetNumber srv_msg;
     srv_msg.request.requested_int = number;
 
     // Call the server
     try
     {
-      resource_manager_->template call<temoto_2::GetNumber>( context_manager::srv_name::MANAGER
-                                                           , context_manager::srv_name::GET_NUMBER_SERVER
+      resource_manager_->template call<GetNumber>( srv_name::MANAGER
+                                                           , srv_name::GET_NUMBER_SERVER
                                                            , srv_msg);
     }
     catch(temoto_core::error::ErrorStack& error_stack)
@@ -86,7 +85,7 @@ public:
     return srv_msg.response.responded_int;
   }
 
-  void getSpeech(std::vector<temoto_2::SpeechSpecifier> speech_specifiers, SpeechCallbackType callback, OwnerTask* obj)
+  void getSpeech(std::vector<SpeechSpecifier> speech_specifiers, SpeechCallbackType callback, OwnerTask* obj)
   {
     try
     {
@@ -103,14 +102,14 @@ public:
     // Contact the "Context Manager", pass the speech specifier and if successful, get
     // the name of the topic
 
-    temoto_2::LoadSpeech srv_msg;
+    LoadSpeech srv_msg;
     srv_msg.request.speech_specifiers = speech_specifiers;
 
     // Call the server
     try
     {
-      resource_manager_->template call<temoto_2::LoadSpeech>( context_manager::srv_name::MANAGER
-                                                            , context_manager::srv_name::SPEECH_SERVER
+      resource_manager_->template call<LoadSpeech>( srv_name::MANAGER
+                                                            , srv_name::SPEECH_SERVER
                                                             , srv_msg);
       allocated_speeches_.push_back(srv_msg);
     }
@@ -142,13 +141,13 @@ public:
     }
 
     // Start filling out the LoadTracker message
-    temoto_2::LoadTracker load_tracker_msg;
+    LoadTracker load_tracker_msg;
     load_tracker_msg.request.tracker_category = tracker_category;
 
     try
     {
-      resource_manager_->template call<temoto_2::LoadTracker>(context_manager::srv_name::MANAGER_2,
-                                                              context_manager::srv_name::TRACKER_SERVER,
+      resource_manager_->template call<LoadTracker>(srv_name::MANAGER_2,
+                                                              srv_name::TRACKER_SERVER,
                                                               load_tracker_msg);
       allocated_trackers_.push_back(load_tracker_msg);
     }
@@ -176,13 +175,13 @@ public:
     }
 
     // Start filling out the TrackObject message
-    temoto_2::TrackObject track_object_msg;
+    TrackObject track_object_msg;
     track_object_msg.request.object_name = object_name;
 
     try
     {
-      resource_manager_->template call<temoto_2::TrackObject>(context_manager::srv_name::MANAGER,
-                                                              context_manager::srv_name::TRACK_OBJECT_SERVER,
+      resource_manager_->template call<TrackObject>(srv_name::MANAGER,
+                                                              srv_name::TRACK_OBJECT_SERVER,
                                                               track_object_msg);
 
       allocated_track_objects_.push_back(track_object_msg);
@@ -198,7 +197,7 @@ public:
    * @brief addWorldObjects
    * @param objects
    */
-  void addWorldObjects(const std::vector<temoto_2::ObjectContainer>& objects)
+  void addWorldObjects(const std::vector<ObjectContainer>& objects)
   {
     // Check if this message contains the basic parameters
     // Does it have a name
@@ -216,7 +215,7 @@ public:
       }
     }
 
-    temoto_2::AddObjects add_obj_srvmsg;
+    AddObjects add_obj_srvmsg;
     add_obj_srvmsg.request.objects = objects;
 
     // Call the server
@@ -238,9 +237,9 @@ public:
    * @brief addWorldObjects
    * @param object
    */
-  void addWorldObjects(const temoto_2::ObjectContainer& object)
+  void addWorldObjects(const ObjectContainer& object)
   {
-    std::vector<temoto_2::ObjectContainer> objects;
+    std::vector<ObjectContainer> objects;
     objects.push_back(object);
     addWorldObjects(objects);
   }
@@ -294,17 +293,17 @@ public:
       TEMOTO_WARN("Received a notification about a resource failure. Unloading and trying again");
 
       auto speech_it = std::find_if(allocated_speeches_.begin(), allocated_speeches_.end(),
-                                  [&](const temoto_2::LoadSpeech& sens) -> bool {
+                                  [&](const LoadSpeech& sens) -> bool {
                                     return sens.response.rmp.resource_id == srv.request.resource_id;
                                   });
 
       auto tracker_it = std::find_if(allocated_trackers_.begin(), allocated_trackers_.end(),
-                                  [&](const temoto_2::LoadTracker& sens) -> bool {
+                                  [&](const LoadTracker& sens) -> bool {
                                     return sens.response.rmp.resource_id == srv.request.resource_id;
                                   });
 
       auto track_object_it = std::find_if(allocated_track_objects_.begin(), allocated_track_objects_.end(),
-                                  [&](const temoto_2::TrackObject& sens) -> bool {
+                                  [&](const TrackObject& sens) -> bool {
                                     return sens.response.rmp.resource_id == srv.request.resource_id;
                                   });
 
@@ -315,8 +314,8 @@ public:
           TEMOTO_DEBUG("Unloading speech");
           resource_manager_->unloadClientResource(speech_it->response.rmp.resource_id);
           TEMOTO_DEBUG("Asking the same speech again");
-          resource_manager_->template call<temoto_2::LoadSpeech>(
-              context_manager::srv_name::MANAGER, context_manager::srv_name::SPEECH_SERVER,
+          resource_manager_->template call<LoadSpeech>(
+              srv_name::MANAGER, srv_name::SPEECH_SERVER,
               *speech_it);
         }
         catch(temoto_core::error::ErrorStack& error_stack)
@@ -350,8 +349,8 @@ public:
 
           TEMOTO_DEBUG_STREAM("Trying to load an alternative tracker");
 
-          resource_manager_->template call<temoto_2::LoadTracker>(context_manager::srv_name::MANAGER_2,
-                                                                  context_manager::srv_name::TRACKER_SERVER,
+          resource_manager_->template call<LoadTracker>(srv_name::MANAGER_2,
+                                                                  srv_name::TRACKER_SERVER,
                                                                   *tracker_it);
         }
         catch(temoto_core::error::ErrorStack& error_stack)
@@ -371,8 +370,8 @@ public:
 
           TEMOTO_DEBUG_STREAM("Trying to resume tracking the " << track_object_it->request.object_name);
 
-          resource_manager_->template call<temoto_2::TrackObject>(context_manager::srv_name::MANAGER,
-                                                                  context_manager::srv_name::TRACK_OBJECT_SERVER,
+          resource_manager_->template call<TrackObject>(srv_name::MANAGER,
+                                                                  srv_name::TRACK_OBJECT_SERVER,
                                                                   *track_object_it);
         }
         catch(temoto_core::error::ErrorStack& error_stack)
@@ -415,13 +414,13 @@ private:
   ros::Subscriber speech_subscriber_;
   ros::ServiceClient add_object_client_;
 
-  std::vector<temoto_2::LoadSpeech> allocated_speeches_;
-  std::vector<temoto_2::LoadTracker> allocated_trackers_;
-  std::vector<temoto_2::TrackObject> allocated_track_objects_;
+  std::vector<LoadSpeech> allocated_speeches_;
+  std::vector<LoadTracker> allocated_trackers_;
+  std::vector<TrackObject> allocated_track_objects_;
 
   /**
    * @brief validateInterface()
-   * @param sensor_type
+   * @param component_type
    */
   void validateInterface()
   {

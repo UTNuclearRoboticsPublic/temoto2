@@ -24,7 +24,7 @@
 // Action specific includes
 #include "ros/ros.h"
 #include "output_manager/output_manager_interface.h"
-#include "temoto_2/ObjectContainer.h"
+#include "temoto_context_manager/ObjectContainer.h"
 #include <visualization_msgs/Marker.h>
 #include "human_msgs/Hands.h"
 
@@ -92,7 +92,7 @@ ros::Publisher marker_publisher_;
  * @brief objectContainerCb
  * @param msg
  */
-void objectContainerCb(temoto_2::ObjectContainer msg)
+void objectContainerCb(temoto_context_manager::ObjectContainer msg)
 {
   //TEMOTO_DEBUG_STREAM(" Publishing the marker");
 

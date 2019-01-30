@@ -24,7 +24,7 @@
 // Action specific includes
 #include "ros/ros.h"
 #include "ar_track_alvar_msgs/AlvarMarkers.h"
-#include "context_manager/context_manager_containers.h"
+#include "temoto_context_manager/context_manager_containers.h"
 
 /* 
  * ACTION IMPLEMENTATION of TaTrackArtag 
@@ -74,7 +74,7 @@ private:
 ros::NodeHandle nh_;
 ros::Subscriber artag_subscriber_;
 ros::Publisher tracked_object_publisher_;
-context_manager::ObjectPtr tracked_object_;
+temoto_context_manager::ObjectPtr tracked_object_;
 uint32_t tag_id_;
 
 void artagDataCb(ar_track_alvar_msgs::AlvarMarkers msg)
@@ -112,7 +112,7 @@ void startInterface_0()
   std::string  what_1_word_in = what_1_in.words_[0];
   std::string  what_1_data_0_in = boost::any_cast<std::string>(what_1_in.data_[0].value);
   std::string  what_1_data_1_in = boost::any_cast<std::string>(what_1_in.data_[1].value);
-  context_manager::ObjectPtr  what_1_data_2_in = boost::any_cast<context_manager::ObjectPtr>(what_1_in.data_[2].value);
+  temoto_context_manager::ObjectPtr  what_1_data_2_in = boost::any_cast<temoto_context_manager::ObjectPtr>(what_1_in.data_[2].value);
 
 
   try
@@ -130,7 +130,7 @@ void startInterface_0()
     artag_subscriber_ = nh_.subscribe(what_1_data_0_in, 10, &TaTrackArtag::artagDataCb, this);
 
     // Advertise the tracked object topic
-    tracked_object_publisher_ = nh_.advertise<temoto_2::ObjectContainer>(what_1_data_1_in, 10);
+    tracked_object_publisher_ = nh_.advertise<temoto_context_manager::ObjectContainer>(what_1_data_1_in, 10);
 
     // Assign the object pointer to the local object pointer "tracked_object"
     tracked_object_ = what_1_data_2_in;

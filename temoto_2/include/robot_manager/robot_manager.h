@@ -5,7 +5,7 @@
 #include "temoto_core/common/base_subsystem.h"
 #include "robot_manager/robot_manager_services.h"
 #include "process_manager/process_manager_services.h"
-#include "context_manager/context_manager_services.h"
+#include "temoto_context_manager/context_manager_services.h"
 #include "temoto_core/rmp/resource_manager.h"
 #include "temoto_core/rmp/config_synchronizer.h"
 #include "temoto_core/ConfigSync.h"
@@ -100,7 +100,7 @@ private:
   bool getVizInfoCb(temoto_2::RobotGetVizInfo::Request& req,
                        temoto_2::RobotGetVizInfo::Response& res);
 
-  void targetPoseCb(const temoto_2::ObjectContainer& msg);
+  void targetPoseCb(const temoto_context_manager::ObjectContainer& msg);
 
   void statusInfoCb(temoto_core::ResourceStatus& srv);
 

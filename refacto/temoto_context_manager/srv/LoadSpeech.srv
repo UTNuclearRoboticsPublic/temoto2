@@ -2,7 +2,7 @@
 temoto_core/RMPRequest rmp
 
 # Field that contains the speech specifiers
-temoto_2/SpeechSpecifier[] speech_specifiers
+temoto_context_manager/SpeechSpecifier[] speech_specifiers
 
 ---
 

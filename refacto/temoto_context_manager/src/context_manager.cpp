@@ -1,15 +1,15 @@
-#include "context_manager/context_manager.h"
 #include "ros/package.h"
+#include "temoto_context_manager/context_manager.h"
 #include <algorithm>
 #include <utility>
 #include <yaml-cpp/yaml.h>
 #include <fstream>
 
-namespace context_manager
+namespace temoto_context_manager
 {
 
 ContextManager::ContextManager()
-  : temoto_core::BaseSubsystem("context_manager", temoto_core::error::Subsystem::CONTEXT_MANAGER, __func__)
+  : temoto_core::BaseSubsystem("temoto_context_manager", temoto_core::error::Subsystem::CONTEXT_MANAGER, __func__)
   , resource_manager_1_(srv_name::MANAGER, this)
   , resource_manager_2_(srv_name::MANAGER_2, this)
   , tracked_objects_syncer_(srv_name::MANAGER, srv_name::SYNC_TRACKED_OBJECTS_TOPIC, &ContextManager::trackedObjectsSyncCb, this)
@@ -21,22 +21,22 @@ ContextManager::ContextManager()
    */
 
   // Speech recognition service
-  resource_manager_1_.addServer<temoto_2::GetNumber>( srv_name::GET_NUMBER_SERVER
+  resource_manager_1_.addServer<GetNumber>( srv_name::GET_NUMBER_SERVER
                                                     , &ContextManager::loadGetNumberCb
                                                     , &ContextManager::unloadGetNumberCb);
 
   // Speech recognition service
-  resource_manager_1_.addServer<temoto_2::LoadSpeech>(srv_name::SPEECH_SERVER
+  resource_manager_1_.addServer<LoadSpeech>(srv_name::SPEECH_SERVER
                                                     , &ContextManager::loadSpeechCb
                                                     , &ContextManager::unloadSpeechCb);
 
   // Object tracking service
-  resource_manager_1_.addServer<temoto_2::TrackObject>(srv_name::TRACK_OBJECT_SERVER
+  resource_manager_1_.addServer<TrackObject>(srv_name::TRACK_OBJECT_SERVER
                                                     , &ContextManager::loadTrackObjectCb
                                                     , &ContextManager::unloadTrackObjectCb);
 
   // Tracker setup service
-  resource_manager_2_.addServer<temoto_2::LoadTracker>(srv_name::TRACKER_SERVER
+  resource_manager_2_.addServer<LoadTracker>(srv_name::TRACKER_SERVER
                                                     , &ContextManager::loadTrackerCb
                                                     , &ContextManager::unloadTrackerCb);
 
@@ -77,8 +77,8 @@ ContextManager::ContextManager()
 /*
  * Implementation of the GetNumber service
  */ 
-void ContextManager::loadGetNumberCb( temoto_2::GetNumber::Request& req
-                                    , temoto_2::GetNumber::Response& res)
+void ContextManager::loadGetNumberCb( GetNumber::Request& req
+                                    , GetNumber::Response& res)
 {
   TEMOTO_INFO_STREAM("Received a request to load number '" << req.requested_int << "'");
   res.responded_int = req.requested_int;
@@ -87,8 +87,8 @@ void ContextManager::loadGetNumberCb( temoto_2::GetNumber::Request& req
 /*
  * Implementation of the unload GetNumber service
  */ 
-void ContextManager::unloadGetNumberCb( temoto_2::GetNumber::Request& req
-                                      , temoto_2::GetNumber::Response& res)
+void ContextManager::unloadGetNumberCb( GetNumber::Request& req
+                                      , GetNumber::Response& res)
 {
   TEMOTO_INFO_STREAM("Received a request to UNload number '" << req.requested_int << "'");
 }
@@ -155,14 +155,14 @@ void ContextManager::addOrUpdateObjects(const Objects& objects_to_add, bool from
     if (it != objects_.end())
     {
       TEMOTO_INFO("Updating object: '%s'.", object.name.c_str());
-      *it = std::make_shared<temoto_2::ObjectContainer>(object);
+      *it = std::make_shared<temoto_context_manager::ObjectContainer>(object);
     }
 
     // Add new object
     else
     {
       TEMOTO_INFO("Adding new object: '%s'.", object.name.c_str());
-      objects_.push_back(std::make_shared<temoto_2::ObjectContainer>(object));
+      objects_.push_back(std::make_shared<temoto_context_manager::ObjectContainer>(object));
     }
   }
 
@@ -215,7 +215,7 @@ ObjectPtr ContextManager::findObject(std::string object_name)
 /*
  * Callback for adding objects
  */
-bool ContextManager::addObjectsCb(temoto_2::AddObjects::Request& req, temoto_2::AddObjects::Response& res)
+bool ContextManager::addObjectsCb(AddObjects::Request& req, AddObjects::Response& res)
 {
   TEMOTO_INFO("Received a request to add %ld objects.", req.objects.size());
 
@@ -227,7 +227,7 @@ bool ContextManager::addObjectsCb(temoto_2::AddObjects::Request& req, temoto_2::
 /*
  * Server for tracking objects
  */
-void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temoto_2::TrackObject::Response& res)
+void ContextManager::loadTrackObjectCb(TrackObject::Request& req, TrackObject::Response& res)
 {
   try
   {
@@ -247,12 +247,12 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
       TEMOTO_DEBUG_STREAM("The object '" << object_name_no_space << "' is alerady tracked by '"
                           << remote_temoto_namespace << "'. Forwarding the request.");
 
-      temoto_2::TrackObject track_object_msg;
+      TrackObject track_object_msg;
       track_object_msg.request = req;
 
       // Send the request to the remote namespace
-      resource_manager_2_.template call<temoto_2::TrackObject>(context_manager::srv_name::MANAGER,
-                                                               context_manager::srv_name::TRACK_OBJECT_SERVER,
+      resource_manager_2_.template call<TrackObject>(srv_name::MANAGER,
+                                                               srv_name::TRACK_OBJECT_SERVER,
                                                                track_object_msg,
                                                                temoto_core::rmp::FailureBehavior::NONE,
                                                                remote_temoto_namespace);
@@ -269,7 +269,7 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
     /*
      * Start a tracker that can be used to detect the requested object
      */
-    temoto_2::LoadTracker load_tracker_msg;
+    LoadTracker load_tracker_msg;
     addDetectionMethods(requested_object->detection_methods);
     std::vector<std::string> detection_methods = getOrderedDetectionMethods();
 
@@ -289,10 +289,10 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
         TEMOTO_INFO_STREAM("Trying to track the " << object_name_no_space
                            << " via '"<< tracker_category << "'");
 
-        load_tracker_msg = temoto_2::LoadTracker();
+        load_tracker_msg = LoadTracker();
         load_tracker_msg.request.tracker_category = tracker_category;
-        resource_manager_1_.call<temoto_2::LoadTracker>(context_manager::srv_name::MANAGER_2,
-                                                        context_manager::srv_name::TRACKER_SERVER,
+        resource_manager_1_.call<LoadTracker>(srv_name::MANAGER_2,
+                                                        srv_name::TRACKER_SERVER,
                                                         load_tracker_msg);
 
         selected_tracker = tracker_category;
@@ -469,8 +469,8 @@ void ContextManager::loadTrackObjectCb(temoto_2::TrackObject::Request& req, temo
 /*
  * Unload the track object
  */
-void ContextManager::unloadTrackObjectCb(temoto_2::TrackObject::Request& req,
-                                         temoto_2::TrackObject::Response& res)
+void ContextManager::unloadTrackObjectCb(TrackObject::Request& req,
+                                         TrackObject::Response& res)
 {
   /*
    * Stopping tracking the object based on its name
@@ -516,7 +516,7 @@ void ContextManager::unloadTrackObjectCb(temoto_2::TrackObject::Request& req,
  * @param req
  * @return
  */
-TrackerInfoPtrs ContextManager::findTrackers(temoto_2::LoadTracker::Request& req)
+TrackerInfoPtrs ContextManager::findTrackers(LoadTracker::Request& req)
 {
   // Get the tracking methods of the requested category
   auto tracker_category = categorized_trackers_.find(req.tracker_category);
@@ -600,8 +600,8 @@ TrackerInfoPtrs ContextManager::findTrackers(temoto_2::LoadTracker::Request& req
 /*
  * Load tracker callback
  */
-void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
-                                   temoto_2::LoadTracker::Response& res)
+void ContextManager::loadTrackerCb(LoadTracker::Request& req,
+                                   LoadTracker::Response& res)
 {
   TEMOTO_INFO_STREAM("Received a request: \n" << req << std::endl);
 
@@ -685,22 +685,22 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
         if (pipe.at(i).filter_category_ == "sensor")
         {
           // Compose the LoadSensor message
-          temoto_2::LoadSensor load_sensor_msg;
-          load_sensor_msg.request.sensor_type = pipe.at(i).filter_type_;
-          load_sensor_msg.request.output_topics = required_topics.outputTopicsAsKeyValues();
+          temoto_component_manager::LoadComponent load_component_msg;
+          load_component_msg.request.component_type = pipe.at(i).filter_type_;
+          load_component_msg.request.output_topics = required_topics.outputTopicsAsKeyValues();
 
           // Call the Sensor Manager
-          resource_manager_2_.call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
-                                                         sensor_manager::srv_name::SERVER,
-                                                         load_sensor_msg);
+          resource_manager_2_.call<temoto_component_manager::LoadComponent>(temoto_component_manager::srv_name::MANAGER,
+                                                         temoto_component_manager::srv_name::SERVER,
+                                                         load_component_msg);
 
           // TODO: REMOVE AFTER RMP HAS THIS FUNCTIONALITY
-          sub_resource_ids.push_back(load_sensor_msg.response.rmp.resource_id);
+          sub_resource_ids.push_back(load_component_msg.response.rmp.resource_id);
 
-          required_topics.setInputTopicsByKeyValue(load_sensor_msg.response.output_topics);
+          required_topics.setInputTopicsByKeyValue(load_component_msg.response.output_topics);
 
           // This line is necessary if the pipe size is 1
-          required_topics.setOutputTopicsByKeyValue(load_sensor_msg.response.output_topics);
+          required_topics.setOutputTopicsByKeyValue(load_component_msg.response.output_topics);
         }
 
         /*
@@ -732,20 +732,20 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
           }
 
           // Compose the LoadAlgorithm message
-          temoto_2::LoadAlgorithm load_algorithm_msg;
-          load_algorithm_msg.request.algorithm_type = pipe.at(i).filter_type_;
-          load_algorithm_msg.request.input_topics = required_topics.inputTopicsAsKeyValues();
-          load_algorithm_msg.request.output_topics = required_topics.outputTopicsAsKeyValues();
+          temoto_component_manager::LoadComponent load_component_msg;
+          load_component_msg.request.component_type = pipe.at(i).filter_type_;
+          load_component_msg.request.input_topics = required_topics.inputTopicsAsKeyValues();
+          load_component_msg.request.output_topics = required_topics.outputTopicsAsKeyValues();
 
           // Call the Algorithm Manager
-          resource_manager_2_.call<temoto_2::LoadAlgorithm>(algorithm_manager::srv_name::MANAGER,
-                                                            algorithm_manager::srv_name::SERVER,
-                                                            load_algorithm_msg);
+          resource_manager_2_.call<temoto_component_manager::LoadComponent>(temoto_component_manager::srv_name::MANAGER,
+                                                            temoto_component_manager::srv_name::SERVER,
+                                                            load_component_msg);
 
           // TODO: REMOVE AFTER RMP HAS THIS FUNCTIONALITY
-          sub_resource_ids.push_back(load_algorithm_msg.response.rmp.resource_id);
+          sub_resource_ids.push_back(load_component_msg.response.rmp.resource_id);
 
-          required_topics.setInputTopicsByKeyValue(load_algorithm_msg.response.output_topics);
+          required_topics.setInputTopicsByKeyValue(load_component_msg.response.output_topics);
         }
       }
 
@@ -772,7 +772,7 @@ void ContextManager::loadTrackerCb(temoto_2::LoadTracker::Request& req,
 /*
  * Unload tracker callback
  */
-void ContextManager::unloadTrackerCb(temoto_2::LoadTracker::Request& req, temoto_2::LoadTracker::Response& res)
+void ContextManager::unloadTrackerCb(LoadTracker::Request& req, LoadTracker::Response& res)
 {
   // Remove the tracker from the list of allocated trackers
   auto it = allocated_trackers_hack_.find(res.rmp.resource_id);
@@ -827,11 +827,11 @@ void ContextManager::parseTrackers(std::string config_path)
       try
       {
         // Convert the tracking method yaml description into TrackerInfo
-        context_manager::TrackerInfo tracker_info = method_it->as<context_manager::TrackerInfo>();
+        temoto_context_manager::TrackerInfo tracker_info = method_it->as<temoto_context_manager::TrackerInfo>();
         tracker_info.setType(tracker_category);
 
         // Add the tracking method into the map of locally known trackers
-        categorized_trackers_[tracker_category].push_back(std::make_shared<context_manager::TrackerInfo>(tracker_info));
+        categorized_trackers_[tracker_category].push_back(std::make_shared<temoto_context_manager::TrackerInfo>(tracker_info));
 
         // TODO: Print via TEMOTO_DEBUG
         // std::cout << tracker_info.toString() << std::endl;
@@ -848,20 +848,20 @@ void ContextManager::parseTrackers(std::string config_path)
 /*
  * TODO: use the generic tracker service
  */
-void ContextManager::loadSpeechCb(temoto_2::LoadSpeech::Request& req,
-                                  temoto_2::LoadSpeech::Response& res)
+void ContextManager::loadSpeechCb(LoadSpeech::Request& req,
+                                  LoadSpeech::Response& res)
 {
   TEMOTO_INFO("Speech requested.");
   TEMOTO_DEBUG("Using hardcoded specifiers[0]");
 
-  temoto_2::LoadSensor msg;
-  msg.request.sensor_type = req.speech_specifiers[0].type;
+  temoto_component_manager::LoadComponent msg;
+  msg.request.component_type = req.speech_specifiers[0].type;
 
   // Request a speech sensor from the Sensor Manager
   try
   {
-    resource_manager_1_.call<temoto_2::LoadSensor>(sensor_manager::srv_name::MANAGER,
-                                                   sensor_manager::srv_name::SERVER,
+    resource_manager_1_.call<temoto_component_manager::LoadComponent>(temoto_component_manager::srv_name::MANAGER,
+                                                   temoto_component_manager::srv_name::SERVER,
                                                    msg);
 
     TEMOTO_DEBUG("Got a response: '%s'", msg.response.rmp.message.c_str());
@@ -875,8 +875,8 @@ void ContextManager::loadSpeechCb(temoto_2::LoadSpeech::Request& req,
   }
 }
 
-void ContextManager::unloadSpeechCb(temoto_2::LoadSpeech::Request& req,
-                                    temoto_2::LoadSpeech::Response& res)
+void ContextManager::unloadSpeechCb(LoadSpeech::Request& req,
+                                    LoadSpeech::Response& res)
 {
   TEMOTO_INFO("Speech unloaded.");
 }
@@ -981,4 +981,4 @@ std::vector<std::string> ContextManager::getOrderedDetectionMethods()
   return odm_vec;
 }
 
-}  // namespace context_manager
+}  // namespace temoto_context_manager

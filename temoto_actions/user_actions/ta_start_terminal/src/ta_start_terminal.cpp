@@ -15,7 +15,7 @@
 // Task specific includes
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-#include "context_manager/context_manager_interface.h"
+#include "temoto_context_manager/context_manager_interface.h"
 
 // experimental testing in speech callback
 #include <boost/algorithm/string.hpp>
@@ -75,8 +75,8 @@ public:
 
     // Build a speech specifier
     // TODO: This shoud be done via speech specifier helper class
-    std::vector<temoto_2::SpeechSpecifier> speech_specifiers;
-    temoto_2::SpeechSpecifier speech_specifier;
+    std::vector<temoto_context_manager::SpeechSpecifier> speech_specifiers;
+    temoto_context_manager::SpeechSpecifier speech_specifier;
     speech_specifier.dev = "device";
     speech_specifier.type = "speech";
     speech_specifiers.push_back(speech_specifier);
@@ -128,7 +128,7 @@ private:
   std::string class_name_;
 
   // Human context interface object
-  context_manager::ContextManagerInterface<TaTaskTerminal> cmi_;
+  temoto_context_manager::ContextManagerInterface<TaTaskTerminal> cmi_;
   ros::Publisher core_pub_;
   ros::NodeHandle nh_;
 };
