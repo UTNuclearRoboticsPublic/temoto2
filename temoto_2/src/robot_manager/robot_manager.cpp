@@ -1,12 +1,12 @@
 #include "ros/package.h"
 #include "temoto_core/temoto_error/temoto_error.h"
 #include "robot_manager/robot_manager.h"
-#include "process_manager/process_manager_services.h"
+#include "temoto_er_manager/temoto_er_manager_services.h"
 #include <yaml-cpp/yaml.h>
 #include <fstream>
 #include <sstream>
 
-#include "output_manager/output_manager_services.h"
+#include "temoto_output_manager/temoto_output_manager_services.h"
 
 namespace robot_manager
 {

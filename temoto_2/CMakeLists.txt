@@ -17,10 +17,8 @@ find_package(catkin REQUIRED COMPONENTS
   ar_track_alvar_msgs
   visualization_msgs
   diagnostic_msgs
-  class_loader
   cmake_modules
 	message_generation
-  rviz_plugin_manager
   file_template_parser
   temoto_action_assistant
   moveit_ros_planning_interface
@@ -30,20 +28,18 @@ find_package(catkin REQUIRED COMPONENTS
   temoto_core
   temoto_nlp
   temoto_context_manager
+  temoto_er_manager
+  temoto_output_manager
   roslib
 )
 
 find_package(TinyXML REQUIRED)
-find_package(TBB REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(MeTA REQUIRED)
 
 # THE FOLLOWING FILES CANNOT BE PLACED UNDER SUBDIRS!
 
 add_service_files(
   FILES
-  # Process Manager
-  process_manager/LoadProcess.srv
 
   # Sensor Manager
   sensor_manager/ListDevices.srv
@@ -51,9 +47,6 @@ add_service_files(
 
   # Algorithm Manager
   algorithm_manager/LoadAlgorithm.srv
-
-  # Output Manager
-  output_manager/rviz_manager/LoadRvizPlugin.srv
 
   # Robot Manager
   robot_manager/RobotLoad.srv
@@ -93,6 +86,7 @@ catkin_package(
     temoto_core
     temoto_nlp
     temoto_context_manager
+    temoto_er_manager
   DEPENDS 
     TinyXML
     EIGEN3
@@ -103,7 +97,6 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${TinyXML_INCLUDE_DIRS}
-  ${TBB_INCLUDE_DIRS}
 )
 
 # # # # # # # # # # # #   TEMOTO SYSTEM NODES   # # # # # # # # # # # # # # #
@@ -134,28 +127,6 @@ add_executable(algorithm_manager
 )
 add_dependencies(algorithm_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(algorithm_manager ${catkin_LIBRARIES} yaml-cpp temoto_nlp_components temoto_core_components)
-
-# # # # # # # # # # # #
-# OUTPUT MANAGER
-# # # # # # # # # # # #
-add_executable(output_manager 
-  src/output_manager/output_manager.cpp
-  src/output_manager/rviz_manager/rviz_manager.cpp
-  src/output_manager/rviz_manager/plugin_info.cpp
-)
-add_dependencies(output_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(output_manager ${catkin_LIBRARIES} temoto_core_components)
-
-# # # # # # # # # # # #
-# PROCESS MANAGER
-# # # # # # # # # # # #
-add_executable(process_manager 
-  src/process_manager/process_manager.cpp
-  src/process_manager/process_manager_node.cpp
-)
-add_dependencies(process_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(process_manager ${catkin_LIBRARIES} temoto_core_components)
-
 
 # # # # # # # # # # # #
 # ROBOT MANAGER

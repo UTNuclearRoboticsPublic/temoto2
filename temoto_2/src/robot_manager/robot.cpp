@@ -288,17 +288,17 @@ void Robot::loadNavigationDriver()
 temoto_core::temoto_id::ID Robot::rosExecute(const std::string& package_name, const std::string& executable,
                        const std::string& args)
 {
-  temoto_2::LoadProcess load_proc_srvc;
+  temoto_er_manager::LoadExtResource load_proc_srvc;
   load_proc_srvc.request.package_name = package_name;
   load_proc_srvc.request.ros_namespace = config_->getAbsRobotNamespace(); //Execute in robot namespace
-  load_proc_srvc.request.action = process_manager::action::ROS_EXECUTE;
+  load_proc_srvc.request.action = temoto_er_manager::action::ROS_EXECUTE;
   load_proc_srvc.request.executable = executable;
   load_proc_srvc.request.args = args;
 
   try
   {
-    resource_manager_.call<temoto_2::LoadProcess>(
-        process_manager::srv_name::MANAGER, process_manager::srv_name::SERVER, load_proc_srvc);
+    resource_manager_.call<temoto_er_manager::LoadExtResource>(
+        temoto_er_manager::srv_name::MANAGER, temoto_er_manager::srv_name::SERVER, load_proc_srvc);
   }
   catch(temoto_core::error::ErrorStack& error_stack)
   {

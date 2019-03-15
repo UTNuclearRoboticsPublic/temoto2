@@ -222,8 +222,8 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
   if (algorithm_ptr)
   {
     // Local algorithm found, prepare the message and make a call to the local resource manager
-    temoto_2::LoadProcess load_process_msg;
-    load_process_msg.request.action = process_manager::action::ROS_EXECUTE;
+    temoto_er_manager::LoadExtResource load_process_msg;
+    load_process_msg.request.action = temoto_er_manager::action::ROS_EXECUTE;
     load_process_msg.request.package_name = algorithm_ptr->getPackageName();
     load_process_msg.request.executable = algorithm_ptr->getExecutable();
 
@@ -244,8 +244,8 @@ void AlgorithmManager::loadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req
     // Request the Process Manager to load the algorithm
     try
     {
-      resource_manager_.call<temoto_2::LoadProcess>(process_manager::srv_name::MANAGER
-                                                  , process_manager::srv_name::SERVER
+      resource_manager_.call<temoto_er_manager::LoadExtResource>(temoto_er_manager::srv_name::MANAGER
+                                                  , temoto_er_manager::srv_name::SERVER
                                                   , load_process_msg
                                                   , temoto_core::rmp::FailureBehavior::NONE);
       algorithm_ptr->adjustReliability(1.0);
@@ -554,7 +554,7 @@ AlgorithmInfoPtrs AlgorithmManager::parseAlgorithms(const YAML::Node& config)
 
 void AlgorithmManager::remapArguments(std::vector<diagnostic_msgs::KeyValue>& req_topics,
                                       std::vector<diagnostic_msgs::KeyValue>& res_topics,
-                                      temoto_2::LoadProcess& load_process_msg,
+                                      temoto_er_manager::LoadExtResource& load_process_msg,
                                       AlgorithmInfoPtr algorithm_ptr,
                                       bool inputTopics)
 {

@@ -69,8 +69,8 @@ void AlgorithmManagerServers::loadAlgorithmCb( temoto_2::LoadAlgorithm::Request&
     for (AlgorithmInfo& ai : ais)
     {
       // Try to run the algorithm via local Resource Manager
-      temoto_2::LoadProcess load_process_msg;
-      load_process_msg.request.action = process_manager::action::ROS_EXECUTE;
+      temoto_er_manager::LoadExtResource load_process_msg;
+      load_process_msg.request.action = temoto_er_manager::action::ROS_EXECUTE;
       load_process_msg.request.package_name = ai.getPackageName();
       load_process_msg.request.executable = ai.getExecutable();
 
@@ -88,8 +88,8 @@ void AlgorithmManagerServers::loadAlgorithmCb( temoto_2::LoadAlgorithm::Request&
 
       try
       {
-        resource_manager_.call<temoto_2::LoadProcess>( process_manager::srv_name::MANAGER
-                                                     , process_manager::srv_name::SERVER
+        resource_manager_.call<temoto_er_manager::LoadExtResource>( temoto_er_manager::srv_name::MANAGER
+                                                     , temoto_er_manager::srv_name::SERVER
                                                      , load_process_msg
                                                      , temoto_core::rmp::FailureBehavior::NONE);
 
@@ -172,6 +172,8 @@ void AlgorithmManagerServers::loadAlgorithmCb( temoto_2::LoadAlgorithm::Request&
 void AlgorithmManagerServers::unloadAlgorithmCb(temoto_2::LoadAlgorithm::Request& req,
                                  temoto_2::LoadAlgorithm::Response& res)
 {
+  (void)req; // Suppress "unused variable" compiler warnings
+  
   TEMOTO_DEBUG("received a request to stop algorithm with id '%ld'", res.rmp.resource_id);
   allocated_algorithms_.erase(res.rmp.resource_id);
   return;
@@ -179,7 +181,7 @@ void AlgorithmManagerServers::unloadAlgorithmCb(temoto_2::LoadAlgorithm::Request
 
 void AlgorithmManagerServers::processTopics( std::vector<diagnostic_msgs::KeyValue>& req_topics
                                            , std::vector<diagnostic_msgs::KeyValue>& res_topics
-                                           , temoto_2::LoadProcess& load_process_msg
+                                           , temoto_er_manager::LoadExtResource& load_process_msg
                                            , AlgorithmInfo& algorithm_info
                                            , bool inputTopics)
 {

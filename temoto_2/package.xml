@@ -59,6 +59,8 @@
   <build_depend>temoto_core</build_depend>
   <build_depend>temoto_nlp</build_depend>
   <build_depend>temoto_context_manager</build_depend>
+  <build_depend>temoto_er_manager</build_depend>
+  <build_depend>temoto_output_manager</build_depend>
   <build_depend>yaml-cpp</build_depend>
 
   <run_depend>tinyxml</run_depend>
@@ -78,7 +80,9 @@
   <run_depend>temoto_core</run_depend>
   <run_depend>temoto_nlp</run_depend>
   <run_depend>temoto_context_manager</run_depend>
-  <run_depend>yaml-cpp</run_depend>r
+  <run_depend>temoto_er_manager</run_depend>
+  <run_depend>temoto_output_manager</run_depend>
+  <run_depend>yaml-cpp</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

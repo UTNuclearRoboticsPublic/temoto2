@@ -5,11 +5,11 @@
   <env name="ROSCONSOLE_CONFIG_FILE" value="$(find temoto_2)/conf/console.conf" />  
 
   <group ns="veikumoto">
-    <node name="process_manager" pkg="temoto_2" type="process_manager" output="screen" />
+    <node name="temoto_er_manager" pkg="temoto_2" type="temoto_er_manager" output="screen" />
     <node name="sensor_manager" pkg="temoto_2" type="sensor_manager" output="screen" />
     <node name="algorithm_manager" pkg="temoto_2" type="algorithm_manager" output="screen" />
     <node name="context_manager" pkg="temoto_2" type="context_manager" output="screen" />
-    <node name="output_manager" pkg="temoto_2" type="output_manager" output="screen" />
+    <node name="temoto_output_manager" pkg="temoto_2" type="temoto_output_manager" output="screen" />
     <node name="robot_manager" pkg="temoto_2" type="robot_manager" output="screen" />
   </group>
 

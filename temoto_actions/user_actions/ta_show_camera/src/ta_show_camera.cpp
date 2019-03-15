@@ -14,7 +14,7 @@
 
 // Task specific includes
 #include "ros/ros.h"
-#include "output_manager/output_manager_interface.h"
+#include "temoto_output_manager/temoto_output_manager_interface.h"
 #include "temoto_context_manager/ObjectContainer.h"
 #include <visualization_msgs/Marker.h>
 #include "human_msgs/Hands.h"
@@ -126,7 +126,7 @@ std::vector<temoto_nlp::Subject> getSolution()
 private:
 
 // Create sensor manager interface object for accessing sensor manager
-output_manager::OutputManagerInterface<TaShowCamera> omi_;
+temoto_output_manager::OutputManagerInterface<TaShowCamera> omi_;
 
 // Nodehandle for subscribers and publishers
 ros::NodeHandle nh_;

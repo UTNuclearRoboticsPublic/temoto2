@@ -4,7 +4,7 @@
 #include "temoto_core/common/base_subsystem.h"
 #include "algorithm_manager/algorithm_info_registry.h"
 #include "algorithm_manager/algorithm_manager_services.h"
-#include "process_manager/process_manager_services.h"
+#include "temoto_er_manager/temoto_er_manager_services.h"
 #include "temoto_core/rmp/resource_manager.h"
 
 #include "std_msgs/String.h"
@@ -64,7 +64,7 @@ private:
    */
   void processTopics( std::vector<diagnostic_msgs::KeyValue>& req_topics
                     , std::vector<diagnostic_msgs::KeyValue>& res_topics
-                    , temoto_2::LoadProcess& load_process_msg
+                    , temoto_er_manager::LoadExtResource& load_process_msg
                     , AlgorithmInfo& algorithm_info
                     , bool inputTopics);
 

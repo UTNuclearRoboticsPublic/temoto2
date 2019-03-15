@@ -11,7 +11,9 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
-  temoto_2
+  temoto_core
+  temoto_nlp
+  temoto_output_manager
 )
 
 catkin_package()
