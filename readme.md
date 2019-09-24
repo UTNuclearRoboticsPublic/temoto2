@@ -1,4 +1,5 @@
-= TeMoto project has [moved here](https://github.com/temoto-telerobotics) and this version of TeMoto is now deprecated = 
+# TeMoto project has [moved here](https://github.com/temoto-telerobotics) and this version of TeMoto is now deprecated # 
+
 for more information, visit https://temoto-telerobotics.github.io
 
 <br></br>
